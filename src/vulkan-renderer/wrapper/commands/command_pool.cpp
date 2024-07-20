@@ -10,10 +10,11 @@
 
 namespace inexor::vulkan_renderer::wrapper::commands {
 
-CommandPool::CommandPool(const wrapper::Device &device, std::string name) : m_device(device), m_name(std::move(name)) {
+CommandPool::CommandPool(const Device &device, std::uint32_t queue_family_index, std::string name)
+    : m_device(device), m_name(std::move(name)) {
     const auto cmd_pool_ci = make_info<VkCommandPoolCreateInfo>({
         .flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT | VK_COMMAND_POOL_CREATE_TRANSIENT_BIT,
-        .queueFamilyIndex = device.graphics_queue_family_index(),
+        .queueFamilyIndex = queue_family_index,
     });
 
     // Get the thread id as string for naming the command pool and the command buffers
@@ -37,7 +38,7 @@ CommandPool::~CommandPool() {
     vkDestroyCommandPool(m_device.device(), m_cmd_pool, nullptr);
 }
 
-const commands::CommandBuffer &CommandPool::request_command_buffer(const std::string &name) {
+const commands::CommandBuffer &CommandPool::request_command_buffer(const std::string &name) const {
     // Try to find a command buffer which is currently not used
     for (const auto &cmd_buf : m_cmd_bufs) {
         if (cmd_buf->m_cmd_buf_execution_completed->status() == VK_SUCCESS) {

@@ -553,8 +553,9 @@ void Application::setup_render_graph() {
 
     // TODO: We don't need to recreate the imgui overlay when swapchain is recreated, use a .recreate() method instead?
     // TODO: Decouple ImGuiRenderer form ImGuiLoader
-    m_imgui_overlay = std::make_unique<renderers::ImGuiRenderer>(*m_device, m_swapchain, m_render_graph, m_octree_pass,
-                                                                 [&]() { update_imgui_overlay(); });
+    // m_imgui_overlay = std::make_unique<renderers::ImGuiRenderer>(*m_device, m_swapchain, m_render_graph,
+    // m_octree_pass,
+    //                                                             [&]() { update_imgui_overlay(); });
 
     m_render_graph->compile();
 }

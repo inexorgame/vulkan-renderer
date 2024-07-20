@@ -339,9 +339,9 @@ void RenderGraph::update_buffers() {
             any_update_required = true;
         }
     }
-    // Only start recording and submitting a command buffer if any update is required
+    // Only start recording and submitting a command buffer on transfer queue if any update is required
     if (any_update_required) {
-        m_device.execute("[RenderGraph::update_buffers]", VK_QUEUE_GRAPHICS_BIT, DebugLabelColor::MAGENTA,
+        m_device.execute("[RenderGraph::update_buffers]", VK_QUEUE_TRANSFER_BIT, DebugLabelColor::MAGENTA,
                          [&](const CommandBuffer &cmd_buf) {
                              for (const auto &buffer : m_buffers) {
                                  if (buffer->m_update_requested) {
@@ -368,9 +368,9 @@ void RenderGraph::update_textures() {
             }
         }
     }
-    // Only start recording and submitting a command buffer if any update is required
+    // Only start recording and submitting a command buffer on transfer queue if any update is required
     if (any_update_required) {
-        m_device.execute("[RenderGraph::update_textures]", VK_QUEUE_GRAPHICS_BIT, DebugLabelColor::LIME,
+        m_device.execute("[RenderGraph::update_textures]", VK_QUEUE_TRANSFER_BIT, DebugLabelColor::LIME,
                          [&](const CommandBuffer &cmd_buf) {
                              for (const auto &texture : m_textures) {
                                  if (texture->m_update_requested) {

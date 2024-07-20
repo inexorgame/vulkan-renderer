@@ -10,7 +10,8 @@
 #include <string>
 
 namespace inexor::vulkan_renderer::wrapper::commands {
-// Forward declaration
+// Forward declarations
+class CommandBuffer;
 class CommandPool;
 } // namespace inexor::vulkan_renderer::wrapper::commands
 
@@ -41,6 +42,10 @@ enum class DebugLabelColor {
 /// @param color The DebugLabelColor
 /// @return An array of RGBA float values to be passed into vkCmdBeginDebugUtilsLabelEXT
 [[nodiscard]] std::array<float, 4> get_debug_label_color(const DebugLabelColor color);
+
+// Using declarations
+using commands::CommandBuffer;
+using commands::CommandPool;
 
 // Forward declaration
 class Instance;
@@ -77,10 +82,11 @@ class Device {
     std::uint32_t m_graphics_queue_family_index{0};
     std::uint32_t m_transfer_queue_family_index{0};
     std::uint32_t m_compute_queue_family_index{0};
+    // TODO: Implement sparse binding queue if required
 
     /// According to NVidia, we should aim for one command pool per thread
     /// https://developer.nvidia.com/blog/vulkan-dos-donts/
-    mutable std::vector<std::unique_ptr<commands::CommandPool>> m_cmd_pools;
+    mutable std::vector<std::unique_ptr<CommandPool>> m_cmd_pools;
     mutable std::mutex m_mutex;
 
     /// Set the debug name of a Vulkan object using debug utils extension (VK_EXT_debug_utils)
@@ -92,11 +98,17 @@ class Device {
     /// @param name the internal debug name of the Vulkan object
     void set_debug_utils_object_name(VkObjectType obj_type, std::uint64_t obj_handle, const std::string &name) const;
 
-    /// Get the thread_local command pool
+    /// Get the thread_local compute pool for transfer commands
     /// @note This method will create a command pool for the thread if it doesn't already exist
-    commands::CommandPool &thread_graphics_pool() const;
+    const CommandPool &thread_local_compute_command_pool() const;
 
-    /// TODO: Implement thread_local command pools for other queue types (transfer, compute, sparse binding..?)
+    /// Get the thread_local command pool for graphics commands
+    /// @note This method will create a command pool for the thread if it doesn't already exist
+    const CommandPool &thread_local_graphics_command_pool() const;
+
+    /// Get the thread_local command pool for transfer commands
+    /// @note This method will create a command pool for the thread if it doesn't already exist
+    const CommandPool &thread_local_transfer_command_pool() const;
 
 public:
     /// Pick the best physical device automatically
@@ -187,7 +199,7 @@ public:
     void execute(const std::string &name,
                  VkQueueFlagBits queue_type,
                  DebugLabelColor dbg_label_color,
-                 const std::function<void(const commands::CommandBuffer &cmd_buf)> &cmd_buf_recording_func,
+                 const std::function<void(const CommandBuffer &cmd_buf)> &cmd_buf_recording_func,
                  std::span<const VkSemaphore> wait_semaphores = {},
                  std::span<const VkSemaphore> signal_semaphores = {}) const;
 
