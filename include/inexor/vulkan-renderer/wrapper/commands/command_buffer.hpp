@@ -62,9 +62,11 @@ private:
     const CommandBuffer &end_command_buffer() const; // NOLINT
 
     /// Call vkQueueSubmit
+    /// @param queue_type The queue type to submit the command buffer to
     /// @param wait_semaphores The semaphores to wait for
     /// @param signal_semaphores The semaphores to signal
-    void submit_and_wait(std::span<const VkSemaphore> wait_semaphores = {},
+    void submit_and_wait(VkQueueFlagBits queue_type,
+                         std::span<const VkSemaphore> wait_semaphores = {},
                          std::span<const VkSemaphore> signal_semaphores = {}) const;
 
 public:

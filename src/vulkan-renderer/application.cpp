@@ -493,6 +493,7 @@ void Application::setup_render_graph() {
                                 //.set_multisampling(m_device->get_max_usable_sample_count(), 0.25f)
                                 .add_default_color_blend_attachment()
                                 .add_color_attachment_format(m_swapchain->image_format())
+                                // TODO: Implement m_device->get_available_depth_format()
                                 .set_depth_attachment_format(VK_FORMAT_D32_SFLOAT_S8_UINT)
                                 .set_depth_stencil({.depthTestEnable = VK_TRUE,
                                                     .depthWriteEnable = VK_TRUE,
@@ -552,9 +553,8 @@ void Application::setup_render_graph() {
 
     // TODO: We don't need to recreate the imgui overlay when swapchain is recreated, use a .recreate() method instead?
     // TODO: Decouple ImGuiRenderer form ImGuiLoader
-    //   m_imgui_overlay = std::make_unique<renderers::ImGuiRenderer>(*m_device, m_swapchain, m_render_graph,
-    //   m_octree_pass,
-    //                                                              [&]() { update_imgui_overlay(); });
+    m_imgui_overlay = std::make_unique<renderers::ImGuiRenderer>(*m_device, m_swapchain, m_render_graph, m_octree_pass,
+                                                                 [&]() { update_imgui_overlay(); });
 
     m_render_graph->compile();
 }

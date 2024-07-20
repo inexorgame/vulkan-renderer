@@ -383,7 +383,7 @@ Device::Device(const Instance &inst,
     }
 
     // Set an internal debug name to this device using Vulkan debug utils (VK_EXT_debug_utils)
-    set_debug_utils_object_name(VK_OBJECT_TYPE_DEVICE, reinterpret_cast<std::uint64_t>(m_device), "Device");
+    set_debug_name(m_device, "Device");
 
     spdlog::trace(
         "Loading Vulkan entrypoints directly from driver with volk metaloader (bypass Vulkan loader dispatch code)");
@@ -400,18 +400,14 @@ Device::Device(const Instance &inst,
     vkGetDeviceQueue(m_device, m_graphics_queue_family_index, 0, &m_graphics_queue);
 
     // Set an internal debug name to the queues using Vulkan debug utils (VK_EXT_debug_utils)
-    set_debug_utils_object_name(VK_OBJECT_TYPE_QUEUE, reinterpret_cast<std::uint64_t>(m_present_queue),
-                                "Present Queue");
-    set_debug_utils_object_name(VK_OBJECT_TYPE_QUEUE, reinterpret_cast<std::uint64_t>(m_graphics_queue),
-                                "Graphics Queue");
+    set_debug_name(m_graphics_queue, "Graphics Queue");
+    set_debug_name(m_present_queue, "Present Queue");
 
     // The use of data transfer queues can be forbidden by using -no_separate_data_queue.
     if (use_distinct_data_transfer_queue) {
         // Use a separate queue for data transfer to GPU.
         vkGetDeviceQueue(m_device, m_transfer_queue_family_index, 0, &m_transfer_queue);
-        // Set the debug name of the transfer queue only if it is a valid VkQueue
-        set_debug_utils_object_name(VK_OBJECT_TYPE_QUEUE, reinterpret_cast<std::uint64_t>(m_transfer_queue),
-                                    "Transfer Queue");
+        set_debug_name(m_transfer_queue, "Transfer Queue");
     }
 
     spdlog::trace("Creating VMA allocator");
@@ -506,6 +502,7 @@ bool Device::surface_supports_usage(const VkSurfaceKHR surface, const VkImageUsa
 }
 
 void Device::execute(const std::string &name,
+                     const VkQueueFlagBits queue_type,
                      const DebugLabelColor dbg_label_color,
                      const std::function<void(const commands::CommandBuffer &cmd_buf)> &cmd_buf_recording_func,
                      const std::span<const VkSemaphore> wait_semaphores,
@@ -515,7 +512,7 @@ void Device::execute(const std::string &name,
     cmd_buf.begin_debug_label_region(name, get_debug_label_color(dbg_label_color));
     std::invoke(cmd_buf_recording_func, cmd_buf);
     cmd_buf.end_debug_label_region();
-    cmd_buf.submit_and_wait(wait_semaphores, signal_semaphores);
+    cmd_buf.submit_and_wait(queue_type, wait_semaphores, signal_semaphores);
 }
 
 std::optional<std::uint32_t> Device::find_queue_family_index_if(
@@ -543,8 +540,10 @@ commands::CommandPool &Device::thread_graphics_pool() const {
 void Device::set_debug_utils_object_name(const VkObjectType obj_type,
                                          const std::uint64_t obj_handle,
                                          const std::string &name) const {
-    assert(obj_handle);
-
+    if (!obj_handle) {
+        throw std::runtime_error(
+            "[Device::set_debug_utils_object_name] Error: Parameter 'obj_handle' is an invalid pointer!");
+    }
     const auto dbg_obj_name = wrapper::make_info<VkDebugUtilsObjectNameInfoEXT>({
         .objectType = obj_type,
         .objectHandle = obj_handle,

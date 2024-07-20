@@ -176,11 +176,13 @@ public:
     /// the given command pool, begins the command buffer, executes the lambda, ends recording the command buffer,
     /// submits it and waits for it.
     /// @param name The internal debug name of the command buffer (must not be empty)
+    /// @param queue_type The queue type to submit the command buffer to
     /// @param dbg_label_color The debug label color to use for calling ``begin_debug_label_region``
     /// @param cmd_buf_recording_func The command buffer recording function to execute
     /// @param wait_semaphores
     /// @param signal_semaphores
     void execute(const std::string &name,
+                 VkQueueFlagBits queue_type,
                  DebugLabelColor dbg_label_color,
                  const std::function<void(const commands::CommandBuffer &cmd_buf)> &cmd_buf_recording_func,
                  std::span<const VkSemaphore> wait_semaphores = {},

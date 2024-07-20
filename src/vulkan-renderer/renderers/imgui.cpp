@@ -140,10 +140,7 @@ ImGuiRenderer::ImGuiRenderer(const Device &device,
         // NOTE: We directly return the ImGui graphics pass and do not store it in here because it's the last pass (for
         // now) and there is no reads_from function which would need it.
         return builder
-            .writes_to(m_swapchain,
-                       VkClearValue{
-                           .color = {1.0f, 1.0f, 1.0f, 1.0f},
-                       })
+            .writes_to(m_swapchain)
             //.conditionally_reads_from(m_previous_pass, !m_previous_pass.expired())
             .set_on_record([&](const wrapper::commands::CommandBuffer &cmd_buf) {
                 ImDrawData *draw_data = ImGui::GetDrawData();

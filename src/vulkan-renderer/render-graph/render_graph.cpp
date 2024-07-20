@@ -134,21 +134,23 @@ void RenderGraph::create_graphics_pipelines() {
 }
 
 void RenderGraph::create_textures() {
-    m_device.execute("[RenderGraph::create_textures]", DebugLabelColor::BLUE, [&](const CommandBuffer &cmd_buf) {
-        for (const auto &texture : m_textures) {
-            if (texture->m_on_init) {
-                cmd_buf.set_suboperation_debug_name("[Texture|Initialize]:" + texture->m_name + "]");
-                std::invoke(texture->m_on_init.value());
-            }
-            cmd_buf.set_suboperation_debug_name("[Texture|Create]:" + texture->m_name + "]");
-            texture->create();
-            if (texture->m_usage == TextureUsage::NORMAL) {
-                cmd_buf.set_suboperation_debug_name("[Texture|Update]:" + texture->m_name + "]");
-                // Only external textures are updated, not back or depth buffers used internally in rendergraph
-                texture->update(cmd_buf);
-            }
-        }
-    });
+    m_device.execute("[RenderGraph::create_textures]", VK_QUEUE_GRAPHICS_BIT, DebugLabelColor::BLUE,
+                     [&](const CommandBuffer &cmd_buf) {
+                         for (const auto &texture : m_textures) {
+                             if (texture->m_on_init) {
+                                 cmd_buf.set_suboperation_debug_name("[Texture|Initialize]:" + texture->m_name + "]");
+                                 std::invoke(texture->m_on_init.value());
+                             }
+                             cmd_buf.set_suboperation_debug_name("[Texture|Create]:" + texture->m_name + "]");
+                             texture->create();
+                             if (texture->m_usage == TextureUsage::NORMAL) {
+                                 cmd_buf.set_suboperation_debug_name("[Texture|Update]:" + texture->m_name + "]");
+                                 // Only external textures are updated, not back or depth buffers used internally in
+                                 // rendergraph
+                                 texture->update(cmd_buf);
+                             }
+                         }
+                     });
 }
 
 void RenderGraph::determine_pass_order() {
@@ -314,7 +316,7 @@ void RenderGraph::render() {
     // So if we are writing to multiple swapchains in this pass, we must wait for every swapchains
     // semaphore!
     m_device.execute(
-        "[RenderGraph::render]", DebugLabelColor::CYAN,
+        "[RenderGraph::render]", VK_QUEUE_GRAPHICS_BIT, DebugLabelColor::CYAN,
         [&](const CommandBuffer &cmd_buf) {
             // Call the command buffer recording function of every graphics pass
             for (auto &pass : m_graphics_passes) {
@@ -339,17 +341,19 @@ void RenderGraph::update_buffers() {
     }
     // Only start recording and submitting a command buffer if any update is required
     if (any_update_required) {
-        m_device.execute("[RenderGraph::update_buffers]", DebugLabelColor::MAGENTA, [&](const CommandBuffer &cmd_buf) {
-            for (const auto &buffer : m_buffers) {
-                if (buffer->m_update_requested) {
-                    cmd_buf.set_suboperation_debug_name("[Buffer|Destroy:" + buffer->m_name + "]");
-                    buffer->destroy_all();
-                    cmd_buf.set_suboperation_debug_name("[Buffer|Update:" + buffer->m_name + "]");
-                    buffer->create(cmd_buf);
-                }
-            }
-        });
+        m_device.execute("[RenderGraph::update_buffers]", VK_QUEUE_GRAPHICS_BIT, DebugLabelColor::MAGENTA,
+                         [&](const CommandBuffer &cmd_buf) {
+                             for (const auto &buffer : m_buffers) {
+                                 if (buffer->m_update_requested) {
+                                     cmd_buf.set_suboperation_debug_name("[Buffer|Destroy:" + buffer->m_name + "]");
+                                     buffer->destroy_all();
+                                     cmd_buf.set_suboperation_debug_name("[Buffer|Update:" + buffer->m_name + "]");
+                                     buffer->create(cmd_buf);
+                                 }
+                             }
+                         });
     }
+    // NOTE: We can't insert a debug label "no buffer updates required" because it requires a recording command buffer
 }
 
 void RenderGraph::update_textures() {
@@ -366,20 +370,21 @@ void RenderGraph::update_textures() {
     }
     // Only start recording and submitting a command buffer if any update is required
     if (any_update_required) {
-        m_device.execute("[RenderGraph::update_textures]", DebugLabelColor::LIME, [&](const CommandBuffer &cmd_buf) {
-            for (const auto &texture : m_textures) {
-                // Only for dynamic textures m_on_lambda which is not std::nullopt
-                if (texture->m_update_requested) {
-                    cmd_buf.set_suboperation_debug_name("[Texture|Destroy:" + texture->m_name + "]");
-                    texture->destroy();
-                    cmd_buf.set_suboperation_debug_name("[Texture|Update:" + texture->m_name + "]");
-                    std::invoke(texture->m_on_check_for_updates.value());
-                    cmd_buf.set_suboperation_debug_name("[Texture|Create:" + texture->m_name + "]");
-                    texture->create();
-                }
-            }
-        });
+        m_device.execute("[RenderGraph::update_textures]", VK_QUEUE_GRAPHICS_BIT, DebugLabelColor::LIME,
+                         [&](const CommandBuffer &cmd_buf) {
+                             for (const auto &texture : m_textures) {
+                                 if (texture->m_update_requested) {
+                                     cmd_buf.set_suboperation_debug_name("[Texture|Destroy:" + texture->m_name + "]");
+                                     texture->destroy();
+                                     cmd_buf.set_suboperation_debug_name("[Texture|Update:" + texture->m_name + "]");
+                                     std::invoke(texture->m_on_check_for_updates.value());
+                                     cmd_buf.set_suboperation_debug_name("[Texture|Create:" + texture->m_name + "]");
+                                     texture->create();
+                                 }
+                             }
+                         });
     }
+    // NOTE: We can't insert a debug label "no texture updates required" because it requires a recording command buffer
 }
 
 void RenderGraph::update_write_descriptor_sets() {
