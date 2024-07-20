@@ -5,8 +5,6 @@
 
 #include "inexor/vulkan-renderer/wrapper/commands/command_buffer.hpp"
 
-#include <cassert>
-
 namespace inexor::vulkan_renderer::wrapper {
 // Forward declaration
 class Device;
@@ -22,6 +20,7 @@ class CommandPool {
     std::string m_name;
     const Device &m_device;
     VkCommandPool m_cmd_pool{VK_NULL_HANDLE};
+    VkQueueFlagBits m_queue_type;
 
     /// The command buffers which can be requested by the current thread
     mutable std::vector<std::unique_ptr<CommandBuffer>> m_cmd_bufs;
@@ -29,9 +28,9 @@ class CommandPool {
 public:
     /// Default constructor
     /// @param device The device wrapper instance
-    /// @param queue_family_index The queue family index of the commands pool
+    /// @param queue_type The queue type
     /// @param name The internal debug marker name which will be assigned to this command pool
-    CommandPool(const Device &device, std::uint32_t queue_family_index, std::string name);
+    CommandPool(const Device &device, VkQueueFlagBits queue_type, std::string name);
 
     CommandPool(const CommandPool &) = delete;
     CommandPool(CommandPool &&) noexcept;
@@ -43,7 +42,7 @@ public:
     /// Request a command buffer
     /// @param name The internal debug name which will be assigned to this command buffer (must not be empty)
     /// @return A command buffer handle instance which allows access to the requested command buffer
-    [[nodiscard]] const CommandBuffer &request_command_buffer(const std::string &name) const;
+    [[nodiscard]] CommandBuffer &request_command_buffer(const std::string &name) const;
 };
 
 } // namespace inexor::vulkan_renderer::wrapper::commands

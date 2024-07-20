@@ -557,7 +557,7 @@ const CommandPool &Device::thread_local_compute_command_pool() const {
     // NOTE: thread_graphics_pool is implicitly static!
     thread_local CommandPool *compute_pool = nullptr; // NOLINT
     if (compute_pool == nullptr) {
-        auto cmd_pool = std::make_unique<CommandPool>(*this, m_compute_queue_family_index, "Compute Command Pool");
+        auto cmd_pool = std::make_unique<CommandPool>(*this, VK_QUEUE_COMPUTE_BIT, "Compute Command Pool");
         std::scoped_lock locker(m_mutex);
         compute_pool = m_cmd_pools.emplace_back(std::move(cmd_pool)).get();
     }
@@ -568,7 +568,7 @@ const CommandPool &Device::thread_local_graphics_command_pool() const {
     // NOTE: thread_graphics_pool is implicitly static!
     thread_local CommandPool *graphics_pool = nullptr; // NOLINT
     if (graphics_pool == nullptr) {
-        auto cmd_pool = std::make_unique<CommandPool>(*this, m_graphics_queue_family_index, "Graphics Command Pool");
+        auto cmd_pool = std::make_unique<CommandPool>(*this, VK_QUEUE_GRAPHICS_BIT, "Graphics Command Pool");
         std::scoped_lock locker(m_mutex);
         graphics_pool = m_cmd_pools.emplace_back(std::move(cmd_pool)).get();
     }
@@ -579,7 +579,7 @@ const CommandPool &Device::thread_local_transfer_command_pool() const {
     // NOTE: thread_graphics_pool is implicitly static!
     thread_local CommandPool *graphics_pool = nullptr; // NOLINT
     if (graphics_pool == nullptr) {
-        auto cmd_pool = std::make_unique<CommandPool>(*this, m_transfer_queue_family_index, "Transfer Command Pool");
+        auto cmd_pool = std::make_unique<CommandPool>(*this, VK_QUEUE_TRANSFER_BIT, "Transfer Command Pool");
         std::scoped_lock locker(m_mutex);
         graphics_pool = m_cmd_pools.emplace_back(std::move(cmd_pool)).get();
     }

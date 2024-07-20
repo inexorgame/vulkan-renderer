@@ -283,16 +283,17 @@ void RenderGraph::record_command_buffer_for_pass(const CommandBuffer &cmd_buf, G
     // NOTE: Pipeline barriers must not be placed inside of dynamic rendering instances, which means we must change the
     // image layout of all swapchains we write to before we call begin_rendering and then again after we call
     // end_rendering.
-    // ----------------------------------------------------------------------------------------------------------------
+
     // Start dynamic rendering with the compiled rendering info
     cmd_buf.begin_rendering(pass.m_rendering_info);
+
     // Call the command buffer recording function of this graphics pass. In this function, the actual rendering takes
     // place: the programmer binds pipelines, descriptor sets, buffers, and calls Vulkan commands. Note that rendergraph
     // does not bind any pipelines, descriptor sets, or buffers automatically!
     std::invoke(pass.m_on_record_cmd_buffer, cmd_buf);
+
     // End dynamic rendering
     cmd_buf.end_rendering();
-    // ----------------------------------------------------------------------------------------------------------------
 
     // TODO: Only change image layout of swapchain if previous pass did not already do this!
 

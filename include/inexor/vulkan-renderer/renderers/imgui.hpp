@@ -45,7 +45,7 @@ class ImGuiRenderer {
     std::weak_ptr<Buffer> m_index_buffer;
     std::weak_ptr<Buffer> m_vertex_buffer;
     std::weak_ptr<Texture> m_imgui_texture;
-    std::shared_ptr<wrapper::pipelines::GraphicsPipeline> m_imgui_pipeline;
+    std::shared_ptr<GraphicsPipeline> m_imgui_pipeline;
 
     // This is the color attachment we will write to
     std::weak_ptr<Swapchain> m_swapchain;
@@ -87,16 +87,15 @@ class ImGuiRenderer {
 public:
     /// Default constructor
     /// @param device The device wrapper
-    /// @param swapchain The swapchain to render to
     /// @param render_graph The rendergraph
     /// @param previous_pass The previous pass
     /// @param color_attachment The color attachment
+    /// @param swapchain The swapchain to render to
     /// @param on_update_user_data The user-specified ImGui update function
     ImGuiRenderer(const Device &device,
-                  std::weak_ptr<Swapchain> swapchain,
                   std::weak_ptr<RenderGraph> render_graph,
                   std::weak_ptr<GraphicsPass> previous_pass,
-                  //std::weak_ptr<Texture> color_attachment,
+                  std::weak_ptr<Swapchain> swapchain,
                   std::function<void()> on_update_user_data);
 
     ImGuiRenderer(const ImGuiRenderer &) = delete;

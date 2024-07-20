@@ -10,16 +10,33 @@
 
 namespace inexor::vulkan_renderer::wrapper::commands {
 
-CommandPool::CommandPool(const Device &device, std::uint32_t queue_family_index, std::string name)
-    : m_device(device), m_name(std::move(name)) {
+CommandPool::CommandPool(const Device &device, const VkQueueFlagBits queue_type, std::string name)
+    : m_device(device), m_queue_type(queue_type), m_name(std::move(name)) {
+
+    auto get_queue_family_index = [&]() {
+        switch (queue_type) {
+        case VK_QUEUE_TRANSFER_BIT: {
+            return m_device.transfer_queue_family_index();
+        }
+        case VK_QUEUE_COMPUTE_BIT: {
+            return m_device.compute_queue_family_index();
+        }
+        default: {
+            // VK_QUEUE_GRAPHICS_BIT and rest
+            return m_device.graphics_queue_family_index();
+        }
+        }
+    };
+
     const auto cmd_pool_ci = make_info<VkCommandPoolCreateInfo>({
         .flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT | VK_COMMAND_POOL_CREATE_TRANSIENT_BIT,
-        .queueFamilyIndex = queue_family_index,
+        .queueFamilyIndex = get_queue_family_index(),
     });
 
     // Get the thread id as string for naming the command pool and the command buffers
-    const std::size_t thread_id = std::hash<std::thread::id>{}(std::this_thread::get_id());
-    spdlog::trace("Creating command pool for thread {}", thread_id);
+    std::ostringstream thread_id;
+    thread_id << std::this_thread::get_id();
+    spdlog::trace("Creating {} command pool for thread ID {}", vk_tools::as_string(queue_type), thread_id.str());
 
     if (const auto result = vkCreateCommandPool(m_device.device(), &cmd_pool_ci, nullptr, &m_cmd_pool);
         result != VK_SUCCESS) {
@@ -32,13 +49,14 @@ CommandPool::CommandPool(CommandPool &&other) noexcept : m_device(other.m_device
     m_cmd_pool = std::exchange(other.m_cmd_pool, nullptr);
     m_name = std::move(other.m_name);
     m_cmd_bufs = std::move(other.m_cmd_bufs);
+    m_queue_type = other.m_queue_type;
 }
 
 CommandPool::~CommandPool() {
     vkDestroyCommandPool(m_device.device(), m_cmd_pool, nullptr);
 }
 
-const commands::CommandBuffer &CommandPool::request_command_buffer(const std::string &name) const {
+CommandBuffer &CommandPool::request_command_buffer(const std::string &name) const {
     // Try to find a command buffer which is currently not used
     for (const auto &cmd_buf : m_cmd_bufs) {
         if (cmd_buf->m_cmd_buf_execution_completed->status() == VK_SUCCESS) {
@@ -50,11 +68,11 @@ const commands::CommandBuffer &CommandPool::request_command_buffer(const std::st
         }
     }
 
-    spdlog::trace("Creating new command buffer #{}", 1 + m_cmd_bufs.size());
+    spdlog::trace("Creating {} new command buffer #{}", vk_tools::as_string(m_queue_type), 1 + m_cmd_bufs.size());
 
     // No free command buffer was found so we need to create a new one
     // Note that there is currently no method for shrinking m_cmd_bufs, but this should not be a problem
-    m_cmd_bufs.emplace_back(std::make_unique<commands::CommandBuffer>(m_device, m_cmd_pool, name));
+    m_cmd_bufs.emplace_back(std::make_unique<CommandBuffer>(m_device, m_cmd_pool, name));
 
     auto &new_cmd_buf = *m_cmd_bufs.back();
     new_cmd_buf.begin_command_buffer();
