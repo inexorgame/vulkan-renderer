@@ -448,14 +448,17 @@ void CommandBuffer::submit_and_wait(const VkQueueFlagBits queue_type,
         .pSignalSemaphores = signal_semaphores.data(),
     });
 
-    // TODO: Support distinct compute queue!
+    // TODO: Support VK_QUEUE_SPARSE_BINDING_BIT if required
     auto get_queue = [&]() {
         switch (queue_type) {
         case VK_QUEUE_TRANSFER_BIT: {
             return m_device.transfer_queue();
         }
+        case VK_QUEUE_COMPUTE_BIT: {
+            return m_device.compute_queue();
+        }
         default: {
-            // VK_QUEUE_GRAPHICS_BIT and VK_QUEUE_COMPUTE_BIT
+            // VK_QUEUE_GRAPHICS_BIT and rest
             return m_device.graphics_queue();
         }
         }

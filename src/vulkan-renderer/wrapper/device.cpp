@@ -389,19 +389,31 @@ Device::Device(const Instance &inst,
         "Loading Vulkan entrypoints directly from driver with volk metaloader (bypass Vulkan loader dispatch code)");
     volkLoadDevice(m_device);
 
+    auto compute_queue_candidate =
+        find_queue_family_index_if([&](const std::uint32_t index, const VkQueueFamilyProperties &queue_family) {
+            return (queue_family.queueFlags & VK_QUEUE_COMPUTE_BIT) != 0u;
+        });
+
+    if (!compute_queue_candidate) {
+        throw std::runtime_error("Error: Could not find a compute queue!");
+    }
+
     spdlog::trace("Queue family indices:");
     spdlog::trace("   - Graphics: {}", m_graphics_queue_family_index);
     spdlog::trace("   - Present: {}", m_present_queue_family_index);
     spdlog::trace("   - Transfer: {}", m_transfer_queue_family_index);
+    spdlog::trace("   - Compute: {}", m_compute_queue_family_index);
 
     // Setup the queues for presentation and graphics.
     // Since we only have one queue per queue family, we acquire index 0.
     vkGetDeviceQueue(m_device, m_present_queue_family_index, 0, &m_present_queue);
     vkGetDeviceQueue(m_device, m_graphics_queue_family_index, 0, &m_graphics_queue);
+    vkGetDeviceQueue(m_device, m_compute_queue_family_index, 0, &m_compute_queue);
 
     // Set an internal debug name to the queues using Vulkan debug utils (VK_EXT_debug_utils)
     set_debug_name(m_graphics_queue, "Graphics Queue");
     set_debug_name(m_present_queue, "Present Queue");
+    set_debug_name(m_compute_queue, "Compute Queue");
 
     // The use of data transfer queues can be forbidden by using -no_separate_data_queue.
     if (use_distinct_data_transfer_queue) {

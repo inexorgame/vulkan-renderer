@@ -68,6 +68,7 @@ class Device {
     VkPhysicalDeviceProperties m_properties{};
     VkSampleCountFlagBits m_max_usable_sample_count{VK_SAMPLE_COUNT_1_BIT};
 
+    VkQueue m_compute_queue{VK_NULL_HANDLE};
     VkQueue m_graphics_queue{VK_NULL_HANDLE};
     VkQueue m_present_queue{VK_NULL_HANDLE};
     VkQueue m_transfer_queue{VK_NULL_HANDLE};
@@ -75,6 +76,7 @@ class Device {
     std::uint32_t m_present_queue_family_index{0};
     std::uint32_t m_graphics_queue_family_index{0};
     std::uint32_t m_transfer_queue_family_index{0};
+    std::uint32_t m_compute_queue_family_index{0};
 
     /// According to NVidia, we should aim for one command pool per thread
     /// https://developer.nvidia.com/blog/vulkan-dos-donts/
@@ -142,7 +144,8 @@ public:
            const VkPhysicalDeviceFeatures &optional_features = {});
 
     Device(const Device &) = delete;
-    Device(Device &&) = delete;
+    // TODO: Implement me!
+    Device(Device &&) noexcept;
 
     ~Device();
 
@@ -212,6 +215,10 @@ public:
 
     [[nodiscard]] const std::string &gpu_name() const {
         return m_gpu_name;
+    }
+
+    [[nodiscard]] VkQueue compute_queue() const {
+        return m_compute_queue;
     }
 
     [[nodiscard]] VkQueue graphics_queue() const {
