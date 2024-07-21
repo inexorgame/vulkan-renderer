@@ -81,10 +81,8 @@ private:
     void *m_src_texture_data{nullptr};
     std::size_t m_src_texture_data_size{0};
 
-    /// This is for initialization of textures which are of TextureUsage::NORMAL
-    std::optional<std::function<void()>> m_on_init{std::nullopt};
     /// By definition, if this is not std::nullopt, this is a dynamic texture
-    std::optional<std::function<void()>> m_on_check_for_updates{std::nullopt};
+    std::function<void()> m_on_check_for_updates;
 
     // The staging buffer for updating the texture data
     VkBuffer m_staging_buffer{VK_NULL_HANDLE};
@@ -117,10 +115,7 @@ public:
     /// @param width The width of the texture
     /// @param height The height of the texture
     /// @param sample_count The sample count of the texture
-    /// @param on_init The initialization function of the texture
-    /// @note If ``on_init`` is ``std::nullopt``, it means the texture will be initialized internally in rendergraph.
     /// @param on_check_for_updates The update function of the texture
-    /// @note If ``on_check_for_updates`` is ``std::nullopt``, the texture will not be updated at all!
     Texture(const Device &device,
             std::string name,
             TextureUsage usage,
@@ -128,8 +123,7 @@ public:
             std::uint32_t width,
             std::uint32_t height,
             VkSampleCountFlagBits sample_count, // TODO: Channel count as well?
-            std::optional<std::function<void()>> on_init = std::nullopt,
-            std::optional<std::function<void()>> on_check_for_updates = std::nullopt);
+            std::function<void()> on_check_for_updates);
 
     Texture(const Texture &) = delete;
     Texture(Texture &&other) noexcept;

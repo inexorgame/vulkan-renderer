@@ -258,9 +258,6 @@ private:
     /// @param pass The graphics pass
     void fill_graphics_pass_rendering_info(GraphicsPass &pass);
 
-    /// Call m_on_initialize for every texture
-    void initialize_textures();
-
     /// Record the command buffer of a pass. After a lot of discussions about the API design of rendergraph, we came to
     /// the conclusion that it's the full responsibility of the programmer to manually bind pipelines, descriptors sets,
     /// and buffers inside of the on_record function instead of attempting to abstract all of this in rendergraph. This
@@ -340,17 +337,16 @@ public:
     /// @param usage The usage of the texture inside of rendergraph
     /// @param format The format of the texture
     /// @param sample_count The sample count of the texture
-    /// @param on_init The texture initialization function
-    /// @param on_update The texture update function
+    /// @param m_on_check_for_updates The texture update function (an empty lambda by default)
     /// @return A weak pointer to the texture that was created
-    [[nodiscard]] std::weak_ptr<Texture> add_texture(std::string texture_name,
-                                                     TextureUsage usage,
-                                                     VkFormat format,
-                                                     std::uint32_t width,
-                                                     std::uint32_t height,
-                                                     VkSampleCountFlagBits sample_count = VK_SAMPLE_COUNT_1_BIT,
-                                                     std::optional<std::function<void()>> on_init = std::nullopt,
-                                                     std::optional<std::function<void()>> on_update = std::nullopt);
+    [[nodiscard]] std::weak_ptr<Texture> add_texture(
+        std::string texture_name,
+        TextureUsage usage,
+        VkFormat format,
+        std::uint32_t width,
+        std::uint32_t height,
+        VkSampleCountFlagBits sample_count = VK_SAMPLE_COUNT_1_BIT,
+        std::function<void()> m_on_check_for_updates = []() {});
 
     /// Compile the rendergraph
     void compile();

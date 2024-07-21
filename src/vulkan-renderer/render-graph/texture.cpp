@@ -18,11 +18,9 @@ Texture::Texture(const Device &device,
                  const std::uint32_t width,
                  const std::uint32_t height,
                  const VkSampleCountFlagBits sample_count,
-                 std::optional<std::function<void()>> on_init,
-                 std::optional<std::function<void()>> on_check_for_updates)
+                 std::function<void()> on_check_for_updates)
     : m_device(device), m_name(std::move(name)), m_usage(usage), m_format(format), m_width(width), m_height(height),
-      m_sample_count(sample_count), m_on_init(std::move(on_init)),
-      m_on_check_for_updates(std::move(on_check_for_updates)) {
+      m_sample_count(sample_count), m_on_check_for_updates(std::move(on_check_for_updates)) {
     if (m_name.empty()) {
         throw std::invalid_argument("[Texture::Texture] Error: Parameter 'name' is empty!");
     }
@@ -75,7 +73,7 @@ void Texture::create() {
     });
 
     const auto img_view_ci = wrapper::make_info<VkImageViewCreateInfo>({
-        // NOTE: .image will be filled by the Texture wrapper
+        // NOTE: .image will be filled by the Image wrapper
         .viewType = VK_IMAGE_VIEW_TYPE_2D,
         .format = m_format,
         .subresourceRange =
@@ -159,6 +157,8 @@ void Texture::update(const CommandBuffer &cmd_buf) {
 
     cmd_buf.insert_debug_label("[Texture::update|" + m_name + "]",
                                wrapper::get_debug_label_color(wrapper::DebugLabelColor::ORANGE));
+
+    // TODO: Check on which queue the udpate is carried out and adjust the stages in the pipeline barrier accordingly
     cmd_buf.pipeline_image_memory_barrier_before_copy_buffer_to_image(m_img->m_img)
         .copy_buffer_to_image(m_staging_buffer, m_img->m_img,
                               {
@@ -169,6 +169,7 @@ void Texture::update(const CommandBuffer &cmd_buf) {
         .pipeline_image_memory_barrier_after_copy_buffer_to_image(m_img->m_img);
 
     // Update the descriptor image info
+    // TODO: Does this mean we can this in create() function, not on a per-frame basis?
     m_descriptor_img_info = VkDescriptorImageInfo{
         .sampler = m_img->m_sampler->m_sampler,
         .imageView = m_img->m_img_view,
@@ -182,7 +183,6 @@ void Texture::update(const CommandBuffer &cmd_buf) {
 
     // NOTE: The staging buffer needs to stay valid until command buffer finished executing!
     // It will be destroyed either in the destructor or the next time execute_update is called.
-
     // NOTE: Another option would have been to wrap each call to execute_update() into its own single time
     // command buffer, which would increase the total number of command buffer submissions though.
 }

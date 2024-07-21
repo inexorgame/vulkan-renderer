@@ -68,6 +68,7 @@ class ImGuiRenderer {
     int m_font_texture_width{0};
     int m_font_texture_height{0};
     int m_font_texture_data_size{0};
+    bool m_font_texture_initialized{false};
 
     // Neither scale nor translation change
     struct PushConstBlock {

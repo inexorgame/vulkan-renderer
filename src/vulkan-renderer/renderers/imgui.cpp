@@ -78,12 +78,15 @@ ImGuiRenderer::ImGuiRenderer(const Device &device,
     m_fragment_shader =
         std::make_shared<wrapper::Shader>(device, "ImGui", VK_SHADER_STAGE_FRAGMENT_BIT, "shaders/ui.frag.spv");
 
-    m_imgui_texture =
-        graph->add_texture("ImGui-Font", render_graph::TextureUsage::NORMAL, VK_FORMAT_R8G8B8A8_UNORM,
-                           m_font_texture_width, m_font_texture_width, VK_SAMPLE_COUNT_1_BIT, [&]() {
-                               // Initialize the ImGui font texture
-                               m_imgui_texture.lock()->request_update(m_font_texture_data, m_font_texture_data_size);
-                           });
+    m_imgui_texture = graph->add_texture("ImGui-Font", render_graph::TextureUsage::NORMAL, VK_FORMAT_R8G8B8A8_UNORM,
+                                         m_font_texture_width, m_font_texture_width, VK_SAMPLE_COUNT_1_BIT, [&]() {
+                                             // Initialize the ImGui font texture only once in the update function
+                                             if (!m_font_texture_initialized) {
+                                                 m_imgui_texture.lock()->request_update(m_font_texture_data,
+                                                                                        m_font_texture_data_size);
+                                                 m_font_texture_initialized = true;
+                                             }
+                                         });
 
     graph->add_resource_descriptor(
         [&](wrapper::descriptors::DescriptorSetLayoutBuilder &builder) {

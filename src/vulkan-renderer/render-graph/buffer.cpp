@@ -141,12 +141,14 @@ void Buffer::create(const CommandBuffer &cmd_buf) {
             .copy_buffer(m_staging_buffer, m_buffer, m_src_data_size)
             .pipeline_buffer_memory_barrier_after_copy_buffer(m_buffer);
     }
+
     // Update the descriptor buffer info
     m_descriptor_buffer_info = VkDescriptorBufferInfo{
         .buffer = m_buffer,
         .offset = 0,
         .range = m_alloc_info.size,
     };
+
     // The update is finished
     m_update_requested = false;
     m_src_data = nullptr;
@@ -154,7 +156,6 @@ void Buffer::create(const CommandBuffer &cmd_buf) {
 
     // NOTE: The staging buffer needs to stay valid until command buffer finished executing!
     // It will be destroyed either in the destructor or the next time create is called.
-
     // NOTE: Another option would have been to wrap each call to create() into its own single time command buffer, which
     // would increase the total number of command buffer submissions though.
 }

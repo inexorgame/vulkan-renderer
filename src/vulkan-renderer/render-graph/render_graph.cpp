@@ -49,10 +49,9 @@ std::weak_ptr<Texture> RenderGraph::add_texture(std::string texture_name,
                                                 const std::uint32_t width,
                                                 const std::uint32_t height,
                                                 const VkSampleCountFlagBits sample_count,
-                                                std::optional<std::function<void()>> on_init,
-                                                std::optional<std::function<void()>> on_update) {
+                                                std::function<void()> m_on_check_for_updates) {
     m_textures.emplace_back(std::make_shared<Texture>(m_device, std::move(texture_name), usage, format, width, height,
-                                                      sample_count, std::move(on_init), std::move(on_update)));
+                                                      sample_count, std::move(m_on_check_for_updates)));
     return m_textures.back();
 }
 
@@ -106,7 +105,6 @@ void RenderGraph::compile() {
     validate_render_graph();
     determine_pass_order();
     update_buffers();
-    initialize_textures();
     update_textures();
     create_descriptor_set_layouts();
     allocate_descriptor_sets();
@@ -149,8 +147,8 @@ void RenderGraph::determine_pass_order() {
 void RenderGraph::fill_graphics_pass_rendering_info(GraphicsPass &pass) {
     pass.reset_rendering_info();
 
-    ///
-    ///
+    /// Fill the VkRenderingattachmentInfo for a color, depth, or stencil attachment
+    /// @param write_attachment The attachment this graphics pass writes to
     ///
     auto fill_rendering_info_for_attachment = [&](const std::weak_ptr<Texture> &write_attachment,
                                                   const std::optional<VkClearValue> &clear_value) {
@@ -172,6 +170,7 @@ void RenderGraph::fill_graphics_pass_rendering_info(GraphicsPass &pass) {
 
         // TODO: Support MSAA again!
         return wrapper::make_info<VkRenderingAttachmentInfo>({
+            // TODO: Implement m_current_img_view when double/triple buffering and do this on init, not per-frame?
             .imageView = attachment->m_img->m_img_view,
             .imageLayout = get_image_layout(),
             .resolveMode = VK_RESOLVE_MODE_NONE,
@@ -209,13 +208,14 @@ void RenderGraph::fill_graphics_pass_rendering_info(GraphicsPass &pass) {
         }
     }
 
-    ///
-    ///
-    ///
+    /// Fill the VkRenderingAttachmentInfo for a swapchain
+    /// @param write_swapchain The swapchain to which this graphics pass writes to
+    /// @param clear_value The optional clear value for the swapchain image
     auto fill_write_info_for_swapchain = [&](const std::weak_ptr<Swapchain> &write_swapchain,
                                              const std::optional<VkClearValue> &clear_value) {
         // TODO: Support MSAA again!
         return wrapper::make_info<VkRenderingAttachmentInfo>({
+            // TODO: Does this mean we can do this on init now? Not on a per-frame basis?
             .imageView = write_swapchain.lock()->m_current_swapchain_img_view,
             .imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
             .resolveMode = VK_RESOLVE_MODE_NONE,
@@ -248,37 +248,6 @@ void RenderGraph::fill_graphics_pass_rendering_info(GraphicsPass &pass) {
         .pDepthAttachment = pass.m_has_depth_attachment ? &pass.m_depth_attachment : nullptr,
         .pStencilAttachment = pass.m_has_stencil_attachment ? &pass.m_stencil_attachment : nullptr,
     });
-}
-
-// TODO: Consistent naming: create, initialize, update=create for static textures...?
-
-void RenderGraph::initialize_textures() {
-    // Check if there is any update required
-    bool any_update_required = false;
-    for (const auto &texture : m_textures) {
-        // NOTE: For textures which are created internally by rendergraph, m_on_init is std::nullopt
-        if (texture->m_on_init) {
-            std::invoke(texture->m_on_init.value());
-            if (texture->m_update_requested) {
-                any_update_required = true;
-            }
-        }
-    }
-    // Only start recording and submitting a command buffer on transfer queue if any update is required
-    if (any_update_required) {
-        m_device.execute("[RenderGraph::initialize_textures]", VK_QUEUE_TRANSFER_BIT, DebugLabelColor::LIME,
-                         [&](const CommandBuffer &cmd_buf) {
-                             for (const auto &texture : m_textures) {
-                                 if (texture->m_update_requested) {
-                                     cmd_buf.set_suboperation_debug_name("[Texture|Create:" + texture->m_name + "]");
-                                     texture->create();
-                                     texture->update(cmd_buf);
-                                 }
-                             }
-                         });
-    }
-    // NOTE: For the "else" case: We can't insert a debug label here telling us that there are no buffer updates
-    // required because that command itself would require a command buffer to be in recording state
 }
 
 void RenderGraph::record_command_buffer_for_pass(const CommandBuffer &cmd_buf, GraphicsPass &pass) {
@@ -337,6 +306,7 @@ void RenderGraph::record_command_buffer_for_pass(const CommandBuffer &cmd_buf, G
 void RenderGraph::render() {
     update_buffers();
     update_textures();
+    // TODO: Optimize this: Only call if any data changed and try to accumulate write descriptor sets
     update_write_descriptor_sets();
 
     m_device.execute(
@@ -365,7 +335,7 @@ void RenderGraph::update_buffers() {
     }
     // Only start recording and submitting a command buffer on transfer queue if any update is required
     if (any_update_required) {
-        m_device.execute("[RenderGraph::update_buffers]", VK_QUEUE_TRANSFER_BIT, DebugLabelColor::MAGENTA,
+        m_device.execute("[RenderGraph::update_buffers]", VK_QUEUE_GRAPHICS_BIT, DebugLabelColor::MAGENTA,
                          [&](const CommandBuffer &cmd_buf) {
                              for (const auto &buffer : m_buffers) {
                                  if (buffer->m_update_requested) {
@@ -385,26 +355,27 @@ void RenderGraph::update_textures() {
     // Check if there is any update required
     bool any_update_required = false;
     for (const auto &texture : m_textures) {
-        // Only for dynamic textures m_on_lambda which is not std::nullopt
-        if (texture->m_on_check_for_updates) {
-            std::invoke(texture->m_on_check_for_updates.value());
-            if (texture->m_update_requested) {
-                any_update_required = true;
-            }
+        // Check if this texture needs an update
+        if (texture->m_usage == TextureUsage::NORMAL) {
+            texture->m_on_check_for_updates();
+        } else {
+            texture->m_update_requested = true;
+        }
+        if (texture->m_update_requested) {
+            any_update_required = true;
         }
     }
     // Only start recording and submitting a command buffer on transfer queue if any update is required
     if (any_update_required) {
-        m_device.execute("[RenderGraph::update_textures]", VK_QUEUE_TRANSFER_BIT, DebugLabelColor::LIME,
+        m_device.execute("[RenderGraph::update_textures]", VK_QUEUE_GRAPHICS_BIT, DebugLabelColor::LIME,
                          [&](const CommandBuffer &cmd_buf) {
                              for (const auto &texture : m_textures) {
                                  if (texture->m_update_requested) {
                                      cmd_buf.set_suboperation_debug_name("[Texture|Destroy:" + texture->m_name + "]");
                                      texture->destroy();
-                                     cmd_buf.set_suboperation_debug_name("[Texture|Update:" + texture->m_name + "]");
-                                     std::invoke(texture->m_on_check_for_updates.value());
                                      cmd_buf.set_suboperation_debug_name("[Texture|Create:" + texture->m_name + "]");
                                      texture->create();
+                                     texture->update(cmd_buf);
                                  }
                              }
                          });
