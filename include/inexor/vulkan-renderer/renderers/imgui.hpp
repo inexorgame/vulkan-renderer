@@ -49,7 +49,7 @@ class ImGuiRenderer {
 
     // This is the color attachment we will write to
     std::weak_ptr<Swapchain> m_swapchain;
-    std::weak_ptr<Texture> m_color_attachment;
+    std::weak_ptr<Texture> m_depth_attachment;
     // This is the previous pass we read from
     std::weak_ptr<GraphicsPass> m_previous_pass;
 
@@ -97,6 +97,7 @@ public:
                   std::weak_ptr<RenderGraph> render_graph,
                   std::weak_ptr<GraphicsPass> previous_pass,
                   std::weak_ptr<Swapchain> swapchain,
+                  std::weak_ptr<Texture> depth_attachment,
                   std::function<void()> on_update_user_data);
 
     ImGuiRenderer(const ImGuiRenderer &) = delete;

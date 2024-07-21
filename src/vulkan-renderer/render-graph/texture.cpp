@@ -57,8 +57,7 @@ void Texture::create() {
         .usage = [&]() -> VkImageUsageFlags {
             switch (m_usage) {
             case TextureUsage::NORMAL: {
-                return VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT |
-                       VK_IMAGE_USAGE_SAMPLED_BIT;
+                return VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
             }
             case TextureUsage::COLOR_ATTACHMENT: {
                 return VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;

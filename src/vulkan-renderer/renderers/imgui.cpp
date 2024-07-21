@@ -16,9 +16,10 @@ ImGuiRenderer::ImGuiRenderer(const Device &device,
                              std::weak_ptr<RenderGraph> render_graph,
                              std::weak_ptr<GraphicsPass> previous_pass,
                              std::weak_ptr<Swapchain> swapchain,
+                             std::weak_ptr<Texture> depth_attachment,
                              std::function<void()> on_update_user_data)
     : m_on_update_user_data(std::move(on_update_user_data)), m_previous_pass(std::move(previous_pass)),
-      m_swapchain(std::move(swapchain)) /*, m_color_attachment(std::move(color_attachment))*/ {
+      m_swapchain(std::move(swapchain)), m_depth_attachment(std::move(depth_attachment)) {
 
     if (render_graph.expired()) {
         throw std::invalid_argument(
@@ -79,7 +80,7 @@ ImGuiRenderer::ImGuiRenderer(const Device &device,
         std::make_shared<wrapper::Shader>(device, "ImGui", VK_SHADER_STAGE_FRAGMENT_BIT, "shaders/ui.frag.spv");
 
     m_imgui_texture = graph->add_texture("ImGui-Font", render_graph::TextureUsage::NORMAL, VK_FORMAT_R8G8B8A8_UNORM,
-                                         m_font_texture_width, m_font_texture_width, 4, VK_SAMPLE_COUNT_1_BIT, [&]() {
+                                         m_font_texture_width, m_font_texture_height, 4, VK_SAMPLE_COUNT_1_BIT, [&]() {
                                              // Initialize the ImGui font texture only once in the update function
                                              if (!m_font_texture_initialized) {
                                                  m_imgui_texture.lock()->request_update(m_font_texture_data,
@@ -100,52 +101,53 @@ ImGuiRenderer::ImGuiRenderer(const Device &device,
         });
 
     graph->add_graphics_pipeline([&](wrapper::pipelines::GraphicsPipelineBuilder &builder) {
-        m_imgui_pipeline = builder
-                               .set_vertex_input_bindings({
-                                   {
-                                       .binding = 0,
-                                       .stride = sizeof(ImDrawVert),
-                                       .inputRate = VK_VERTEX_INPUT_RATE_VERTEX,
-                                   },
-                               })
-                               .set_vertex_input_attributes({
-                                   {
-                                       .location = 0,
-                                       .format = VK_FORMAT_R32G32_SFLOAT,
-                                       .offset = offsetof(ImDrawVert, pos),
-                                   },
-                                   {
-                                       .location = 1,
-                                       .format = VK_FORMAT_R32G32_SFLOAT,
-                                       .offset = offsetof(ImDrawVert, uv),
-                                   },
-                                   {
-                                       .location = 2,
-                                       .format = VK_FORMAT_R8G8B8A8_UNORM,
-                                       .offset = offsetof(ImDrawVert, col),
-                                   },
-                               })
-                               .add_color_blend_attachment({
-                                   .blendEnable = VK_TRUE,
-                                   .srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA,
-                                   .dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA,
-                                   .colorBlendOp = VK_BLEND_OP_ADD,
-                                   .srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE,
-                                   .dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO,
-                                   .alphaBlendOp = VK_BLEND_OP_ADD,
-                               })
-                               .add_color_attachment_format(m_swapchain.lock()->image_format())
-                               .set_dynamic_states({
-                                   VK_DYNAMIC_STATE_VIEWPORT,
-                                   VK_DYNAMIC_STATE_SCISSOR,
-                               })
-                               .set_scissor(m_swapchain.lock()->extent())
-                               .set_viewport(m_swapchain.lock()->extent())
-                               .add_shader(m_vertex_shader)
-                               .add_shader(m_fragment_shader)
-                               .set_descriptor_set_layout(m_descriptor_set_layout)
-                               .add_push_constant_range(VK_SHADER_STAGE_VERTEX_BIT, sizeof(m_push_const_block))
-                               .build("ImGui");
+        m_imgui_pipeline =
+            builder
+                .set_vertex_input_bindings({
+                    {
+                        .binding = 0,
+                        .stride = sizeof(ImDrawVert),
+                        .inputRate = VK_VERTEX_INPUT_RATE_VERTEX,
+                    },
+                })
+                .set_vertex_input_attributes({
+                    {
+                        .location = 0,
+                        .format = VK_FORMAT_R32G32_SFLOAT,
+                        .offset = offsetof(ImDrawVert, pos),
+                    },
+                    {
+                        .location = 1,
+                        .format = VK_FORMAT_R32G32_SFLOAT,
+                        .offset = offsetof(ImDrawVert, uv),
+                    },
+                    {
+                        .location = 2,
+                        .format = VK_FORMAT_R8G8B8A8_UNORM,
+                        .offset = offsetof(ImDrawVert, col),
+                    },
+                })
+                .add_default_color_blend_attachment()
+                .set_depth_attachment_format(m_depth_attachment.lock()->format())
+                .set_depth_stencil({.depthTestEnable = VK_TRUE,
+                                    .depthWriteEnable = VK_TRUE,
+                                    .depthCompareOp = VK_COMPARE_OP_LESS_OR_EQUAL,
+                                    .back{
+                                        .compareOp = VK_COMPARE_OP_ALWAYS,
+                                    }})
+                .add_color_attachment_format(m_swapchain.lock()->image_format())
+                .set_dynamic_states({
+                    VK_DYNAMIC_STATE_VIEWPORT,
+                    VK_DYNAMIC_STATE_SCISSOR,
+                })
+                // NOTE: Even thoguh viewport and scissor are dynamic states, we still need to specify 1 for each
+                .set_scissor(m_swapchain.lock()->extent())
+                .set_viewport(m_swapchain.lock()->extent())
+                .add_shader(m_vertex_shader)
+                .add_shader(m_fragment_shader)
+                .set_descriptor_set_layout(m_descriptor_set_layout)
+                .add_push_constant_range(VK_SHADER_STAGE_VERTEX_BIT, sizeof(m_push_const_block))
+                .build("ImGui");
         return m_imgui_pipeline;
     });
 
@@ -154,6 +156,7 @@ ImGuiRenderer::ImGuiRenderer(const Device &device,
         // NOTE: We directly return the ImGui graphics pass and do not store it in here because it's the last pass (for
         // now) and there is no reads_from function which would need it.
         return builder.writes_to(m_swapchain)
+            .writes_to(m_depth_attachment)
             .conditionally_reads_from(m_previous_pass, !m_previous_pass.expired())
             .set_on_record([&](const wrapper::commands::CommandBuffer &cmd_buf) {
                 ImDrawData *draw_data = ImGui::GetDrawData();
@@ -165,14 +168,14 @@ ImGuiRenderer::ImGuiRenderer(const Device &device,
                 m_push_const_block.scale = glm::vec2(2.0f / io.DisplaySize.x, 2.0f / io.DisplaySize.y);
 
                 cmd_buf.bind_pipeline(m_imgui_pipeline)
+                    .bind_descriptor_set(m_descriptor_set, m_imgui_pipeline)
+                    .push_constant(m_imgui_pipeline, m_push_const_block, VK_SHADER_STAGE_VERTEX_BIT)
                     .bind_vertex_buffer(m_vertex_buffer)
                     .bind_index_buffer(m_index_buffer)
                     .set_viewport(VkViewport{.width = ImGui::GetIO().DisplaySize.x,
                                              .height = ImGui::GetIO().DisplaySize.y,
                                              .minDepth = 0.0f,
-                                             .maxDepth = 1.0f})
-                    .bind_descriptor_set(m_descriptor_set, m_imgui_pipeline)
-                    .push_constant(m_imgui_pipeline, m_push_const_block, VK_SHADER_STAGE_VERTEX_BIT);
+                                             .maxDepth = 1.0f});
 
                 std::uint32_t index_offset = 0;
                 std::int32_t vertex_offset = 0;
