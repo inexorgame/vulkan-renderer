@@ -14,6 +14,14 @@ namespace inexor::vulkan_renderer::wrapper::commands {
 
 CommandBuffer::CommandBuffer(const wrapper::Device &device, const VkCommandPool cmd_pool, std::string name)
     : m_device(device), m_name(std::move(name)) {
+    if (m_name.empty()) {
+        throw std::invalid_argument("[CommandBuffer::CommandBuffer] Error: Parameter 'name' is empty!");
+    }
+    if (!cmd_pool) {
+        throw std::invalid_argument(
+            "[CommandBuffer::CommandBuffer] Error: Parameter 'cmd_pool' is an invalid pointer!");
+    }
+
     const auto cmd_buf_ai = make_info<VkCommandBufferAllocateInfo>({
         .commandPool = cmd_pool,
         .level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
@@ -26,12 +34,12 @@ CommandBuffer::CommandBuffer(const wrapper::Device &device, const VkCommandPool 
         result != VK_SUCCESS) {
         throw VulkanException("Error: vkAllocateCommandBuffers failed!", result);
     }
-
     m_device.set_debug_name(m_cmd_buf, m_name);
     m_cmd_buf_execution_completed = std::make_unique<synchronization::Fence>(m_device, m_name, false);
 }
 
 CommandBuffer::CommandBuffer(CommandBuffer &&other) noexcept : m_device(other.m_device) {
+    // TODO: Check me!
     m_cmd_buf = std::exchange(other.m_cmd_buf, VK_NULL_HANDLE);
     m_name = std::move(other.m_name);
     m_cmd_buf_execution_completed = std::exchange(other.m_cmd_buf_execution_completed, nullptr);
@@ -46,6 +54,10 @@ const CommandBuffer &CommandBuffer::begin_command_buffer(const VkCommandBufferUs
 }
 
 const CommandBuffer &CommandBuffer::begin_debug_label_region(std::string name, std::array<float, 4> color) const {
+    if (name.empty()) {
+        // NOTE: Despite Vulkan spec allowing name to be empty, we strictly enforce this rule in our code base!
+        throw std::invalid_argument("[CommandBuffer::begin_debug_label_region] Error: Parameter 'name' is empty!");
+    }
     auto label = make_info<VkDebugUtilsLabelEXT>({
         .pLabelName = name.c_str(),
         .color = {color[0], color[1], color[2], color[3]},
@@ -61,16 +73,25 @@ const CommandBuffer &CommandBuffer::begin_rendering(const VkRenderingInfo &rende
 
 const CommandBuffer &CommandBuffer::bind_descriptor_set(const VkDescriptorSet descriptor_set,
                                                         const std::weak_ptr<GraphicsPipeline> pipeline) const {
-    assert(descriptor_set);
+    if (!descriptor_set) {
+        throw std::invalid_argument(
+            "[CommandBuffer::bind_descriptor_set] Error: Parameter 'descriptor_set' is invalid!");
+    }
+    if (pipeline.expired()) {
+        throw std::invalid_argument("[CommandBuffer::bind_descriptor_set] Error: Parameter 'pipeline' is invalid!");
+    }
     vkCmdBindDescriptorSets(m_cmd_buf, VK_PIPELINE_BIND_POINT_GRAPHICS,
                             pipeline.lock()->m_pipeline_layout->m_pipeline_layout, 0, 1, &descriptor_set, 0, nullptr);
     return *this;
 }
 
-const CommandBuffer &CommandBuffer::bind_index_buffer(const std::weak_ptr<render_graph::Buffer> buffer,
+const CommandBuffer &CommandBuffer::bind_index_buffer(const std::weak_ptr<Buffer> buffer,
                                                       const VkIndexType index_type,
                                                       const VkDeviceSize offset) const {
-    if (buffer.lock()->m_buffer_type != render_graph::BufferType::INDEX_BUFFER) {
+    if (buffer.expired()) {
+        throw std::invalid_argument("[CommandBuffer::bind_index_buffer] Error: Parameter 'buffer' is invalid!");
+    }
+    if (buffer.lock()->m_buffer_type != BufferType::INDEX_BUFFER) {
         throw std::invalid_argument("Error: Rendergraph buffer resource " + buffer.lock()->m_name +
                                     " is not an index buffer!");
     }
@@ -80,12 +101,18 @@ const CommandBuffer &CommandBuffer::bind_index_buffer(const std::weak_ptr<render
 
 const CommandBuffer &CommandBuffer::bind_pipeline(const std::weak_ptr<GraphicsPipeline> pipeline,
                                                   const VkPipelineBindPoint bind_point) const {
+    if (pipeline.expired()) {
+        throw std::invalid_argument("[CommandBuffer::bind_pipeline] Error: Parameter 'pipeline' is invalid!");
+    }
     vkCmdBindPipeline(m_cmd_buf, bind_point, pipeline.lock()->m_pipeline);
     return *this;
 }
 
-const CommandBuffer &CommandBuffer::bind_vertex_buffer(const std::weak_ptr<render_graph::Buffer> buffer) const {
-    if (buffer.lock()->m_buffer_type != render_graph::BufferType::VERTEX_BUFFER) {
+const CommandBuffer &CommandBuffer::bind_vertex_buffer(const std::weak_ptr<Buffer> buffer) const {
+    if (buffer.expired()) {
+        throw std::invalid_argument("[CommandBuffer::bind_vertex_buffer] Error: Parameter 'buffer' is invaldi!");
+    }
+    if (buffer.lock()->m_buffer_type != BufferType::VERTEX_BUFFER) {
         throw std::invalid_argument("Error: Rendergraph buffer resource " + buffer.lock()->m_name +
                                     " is not a vertex buffer!");
     }
@@ -93,20 +120,22 @@ const CommandBuffer &CommandBuffer::bind_vertex_buffer(const std::weak_ptr<rende
     return *this;
 }
 
-const CommandBuffer &CommandBuffer::change_image_layout(const VkImage image,
+const CommandBuffer &CommandBuffer::change_image_layout(const VkImage img,
                                                         const VkImageLayout old_layout,
                                                         const VkImageLayout new_layout,
                                                         const VkImageSubresourceRange subres_range,
                                                         const VkPipelineStageFlags src_mask,
                                                         const VkPipelineStageFlags dst_mask) const {
-    assert(new_layout != old_layout);
+    if (!img) {
+        throw std::invalid_argument("[CommandBuffer::change_image_layout] Error: Parameter 'img' is invalid!");
+    }
 
     auto barrier = make_info<VkImageMemoryBarrier>({
         .oldLayout = old_layout,
         .newLayout = new_layout,
         .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
         .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
-        .image = image,
+        .image = img,
         .subresourceRange = subres_range,
     });
 
@@ -147,7 +176,7 @@ const CommandBuffer &CommandBuffer::change_image_layout(const VkImage image,
         barrier.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
         break;
     case VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL:
-        barrier.dstAccessMask = barrier.dstAccessMask | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+        barrier.dstAccessMask |= VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
         break;
     case VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL:
         if (barrier.srcAccessMask == 0) {
@@ -171,7 +200,7 @@ const CommandBuffer &CommandBuffer::change_image_layout(const VkImage img,
                                                         const std::uint32_t base_array_layer,
                                                         const VkPipelineStageFlags src_mask,
                                                         const VkPipelineStageFlags dst_mask) const {
-    assert(img);
+    // NOTE: We delegate error checks to the other overload
     return change_image_layout(img, old_layout, new_layout,
                                {
                                    .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
@@ -186,34 +215,44 @@ const CommandBuffer &CommandBuffer::change_image_layout(const VkImage img,
 const CommandBuffer &CommandBuffer::copy_buffer(const VkBuffer src_buf,
                                                 const VkBuffer dst_buf,
                                                 const std::span<const VkBufferCopy> copy_regions) const {
-    assert(src_buf);
-    assert(dst_buf);
-    assert(!copy_regions.empty());
+    if (!src_buf) {
+        throw std::invalid_argument("[CommandBuffer::copy_buffer] Error: Parameter 'src_buf' is invalid!");
+    }
+    if (!dst_buf) {
+        throw std::invalid_argument("[CommandBuffer::copy_buffer] Error: Parameter 'dst_buf' is invalid!");
+    }
     vkCmdCopyBuffer(m_cmd_buf, src_buf, dst_buf, static_cast<std::uint32_t>(copy_regions.size()), copy_regions.data());
     return *this;
 }
 
 const CommandBuffer &
 CommandBuffer::copy_buffer(const VkBuffer src_buf, const VkBuffer dst_buf, const VkBufferCopy &copy_region) const {
+    // NOTE: We delegate error checks to the other function overload
     return copy_buffer(src_buf, dst_buf, {&copy_region, 1});
 }
 
 const CommandBuffer &
 CommandBuffer::copy_buffer(const VkBuffer src_buf, const VkBuffer dst_buf, const VkDeviceSize src_buf_size) const {
+    // NOTE: We delegate error checks to the other function overload
     return copy_buffer(src_buf, dst_buf, {.size = src_buf_size});
 }
 
 const CommandBuffer &CommandBuffer::copy_buffer_to_image(const VkBuffer src_buf,
                                                          const VkImage dst_img,
                                                          const VkBufferImageCopy &copy_region) const {
-    assert(src_buf);
-    assert(dst_img);
+    if (!src_buf) {
+        throw std::invalid_argument("[CommandBuffer::copy_buffer_to_image] Error: Parameter 'src_buf' is invalid!");
+    }
+    if (!dst_img) {
+        throw std::invalid_argument("[CommandBuffer::copy_buffer_to_image] Error: Parameter 'dst_img' is invalid!");
+    }
     vkCmdCopyBufferToImage(m_cmd_buf, src_buf, dst_img, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &copy_region);
     return *this;
 }
 
 const CommandBuffer &
 CommandBuffer::copy_buffer_to_image(const VkBuffer buffer, const VkImage img, const VkExtent3D extent) const {
+    // NOTE: We delegate error checks to the other function overload
     return copy_buffer_to_image(buffer, img,
                                 {
                                     .imageSubresource =
@@ -334,7 +373,10 @@ const CommandBuffer &CommandBuffer::pipeline_image_memory_barrier(const VkPipeli
                                                                   const VkImageLayout old_img_layout,
                                                                   const VkImageLayout new_img_layout,
                                                                   const VkImage img) const {
-    assert(img);
+    if (!img) {
+        throw std::invalid_argument(
+            "[CommandBuffer::pipeline_image_memory_barrier] Error: Parameter 'img' is invalid!");
+    }
     return pipeline_image_memory_barrier(src_stage_flags, dst_stage_flags,
                                          wrapper::make_info<VkImageMemoryBarrier>({
                                              .srcAccessMask = src_access_flags,
@@ -358,7 +400,7 @@ const CommandBuffer &CommandBuffer::pipeline_image_memory_barrier(const VkPipeli
 const CommandBuffer &CommandBuffer::pipeline_image_memory_barrier_after_copy_buffer_to_image(const VkImage img) const {
     if (!img) {
         throw std::invalid_argument("[CommandBuffer::pipeline_image_memory_barrier_after_copy_buffer_to_image] Error: "
-                                    "Parameter 'img' is an invalid pointer!");
+                                    "Parameter 'img' is invalid!");
     }
     return pipeline_image_memory_barrier(VK_PIPELINE_STAGE_TRANSFER_BIT,           // src_stage_flags
                                          VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,    // dst_stage_flags
@@ -372,7 +414,7 @@ const CommandBuffer &CommandBuffer::pipeline_image_memory_barrier_after_copy_buf
 const CommandBuffer &CommandBuffer::pipeline_image_memory_barrier_before_copy_buffer_to_image(const VkImage img) const {
     if (!img) {
         throw std::invalid_argument("[CommandBuffer::pipeline_image_memory_barrier_before_copy_buffer_to_image] Error: "
-                                    "Parameter 'img' is an invalid pointer!");
+                                    "Parameter 'img' is invalid!");
     }
     return pipeline_image_memory_barrier(VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,    // src_stage_flags
                                          VK_PIPELINE_STAGE_TRANSFER_BIT,       // dst_stage_flags
@@ -412,6 +454,9 @@ const CommandBuffer &CommandBuffer::full_barrier() const {
 }
 
 const CommandBuffer &CommandBuffer::insert_debug_label(std::string name, std::array<float, 4> color) const {
+    if (name.empty()) {
+        throw std::invalid_argument("[] Error: Parameter 'name' is empty!");
+    }
     auto label = make_info<VkDebugUtilsLabelEXT>({
         .pLabelName = name.c_str(),
         .color = {color[0], color[1], color[2], color[3]},
@@ -425,9 +470,15 @@ const CommandBuffer &CommandBuffer::push_constants(const VkPipelineLayout layout
                                                    const std::uint32_t size,
                                                    const void *data,
                                                    const VkDeviceSize offset) const {
-    assert(layout);
-    assert(size > 0);
-    assert(data);
+    if (!layout) {
+        throw std::invalid_argument("[CommandBuffer::push_constants] Error: Parameter 'layout' is invalid!");
+    }
+    if (size == 0) {
+        throw std::invalid_argument("[CommandBuffer::push_constants] Error: Parameter 'size' is 0!");
+    }
+    if (!data) {
+        throw std::invalid_argument("[CommandBuffer::push_constants] Error: Parameter 'data' is 0!");
+    }
     vkCmdPushConstants(m_cmd_buf, layout, stage, static_cast<std::uint32_t>(offset), size, data);
     return *this;
 }

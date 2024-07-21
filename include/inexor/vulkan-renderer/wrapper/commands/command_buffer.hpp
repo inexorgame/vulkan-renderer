@@ -18,6 +18,7 @@ namespace inexor::vulkan_renderer::render_graph {
 // Forward declarations
 class Buffer;
 class RenderGraph;
+enum class BufferType;
 } // namespace inexor::vulkan_renderer::render_graph
 
 namespace inexor::vulkan_renderer::wrapper::pipelines {
@@ -33,6 +34,8 @@ class Fence;
 namespace inexor::vulkan_renderer::wrapper::commands {
 
 // Using declaration
+using render_graph::Buffer;
+using render_graph::BufferType;
 using render_graph::RenderGraph;
 using wrapper::pipelines::GraphicsPipeline;
 using wrapper::synchronization::Fence;
@@ -114,7 +117,7 @@ public:
     /// @param index_type The index type to use (``VK_INDEX_TYPE_UINT32`` by default)
     /// @param offset The offset (``0`` by default)
     /// @return A const reference to the this pointer (allowing method calls to be chained)
-    const CommandBuffer &bind_index_buffer(std::weak_ptr<render_graph::Buffer> buffer,
+    const CommandBuffer &bind_index_buffer(std::weak_ptr<Buffer> buffer,
                                            VkIndexType index_type = VK_INDEX_TYPE_UINT32, // NOLINT
                                            VkDeviceSize offset = 0) const;
 
@@ -130,10 +133,10 @@ public:
     /// ``pOffsets`` in ``vkCmdBindVertexBuffers`` do not need to be exposed.
     /// @param buffer The vertex buffer to bind
     /// @return A const reference to the this pointer (allowing method calls to be chained)
-    const CommandBuffer &bind_vertex_buffer(std::weak_ptr<render_graph::Buffer> buffer) const;
+    const CommandBuffer &bind_vertex_buffer(std::weak_ptr<Buffer> buffer) const;
 
     /// Call vkCmdPipelineBarrier
-    /// @param image The image
+    /// @param img The image
     /// @param old_layout The old layout of the image
     /// @param new_layout The new layout of the image
     /// @note The new layout must be different from the old layout!
@@ -142,7 +145,7 @@ public:
     /// @param dst_mask The destination pipeline stage flags (``VK_PIPELINE_STAGE_ALL_COMMANDS_BIT`` by default)
     /// @return A const reference to the dereferenced ``this`` pointer (allowing for method calls to be chained)
     const CommandBuffer & // NOLINT
-    change_image_layout(VkImage image,
+    change_image_layout(VkImage img,
                         VkImageLayout old_layout,
                         VkImageLayout new_layout,
                         VkImageSubresourceRange subres_range,
