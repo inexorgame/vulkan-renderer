@@ -16,10 +16,9 @@ ImGuiRenderer::ImGuiRenderer(const Device &device,
                              std::weak_ptr<RenderGraph> render_graph,
                              std::weak_ptr<GraphicsPass> previous_pass,
                              std::weak_ptr<Swapchain> swapchain,
-                             std::weak_ptr<Texture> depth_attachment,
                              std::function<void()> on_update_user_data)
     : m_on_update_user_data(std::move(on_update_user_data)), m_previous_pass(std::move(previous_pass)),
-      m_swapchain(std::move(swapchain)), m_depth_attachment(std::move(depth_attachment)) {
+      m_swapchain(std::move(swapchain)) {
 
     if (render_graph.expired()) {
         throw std::invalid_argument(
@@ -128,13 +127,6 @@ ImGuiRenderer::ImGuiRenderer(const Device &device,
                     },
                 })
                 .add_default_color_blend_attachment()
-                .set_depth_attachment_format(m_depth_attachment.lock()->format())
-                .set_depth_stencil({.depthTestEnable = VK_TRUE,
-                                    .depthWriteEnable = VK_TRUE,
-                                    .depthCompareOp = VK_COMPARE_OP_LESS_OR_EQUAL,
-                                    .back{
-                                        .compareOp = VK_COMPARE_OP_ALWAYS,
-                                    }})
                 .add_color_attachment_format(m_swapchain.lock()->image_format())
                 .set_dynamic_states({
                     VK_DYNAMIC_STATE_VIEWPORT,
@@ -156,7 +148,6 @@ ImGuiRenderer::ImGuiRenderer(const Device &device,
         // NOTE: We directly return the ImGui graphics pass and do not store it in here because it's the last pass (for
         // now) and there is no reads_from function which would need it.
         return builder.writes_to(m_swapchain)
-            .writes_to(m_depth_attachment)
             .conditionally_reads_from(m_previous_pass, !m_previous_pass.expired())
             .set_on_record([&](const wrapper::commands::CommandBuffer &cmd_buf) {
                 ImDrawData *draw_data = ImGui::GetDrawData();
