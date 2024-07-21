@@ -51,21 +51,30 @@ GraphicsPassBuilder &GraphicsPassBuilder::set_on_record(OnRecordCommandBufferFor
     return *this;
 }
 
-GraphicsPassBuilder &GraphicsPassBuilder::writes_to(std::weak_ptr<Texture> attachment,
-                                                    std::optional<VkClearValue> clear_value) {
-    if (attachment.expired()) {
-        throw std::invalid_argument("[GraphicsPassBuilder::writes_to] Error: 'attachment' is an invalid pointer!");
+GraphicsPassBuilder &
+GraphicsPassBuilder::writes_to(std::variant<std::weak_ptr<Texture>, std::weak_ptr<Swapchain>> write_attachment,
+                               std::optional<VkClearValue> clear_value) {
+    // Check if this is a std::weak_ptr<Texture>
+    if (std::holds_alternative<std::weak_ptr<Texture>>(write_attachment)) {
+        // This is a std::weak_ptr<Texture>, but we need to check if it's a valid pointer
+        auto &texture = std::get<std::weak_ptr<Texture>>(write_attachment);
+        // Check if the std::weak_ptr<Texture> is still a valid pointer
+        if (texture.expired()) {
+            throw std::invalid_argument(
+                "[GraphicsPassBuilder::writes_to] Error: parameter 'write_attachment' is an std::weak_ptr<Texture>!");
+        }
+        // It's a std::weak_ptr<Texture> and the memory is valid
+        m_write_attachments.emplace_back(std::move(texture), std::move(clear_value));
+    } else {
+        // Otherwise, this must be a std::weak_ptr<Swapchain>! No need to check with std::holds_alternative explicitely.
+        auto &swapchain = std::get<std::weak_ptr<Swapchain>>(write_attachment);
+        // Check if the std::weak_ptr<Swapchain> is still a valid pointer
+        if (swapchain.expired()) {
+            throw std::invalid_argument("[GraphicsPassBuilder::writes_to] Error: Parameter 'write_attachment' is an "
+                                        "invalid std::weak_ptr<Swapchain>!");
+        }
+        m_write_swapchains.emplace_back(std::move(swapchain), std::move(clear_value));
     }
-    m_write_attachments.emplace_back(std::make_pair(std::move(attachment), std::move(clear_value)));
-    return *this;
-}
-
-GraphicsPassBuilder &GraphicsPassBuilder::writes_to(std::weak_ptr<Swapchain> swapchain,
-                                                    std::optional<VkClearValue> clear_value) {
-    if (swapchain.expired()) {
-        throw std::invalid_argument("[GraphicsPassBuilder::writes_to] Error: 'swapchain' is an invalid pointer!");
-    }
-    m_write_swapchains.emplace_back(std::make_pair(std::move(swapchain), std::move(clear_value)));
     return *this;
 }
 

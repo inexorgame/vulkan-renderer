@@ -427,11 +427,11 @@ void Application::setup_render_graph() {
 
     m_color_attachment = m_render_graph->add_texture(
         "Color", render_graph::TextureUsage::COLOR_ATTACHMENT, m_swapchain->image_format(), swapchain_extent.width,
-        swapchain_extent.height /*, m_device->get_max_usable_sample_count() */);
+        swapchain_extent.height, 4 /*, m_device->get_max_usable_sample_count() */);
 
     m_depth_attachment = m_render_graph->add_texture(
         "Depth", render_graph::TextureUsage::DEPTH_ATTACHMENT, VK_FORMAT_D32_SFLOAT_S8_UINT, swapchain_extent.width,
-        swapchain_extent.height /*, m_device->get_max_usable_sample_count()*/);
+        swapchain_extent.height, 4 /*, m_device->get_max_usable_sample_count()*/);
 
     m_vertex_buffer = m_render_graph->add_buffer("Octree|Vertex", render_graph::BufferType::VERTEX_BUFFER, [&]() {
         // If the key N was pressed once, generate a new octree

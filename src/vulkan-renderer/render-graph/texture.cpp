@@ -17,16 +17,17 @@ Texture::Texture(const Device &device,
                  const VkFormat format,
                  const std::uint32_t width,
                  const std::uint32_t height,
-                 const VkSampleCountFlagBits sample_count,
+                 const std::uint32_t channels,
+                 const VkSampleCountFlagBits samples,
                  std::function<void()> on_check_for_updates)
     : m_device(device), m_name(std::move(name)), m_usage(usage), m_format(format), m_width(width), m_height(height),
-      m_sample_count(sample_count), m_on_check_for_updates(std::move(on_check_for_updates)) {
+      m_channels(channels), m_samples(samples), m_on_check_for_updates(std::move(on_check_for_updates)) {
     if (m_name.empty()) {
         throw std::invalid_argument("[Texture::Texture] Error: Parameter 'name' is empty!");
     }
     m_img = std::make_unique<Image>(m_device, m_name);
 
-    if (sample_count > VK_SAMPLE_COUNT_1_BIT) {
+    if (samples > VK_SAMPLE_COUNT_1_BIT) {
         m_msaa_img = std::make_unique<Image>(m_device, m_name);
     }
 }
@@ -100,9 +101,9 @@ void Texture::create() {
     m_img->create(img_ci, img_view_ci);
 
     // If MSAA is enabled, create the MSAA texture as well
-    if (m_sample_count > VK_SAMPLE_COUNT_1_BIT) {
+    if (m_samples > VK_SAMPLE_COUNT_1_BIT) {
         // Just overwrite the sample count and re-use the image create info
-        img_ci.samples = m_sample_count;
+        img_ci.samples = m_samples;
         m_msaa_img->create(img_ci, img_view_ci);
     }
 }
@@ -155,7 +156,7 @@ void Texture::update(const CommandBuffer &cmd_buf) {
     // Set the buffer's internal debug name through Vulkan debug utils
     m_device.set_debug_name(m_staging_buffer, staging_buf_name);
 
-    cmd_buf.insert_debug_label("[Texture::update|" + m_name + "]",
+    cmd_buf.insert_debug_label("[Texture::staging-update|" + m_name + "]",
                                wrapper::get_debug_label_color(wrapper::DebugLabelColor::ORANGE));
 
     // TODO: Check on which queue the udpate is carried out and adjust the stages in the pipeline barrier accordingly

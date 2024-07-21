@@ -67,7 +67,7 @@ private:
     // TODO: Can we determine the number of channels based on the given format?
     std::uint32_t m_channels{4};
     /// The sample count of the MSAA image (if MSAA is enabled)
-    VkSampleCountFlagBits m_sample_count;
+    VkSampleCountFlagBits m_samples{VK_SAMPLE_COUNT_1_BIT};
 
     /// The image of the texture
     std::unique_ptr<Image> m_img;
@@ -77,7 +77,7 @@ private:
     std::unique_ptr<Image> m_msaa_img;
 
     // This is used for initializing textures and for updating dynamic textures
-    bool m_update_requested{false};
+    bool m_update_requested{true};
     void *m_src_texture_data{nullptr};
     std::size_t m_src_texture_data_size{0};
 
@@ -114,7 +114,8 @@ public:
     /// @param format The format of the texture
     /// @param width The width of the texture
     /// @param height The height of the texture
-    /// @param sample_count The sample count of the texture
+    /// @param channels The channel count of the texture
+    /// @param samples The sample count of the texture
     /// @param on_check_for_updates The update function of the texture
     Texture(const Device &device,
             std::string name,
@@ -122,7 +123,8 @@ public:
             VkFormat format,
             std::uint32_t width,
             std::uint32_t height,
-            VkSampleCountFlagBits sample_count, // TODO: Channel count as well?
+            std::uint32_t channels,
+            VkSampleCountFlagBits samples,
             std::function<void()> on_check_for_updates);
 
     Texture(const Texture &) = delete;

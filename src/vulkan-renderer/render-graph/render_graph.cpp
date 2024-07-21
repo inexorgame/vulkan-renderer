@@ -48,10 +48,11 @@ std::weak_ptr<Texture> RenderGraph::add_texture(std::string texture_name,
                                                 const VkFormat format,
                                                 const std::uint32_t width,
                                                 const std::uint32_t height,
+                                                const std::uint32_t channels,
                                                 const VkSampleCountFlagBits sample_count,
                                                 std::function<void()> m_on_check_for_updates) {
     m_textures.emplace_back(std::make_shared<Texture>(m_device, std::move(texture_name), usage, format, width, height,
-                                                      sample_count, std::move(m_on_check_for_updates)));
+                                                      channels, sample_count, std::move(m_on_check_for_updates)));
     return m_textures.back();
 }
 
@@ -358,8 +359,6 @@ void RenderGraph::update_textures() {
         // Check if this texture needs an update
         if (texture->m_usage == TextureUsage::NORMAL) {
             texture->m_on_check_for_updates();
-        } else {
-            texture->m_update_requested = true;
         }
         if (texture->m_update_requested) {
             any_update_required = true;

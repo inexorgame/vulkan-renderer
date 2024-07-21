@@ -9,6 +9,7 @@
 #include <functional>
 #include <memory>
 #include <utility>
+#include <variant>
 
 namespace inexor::vulkan_renderer::wrapper::commands {
 // Forward declaration
@@ -72,20 +73,12 @@ public:
     [[nodiscard]] GraphicsPassBuilder &set_on_record(OnRecordCommandBufferForPass on_record_cmd_buffer);
 
     /// Specify that this graphics pass writes to an attachment
-    /// @param attachment The attachment
+    /// @param attachment The attachment (either a std::weak_ptr<Texture> or a std::weak_ptr<Swapchain>)
     /// @param clear_value The optional clear value of the attachment (``std::nullopt`` by default)
     /// @return A const reference to the this pointer (allowing method calls to be chained)
-    [[nodiscard]] GraphicsPassBuilder &writes_to(std::weak_ptr<Texture> color_attachment,
-                                                 std::optional<VkClearValue> clear_value = std::nullopt);
-
-    // TODO: Swapchain clear values?
-
-    /// Specify that this graphics pass writes to a swapchain
-    /// @param swapchain The swapchain this pass writes to
-    /// @param clear_value The optional clear value of the swapchain (``std::nullopt`` by default)
-    /// @return A const reference to the this pointer (allowing method calls to be chained)
-    [[nodiscard]] GraphicsPassBuilder &writes_to(std::weak_ptr<Swapchain> swapchain,
-                                                 std::optional<VkClearValue> clear_value = std::nullopt);
+    [[nodiscard]] GraphicsPassBuilder &
+    writes_to(std::variant<std::weak_ptr<Texture>, std::weak_ptr<Swapchain>> write_attachment,
+              std::optional<VkClearValue> clear_value = std::nullopt);
 };
 
 } // namespace inexor::vulkan_renderer::render_graph

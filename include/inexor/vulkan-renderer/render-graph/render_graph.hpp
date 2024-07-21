@@ -336,6 +336,9 @@ public:
     /// @param texture_name The name of the texture
     /// @param usage The usage of the texture inside of rendergraph
     /// @param format The format of the texture
+    /// @param width The width of the texture
+    /// @param height The height of the texture
+    /// @param channel_count The number of texture channels
     /// @param sample_count The sample count of the texture
     /// @param m_on_check_for_updates The texture update function (an empty lambda by default)
     /// @return A weak pointer to the texture that was created
@@ -345,6 +348,7 @@ public:
         VkFormat format,
         std::uint32_t width,
         std::uint32_t height,
+        std::uint32_t channels,
         VkSampleCountFlagBits sample_count = VK_SAMPLE_COUNT_1_BIT,
         std::function<void()> m_on_check_for_updates = []() {});
 
