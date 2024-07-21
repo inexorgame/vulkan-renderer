@@ -187,20 +187,21 @@ void RenderGraph::fill_graphics_pass_rendering_info(GraphicsPass &pass) {
         // What type of attachment is this?
         const auto &attachment = write_attachment.first;
         const auto &clear_value = write_attachment.second;
+        const auto rendering_info = fill_rendering_info_for_attachment(attachment, clear_value);
 
         switch (attachment.lock()->m_usage) {
         case TextureUsage::COLOR_ATTACHMENT:
         case TextureUsage::NORMAL: {
-            pass.m_color_attachments.push_back(fill_rendering_info_for_attachment(attachment, clear_value));
+            pass.m_color_attachments.push_back(rendering_info);
             break;
         }
         case TextureUsage::DEPTH_ATTACHMENT: {
-            pass.m_depth_attachment = fill_rendering_info_for_attachment(attachment, clear_value);
+            pass.m_depth_attachment = rendering_info;
             pass.m_has_depth_attachment = true;
             break;
         }
         case TextureUsage::STENCIL_ATTACHMENT: {
-            pass.m_stencil_attachment = fill_rendering_info_for_attachment(attachment, clear_value);
+            pass.m_stencil_attachment = rendering_info;
             pass.m_has_stencil_attachment = true;
             break;
         }

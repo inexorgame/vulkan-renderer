@@ -143,12 +143,6 @@ Application::Application(int argc, char **argv) {
     std::vector<const char *> required_extensions{
         // Since we want to draw on a window, we need the swapchain extension
         VK_KHR_SWAPCHAIN_EXTENSION_NAME, // VK_KHR_swapchain
-        // We are using dynamic rendering
-        VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME, // VK_KHR_dynamic_rendering
-        // The following is required by VK_KHR_dynamic_rendering
-        VK_KHR_DEPTH_STENCIL_RESOLVE_EXTENSION_NAME, // VK_KHR_depth_stencil_resolve
-        // The following is required by VK_KHR_depth_stencil_resolve
-        VK_KHR_CREATE_RENDERPASS_2_EXTENSION_NAME, // VK_KHR_create_renderpass2
     };
 
     const VkPhysicalDevice physical_device =
@@ -494,7 +488,7 @@ void Application::setup_render_graph() {
                                 .add_default_color_blend_attachment()
                                 .add_color_attachment_format(m_swapchain->image_format())
                                 // TODO: Implement m_device->get_available_depth_format()
-                                .set_depth_attachment_format(VK_FORMAT_D32_SFLOAT_S8_UINT)
+                                .set_depth_attachment_format(m_depth_attachment.lock()->format())
                                 .set_depth_stencil({.depthTestEnable = VK_TRUE,
                                                     .depthWriteEnable = VK_TRUE,
                                                     .depthCompareOp = VK_COMPARE_OP_LESS_OR_EQUAL,
