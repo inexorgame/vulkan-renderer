@@ -72,7 +72,7 @@ public:
     /// @return A const reference to the this pointer (allowing method calls to be chained)
     [[nodiscard]] GraphicsPassBuilder &set_on_record(OnRecordCommandBufferForPass on_record_cmd_buffer);
 
-    /// Specify that this graphics pass writes to an attachment
+    /// Specify that this graphics pass writes to an either a std::weak_ptr<Texture> or a std::weak_ptr<Swapchain>
     /// @param attachment The attachment (either a std::weak_ptr<Texture> or a std::weak_ptr<Swapchain>)
     /// @param clear_value The optional clear value of the attachment (``std::nullopt`` by default)
     /// @return A const reference to the this pointer (allowing method calls to be chained)

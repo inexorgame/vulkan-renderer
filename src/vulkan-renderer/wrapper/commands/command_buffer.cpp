@@ -432,8 +432,18 @@ const CommandBuffer &CommandBuffer::push_constants(const VkPipelineLayout layout
     return *this;
 }
 
+const CommandBuffer &CommandBuffer::set_scissor(const VkRect2D scissor) const {
+    vkCmdSetScissor(m_cmd_buf, 0, 1, &scissor);
+    return *this;
+}
+
 const CommandBuffer &CommandBuffer::set_suboperation_debug_name(std::string name) const {
     m_device.set_debug_name(m_cmd_buf, m_name + name);
+    return *this;
+}
+
+const CommandBuffer &CommandBuffer::set_viewport(const VkViewport viewport) const {
+    vkCmdSetViewport(m_cmd_buf, 0, 1, &viewport);
     return *this;
 }
 

@@ -55,8 +55,6 @@ private:
     const CommandBuffer & // NOLINT
     begin_command_buffer(VkCommandBufferUsageFlags flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT) const;
 
-    // TODO: Implement create_staging_buffer()!
-
     /// Call vkEndCommandBuffer
     /// @return A const reference to the this pointer (allowing method calls to be chained)
     const CommandBuffer &end_command_buffer() const; // NOLINT
@@ -414,10 +412,20 @@ public:
                               offset);
     }
 
+    /// Set the scissor
+    /// @param scissor The scissor
+    /// @return A const reference to the this pointer (allowing method calls to be chained)
+    const CommandBuffer &set_scissor(VkRect2D scissor) const;
+
     /// Set the name of a command buffer during recording of a specific command in the current command buffer
     /// @param name The name of the suboperation
     /// @return A const reference to the this pointer (allowing method calls to be chained)
     const CommandBuffer &set_suboperation_debug_name(std::string name) const;
+
+    /// Set the viewport
+    /// @param viewport The viewport
+    /// @return A const reference to the this pointer (allowing method calls to be chained)
+    const CommandBuffer &set_viewport(VkViewport viewport) const;
 };
 
 } // namespace inexor::vulkan_renderer::wrapper::commands

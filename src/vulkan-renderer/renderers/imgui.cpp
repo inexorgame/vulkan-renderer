@@ -135,8 +135,12 @@ ImGuiRenderer::ImGuiRenderer(const Device &device,
                                    .alphaBlendOp = VK_BLEND_OP_ADD,
                                })
                                .add_color_attachment_format(m_swapchain.lock()->image_format())
-                               .set_viewport(m_swapchain.lock()->extent())
+                               .set_dynamic_states({
+                                   VK_DYNAMIC_STATE_VIEWPORT,
+                                   VK_DYNAMIC_STATE_SCISSOR,
+                               })
                                .set_scissor(m_swapchain.lock()->extent())
+                               .set_viewport(m_swapchain.lock()->extent())
                                .add_shader(m_vertex_shader)
                                .add_shader(m_fragment_shader)
                                .set_descriptor_set_layout(m_descriptor_set_layout)
@@ -163,10 +167,12 @@ ImGuiRenderer::ImGuiRenderer(const Device &device,
                 cmd_buf.bind_pipeline(m_imgui_pipeline)
                     .bind_vertex_buffer(m_vertex_buffer)
                     .bind_index_buffer(m_index_buffer)
+                    .set_viewport(VkViewport{.width = ImGui::GetIO().DisplaySize.x,
+                                             .height = ImGui::GetIO().DisplaySize.y,
+                                             .minDepth = 0.0f,
+                                             .maxDepth = 1.0f})
                     .bind_descriptor_set(m_descriptor_set, m_imgui_pipeline)
                     .push_constant(m_imgui_pipeline, m_push_const_block, VK_SHADER_STAGE_VERTEX_BIT);
-
-                // TODO: Crop to ImGui viewport and scissor for improved performance
 
                 std::uint32_t index_offset = 0;
                 std::int32_t vertex_offset = 0;
@@ -174,6 +180,12 @@ ImGuiRenderer::ImGuiRenderer(const Device &device,
                     const ImDrawList *cmd_list = draw_data->CmdLists[i];
                     for (std::int32_t j = 0; j < cmd_list->CmdBuffer.Size; j++) {
                         const ImDrawCmd &draw_cmd = cmd_list->CmdBuffer[j];
+                        VkRect2D scissor{};
+                        scissor.offset.x = std::max((int32_t)(draw_cmd.ClipRect.x), 0);
+                        scissor.offset.y = std::max((int32_t)(draw_cmd.ClipRect.y), 0);
+                        scissor.extent.width = (uint32_t)(draw_cmd.ClipRect.z - draw_cmd.ClipRect.x);
+                        scissor.extent.height = (uint32_t)(draw_cmd.ClipRect.w - draw_cmd.ClipRect.y);
+                        cmd_buf.set_scissor(scissor);
                         cmd_buf.draw_indexed(draw_cmd.ElemCount, 1, index_offset, vertex_offset);
                         index_offset += draw_cmd.ElemCount;
                     }
