@@ -529,26 +529,17 @@ void Device::execute(const std::string &name,
                      const std::function<void(const CommandBuffer &cmd_buf)> &cmd_buf_recording_func,
                      const std::span<const VkSemaphore> wait_semaphores,
                      const std::span<const VkSemaphore> signal_semaphores) const {
-
-    // NOTE: We need to tell the lambda to return the command buffer as a const reference!
-    const auto &cmd_pool = [&]() -> const CommandPool & {
-        switch (queue_type) {
-        case VK_QUEUE_TRANSFER_BIT: {
-            return thread_local_transfer_command_pool();
-        }
-        case VK_QUEUE_COMPUTE_BIT: {
-            return thread_local_compute_command_pool();
-        }
-        default: {
-            return thread_local_graphics_command_pool();
-        }
-        }
-    }();
-
+    // Request the thread_local command pool for this queue type
+    const auto &cmd_pool = thread_local_command_pool(queue_type);
+    // Start recording the command buffer
     const auto &cmd_buf = cmd_pool.request_command_buffer(name);
+    // Begin a debug label region (visible in graphics debuggers like RenderDoc)
     cmd_buf.begin_debug_label_region(name, get_debug_label_color(dbg_label_color));
+    // Call the external code
     std::invoke(cmd_buf_recording_func, cmd_buf);
+    // End the debug label region
     cmd_buf.end_debug_label_region();
+    // Submit the command buffer and do necessary synchronization
     cmd_buf.submit_and_wait(queue_type, wait_semaphores, signal_semaphores);
 }
 
@@ -563,37 +554,39 @@ std::optional<std::uint32_t> Device::find_queue_family_index_if(
     return std::nullopt;
 }
 
-const CommandPool &Device::thread_local_compute_command_pool() const {
-    // NOTE: thread_graphics_pool is implicitly static!
-    thread_local CommandPool *compute_pool = nullptr; // NOLINT
-    if (compute_pool == nullptr) {
-        auto cmd_pool = std::make_unique<CommandPool>(*this, VK_QUEUE_COMPUTE_BIT, "Compute Command Pool");
-        std::scoped_lock locker(m_mutex);
-        compute_pool = m_cmd_pools.emplace_back(std::move(cmd_pool)).get();
-    }
-    return *compute_pool;
-}
+const CommandPool &Device::thread_local_command_pool(const VkQueueFlagBits queue_type) const {
+    // NOTE: thread_local means implicitly static!
+    thread_local CommandPool *cmd_pool_graphics = nullptr; // NOLINT
+    thread_local CommandPool *cmd_pool_transfer = nullptr; // NOLINT
+    thread_local CommandPool *cmd_pool_compute = nullptr;  // NOLINT
 
-const CommandPool &Device::thread_local_graphics_command_pool() const {
-    // NOTE: thread_graphics_pool is implicitly static!
-    thread_local CommandPool *graphics_pool = nullptr; // NOLINT
-    if (graphics_pool == nullptr) {
-        auto cmd_pool = std::make_unique<CommandPool>(*this, VK_QUEUE_GRAPHICS_BIT, "Graphics Command Pool");
-        std::scoped_lock locker(m_mutex);
-        graphics_pool = m_cmd_pools.emplace_back(std::move(cmd_pool)).get();
+    switch (queue_type) {
+    case VK_QUEUE_COMPUTE_BIT: {
+        if (cmd_pool_compute == nullptr) {
+            auto new_cmd_pool = std::make_unique<CommandPool>(*this, VK_QUEUE_COMPUTE_BIT, "Compute");
+            std::scoped_lock locker(m_mutex);
+            cmd_pool_compute = m_cmd_pools.emplace_back(std::move(new_cmd_pool)).get();
+        }
+        return *cmd_pool_compute;
     }
-    return *graphics_pool;
-}
-
-const CommandPool &Device::thread_local_transfer_command_pool() const {
-    // NOTE: thread_graphics_pool is implicitly static!
-    thread_local CommandPool *graphics_pool = nullptr; // NOLINT
-    if (graphics_pool == nullptr) {
-        auto cmd_pool = std::make_unique<CommandPool>(*this, VK_QUEUE_TRANSFER_BIT, "Transfer Command Pool");
-        std::scoped_lock locker(m_mutex);
-        graphics_pool = m_cmd_pools.emplace_back(std::move(cmd_pool)).get();
+    case VK_QUEUE_TRANSFER_BIT: {
+        if (cmd_pool_transfer == nullptr) {
+            auto new_cmd_pool = std::make_unique<CommandPool>(*this, VK_QUEUE_TRANSFER_BIT, "Transfer");
+            std::scoped_lock locker(m_mutex);
+            cmd_pool_transfer = m_cmd_pools.emplace_back(std::move(new_cmd_pool)).get();
+        }
+        return *cmd_pool_transfer;
     }
-    return *graphics_pool;
+    default: {
+        // VK_QUEUE_GRAPHICS_BIT and others
+        if (cmd_pool_graphics == nullptr) {
+            auto new_cmd_pool = std::make_unique<CommandPool>(*this, VK_QUEUE_GRAPHICS_BIT, "Graphics");
+            std::scoped_lock locker(m_mutex);
+            cmd_pool_graphics = m_cmd_pools.emplace_back(std::move(new_cmd_pool)).get();
+        }
+        return *cmd_pool_graphics;
+    }
+    }
 }
 
 void Device::set_debug_utils_object_name(const VkObjectType obj_type,

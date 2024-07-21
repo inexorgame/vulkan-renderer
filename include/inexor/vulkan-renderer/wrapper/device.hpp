@@ -98,19 +98,9 @@ class Device {
     /// @param name the internal debug name of the Vulkan object
     void set_debug_utils_object_name(VkObjectType obj_type, std::uint64_t obj_handle, const std::string &name) const;
 
-    // TODO: Maybe we can merge those three functions into one? Use a thread_local std::array<CommandPool, 3>?
-
     /// Get the thread_local compute pool for transfer commands
     /// @note This method will create a command pool for the thread if it doesn't already exist
-    const CommandPool &thread_local_compute_command_pool() const;
-
-    /// Get the thread_local command pool for graphics commands
-    /// @note This method will create a command pool for the thread if it doesn't already exist
-    const CommandPool &thread_local_graphics_command_pool() const;
-
-    /// Get the thread_local command pool for transfer commands
-    /// @note This method will create a command pool for the thread if it doesn't already exist
-    const CommandPool &thread_local_transfer_command_pool() const;
+    const CommandPool &thread_local_command_pool(VkQueueFlagBits queue_type) const;
 
 public:
     /// Pick the best physical device automatically
