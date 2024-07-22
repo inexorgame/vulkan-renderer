@@ -94,8 +94,26 @@ private:
     /// -----------------------------------------------------------------------------------------------------------------
     ///  SWAPCHAINS
     /// -----------------------------------------------------------------------------------------------------------------
+    /// Swapchains are not managed by rendergraph and they are not even stored as a std::weak_ptr inside of rendergraph.
+    /// Instead, if a graphics pass writes to a swapchain, it can be specified by using the writes_to method in
+    /// GraphicsPassBuilder. To unify textures and swapchains as write attachments, The GraphicsPassBuilder class uses
+    /// std::variant<std::weak_ptr<Texture>, std::weak_ptr<Swapchain>> as type for write attachments. When creating the
+    /// graphics pass, The constructor of the GraphicsPass class will automatically sort the write attachment by type
+    /// (texture or swapchain). The textures and swapchains which are used as write attachments are processed by
+    /// rendergraph in the fill_graphics_pass_rendering_info method. To fill VkRenderingInfo of a graphics pass, we need
+    /// to fill VkRenderingInfo for every texture and swapchain that is written to. This means we only need to know the
+    /// image view of the texture (the current image view in case of a swapchain), the image layout, and the optional
+    /// clear value for the swapchain or texture. The clear value is stored in the graphics pass as well.
+    ///
+    /// Rendergraph automatically performs image layout transitions for swapchains when they are used as write
+    /// attachment. To avoid unnecessary transitions, rendergraph will check if a swapchain is already in
+    /// VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL layout before starting dynamic rendering. To avoid more unnecessary
+    /// image layout transition of the swapchain image, the layout is changed to VK_IMAGE_LAYOUT_PRESENT_SRC_KHR only if
+    /// the next pass (if any) is not rendering to the swapchain.
+    /// -----------------------------------------------------------------------------------------------------------------
 
-    // TODO
+    /// The unique wait semaphores of all swapchains used (This means if one swapchain is used mutliple times it's still
+    /// only one VkSemaphore in here because collect_swapchain_image_available_semaphores method will fill this vector)
     std::vector<VkSemaphore> m_swapchains_imgs_available;
 
     /// -----------------------------------------------------------------------------------------------------------------
@@ -127,7 +145,7 @@ private:
     GraphicsPipelineBuilder m_graphics_pipeline_builder;
     /// In these callback functions, the graphics pipelines will be created
     using OnCreateGraphicsPipeline = std::function<void(GraphicsPipelineBuilder &)>;
-    /// The graphics pipeline create functions
+    /// The graphics pipeline create functions which are called by rendergraph to create the graphics pipelines
     std::vector<OnCreateGraphicsPipeline> m_pipeline_create_functions;
 
     /// -----------------------------------------------------------------------------------------------------------------
@@ -152,13 +170,13 @@ private:
     /// per-frame basis coherently anyways. So it doesn't really matter.
     /// -----------------------------------------------------------------------------------------------------------------
 
-    /// The vertex-, index-, and uniform buffers
+    /// The vertex buffers, index buffers, and uniform buffers
     std::vector<std::shared_ptr<Buffer>> m_buffers;
 
     /// -----------------------------------------------------------------------------------------------------------------
     ///  TEXTURES
     /// -----------------------------------------------------------------------------------------------------------------
-    /// Like buffers, textures are created by rendergraph and stored in the rendergraph in a shared_ptr. This means just
+    /// Like buffers, textures are created by rendergraph and stored in the rendergraph as a shared_ptr. This means just
     /// like buffers, the rendergraph owns the underlying memory, and all external code must use std::weak_ptr to it.
     /// There are different types of textures, which are listed in TextureUsage. In principle, the Texture wrapper
     /// allows each texture to have an on_init and an on_update function. Depending on the texture usage, textures can
@@ -175,6 +193,8 @@ private:
     /// allowed to have an on_update function. The on_update function is called per-frame (if it's not std::nullopt).
     /// The on_update function allows for dynamic textures which are updated every frame. Note that so far, our code
     /// base does not use this feature yet.
+
+    /// The textures
     std::vector<std::shared_ptr<Texture>> m_textures;
 
     /// -----------------------------------------------------------------------------------------------------------------

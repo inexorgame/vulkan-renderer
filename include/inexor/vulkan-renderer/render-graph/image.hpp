@@ -11,6 +11,11 @@ class Device;
 class Sampler;
 } // namespace inexor::vulkan_renderer::wrapper
 
+namespace inexor::vulkan_renderer::wrapper::commands {
+// Forward declaration
+class CommandBuffer;
+} // namespace inexor::vulkan_renderer::wrapper::commands
+
 namespace inexor::vulkan_renderer::render_graph {
 
 // Forward declarations
@@ -22,14 +27,18 @@ using render_graph::RenderGraph;
 using render_graph::Texture;
 using wrapper::Device;
 using wrapper::Sampler;
+using wrapper::commands::CommandBuffer;
 
 // NOTE: Originally we did not want to have a RAII wrapper for VkImage and VkImageView and put this into the Texture
 // wrapper directly, but since the Texture wrapper contains 2 Images depending on whether MSAA is enabled or not, we
 // have chosen to use the Image RAII wrapper.
 
+// TODO: Move this to wrapper/ folder again (it is not really part of rendergraph)
+
 /// RAII wrapper for VkImage and VkImageView
 /// @note Multisample anti-aliasing (MSAA) can be enabled on a per-texture basis
 class Image {
+    friend class CommandBuffer;
     friend class RenderGraph;
     friend class Texture;
 
@@ -39,10 +48,12 @@ private:
     /// The internal debug name of the image
     std::string m_name;
 
+    VkImageCreateInfo m_img_ci{};
+    VkImageViewCreateInfo m_img_view_ci{};
+
     VkImage m_img{VK_NULL_HANDLE};
     VkImageView m_img_view{VK_NULL_HANDLE};
     VmaAllocation m_alloc{VK_NULL_HANDLE};
-
     VmaAllocationInfo m_alloc_info{};
 
     const VmaAllocationCreateInfo m_alloc_ci{

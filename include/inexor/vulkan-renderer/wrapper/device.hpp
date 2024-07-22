@@ -277,7 +277,12 @@ public:
 
     /// Call vkDeviceWaitIdle
     /// @exception VulkanException vkDeviceWaitIdle call failed
-    void wait_idle() const;
+    void device_wait_idle() const;
+
+    /// Call vkQueueWaitIdle
+    /// @param queue The queue to wait for
+    /// @exception VulkanException vkQueueWaitIdle call failed
+    void queue_wait_idle(VkQueue queue) const;
 };
 
 } // namespace inexor::vulkan_renderer::wrapper

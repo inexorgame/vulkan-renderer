@@ -477,7 +477,7 @@ Device::Device(const Instance &inst,
 
 Device::~Device() {
     std::scoped_lock locker(m_mutex);
-    wait_idle();
+    device_wait_idle();
 
     // Because the device handle must be valid for the destruction of the command pools in the CommandPool destructor,
     // we must destroy the command pools manually here in order to ensure the right order of destruction
@@ -607,9 +607,15 @@ void Device::set_debug_utils_object_name(const VkObjectType obj_type,
     }
 }
 
-void Device::wait_idle() const {
+void Device::device_wait_idle() const {
     if (const auto result = vkDeviceWaitIdle(m_device); result != VK_SUCCESS) {
         throw VulkanException("Error: vkDeviceWaitIdle failed!", result);
+    }
+}
+
+void Device::queue_wait_idle(const VkQueue queue) const {
+    if (const auto result = vkQueueWaitIdle(queue); result != VK_SUCCESS) {
+        throw VulkanException("Error: vkQueueWaitIdle", result);
     }
 }
 

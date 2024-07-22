@@ -172,7 +172,7 @@ void RenderGraph::fill_graphics_pass_rendering_info(GraphicsPass &pass) {
         // TODO: Support MSAA again!
         return wrapper::make_info<VkRenderingAttachmentInfo>({
             // TODO: Implement m_current_img_view when double/triple buffering and do this on init, not per-frame?
-            .imageView = attachment->m_img->m_img_view,
+            .imageView = attachment->m_image->m_img_view,
             .imageLayout = get_image_layout(),
             .resolveMode = VK_RESOLVE_MODE_NONE,
             .resolveImageView = nullptr,
@@ -281,6 +281,10 @@ void RenderGraph::record_command_buffer_for_pass(const CommandBuffer &cmd_buf, G
 
     // End dynamic rendering
     cmd_buf.end_rendering();
+
+    // TODO: Not only check for next pass, but check all following passes! For example if pass A writes to swapchain,
+    // pass B doesn't, but pass C does again, we would unnecessarily transition between A and B, then B and C, and after
+    // C again!
 
     // Change the swapchain image layouts to prepare the swapchains for presenting
     for (const auto &swapchain : pass.m_write_swapchains) {

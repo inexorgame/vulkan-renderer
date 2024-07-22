@@ -1,6 +1,7 @@
 #pragma once
 
 #include "inexor/vulkan-renderer/render-graph/buffer.hpp"
+#include "inexor/vulkan-renderer/render-graph/image.hpp"
 #include "inexor/vulkan-renderer/wrapper/synchronization/fence.hpp"
 
 #include <array>
@@ -16,9 +17,7 @@ class Device;
 
 namespace inexor::vulkan_renderer::render_graph {
 // Forward declarations
-class Buffer;
 class RenderGraph;
-enum class BufferType;
 } // namespace inexor::vulkan_renderer::render_graph
 
 namespace inexor::vulkan_renderer::wrapper::pipelines {
@@ -36,6 +35,7 @@ namespace inexor::vulkan_renderer::wrapper::commands {
 // Using declaration
 using render_graph::Buffer;
 using render_graph::BufferType;
+using render_graph::Image;
 using render_graph::RenderGraph;
 using wrapper::pipelines::GraphicsPipeline;
 using wrapper::synchronization::Fence;
@@ -217,6 +217,12 @@ public:
     /// @param extent The extent of the image
     /// @return A const reference to the dereferenced ``this`` pointer (allowing for method calls to be chained)
     const CommandBuffer &copy_buffer_to_image(VkBuffer src_buffer, VkImage dst_img, VkExtent3D extent) const;
+
+    /// Call vkCmdCopyBufferToImage
+    /// @param src_buffer The source buffer
+    /// @param img The image to copy the buffer into
+    /// @return A const reference to the dereferenced ``this`` pointer (allowing for method calls to be chained)
+    const CommandBuffer &copy_buffer_to_image(VkBuffer src_buffer, std::weak_ptr<Image> img) const;
 
     /// Call vkCmdDraw
     /// @param vert_count The number of vertices to draw

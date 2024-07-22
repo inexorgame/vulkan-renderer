@@ -25,10 +25,10 @@ Texture::Texture(const Device &device,
     if (m_name.empty()) {
         throw std::invalid_argument("[Texture::Texture] Error: Parameter 'name' is empty!");
     }
-    m_img = std::make_unique<Image>(m_device, m_name);
+    m_image = std::make_shared<Image>(m_device, m_name);
 
     if (samples > VK_SAMPLE_COUNT_1_BIT) {
-        m_msaa_img = std::make_unique<Image>(m_device, m_name);
+        m_msaa_image = std::make_shared<Image>(m_device, m_name);
     }
 }
 
@@ -97,20 +97,20 @@ void Texture::create() {
     });
 
     // Create the texture
-    m_img->create(img_ci, img_view_ci);
+    m_image->create(img_ci, img_view_ci);
 
     // If MSAA is enabled, create the MSAA texture as well
     if (m_samples > VK_SAMPLE_COUNT_1_BIT) {
         // Just overwrite the sample count and re-use the image create info
         img_ci.samples = m_samples;
-        m_msaa_img->create(img_ci, img_view_ci);
+        m_msaa_image->create(img_ci, img_view_ci);
     }
 }
 
 void Texture::destroy() {
-    m_img->destroy();
-    if (m_msaa_img) {
-        m_msaa_img->destroy();
+    m_image->destroy();
+    if (m_msaa_image) {
+        m_msaa_image->destroy();
     }
     destroy_staging_buffer();
 }
@@ -149,6 +149,13 @@ void Texture::update(const CommandBuffer &cmd_buf) {
     // Copy the texture data into the staging buffer
     std::memcpy(m_staging_buffer_alloc_info.pMappedData, m_src_texture_data, m_src_texture_data_size);
 
+    // After copying the data, we need to flush caches
+    // NOTE: vmaFlushAllocation checks internally if the memory is host coherent, in which case it don't flush
+    if (const auto result = vmaFlushAllocation(m_device.allocator(), m_staging_buffer_alloc, 0, VK_WHOLE_SIZE);
+        result != VK_SUCCESS) {
+        throw VulkanException("Error: vmaFlushAllocation failed for buffer " + m_name + " !", result);
+    }
+
     const std::string staging_buf_name = "staging:" + m_name;
     // Set the buffer's internal debug name in Vulkan Memory Allocator (VMA)
     vmaSetAllocationName(m_device.allocator(), m_staging_buffer_alloc, staging_buf_name.c_str());
@@ -159,20 +166,15 @@ void Texture::update(const CommandBuffer &cmd_buf) {
                                wrapper::get_debug_label_color(wrapper::DebugLabelColor::ORANGE));
 
     // TODO: Check on which queue the udpate is carried out and adjust the stages in the pipeline barrier accordingly
-    cmd_buf.pipeline_image_memory_barrier_before_copy_buffer_to_image(m_img->m_img)
-        .copy_buffer_to_image(m_staging_buffer, m_img->m_img,
-                              {
-                                  .width = m_width,
-                                  .height = m_height,
-                                  .depth = 1,
-                              })
-        .pipeline_image_memory_barrier_after_copy_buffer_to_image(m_img->m_img);
+    cmd_buf.pipeline_image_memory_barrier_before_copy_buffer_to_image(m_image->m_img)
+        .copy_buffer_to_image(m_staging_buffer, m_image)
+        .pipeline_image_memory_barrier_after_copy_buffer_to_image(m_image->m_img);
 
     // Update the descriptor image info
     // TODO: Does this mean we can this in create() function, not on a per-frame basis?
     m_descriptor_img_info = VkDescriptorImageInfo{
-        .sampler = m_img->m_sampler->m_sampler,
-        .imageView = m_img->m_img_view,
+        .sampler = m_image->m_sampler->m_sampler,
+        .imageView = m_image->m_img_view,
         .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
     };
 
@@ -183,6 +185,7 @@ void Texture::update(const CommandBuffer &cmd_buf) {
 
     // NOTE: The staging buffer needs to stay valid until command buffer finished executing!
     // It will be destroyed either in the destructor or the next time execute_update is called.
+
     // NOTE: Another option would have been to wrap each call to execute_update() into its own single time
     // command buffer, which would increase the total number of command buffer submissions though.
 }

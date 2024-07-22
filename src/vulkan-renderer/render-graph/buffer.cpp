@@ -132,10 +132,14 @@ void Buffer::create(const CommandBuffer &cmd_buf) {
         // Copy the memory into the staging buffer
         std::memcpy(m_staging_buffer_alloc_info.pMappedData, m_src_data, m_src_data_size);
 
+        // NOTE: vmaFlushAllocation checks internally if the memory is host coherent, in which case it don't flush
         if (const auto result = vmaFlushAllocation(m_device.allocator(), m_staging_buffer_alloc, 0, VK_WHOLE_SIZE);
             result != VK_SUCCESS) {
             throw VulkanException("Error: vmaFlushAllocation failed for staging buffer " + m_name + " !", result);
         };
+
+        cmd_buf.insert_debug_label("[Buffer::staging-update|" + m_name + "]",
+                                   wrapper::get_debug_label_color(wrapper::DebugLabelColor::ORANGE));
 
         cmd_buf.pipeline_buffer_memory_barrier_before_copy_buffer(m_staging_buffer)
             .copy_buffer(m_staging_buffer, m_buffer, m_src_data_size)
@@ -156,6 +160,7 @@ void Buffer::create(const CommandBuffer &cmd_buf) {
 
     // NOTE: The staging buffer needs to stay valid until command buffer finished executing!
     // It will be destroyed either in the destructor or the next time create is called.
+
     // NOTE: Another option would have been to wrap each call to create() into its own single time command buffer, which
     // would increase the total number of command buffer submissions though.
 }

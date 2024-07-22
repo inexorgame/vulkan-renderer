@@ -365,7 +365,7 @@ void Application::process_mouse_input() {
 
 void Application::recreate_swapchain() {
     m_window->wait_for_focus();
-    m_device->wait_idle();
+    m_device->device_wait_idle();
 
     // Query the framebuffer size here again although the window width is set during framebuffer resize callback
     // The reason for this is that the framebuffer size could already be different again because we missed a poll

@@ -21,9 +21,13 @@ Image::~Image() {
     destroy();
 }
 
-void Image::create(const VkImageCreateInfo img_ci, VkImageViewCreateInfo img_view_ci) {
+void Image::create(VkImageCreateInfo img_ci, VkImageViewCreateInfo img_view_ci) {
+    m_img_ci = std::move(img_ci);
+    m_img_view_ci = std::move(img_view_ci);
+
     // Create the image
-    if (const auto result = vmaCreateImage(m_device.allocator(), &img_ci, &m_alloc_ci, &m_img, &m_alloc, &m_alloc_info);
+    if (const auto result =
+            vmaCreateImage(m_device.allocator(), &m_img_ci, &m_alloc_ci, &m_img, &m_alloc, &m_alloc_info);
         result != VK_SUCCESS) {
         throw VulkanException("Error: vmaCreateImage failed for image " + m_name + "!", result);
     }
@@ -31,10 +35,10 @@ void Image::create(const VkImageCreateInfo img_ci, VkImageViewCreateInfo img_vie
     m_device.set_debug_name(m_img, m_name);
 
     // Set the image in the VkImageViewCreateInfo
-    img_view_ci.image = m_img;
+    m_img_view_ci.image = m_img;
 
     // Create the image view
-    if (const auto result = vkCreateImageView(m_device.device(), &img_view_ci, nullptr, &m_img_view);
+    if (const auto result = vkCreateImageView(m_device.device(), &m_img_view_ci, nullptr, &m_img_view);
         result != VK_SUCCESS) {
         throw VulkanException("Error: vkCreateImageView failed for image view " + m_name + "!", result);
     }

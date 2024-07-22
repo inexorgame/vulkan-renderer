@@ -70,11 +70,11 @@ private:
     VkSampleCountFlagBits m_samples{VK_SAMPLE_COUNT_1_BIT};
 
     /// The image of the texture
-    std::unique_ptr<Image> m_img;
+    std::shared_ptr<Image> m_image;
 
     /// This is only used internally inside of rendergraph in case this texture used as a back buffer, depth buffer, or
     /// stencil buffer and MSAA is enabled.
-    std::unique_ptr<Image> m_msaa_img;
+    std::shared_ptr<Image> m_msaa_image;
 
     // This is used for initializing textures and for updating dynamic textures
     bool m_update_requested{true};

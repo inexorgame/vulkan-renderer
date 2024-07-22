@@ -269,6 +269,16 @@ CommandBuffer::copy_buffer_to_image(const VkBuffer buffer, const VkImage img, co
                                 });
 }
 
+const CommandBuffer &CommandBuffer::copy_buffer_to_image(const VkBuffer src_buf, const std::weak_ptr<Image> img) const {
+    const auto &image = img.lock();
+    return copy_buffer_to_image(src_buf, image->m_img,
+                                {
+                                    .width = image->m_img_ci.extent.width,
+                                    .height = image->m_img_ci.extent.height,
+                                    .depth = 1,
+                                });
+}
+
 const CommandBuffer &CommandBuffer::draw(const std::uint32_t vert_count,
                                          const std::uint32_t inst_count,
                                          const std::uint32_t first_vert,
