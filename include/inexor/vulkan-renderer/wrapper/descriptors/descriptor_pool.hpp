@@ -2,6 +2,7 @@
 
 #include <volk.h>
 
+#include <cstdint>
 #include <string>
 #include <vector>
 
@@ -33,7 +34,9 @@ public:
     /// @exception std::invalid_argument Internal debug name for descriptor pool must not be empty
     /// @exception std::invalid_argument Descriptor pool sizes must not be empty
     /// @exception VulkanException vkCreateDescriptorPool call failed
-    DescriptorPool(const Device &device, std::vector<VkDescriptorPoolSize> pool_sizes, std::uint32_t max_sets,
+    DescriptorPool(const Device &device,
+                   std::vector<VkDescriptorPoolSize> pool_sizes,
+                   std::uint32_t max_sets,
                    std::string name);
 
     DescriptorPool(const DescriptorPool &) = delete;

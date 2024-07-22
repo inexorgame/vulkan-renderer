@@ -2,6 +2,7 @@
 
 #include "inexor/vulkan-renderer/wrapper/pipelines/pipeline_layout.hpp"
 
+#include <memory>
 #include <volk.h>
 
 #include <string>

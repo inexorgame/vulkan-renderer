@@ -12,9 +12,6 @@ class Device;
 
 namespace inexor::vulkan_renderer::wrapper::commands {
 
-// Using declaration
-using wrapper::Device;
-
 /// RAII wrapper class for VkCommandPool
 class CommandPool {
     std::string m_name;

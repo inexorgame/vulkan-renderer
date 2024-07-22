@@ -1,6 +1,7 @@
 #pragma once
 
 #include "inexor/vulkan-renderer/render-graph/buffer.hpp"
+#include "inexor/vulkan-renderer/wrapper/pipelines/pipeline.hpp"
 #include "inexor/vulkan-renderer/wrapper/synchronization/fence.hpp"
 
 #include <array>
@@ -61,14 +62,6 @@ private:
     /// Call vkEndCommandBuffer
     /// @return A const reference to the this pointer (allowing method calls to be chained)
     const CommandBuffer &end_command_buffer() const; // NOLINT
-
-    /// Call vkQueueSubmit
-    /// @param queue_type The queue type to submit the command buffer to
-    /// @param wait_semaphores The semaphores to wait for
-    /// @param signal_semaphores The semaphores to signal
-    void submit_and_wait(VkQueueFlagBits queue_type,
-                         std::span<const VkSemaphore> wait_semaphores = {},
-                         std::span<const VkSemaphore> signal_semaphores = {}) const;
 
 public:
     /// Default constructor
@@ -429,6 +422,14 @@ public:
     /// @param viewport The viewport
     /// @return A const reference to the this pointer (allowing method calls to be chained)
     const CommandBuffer &set_viewport(VkViewport viewport) const;
+
+    /// Call vkQueueSubmit
+    /// @param queue_type The queue type to submit the command buffer to
+    /// @param wait_semaphores The semaphores to wait for
+    /// @param signal_semaphores The semaphores to signal
+    void submit_and_wait(VkQueueFlagBits queue_type,
+                         std::span<const VkSemaphore> wait_semaphores = {},
+                         std::span<const VkSemaphore> signal_semaphores = {}) const;
 };
 
 } // namespace inexor::vulkan_renderer::wrapper::commands

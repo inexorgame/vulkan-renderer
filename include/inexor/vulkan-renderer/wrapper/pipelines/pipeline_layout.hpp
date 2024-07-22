@@ -1,8 +1,12 @@
 #pragma once
 
-#include "inexor/vulkan-renderer/wrapper/device.hpp"
-
+#include "vulkan/vulkan_core.h"
 #include <span>
+#include <string>
+
+namespace inexor::vulkan_renderer::wrapper {
+struct Device;
+} // namespace inexor::vulkan_renderer::wrapper
 
 namespace inexor::vulkan_renderer::render_graph {
 // Forward declaration
