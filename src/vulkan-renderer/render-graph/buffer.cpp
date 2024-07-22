@@ -95,6 +95,7 @@ void Buffer::create(const CommandBuffer &cmd_buf) {
         std::memcpy(m_alloc_info.pMappedData, m_src_data, m_src_data_size);
 
         // After copying the data, we need to flush caches
+        // NOTE: vmaFlushAllocation checks internally if the memory is host coherent, in which case it don't flush
         if (const auto result = vmaFlushAllocation(m_device.allocator(), m_alloc, 0, VK_WHOLE_SIZE);
             result != VK_SUCCESS) {
             throw VulkanException("Error: vmaFlushAllocation failed for buffer " + m_name + " !", result);
@@ -111,10 +112,12 @@ void Buffer::create(const CommandBuffer &cmd_buf) {
             // This is the buffer usage bit for staging buffers
             .usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
         });
+
         const VmaAllocationCreateInfo staging_buf_alloc_ci{
             .flags = VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT | VMA_ALLOCATION_CREATE_MAPPED_BIT,
             .usage = VMA_MEMORY_USAGE_AUTO,
         };
+
         // Create the staging buffer which is used for the transfer of data into the actual buffer
         if (const auto result =
                 vmaCreateBuffer(m_device.allocator(), &staging_buf_ci, &staging_buf_alloc_ci, &m_staging_buffer,
@@ -147,7 +150,7 @@ void Buffer::create(const CommandBuffer &cmd_buf) {
     }
 
     // Update the descriptor buffer info
-    m_descriptor_buffer_info = VkDescriptorBufferInfo{
+    m_descriptor_buffer_info = {
         .buffer = m_buffer,
         .offset = 0,
         .range = m_alloc_info.size,

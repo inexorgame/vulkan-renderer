@@ -134,6 +134,7 @@ void Texture::update(const CommandBuffer &cmd_buf) {
         .usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
         .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
     });
+
     const VmaAllocationCreateInfo staging_buffer_alloc_ci{
         .flags = VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT | VMA_ALLOCATION_CREATE_MAPPED_BIT,
         .usage = VMA_MEMORY_USAGE_AUTO,
@@ -172,7 +173,7 @@ void Texture::update(const CommandBuffer &cmd_buf) {
 
     // Update the descriptor image info
     // TODO: Does this mean we can this in create() function, not on a per-frame basis?
-    m_descriptor_img_info = VkDescriptorImageInfo{
+    m_descriptor_img_info = {
         .sampler = m_image->m_sampler->m_sampler,
         .imageView = m_image->m_img_view,
         .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,

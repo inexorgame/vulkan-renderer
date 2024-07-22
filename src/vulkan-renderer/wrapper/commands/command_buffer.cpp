@@ -270,6 +270,7 @@ CommandBuffer::copy_buffer_to_image(const VkBuffer buffer, const VkImage img, co
 }
 
 const CommandBuffer &CommandBuffer::copy_buffer_to_image(const VkBuffer src_buf, const std::weak_ptr<Image> img) const {
+    // NOTE: We delegate error checks to the other function overload
     const auto &image = img.lock();
     return copy_buffer_to_image(src_buf, image->m_img,
                                 {

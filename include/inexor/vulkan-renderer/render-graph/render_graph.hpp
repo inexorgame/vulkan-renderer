@@ -18,6 +18,7 @@
 #include <functional>
 #include <memory>
 #include <optional>
+#include <stack>
 #include <tuple>
 #include <utility>
 #include <vector>

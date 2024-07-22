@@ -104,7 +104,6 @@ void RenderGraph::collect_swapchain_image_available_semaphores() {
 void RenderGraph::compile() {
     // TODO: What needs to be re-done when swapchain is recreated?
     validate_render_graph();
-    determine_pass_order();
     update_buffers();
     update_textures();
     create_descriptor_set_layouts();
@@ -113,6 +112,7 @@ void RenderGraph::compile() {
     create_graphics_pipelines();
     collect_swapchain_image_available_semaphores();
     check_for_cycles();
+    determine_pass_order();
 }
 
 void RenderGraph::create_descriptor_set_layouts() {
@@ -128,21 +128,61 @@ void RenderGraph::create_graphics_passes() {
     for (const auto &create_func : m_graphics_pass_create_functions) {
         m_graphics_passes.emplace_back(create_func(m_graphics_pass_builder));
     }
-    // Let each graphics pass know aout its next pass, except the last one which has none
-    for (std::size_t pass_index = 0; pass_index < m_graphics_passes.size() - 1; pass_index++) {
-        m_graphics_passes[pass_index]->m_next_pass = m_graphics_passes[pass_index + 1];
-    }
 }
 
 void RenderGraph::create_graphics_pipelines() {
     for (const auto &create_func : m_pipeline_create_functions) {
+        // Call the graphics pipeline create function
         create_func(m_graphics_pipeline_builder);
     }
 }
 
 void RenderGraph::determine_pass_order() {
-    m_log->warn("Implement determine_pass_order()");
-    // TODO: The data structure to determine pass order should be created before rendergraph compilation!
+    std::stack<std::shared_ptr<GraphicsPass>> stack;
+    std::unordered_map<std::shared_ptr<GraphicsPass>, bool> visited;
+
+    std::function<void(const std::shared_ptr<GraphicsPass> &)> dfs = [&](const std::shared_ptr<GraphicsPass> &pass) {
+        // Mark the node as visited
+        if (visited[pass]) {
+            return;
+        }
+
+        visited[pass] = true;
+        // Visit all the nodes connected by "reads"
+        for (const auto &weak_read_pass : pass->m_graphics_pass_reads) {
+            if (auto read_pass = weak_read_pass.lock()) {
+                if (!visited[read_pass]) {
+                    dfs(read_pass);
+                }
+            }
+        }
+        // Push the node onto the stack
+        stack.push(pass);
+    };
+    // Initialize visited map
+    for (const auto &pass : m_graphics_passes) {
+        visited[pass] = false;
+    }
+    // Perform DFS from each unvisited node
+    for (const auto &pass : m_graphics_passes) {
+        if (!visited[pass]) {
+            dfs(pass);
+        }
+    }
+    // Pop elements from the stack to get the order
+    std::vector<std::shared_ptr<GraphicsPass>> ordered_passes;
+    while (!stack.empty()) {
+        ordered_passes.push_back(stack.top());
+        stack.pop();
+    }
+
+    // Update the member variable with the sorted passes
+    m_graphics_passes = std::move(ordered_passes);
+
+    // Let each graphics pass know aout its next pass, except the last one which has none
+    for (std::size_t pass_index = 0; pass_index < m_graphics_passes.size() - 1; pass_index++) {
+        m_graphics_passes[pass_index]->m_next_pass = m_graphics_passes[pass_index + 1];
+    }
 }
 
 void RenderGraph::fill_graphics_pass_rendering_info(GraphicsPass &pass) {
