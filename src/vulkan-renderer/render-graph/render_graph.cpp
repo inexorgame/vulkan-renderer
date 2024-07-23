@@ -14,8 +14,9 @@ RenderGraph::RenderGraph(Device &device)
     : m_device(device), m_graphics_pipeline_builder(device), m_descriptor_set_layout_builder(device),
       m_descriptor_set_allocator(m_device), m_write_descriptor_set_builder(m_device) {}
 
-void RenderGraph::add_graphics_pass(OnCreateGraphicsPass on_pass_create) {
-    m_graphics_pass_create_functions.emplace_back(std::move(on_pass_create));
+std::weak_ptr<GraphicsPass> RenderGraph::add_graphics_pass(std::shared_ptr<GraphicsPass> graphics_pass) {
+    m_graphics_passes.emplace_back(std::move(graphics_pass));
+    return m_graphics_passes.back();
 }
 
 void RenderGraph::add_graphics_pipeline(OnCreateGraphicsPipeline on_pipeline_create) {
@@ -123,11 +124,7 @@ void RenderGraph::create_descriptor_set_layouts() {
 }
 
 void RenderGraph::create_graphics_passes() {
-    m_graphics_passes.clear();
-    m_graphics_passes.reserve(m_graphics_pass_create_functions.size());
-    for (const auto &create_func : m_graphics_pass_create_functions) {
-        m_graphics_passes.emplace_back(create_func(m_graphics_pass_builder));
-    }
+    // TODO: Implement me
 }
 
 void RenderGraph::create_graphics_pipelines() {
@@ -138,48 +135,45 @@ void RenderGraph::create_graphics_pipelines() {
 }
 
 void RenderGraph::determine_pass_order() {
-    std::stack<std::shared_ptr<GraphicsPass>> stack;
+    // Pop elements from the stack to get the correct order
+    std::vector<std::shared_ptr<GraphicsPass>> ordered_passes;
     std::unordered_map<std::shared_ptr<GraphicsPass>, bool> visited;
 
+    // Lambda function for DFS
     std::function<void(const std::shared_ptr<GraphicsPass> &)> dfs = [&](const std::shared_ptr<GraphicsPass> &pass) {
-        // Mark the node as visited
+        // If the pass has already been visited, return
         if (visited[pass]) {
             return;
         }
 
+        // Mark the pass as visited
         visited[pass] = true;
-        // Visit all the nodes connected by "reads"
+
+        // Visit all passes that this pass reads from
         for (const auto &weak_read_pass : pass->m_graphics_pass_reads) {
             if (auto read_pass = weak_read_pass.lock()) {
-                if (!visited[read_pass]) {
-                    dfs(read_pass);
-                }
+                dfs(read_pass);
             }
         }
-        // Push the node onto the stack
-        stack.push(pass);
+
+        // All dependencies of this pass have been visited, now push this pass onto the stack
+        ordered_passes.push_back(pass);
     };
-    // Initialize visited map
+
+    // Initialize visited map for all passes
     for (const auto &pass : m_graphics_passes) {
         visited[pass] = false;
     }
-    // Perform DFS from each unvisited node
+    // Perform DFS from each pass
     for (const auto &pass : m_graphics_passes) {
         if (!visited[pass]) {
             dfs(pass);
         }
     }
-    // Pop elements from the stack to get the order
-    std::vector<std::shared_ptr<GraphicsPass>> ordered_passes;
-    while (!stack.empty()) {
-        ordered_passes.push_back(stack.top());
-        stack.pop();
-    }
-
     // Update the member variable with the sorted passes
     m_graphics_passes = std::move(ordered_passes);
 
-    // Let each graphics pass know aout its next pass, except the last one which has none
+    // Let each graphics pass know about its next pass, except the last one which has none
     for (std::size_t pass_index = 0; pass_index < m_graphics_passes.size() - 1; pass_index++) {
         m_graphics_passes[pass_index]->m_next_pass = m_graphics_passes[pass_index + 1];
     }
@@ -445,9 +439,6 @@ void RenderGraph::update_write_descriptor_sets() {
 }
 
 void RenderGraph::validate_render_graph() {
-    if (m_graphics_pass_create_functions.empty()) {
-        throw std::runtime_error("[RenderGraph::validate_render_graph] Error: No graphics passes in rendergraph!");
-    }
     if (m_pipeline_create_functions.empty()) {
         throw std::runtime_error("[RenderGraph::validate_render_graph] Error: No graphics pipelines in rendergraph!");
     }

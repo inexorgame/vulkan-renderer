@@ -85,10 +85,6 @@ private:
 
     /// The graphics pass builder of the rendergraph
     GraphicsPassBuilder m_graphics_pass_builder{};
-    /// In these callback functions, the graphics passes will be created
-    using OnCreateGraphicsPass = std::function<std::shared_ptr<GraphicsPass>(GraphicsPassBuilder &)>;
-    /// The graphics pass create functions
-    std::vector<OnCreateGraphicsPass> m_graphics_pass_create_functions;
     /// The graphics passes used in the rendergraph
     std::vector<std::shared_ptr<GraphicsPass>> m_graphics_passes;
 
@@ -323,9 +319,9 @@ public:
     RenderGraph &operator=(RenderGraph &&) = delete;
 
     /// Add a new graphics pass to the rendergraph
-    /// @param on_pass_create A callable to create the graphics pass using GraphicsPassBuilder
-    /// @note Move semantics is used to std::move on_pass_create
-    void add_graphics_pass(OnCreateGraphicsPass on_pass_create);
+    /// @aram graphics_pass The graphics pass that was created
+    /// @return A std::weak_ptr to the graphics pass that was added
+    [[nodiscard]] std::weak_ptr<GraphicsPass> add_graphics_pass(std::shared_ptr<GraphicsPass> graphics_pass);
 
     /// Add a new graphics pipeline to the rendergraph
     /// @param on_pipeline_create A function to create the graphics pipeline using GraphicsPipelineBuilder
@@ -375,6 +371,11 @@ public:
 
     /// Compile the rendergraph
     void compile();
+
+    /// Return the rendergraph's graphics pass builder instance
+    GraphicsPassBuilder &get_graphics_pass_builder() {
+        return m_graphics_pass_builder;
+    }
 
     /// Render a frame
     void render();

@@ -47,6 +47,8 @@ class ImGuiRenderer {
     std::weak_ptr<Texture> m_imgui_texture;
     std::shared_ptr<GraphicsPipeline> m_imgui_pipeline;
 
+    std::weak_ptr<GraphicsPass> m_imgui_pass;
+
     // This is the color attachment we will write to
     std::weak_ptr<Swapchain> m_swapchain;
     // This is the previous pass we read from

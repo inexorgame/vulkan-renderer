@@ -143,11 +143,9 @@ ImGuiRenderer::ImGuiRenderer(const Device &device,
         return m_imgui_pipeline;
     });
 
-    graph->add_graphics_pass([&](render_graph::GraphicsPassBuilder &builder) {
-        // NOTE: ImGui does not write to depth buffer and it reads from octree pass (previous pass)
-        // NOTE: We directly return the ImGui graphics pass and do not store it in here because it's the last pass (for
-        // now) and there is no reads_from function which would need it.
-        return builder.writes_to(m_swapchain)
+    m_imgui_pass = graph->add_graphics_pass(
+        graph->get_graphics_pass_builder()
+            .writes_to(m_swapchain)
             .conditionally_reads_from(m_previous_pass, !m_previous_pass.expired())
             .set_on_record([&](const wrapper::commands::CommandBuffer &cmd_buf) {
                 ImDrawData *draw_data = ImGui::GetDrawData();
@@ -186,8 +184,7 @@ ImGuiRenderer::ImGuiRenderer(const Device &device,
                     vertex_offset += cmd_list->VtxBuffer.Size;
                 }
             })
-            .build("ImGui", render_graph::DebugLabelColor::BLUE);
-    });
+            .build("ImGui", render_graph::DebugLabelColor::BLUE));
 }
 
 ImGuiRenderer::ImGuiRenderer(ImGuiRenderer &&other) noexcept {

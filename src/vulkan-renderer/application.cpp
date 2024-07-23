@@ -518,32 +518,30 @@ void Application::setup_render_graph() {
         return m_octree_pipeline;
     });
 
-    m_render_graph->add_graphics_pass([&](render_graph::GraphicsPassBuilder &builder) {
-        // NOTE: Octree pass is the first pass, so it does not declare any reads_from()
-        m_octree_pass = builder
-                            // TODO: Helper function for clear values
-                            .writes_to(m_swapchain,
-                                       VkClearValue{
-                                           .color = {1.0f, 1.0f, 1.0f, 1.0f},
-                                       })
-                            // TODO: Helper function for clear values
-                            .writes_to(m_depth_attachment,
-                                       VkClearValue{
-                                           .depthStencil =
-                                               VkClearDepthStencilValue{
-                                                   .depth = 1.0f,
-                                               },
-                                       })
-                            .set_on_record([&](const wrapper::commands::CommandBuffer &cmd_buf) {
-                                cmd_buf.bind_pipeline(m_octree_pipeline)
-                                    .bind_descriptor_set(m_descriptor_set, m_octree_pipeline)
-                                    .bind_vertex_buffer(m_vertex_buffer)
-                                    .bind_index_buffer(m_index_buffer)
-                                    .draw_indexed(static_cast<std::uint32_t>(m_octree_indices.size()));
-                            })
-                            .build("Octree", render_graph::DebugLabelColor::RED);
-        return m_octree_pass;
-    });
+    m_octree_pass = m_render_graph->add_graphics_pass(
+        m_render_graph
+            ->get_graphics_pass_builder()
+            // TODO: Helper function for clear values
+            .writes_to(m_swapchain,
+                       VkClearValue{
+                           .color = {1.0f, 1.0f, 1.0f, 1.0f},
+                       })
+            // TODO: Helper function for clear values
+            .writes_to(m_depth_attachment,
+                       VkClearValue{
+                           .depthStencil =
+                               VkClearDepthStencilValue{
+                                   .depth = 1.0f,
+                               },
+                       })
+            .set_on_record([&](const wrapper::commands::CommandBuffer &cmd_buf) {
+                cmd_buf.bind_pipeline(m_octree_pipeline)
+                    .bind_descriptor_set(m_descriptor_set, m_octree_pipeline)
+                    .bind_vertex_buffer(m_vertex_buffer)
+                    .bind_index_buffer(m_index_buffer)
+                    .draw_indexed(static_cast<std::uint32_t>(m_octree_indices.size()));
+            })
+            .build("Octree", render_graph::DebugLabelColor::RED));
 
     // TODO: We don't need to recreate the imgui overlay when swapchain is recreated, use a .recreate() method instead?
     // TODO: Decouple ImGuiRenderer form ImGuiLoader
