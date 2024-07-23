@@ -31,7 +31,8 @@ ImGuiRenderer::ImGuiRenderer(const Device &device,
     // NOTE: It's valid for previous_pass to be an invalid pointer (in that case there is no previous pass!)
 
     spdlog::trace("Creating ImGui context");
-    ImGui::CreateContext();
+    m_imgui_context = ImGui::CreateContext();
+    ImGui::SetCurrentContext(m_imgui_context);
 
     spdlog::trace("Loading ImGui font texture");
     load_font_data_from_file();
@@ -192,7 +193,8 @@ ImGuiRenderer::ImGuiRenderer(ImGuiRenderer &&other) noexcept {
 }
 
 ImGuiRenderer::~ImGuiRenderer() {
-    ImGui::DestroyContext();
+    ImGui::DestroyContext(m_imgui_context);
+    m_imgui_context = nullptr;
 }
 
 void ImGuiRenderer::load_font_data_from_file() {

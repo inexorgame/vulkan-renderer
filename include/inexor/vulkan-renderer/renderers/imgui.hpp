@@ -65,6 +65,8 @@ class ImGuiRenderer {
     std::vector<std::uint32_t> m_index_data;
     std::vector<ImDrawVert> m_vertex_data;
 
+    ImGuiContext *m_imgui_context{nullptr};
+
     unsigned char *m_font_texture_data{nullptr};
     int m_font_texture_width{0};
     int m_font_texture_height{0};

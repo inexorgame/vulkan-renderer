@@ -331,7 +331,6 @@ void Application::mouse_button_callback(GLFWwindow * /*window*/, int button, int
     if (button < 0 || button > GLFW_MOUSE_BUTTON_LAST) {
         return;
     }
-
     switch (action) {
     case GLFW_PRESS:
         m_input_data->press_mouse_button(button);
@@ -375,11 +374,7 @@ void Application::recreate_swapchain() {
     glfwGetFramebufferSize(m_window->get(), &wnd_width, &wnd_height);
 
     m_swapchain->setup(wnd_width, wnd_height, m_vsync_enabled);
-
-    // TODO: Unified API style like this: m_device->create_rendergraph(m_swapchain);
-    // TODO: Maybe make RenderGraph constructor (and others) private and only allow device wrapper to call it?
     m_render_graph = std::make_unique<render_graph::RenderGraph>(*m_device);
-
     setup_render_graph();
 }
 
