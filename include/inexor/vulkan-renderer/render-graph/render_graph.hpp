@@ -262,9 +262,6 @@ private:
     /// Create the descriptor set layouts
     void create_descriptor_set_layouts();
 
-    /// Create the graphics passes
-    void create_graphics_passes();
-
     /// Create the graphics pipelines
     void create_graphics_pipelines();
 
@@ -301,9 +298,6 @@ private:
     /// @note This function must only be called once during rendergraph compilation, not for every frame!
     void update_write_descriptor_sets();
 
-    /// Make sure all required resources are specified so rendergraph is ready to be compiled
-    void validate_render_graph();
-
 public:
     /// Default constructor
     /// @note device and swapchain are not taken as a const reference because rendergraph needs to modify both
@@ -319,9 +313,9 @@ public:
     RenderGraph &operator=(RenderGraph &&) = delete;
 
     /// Add a new graphics pass to the rendergraph
-    /// @aram graphics_pass The graphics pass that was created
+    /// @aram pass The graphics pass that was created
     /// @return A std::weak_ptr to the graphics pass that was added
-    [[nodiscard]] std::weak_ptr<GraphicsPass> add_graphics_pass(std::shared_ptr<GraphicsPass> graphics_pass);
+    [[nodiscard]] std::weak_ptr<GraphicsPass> add_graphics_pass(std::shared_ptr<GraphicsPass> pass);
 
     /// Add a new graphics pipeline to the rendergraph
     /// @param on_pipeline_create A function to create the graphics pipeline using GraphicsPipelineBuilder
@@ -330,11 +324,10 @@ public:
 
     /// Add an buffer to rendergraph
     /// @param name The name of the buffer
-    /// @param buffer_type The type of the buffer
+    /// @param type The type of the buffer
     /// @param on_update The update function of the index buffer
     /// @return A weak pointer to the buffer resource that was created
-    [[nodiscard]] std::weak_ptr<Buffer>
-    add_buffer(std::string buffer_name, BufferType buffer_type, std::function<void()> on_update);
+    [[nodiscard]] std::weak_ptr<Buffer> add_buffer(std::string name, BufferType type, std::function<void()> on_update);
 
     /// Add a descriptor to rendergraph
     /// @note This function is of type void because it does not store anything that is created in those callback
@@ -350,7 +343,7 @@ public:
                                  OnBuildWriteDescriptorSets on_update_descriptor_set);
 
     /// Add a texture which will be initialized externally (not inside of rendergraph)
-    /// @param texture_name The name of the texture
+    /// @param name The name of the texture
     /// @param usage The usage of the texture inside of rendergraph
     /// @param format The format of the texture
     /// @param width The width of the texture
@@ -360,7 +353,7 @@ public:
     /// @param m_on_check_for_updates The texture update function (an empty lambda by default)
     /// @return A weak pointer to the texture that was created
     [[nodiscard]] std::weak_ptr<Texture> add_texture(
-        std::string texture_name,
+        std::string name,
         TextureUsage usage,
         VkFormat format,
         std::uint32_t width,

@@ -14,8 +14,8 @@ RenderGraph::RenderGraph(Device &device)
     : m_device(device), m_graphics_pipeline_builder(device), m_descriptor_set_layout_builder(device),
       m_descriptor_set_allocator(m_device), m_write_descriptor_set_builder(m_device) {}
 
-std::weak_ptr<GraphicsPass> RenderGraph::add_graphics_pass(std::shared_ptr<GraphicsPass> graphics_pass) {
-    m_graphics_passes.emplace_back(std::move(graphics_pass));
+std::weak_ptr<GraphicsPass> RenderGraph::add_graphics_pass(std::shared_ptr<GraphicsPass> pass) {
+    m_graphics_passes.emplace_back(std::move(pass));
     return m_graphics_passes.back();
 }
 
@@ -24,9 +24,8 @@ void RenderGraph::add_graphics_pipeline(OnCreateGraphicsPipeline on_pipeline_cre
 }
 
 std::weak_ptr<Buffer>
-RenderGraph::add_buffer(std::string buffer_name, const BufferType buffer_type, std::function<void()> on_update) {
-    m_buffers.emplace_back(
-        std::make_shared<Buffer>(m_device, std::move(buffer_name), buffer_type, std::move(on_update)));
+RenderGraph::add_buffer(std::string name, const BufferType type, std::function<void()> on_update) {
+    m_buffers.emplace_back(std::make_shared<Buffer>(m_device, std::move(name), type, std::move(on_update)));
     return m_buffers.back();
 }
 
@@ -44,7 +43,7 @@ void RenderGraph::add_resource_descriptor(OnBuildDescriptorSetLayout on_build_de
                                         std::move(on_allocate_descriptor_set), std::move(on_update_descriptor_set));
 }
 
-std::weak_ptr<Texture> RenderGraph::add_texture(std::string texture_name,
+std::weak_ptr<Texture> RenderGraph::add_texture(std::string name,
                                                 const TextureUsage usage,
                                                 const VkFormat format,
                                                 const std::uint32_t width,
@@ -52,8 +51,8 @@ std::weak_ptr<Texture> RenderGraph::add_texture(std::string texture_name,
                                                 const std::uint32_t channels,
                                                 const VkSampleCountFlagBits sample_count,
                                                 std::function<void()> m_on_check_for_updates) {
-    m_textures.emplace_back(std::make_shared<Texture>(m_device, std::move(texture_name), usage, format, width, height,
-                                                      channels, sample_count, std::move(m_on_check_for_updates)));
+    m_textures.emplace_back(std::make_shared<Texture>(m_device, std::move(name), usage, format, width, height, channels,
+                                                      sample_count, std::move(m_on_check_for_updates)));
     return m_textures.back();
 }
 
@@ -104,16 +103,14 @@ void RenderGraph::collect_swapchain_image_available_semaphores() {
 
 void RenderGraph::compile() {
     // TODO: What needs to be re-done when swapchain is recreated?
-    validate_render_graph();
+    check_for_cycles();
+    determine_pass_order();
     update_buffers();
     update_textures();
     create_descriptor_set_layouts();
     allocate_descriptor_sets();
-    create_graphics_passes();
     create_graphics_pipelines();
     collect_swapchain_image_available_semaphores();
-    check_for_cycles();
-    determine_pass_order();
 }
 
 void RenderGraph::create_descriptor_set_layouts() {
@@ -121,10 +118,6 @@ void RenderGraph::create_descriptor_set_layouts() {
         // Call descriptor set layout create function for each descriptor
         std::invoke(std::get<0>(descriptor), m_descriptor_set_layout_builder);
     }
-}
-
-void RenderGraph::create_graphics_passes() {
-    // TODO: Implement me
 }
 
 void RenderGraph::create_graphics_pipelines() {
@@ -139,13 +132,15 @@ void RenderGraph::determine_pass_order() {
     std::vector<std::shared_ptr<GraphicsPass>> ordered_passes;
     std::unordered_map<std::shared_ptr<GraphicsPass>, bool> visited;
 
+    // Reserve memory for the sorted graphics passes
+    ordered_passes.reserve(m_graphics_passes.size());
+
     // Lambda function for DFS
     std::function<void(const std::shared_ptr<GraphicsPass> &)> dfs = [&](const std::shared_ptr<GraphicsPass> &pass) {
         // If the pass has already been visited, return
         if (visited[pass]) {
             return;
         }
-
         // Mark the pass as visited
         visited[pass] = true;
 
@@ -155,7 +150,6 @@ void RenderGraph::determine_pass_order() {
                 dfs(read_pass);
             }
         }
-
         // All dependencies of this pass have been visited, now push this pass onto the stack
         ordered_passes.push_back(pass);
     };
@@ -436,12 +430,6 @@ void RenderGraph::update_write_descriptor_sets() {
     // NOTE: We batch all descriptor set updates into one function call for optimal performance
     vkUpdateDescriptorSets(m_device.device(), static_cast<std::uint32_t>(m_write_descriptor_sets.size()),
                            m_write_descriptor_sets.data(), 0, nullptr);
-}
-
-void RenderGraph::validate_render_graph() {
-    if (m_pipeline_create_functions.empty()) {
-        throw std::runtime_error("[RenderGraph::validate_render_graph] Error: No graphics pipelines in rendergraph!");
-    }
 }
 
 } // namespace inexor::vulkan_renderer::render_graph
