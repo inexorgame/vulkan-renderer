@@ -9,6 +9,11 @@
 #include <span>
 #include <string>
 
+namespace inexor::vulkan_renderer::wrapper {
+// Forward declarations
+class Swapchain;
+} // namespace inexor::vulkan_renderer::wrapper
+
 namespace inexor::vulkan_renderer::wrapper::commands {
 // Forward declarations
 class CommandBuffer;
@@ -46,6 +51,7 @@ enum class DebugLabelColor {
 // Using declarations
 using commands::CommandBuffer;
 using commands::CommandPool;
+using wrapper::Swapchain;
 
 // Forward declaration
 class Instance;
@@ -65,6 +71,11 @@ struct DeviceInfo {
 /// A RAII wrapper class for VkDevice, VkPhysicalDevice and VkQueues
 /// @note There is no method ``is_layer_supported`` in this wrapper class because device layers are deprecated
 class Device {
+    friend class CommandBuffer;
+    friend class CommandPool;
+    friend class Swapchain;
+
+private:
     VkDevice m_device{VK_NULL_HANDLE};
     VkPhysicalDevice m_physical_device{VK_NULL_HANDLE};
     VmaAllocator m_allocator{VK_NULL_HANDLE};
@@ -150,34 +161,18 @@ public:
     Device(const Device &) = delete;
     // TODO: Implement me!
     Device(Device &&) noexcept;
-
     ~Device();
 
     Device &operator=(const Device &) = delete;
     Device &operator=(Device &&) = delete;
 
+    [[nodiscard]] VmaAllocator allocator() const {
+        return m_allocator;
+    }
+
     [[nodiscard]] VkDevice device() const {
         return m_device;
     }
-
-    /// Call vkGetPhysicalDeviceSurfaceCapabilitiesKHR
-    /// @param surface The window surface
-    /// @exception VulkanException vkGetPhysicalDeviceSurfaceCapabilitiesKHR call failed
-    /// @return The surface capabilities
-    [[nodiscard]] VkSurfaceCapabilitiesKHR get_surface_capabilities(VkSurfaceKHR surface) const;
-
-    /// Check if a format supports a feature for images created with ``VK_IMAGE_TILING_OPTIMAL``
-    /// @param format The format
-    /// @param feature The requested format feature
-    /// @return ``true`` if the format feature is supported
-    [[nodiscard]] bool format_supports_feature(VkFormat format, VkFormatFeatureFlagBits feature) const;
-
-    /// Call vkGetPhysicalDeviceSurfaceSupportKHR
-    /// @param surface The window surface
-    /// @param queue_family_index The queue family index
-    /// @exception VulkanException vkGetPhysicalDeviceSurfaceSupportKHR call failed
-    /// @return ``true`` if presentation is supported
-    [[nodiscard]] bool is_presentation_supported(VkSurfaceKHR surface, std::uint32_t queue_family_index) const;
 
     /// A wrapper method for beginning, ending and submitting command buffers. This method calls the request method for
     /// the given command pool, begins the command buffer, executes the lambda, ends recording the command buffer,
@@ -201,60 +196,26 @@ public:
     std::optional<std::uint32_t> find_queue_family_index_if(
         const std::function<bool(std::uint32_t index, const VkQueueFamilyProperties &)> &criteria_lambda);
 
-    /// Returns the maximum sample count usable by the platform
-    [[nodiscard]] VkSampleCountFlagBits get_max_usable_sample_count() const;
-
-    [[nodiscard]] VkPhysicalDevice physical_device() const {
-        return m_physical_device;
-    }
-
-    [[nodiscard]] VmaAllocator allocator() const {
-        return m_allocator;
-    }
-
-    /// @note Enabled features = required features + optional features which are supported
-    [[nodiscard]] const VkPhysicalDeviceFeatures &enabled_device_features() const {
-        return m_enabled_features;
-    }
+    /// Call vkGetPhysicalDeviceSurfaceCapabilitiesKHR
+    /// @param surface The window surface
+    /// @exception VulkanException vkGetPhysicalDeviceSurfaceCapabilitiesKHR call failed
+    /// @return The surface capabilities
+    [[nodiscard]] VkSurfaceCapabilitiesKHR get_surface_capabilities(VkSurfaceKHR surface) const;
 
     [[nodiscard]] const std::string &gpu_name() const {
         return m_gpu_name;
     }
 
-    [[nodiscard]] VkQueue compute_queue() const {
-        return m_compute_queue;
-    }
+    /// Call vkGetPhysicalDeviceSurfaceSupportKHR
+    /// @param surface The window surface
+    /// @param queue_family_index The queue family index
+    /// @exception VulkanException vkGetPhysicalDeviceSurfaceSupportKHR call failed
+    /// @return ``true`` if presentation is supported
+    [[nodiscard]] bool is_presentation_supported(VkSurfaceKHR surface, std::uint32_t queue_family_index) const;
 
-    [[nodiscard]] VkQueue graphics_queue() const {
-        return m_graphics_queue;
-    }
-
-    [[nodiscard]] VkQueue present_queue() const {
-        return m_present_queue;
-    }
-
-    [[nodiscard]] VkQueue transfer_queue() const {
-        return m_transfer_queue;
-    }
-
-    [[nodiscard]] std::uint32_t compute_queue_family_index() const {
-        return m_compute_queue_family_index;
-    }
-
-    [[nodiscard]] std::uint32_t graphics_queue_family_index() const {
-        return m_graphics_queue_family_index;
-    }
-
-    [[nodiscard]] std::uint32_t present_queue_family_index() const {
-        return m_present_queue_family_index;
-    }
-
-    [[nodiscard]] std::uint32_t transfer_queue_family_index() const {
-        return m_transfer_queue_family_index;
-    }
-
-    [[nodiscard]] VkPhysicalDeviceProperties physical_device_properties() const noexcept {
-        return m_properties;
+    /// Returns the maximum sample count usable by the platform
+    [[nodiscard]] VkSampleCountFlagBits max_usable_sample_count() const {
+        return m_max_usable_sample_count;
     }
 
     /// Set the internal debug name of a Vulkan object
@@ -269,20 +230,16 @@ public:
                                            reinterpret_cast<std::uint64_t>(vk_object), name);
     }
 
-    /// Check if a surface supports a certain image usage
+    /// Check if a VkSurfaceKHR supports a certain image usage
     /// @param surface The window surface
     /// @param usage The requested image usage
     /// @return ``true`` if the format feature is supported
     [[nodiscard]] bool surface_supports_usage(VkSurfaceKHR surface, VkImageUsageFlagBits usage) const;
 
-    /// Call vkDeviceWaitIdle
+    /// Call vkDeviceWaitIdle or vkQueueWaitIdle if a VkQueue is specified as parameter
+    /// @param A queue to wait on (``VK_NULL_HANDLE`` by default)
     /// @exception VulkanException vkDeviceWaitIdle call failed
-    void device_wait_idle() const;
-
-    /// Call vkQueueWaitIdle
-    /// @param queue The queue to wait for
-    /// @exception VulkanException vkQueueWaitIdle call failed
-    void queue_wait_idle(VkQueue queue) const;
+    void wait_idle(VkQueue queue = VK_NULL_HANDLE) const;
 };
 
 } // namespace inexor::vulkan_renderer::wrapper

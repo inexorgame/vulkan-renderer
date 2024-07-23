@@ -16,14 +16,14 @@ CommandPool::CommandPool(const Device &device, const VkQueueFlagBits queue_type,
     auto get_queue_family_index = [&]() {
         switch (queue_type) {
         case VK_QUEUE_TRANSFER_BIT: {
-            return m_device.transfer_queue_family_index();
+            return m_device.m_transfer_queue_family_index;
         }
         case VK_QUEUE_COMPUTE_BIT: {
-            return m_device.compute_queue_family_index();
+            return m_device.m_compute_queue_family_index;
         }
         default: {
             // VK_QUEUE_GRAPHICS_BIT and rest
-            return m_device.graphics_queue_family_index();
+            return m_device.m_graphics_queue_family_index;
         }
         }
     };

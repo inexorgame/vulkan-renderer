@@ -210,7 +210,7 @@ void Swapchain::present() {
         .pSwapchains = &m_swapchain,
         .pImageIndices = &m_img_index,
     });
-    if (const auto result = vkQueuePresentKHR(m_device.present_queue(), &present_info); result != VK_SUCCESS) {
+    if (const auto result = vkQueuePresentKHR(m_device.m_present_queue, &present_info); result != VK_SUCCESS) {
         if (result == VK_SUBOPTIMAL_KHR || result == VK_ERROR_OUT_OF_DATE_KHR) {
             // We need to recreate the swapchain
             setup(m_extent.width, m_extent.height, m_vsync_enabled);
@@ -223,7 +223,7 @@ void Swapchain::present() {
 
 void Swapchain::setup(const std::uint32_t width, const std::uint32_t height, const bool vsync_enabled) {
     const auto caps = m_device.get_surface_capabilities(m_surface);
-    m_surface_format = choose_surface_format(vk_tools::get_surface_formats(m_device.physical_device(), m_surface));
+    m_surface_format = choose_surface_format(vk_tools::get_surface_formats(m_device.m_physical_device, m_surface));
     const VkExtent2D requested_extent{.width = width, .height = height};
 
     static const std::vector<VkPresentModeKHR> default_present_mode_priorities{
@@ -261,7 +261,7 @@ void Swapchain::setup(const std::uint32_t width, const std::uint32_t height, con
                             ? VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR
                             : caps.currentTransform,
         .compositeAlpha = composite_alpha.value(),
-        .presentMode = choose_present_mode(vk_tools::get_surface_present_modes(m_device.physical_device(), m_surface),
+        .presentMode = choose_present_mode(vk_tools::get_surface_present_modes(m_device.m_physical_device, m_surface),
                                            default_present_mode_priorities, vsync_enabled),
         .clipped = VK_TRUE,
         .oldSwapchain = old_swapchain,

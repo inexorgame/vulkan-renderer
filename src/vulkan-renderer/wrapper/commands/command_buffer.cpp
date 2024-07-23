@@ -534,14 +534,14 @@ void CommandBuffer::submit_and_wait(const VkQueueFlagBits queue_type,
     auto get_queue = [&]() {
         switch (queue_type) {
         case VK_QUEUE_TRANSFER_BIT: {
-            return m_device.transfer_queue();
+            return m_device.m_transfer_queue;
         }
         case VK_QUEUE_COMPUTE_BIT: {
-            return m_device.compute_queue();
+            return m_device.m_compute_queue;
         }
         default: {
             // VK_QUEUE_GRAPHICS_BIT and rest
-            return m_device.graphics_queue();
+            return m_device.m_graphics_queue;
         }
         }
     };
