@@ -73,7 +73,6 @@ Instance::Instance(const std::string &application_name,
                    const std::string &engine_name,
                    const std::uint32_t application_version,
                    const std::uint32_t engine_version,
-                   bool enable_validation_layers,
                    const PFN_vkDebugUtilsMessengerCallbackEXT debug_callback,
                    const std::vector<std::string> &requested_instance_extensions,
                    const std::vector<std::string> &requested_instance_layers) {
@@ -178,20 +177,9 @@ Instance::Instance(const std::string &application_name,
         }
     }
 
-    std::vector<const char *> instance_layers_wishlist{};
-
-#ifndef NDEBUG
-    // We can't stress enough how important it is to use validation layers during development!
-    // Validation layers in Vulkan are in-depth error checks for the application's use of the API.
-    // They check for a multitude of possible errors. They can be disabled easily for releases.
-    // Understand that in contrary to other APIs, in Vulkan API the driver provides no error checks
-    // for you! If you use Vulkan API incorrectly, your application will likely just crash.
-    // To avoid this, you must use validation layers during development!
-    if (enable_validation_layers) {
-        instance_layers_wishlist.push_back("VK_LAYER_KHRONOS_validation");
-    }
-
-#endif
+    std::vector<const char *> instance_layers_wishlist{
+        "VK_LAYER_KHRONOS_validation",
+    };
 
     // Add requested instance layers to wishlist.
     for (const auto &instance_layer : requested_instance_layers) {
@@ -222,16 +210,16 @@ Instance::Instance(const std::string &application_name,
     });
 
     // Note that an internal debug name will be assigned to the instance inside of the device wrapper
-    if (const auto result = vkCreateInstance(&instance_ci, nullptr, &m_inst); result != VK_SUCCESS) {
+    if (const auto result = vkCreateInstance(&instance_ci, nullptr, &m_instance); result != VK_SUCCESS) {
         throw VulkanException("Error: vkCreateInstance failed!", result);
     }
 
-    volkLoadInstanceOnly(m_inst);
+    volkLoadInstanceOnly(m_instance);
 
     // Note that we can only call is_extension_supported afer volkLoadInstanceOnly!
     if (!is_extension_supported(VK_EXT_DEBUG_UTILS_EXTENSION_NAME)) {
         // Don't forget to destroy the instance before throwing the exception!
-        vkDestroyInstance(m_inst, nullptr);
+        vkDestroyInstance(m_instance, nullptr);
         throw std::runtime_error("Error: VK_EXT_DEBUG_UTILS_EXTENSION_NAME is not supported!");
     }
 
@@ -245,10 +233,10 @@ Instance::Instance(const std::string &application_name,
         .pUserData = nullptr,
     });
 
-    if (const auto result = vkCreateDebugUtilsMessengerEXT(m_inst, &dbg_messenger_ci, nullptr, &m_debug_callback);
+    if (const auto result = vkCreateDebugUtilsMessengerEXT(m_instance, &dbg_messenger_ci, nullptr, &m_debug_callback);
         result != VK_SUCCESS) {
         // Don't forget to destroy the instance before throwing the exception!
-        vkDestroyInstance(m_inst, nullptr);
+        vkDestroyInstance(m_instance, nullptr);
         throw VulkanException(
             "Error: Could not create Vulkan validation layer debug callback! (vkCreateDebugUtilsMessengerEXT failed!)",
             result);
@@ -256,13 +244,13 @@ Instance::Instance(const std::string &application_name,
 }
 
 Instance::Instance(Instance &&other) noexcept {
-    m_inst = std::exchange(other.m_inst, nullptr);
+    m_instance = std::exchange(other.m_instance, nullptr);
     m_debug_callback = std::exchange(other.m_debug_callback, nullptr);
 }
 
 Instance::~Instance() {
-    vkDestroyDebugUtilsMessengerEXT(m_inst, m_debug_callback, nullptr);
-    vkDestroyInstance(m_inst, nullptr);
+    vkDestroyDebugUtilsMessengerEXT(m_instance, m_debug_callback, nullptr);
+    vkDestroyInstance(m_instance, nullptr);
 }
 
 } // namespace inexor::vulkan_renderer::wrapper

@@ -40,6 +40,7 @@ VKAPI_ATTR VkBool32 VKAPI_CALL debug_messenger_callback(const VkDebugUtilsMessag
     } else if (severity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT) {
         m_validation_log->critical("{}", data->pMessage);
     }
+    // TODO: Implement stop on validation error
     return false;
 }
 
@@ -56,37 +57,20 @@ Application::Application(int argc, char **argv) {
 
     load_toml_configuration_file("configuration/renderer.toml");
 
-    // If the user specified command line argument "--no-validation", the Khronos validation instance layer will be
-    // disabled. For debug builds, this is not advisable! Always use validation layers during development!
-    const auto disable_validation = cla_parser.arg<bool>("--no-validation");
-    if (disable_validation.value_or(false)) {
-        spdlog::warn("--no-validation specified, disabling validation layers");
-        m_enable_validation_layers = false;
-    }
-
-    m_window = std::make_unique<wrapper::Window>(m_wnd_title, m_wnd_width, m_wnd_height, true, true, m_wnd_mode);
-
     spdlog::trace("Creating Vulkan instance");
 
+    m_window = std::make_unique<Window>(m_wnd_title, m_wnd_width, m_wnd_height, true, true, m_wnd_mode);
+
     // Management of VkDebugUtilsMessengerCallbackDataEXT is part of the instance wrapper class
-    m_instance = std::make_unique<wrapper::Instance>(
+    m_instance = std::make_unique<Instance>(
         APP_NAME, ENGINE_NAME, VK_MAKE_API_VERSION(0, APP_VERSION[0], APP_VERSION[1], APP_VERSION[2]),
-        VK_MAKE_API_VERSION(0, ENGINE_VERSION[0], ENGINE_VERSION[1], ENGINE_VERSION[2]), m_enable_validation_layers,
-        debug_messenger_callback);
+        VK_MAKE_API_VERSION(0, ENGINE_VERSION[0], ENGINE_VERSION[1], ENGINE_VERSION[2]), debug_messenger_callback);
 
-    m_input_data = std::make_unique<input::KeyboardMouseInputData>();
+    m_surface = std::make_shared<Surface>(m_instance->instance(), m_window->window());
 
-    m_surface = std::make_unique<wrapper::WindowSurface>(m_instance->instance(), m_window->get());
+    m_input_data = std::make_unique<KeyboardMouseInputData>();
 
     setup_window_and_input_callbacks();
-
-#ifndef NDEBUG
-    if (cla_parser.arg<bool>("--stop-on-validation-message").value_or(false)) {
-        spdlog::warn("--stop-on-validation-message specified. Application will call a breakpoint after reporting a "
-                     "validation layer message");
-        m_stop_on_validation_message = true;
-    }
-#endif
 
     spdlog::trace("Creating window surface");
 
@@ -106,59 +90,44 @@ Application::Application(int argc, char **argv) {
         m_vsync_enabled = true;
     } else {
         spdlog::trace("V-sync disabled!");
-        m_vsync_enabled = false;
-    }
-
-    bool use_distinct_data_transfer_queue = true;
-
-    // Ignore distinct data transfer queue
-    const auto forbid_distinct_data_transfer_queue = cla_parser.arg<bool>("--no-separate-data-queue");
-    if (forbid_distinct_data_transfer_queue.value_or(false)) {
-        spdlog::warn("Command line argument --no-separate-data-queue specified");
-        spdlog::warn("This will force the application to avoid using a distinct queue for data transfer to GPU");
-        spdlog::warn("Performance loss might be a result of this!");
-        use_distinct_data_transfer_queue = false;
     }
 
     const auto physical_devices = vk_tools::get_physical_devices(m_instance->instance());
     if (preferred_graphics_card && *preferred_graphics_card >= physical_devices.size()) {
         spdlog::critical("GPU index {} out of range!", *preferred_graphics_card);
+
+        // TODO: Do not throw an exception
         throw std::runtime_error("Invalid GPU index");
     }
 
     const VkPhysicalDeviceFeatures required_features{
-        // Add required physical device features here
+        // Add required features here
+    };
+
+    std::vector<const char *> required_extensions{
+        VK_KHR_SWAPCHAIN_EXTENSION_NAME, // VK_KHR_swapchain
+    };
+
+    const VkPhysicalDeviceFeatures optional_features{
         .sampleRateShading = VK_TRUE,
         .samplerAnisotropy = VK_TRUE,
     };
 
-    const VkPhysicalDeviceFeatures optional_features{
-        // Add optional physical device features here
-        // TODO: Add callback on_device_feature_not_available and remove optional features
-        // Then, return true or false from the callback, indicating if you can run the app
-        // without this physical device feature being present.
-    };
-
-    // TODO: Also implement a callback for required extensions
-    std::vector<const char *> required_extensions{
-        // Since we want to draw on a window, we need the swapchain extension
-        VK_KHR_SWAPCHAIN_EXTENSION_NAME, // VK_KHR_swapchain
+    std::vector<const char *> optional_extensions{
+        // Add desired optional extensions here!
     };
 
     const VkPhysicalDevice physical_device =
         preferred_graphics_card ? physical_devices[*preferred_graphics_card]
-                                : wrapper::Device::pick_best_physical_device(*m_instance, m_surface->get(),
-                                                                             required_features, required_extensions);
+                                : Device::pick_best_physical_device(*m_instance, m_surface->surface(),
+                                                                    required_features, required_extensions);
 
     // TODO: Implement on_extension_unavailable and on_feature_unavailable callback
-    m_device =
-        std::make_unique<wrapper::Device>(*m_instance, m_surface->get(), use_distinct_data_transfer_queue,
-                                          physical_device, required_extensions, required_features, optional_features);
+    m_device = std::make_unique<Device>(*m_instance, m_surface->surface(), physical_device, required_extensions,
+                                        required_features, optional_extensions, optional_features);
 
-    // TODO: Replace ->get() methods with private fields and friend class declaration!
-    // TODO: API style like this: m_swapchain = m_device->create_swapchain(m_surface, m_window, m_vsync_enabled);
-    m_swapchain = std::make_unique<wrapper::Swapchain>(*m_device, "Default", m_surface->get(), m_window->width(),
-                                                       m_window->height(), m_vsync_enabled);
+    m_swapchain =
+        std::make_unique<Swapchain>(*m_device, "Default Swapchain", m_surface->surface(), *m_window, m_vsync_enabled);
 
     load_octree_geometry(true);
     generate_octree_indices();
@@ -371,11 +340,13 @@ void Application::recreate_swapchain() {
     // This seems to be an issue on Linux only though
     int wnd_width = 0;
     int wnd_height = 0;
-    glfwGetFramebufferSize(m_window->get(), &wnd_width, &wnd_height);
+    m_window->get_framebuffer_size(&wnd_width, &wnd_height);
 
     m_swapchain->setup(wnd_width, wnd_height, m_vsync_enabled);
     m_render_graph = std::make_unique<render_graph::RenderGraph>(*m_device);
     setup_render_graph();
+
+    m_camera->set_aspect_ratio(wnd_width, wnd_height);
 }
 
 void Application::render_frame() {

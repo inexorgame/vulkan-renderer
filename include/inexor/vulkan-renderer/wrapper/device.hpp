@@ -80,20 +80,22 @@ private:
     VkPhysicalDevice m_physical_device{VK_NULL_HANDLE};
     VmaAllocator m_allocator{VK_NULL_HANDLE};
     std::string m_gpu_name;
+
     VkPhysicalDeviceFeatures m_enabled_features{};
     VkPhysicalDeviceProperties m_properties{};
-    VkSampleCountFlagBits m_max_usable_sample_count{VK_SAMPLE_COUNT_1_BIT};
+    VkSampleCountFlagBits m_max_available_sample_count{VK_SAMPLE_COUNT_1_BIT};
 
     VkQueue m_compute_queue{VK_NULL_HANDLE};
     VkQueue m_graphics_queue{VK_NULL_HANDLE};
     VkQueue m_present_queue{VK_NULL_HANDLE};
     VkQueue m_transfer_queue{VK_NULL_HANDLE};
+    VkQueue m_sprase_binding_queue{VK_NULL_HANDLE};
 
     std::uint32_t m_present_queue_family_index{0};
     std::uint32_t m_graphics_queue_family_index{0};
     std::uint32_t m_transfer_queue_family_index{0};
     std::uint32_t m_compute_queue_family_index{0};
-    // TODO: Implement sparse binding queue if required
+    std::uint32_t m_sparse_binding_queue_family{0};
 
     /// According to NVidia, we should aim for one command pool per thread
     /// https://developer.nvidia.com/blog/vulkan-dos-donts/
@@ -114,49 +116,33 @@ private:
     const CommandPool &thread_local_command_pool(VkQueueFlagBits queue_type) const;
 
 public:
-    /// Pick the best physical device automatically
-    /// @param physical_device_infos The data of the physical devices
-    /// @param required_features The required device features
-    /// @param required_extensions The required device extensions
-    /// @exception std::runtime_error There are no physical devices are available at all
-    /// @exception std::runtime_error No suitable physical device could be determined
-    /// @return The chosen physical device which is most suitable
-    static VkPhysicalDevice pick_best_physical_device(std::vector<DeviceInfo> &&physical_device_infos,
-                                                      const VkPhysicalDeviceFeatures &required_features,
-                                                      std::span<const char *> required_extensions);
-
-    /// Pick the best physical device automatically
-    /// @param inst The Vulkan instance
-    /// @param surface The window surface
-    /// @param required_features The required device features
-    /// @param required_extensions The required device extensions
-    /// @return The chosen physical device which is most suitable
-    static VkPhysicalDevice pick_best_physical_device(const Instance &inst,
-                                                      VkSurfaceKHR surface,
-                                                      const VkPhysicalDeviceFeatures &required_features,
-                                                      std::span<const char *> required_extensions);
-
     /// Default constructor
-    /// @param inst The Vulkan instance
-    /// @param surface The window surface
-    /// @param prefer_distinct_transfer_queue Specifies if a distinct transfer queue will be preferred
-    /// @param physical_device The physical device
-    /// @param required_extensions The required device extensions
-    /// @param required_features The required device features which the physical device must all support
-    /// @param optional_features The optional device features which do not necessarily have to be present
-    /// @exception std::runtime_error The physical device is not suitable
-    /// @exception std::runtime_error No graphics queue could be found
-    /// @exception std::runtime_error No presentation queue could be found
-    /// @exception VulkanException vkCreateDevice call failed
-    /// @exception VulkanException vmaCreateAllocator call failed
-    /// @note The creation of the physical device will not fail if one of the optional device features is not available
+    /// @param inst The Vulkan instance wrapper
+    /// @param surface The surface
+    /// @param physical_device The physical device to choose
+    /// @param required_extensions The required extensions
+    /// @note If any of the required extensions is not available, an exception is thrown!
+    /// @param required_features The required features
+    /// @note If any of the required features is not available, an exception is thrown!
+    /// @param optional_extensions The optional extensions (empty by default)
+    /// @param optional_features The optional features (``std::nullopt`` by default)
+    /// @param on_optional_extension_unavailable A callback function to call in case an optional extension is not
+    /// available. The callback function can return true, in which case constructor continue, or return false, in which
+    /// case an exception is thrown.
+    /// @param on_optional_feature_unavailable A callback function to call in case an optional feature is not available.
+    /// The callback function can return true, in which case constructor continue, or return false, in which case an
+    /// exception is thrown.
     Device(const Instance &inst,
            VkSurfaceKHR surface,
-           bool prefer_distinct_transfer_queue,
            VkPhysicalDevice physical_device,
            std::span<const char *> required_extensions,
            const VkPhysicalDeviceFeatures &required_features,
-           const VkPhysicalDeviceFeatures &optional_features = {});
+           std::span<const char *> optional_extensions = {},
+           std::optional<VkPhysicalDeviceFeatures> optional_features = std::nullopt,
+           std::optional<std::function<bool(const std::string &extension_name)>> on_optional_extension_unavailable =
+               std::nullopt,
+           std::optional<std::function<bool(const std::string &feature_name)>> on_optional_feature_unavailable =
+               std::nullopt);
 
     Device(const Device &) = delete;
     // TODO: Implement me!
@@ -225,10 +211,32 @@ public:
     /// @return ``true`` if presentation is supported
     [[nodiscard]] bool is_presentation_supported(VkSurfaceKHR surface, std::uint32_t queue_family_index) const;
 
-    /// Returns the maximum sample count usable by the platform
-    [[nodiscard]] VkSampleCountFlagBits max_usable_sample_count() const {
-        return m_max_usable_sample_count;
+    /// Return the maximum sample count that is available
+    [[nodiscard]] VkSampleCountFlagBits max_available_sample_count() const {
+        return m_max_available_sample_count;
     }
+
+    /// Pick the best physical device automatically
+    /// @param physical_device_infos The data of the physical devices
+    /// @param required_features The required device features
+    /// @param required_extensions The required device extensions
+    /// @exception std::runtime_error There are no physical devices are available at all
+    /// @exception std::runtime_error No suitable physical device could be determined
+    /// @return The chosen physical device which is most suitable
+    static VkPhysicalDevice pick_best_physical_device(std::vector<DeviceInfo> &&physical_device_infos,
+                                                      const VkPhysicalDeviceFeatures &required_features,
+                                                      std::span<const char *> required_extensions);
+
+    /// Pick the best physical device automatically
+    /// @param inst The Vulkan instance
+    /// @param surface The window surface
+    /// @param required_features The required device features
+    /// @param required_extensions The required device extensions
+    /// @return The chosen physical device which is most suitable
+    static VkPhysicalDevice pick_best_physical_device(const Instance &inst,
+                                                      VkSurfaceKHR surface,
+                                                      const VkPhysicalDeviceFeatures &required_features,
+                                                      std::span<const char *> required_extensions);
 
     /// Automatically detect the type of a Vulkan object and set the internal debug name to it
     /// @tparam VulkanObjectType The Vulkan object type. This template parameter will be automatically translated into
@@ -239,7 +247,7 @@ public:
     /// @param name The internal debug name of the Vulkan object (must not be empty!)
     template <typename VulkanObjectType>
     void set_debug_name(const VulkanObjectType vk_object, const std::string &name) const {
-        // The get_vulkan_object_type template allows us to turn the template parameter into a VK_OBJECT_TYPE
+        // The get_vulkan_object_type template allows us to convert the template parameter into a VK_OBJECT_TYPE
         // There is no other trivial way in C++ to do this as far as we know
         return set_debug_utils_object_name(vk_tools::get_vulkan_object_type(vk_object),
                                            reinterpret_cast<std::uint64_t>(vk_object), name);

@@ -7,13 +7,18 @@
 
 namespace inexor::vulkan_renderer::wrapper {
 
-Window::Window(const std::string &title, const std::uint32_t width, const std::uint32_t height, const bool visible,
-               const bool resizable, const Mode mode)
+Window::Window(const std::string &title,
+               const std::uint32_t width,
+               const std::uint32_t height,
+               const bool visible,
+               const bool resizable,
+               const Mode mode)
     : m_width(width), m_height(height), m_mode(mode) {
-    assert(!title.empty());
-
+    if (title.empty()) {
+        throw std::invalid_argument("[Window::Window] Error: Parameter 'title' is empty!");
+    }
     if (glfwInit() != GLFW_TRUE) {
-        throw std::runtime_error("Failed to initialise GLFW!");
+        throw std::runtime_error("[Window::Window] Failed to initialise GLFW!");
     }
 
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
@@ -35,7 +40,7 @@ Window::Window(const std::string &title, const std::uint32_t width, const std::u
     m_window = glfwCreateWindow(static_cast<int>(width), static_cast<int>(height), title.c_str(), monitor, nullptr);
 
     if (m_window == nullptr) {
-        throw std::runtime_error("Error: glfwCreateWindow failed for window " + title + " !");
+        throw std::runtime_error("[Window::Window] Error: glfwCreateWindow failed for window " + title + " !");
     }
 }
 
@@ -44,22 +49,20 @@ Window::~Window() {
     glfwTerminate();
 }
 
-void Window::wait_for_focus() {
-    int current_width = 0;
-    int current_height = 0;
-
-    do {
-        glfwWaitEvents();
-        glfwGetFramebufferSize(m_window, &current_width, &current_height);
-    } while (current_width == 0 || current_height == 0);
-
-    m_width = current_width;
-    m_height = current_height;
+void Window::get_framebuffer_size(int *width, int *height) {
+    glfwGetFramebufferSize(m_window, width, height);
 }
 
-void Window::set_title(const std::string &title) {
-    assert(!title.empty());
-    glfwSetWindowTitle(m_window, title.c_str());
+void Window::poll() {
+    glfwPollEvents();
+}
+
+bool Window::should_close() {
+    return glfwWindowShouldClose(m_window) == GLFW_TRUE;
+}
+
+void Window::show() {
+    glfwShowWindow(m_window);
 }
 
 void Window::set_user_ptr(void *user_ptr) {
@@ -86,16 +89,21 @@ void Window::set_mouse_scroll_callback(GLFWscrollfun mouse_scroll_callback) {
     glfwSetScrollCallback(m_window, mouse_scroll_callback);
 }
 
-void Window::show() {
-    glfwShowWindow(m_window);
+void Window::set_title(const std::string &title) {
+    glfwSetWindowTitle(m_window, title.c_str());
 }
 
-void Window::poll() {
-    glfwPollEvents();
-}
+void Window::wait_for_focus() {
+    int current_width = 0;
+    int current_height = 0;
 
-bool Window::should_close() {
-    return glfwWindowShouldClose(m_window) == GLFW_TRUE;
+    do {
+        glfwWaitEvents();
+        glfwGetFramebufferSize(m_window, &current_width, &current_height);
+    } while (current_width == 0 || current_height == 0);
+
+    m_width = current_width;
+    m_height = current_height;
 }
 
 } // namespace inexor::vulkan_renderer::wrapper

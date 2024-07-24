@@ -244,15 +244,17 @@ VkPhysicalDevice Device::pick_best_physical_device(const Instance &inst,
     return pick_best_physical_device(std::move(infos), required_features, required_extensions);
 }
 
-Device::Device(const Instance &inst,
-               const VkSurfaceKHR surface,
-               const bool prefer_distinct_transfer_queue,
-               const VkPhysicalDevice physical_device,
-               const std::span<const char *> required_extensions,
-               const VkPhysicalDeviceFeatures &required_features,
-               const VkPhysicalDeviceFeatures &optional_features)
+Device::Device(
+    const Instance &inst,
+    const VkSurfaceKHR surface,
+    const VkPhysicalDevice physical_device,
+    const std::span<const char *> required_extensions,
+    const VkPhysicalDeviceFeatures &required_features,
+    const std::span<const char *> optional_extensions,
+    const std::optional<VkPhysicalDeviceFeatures> optional_features,
+    const std::optional<std::function<bool(const std::string &extension_name)>> on_optional_extension_unavailable,
+    const std::optional<std::function<bool(const std::string &feature_name)>> on_optional_feature_unavailable)
     : m_physical_device(physical_device) {
-
     if (!is_device_suitable(build_device_info(physical_device, surface), required_features, required_extensions,
                             true)) {
         throw std::runtime_error("Error: The chosen physical device {} is not suitable!");
@@ -263,12 +265,6 @@ Device::Device(const Instance &inst,
 
     spdlog::trace("Creating Vulkan device queues");
     std::vector<VkDeviceQueueCreateInfo> queues_to_create;
-
-    if (prefer_distinct_transfer_queue) {
-        spdlog::trace("The application will try to use a distinct data transfer queue if it is available");
-    } else {
-        spdlog::warn("The application is forced not to use a distinct data transfer queue!");
-    }
 
     // Check if there is one queue family which can be used for both graphics and presentation
     auto queue_candidate =
@@ -303,25 +299,6 @@ Device::Device(const Instance &inst,
 
     bool use_distinct_data_transfer_queue = false;
 
-    if (queue_candidate && prefer_distinct_transfer_queue) {
-        m_transfer_queue_family_index = *queue_candidate;
-
-        spdlog::trace("A separate queue will be used for data transfer.");
-
-        // We have the opportunity to use a separated queue for data transfer!
-        use_distinct_data_transfer_queue = true;
-
-        queues_to_create.push_back(make_info<VkDeviceQueueCreateInfo>({
-            .queueFamilyIndex = m_transfer_queue_family_index,
-            .queueCount = 1,
-            .pQueuePriorities = &::DEFAULT_QUEUE_PRIORITY,
-        }));
-    } else {
-        // We don't have the opportunity to use a separated queue for data transfer!
-        // Do not create a new queue, use the graphics queue instead.
-        use_distinct_data_transfer_queue = false;
-    }
-
     if (!use_distinct_data_transfer_queue) {
         spdlog::warn("The application is forced to avoid distinct data transfer queues");
         spdlog::warn("Because of this, the graphics queue will be used for data transfer");
@@ -333,7 +310,9 @@ Device::Device(const Instance &inst,
     vkGetPhysicalDeviceFeatures(physical_device, &available_features);
 
     const auto comparable_required_features = vk_tools::get_device_features_as_vector(required_features);
-    const auto comparable_optional_features = vk_tools::get_device_features_as_vector(optional_features);
+    const auto comparable_optional_features = optional_features
+                                                  ? vk_tools::get_device_features_as_vector(optional_features.value())
+                                                  : std::vector<VkBool32>{};
     const auto comparable_available_features = vk_tools::get_device_features_as_vector(available_features);
 
     constexpr auto FEATURE_COUNT = sizeof(VkPhysicalDeviceFeatures) / sizeof(VkBool32);
@@ -472,7 +451,7 @@ Device::Device(const Instance &inst,
         return VK_SAMPLE_COUNT_1_BIT;
     };
 
-    m_max_usable_sample_count = determine_max_usable_sample_count();
+    m_max_available_sample_count = determine_max_usable_sample_count();
 }
 
 Device::~Device() {

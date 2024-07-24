@@ -29,6 +29,7 @@ namespace inexor::vulkan_renderer::wrapper {
 
 // Forward declaration
 class Device;
+class Window;
 
 // Using declarations
 using commands::CommandBuffer;
@@ -72,12 +73,7 @@ public:
     /// @param width The swapchain image width
     /// @param height The swapchain image height
     /// @param vsync_enabled ``true`` if vertical synchronization is enabled
-    Swapchain(Device &device,
-              std::string name,
-              VkSurfaceKHR surface,
-              std::uint32_t width,
-              std::uint32_t height,
-              bool vsync_enabled);
+    Swapchain(Device &device, std::string name, const VkSurfaceKHR surface, const Window &wnd, bool vsync_enabled);
 
     Swapchain(const Swapchain &) = delete;
     Swapchain(Swapchain &&) noexcept;

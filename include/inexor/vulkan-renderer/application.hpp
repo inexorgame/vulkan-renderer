@@ -10,9 +10,9 @@
 #include "inexor/vulkan-renderer/world/collision_query.hpp"
 #include "inexor/vulkan-renderer/world/cube.hpp"
 #include "inexor/vulkan-renderer/wrapper/instance.hpp"
+#include "inexor/vulkan-renderer/wrapper/surface.hpp"
 #include "inexor/vulkan-renderer/wrapper/swapchain.hpp"
 #include "inexor/vulkan-renderer/wrapper/window.hpp"
-#include "inexor/vulkan-renderer/wrapper/window_surface.hpp"
 
 // Forward declarations
 namespace inexor::vulkan_renderer::input {
@@ -20,6 +20,14 @@ class KeyboardMouseInputData;
 } // namespace inexor::vulkan_renderer::input
 
 namespace inexor::vulkan_renderer {
+
+// Using declarations
+using input::KeyboardMouseInputData;
+using wrapper::Device;
+using wrapper::Instance;
+using wrapper::Surface;
+using wrapper::Swapchain;
+using wrapper::Window;
 
 class Application {
 private:
@@ -32,11 +40,11 @@ private:
     bool m_debug_report_callback_initialised{false};
 
     std::unique_ptr<Camera> m_camera;
-    std::unique_ptr<wrapper::Window> m_window;
-    std::unique_ptr<wrapper::Instance> m_instance;
-    std::unique_ptr<wrapper::Device> m_device;
-    std::unique_ptr<wrapper::WindowSurface> m_surface;
-    std::shared_ptr<wrapper::Swapchain> m_swapchain;
+    std::unique_ptr<Window> m_window;
+    std::unique_ptr<Instance> m_instance;
+    std::unique_ptr<Device> m_device;
+    std::shared_ptr<Swapchain> m_swapchain;
+    std::shared_ptr<Surface> m_surface;
     std::unique_ptr<renderers::ImGuiRenderer> m_imgui_overlay;
 
     std::vector<OctreeGpuVertex> m_octree_vertices;
