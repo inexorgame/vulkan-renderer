@@ -31,7 +31,9 @@ void Image::create(VkImageCreateInfo img_ci, VkImageViewCreateInfo img_view_ci) 
         result != VK_SUCCESS) {
         throw VulkanException("Error: vmaCreateImage failed for image " + m_name + "!", result);
     }
+    // Set the image's internal debug name in Vulkan Memory Allocator (VMA)
     vmaSetAllocationName(m_device.allocator(), m_alloc, m_name.c_str());
+    // Set the image's internal debug name through Vulkan debug utils
     m_device.set_debug_name(m_img, m_name);
 
     // Set the image in the VkImageViewCreateInfo

@@ -499,20 +499,6 @@ bool Device::is_presentation_supported(const VkSurfaceKHR surface, const std::ui
     return supported == VK_TRUE;
 }
 
-VkSurfaceCapabilitiesKHR Device::get_surface_capabilities(const VkSurfaceKHR surface) const {
-    VkSurfaceCapabilitiesKHR caps{};
-    if (const auto result = vkGetPhysicalDeviceSurfaceCapabilitiesKHR(m_physical_device, surface, &caps);
-        result != VK_SUCCESS) {
-        throw VulkanException("Error: vkGetPhysicalDeviceSurfaceCapabilitiesKHR failed!", result);
-    }
-    return caps;
-}
-
-bool Device::surface_supports_usage(const VkSurfaceKHR surface, const VkImageUsageFlagBits usage) const {
-    const auto capabilities = get_surface_capabilities(surface);
-    return (capabilities.supportedUsageFlags & usage) != 0u;
-}
-
 void Device::execute(const std::string &name,
                      const VkQueueFlagBits queue_type,
                      const DebugLabelColor dbg_label_color,

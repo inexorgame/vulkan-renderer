@@ -222,7 +222,12 @@ void Swapchain::present() {
 }
 
 void Swapchain::setup(const std::uint32_t width, const std::uint32_t height, const bool vsync_enabled) {
-    const auto caps = m_device.get_surface_capabilities(m_surface);
+    VkSurfaceCapabilitiesKHR caps{};
+    if (const auto result = vkGetPhysicalDeviceSurfaceCapabilitiesKHR(m_device.m_physical_device, m_surface, &caps);
+        result != VK_SUCCESS) {
+        throw VulkanException("Error: vkGetPhysicalDeviceSurfaceCapabilitiesKHR failed!", result);
+    }
+
     m_surface_format = choose_surface_format(vk_tools::get_surface_formats(m_device.m_physical_device, m_surface));
     const VkExtent2D requested_extent{.width = width, .height = height};
 
@@ -276,7 +281,7 @@ void Swapchain::setup(const std::uint32_t width, const std::uint32_t height, con
         throw VulkanException("Error: vkCreateSwapchainKHR failed!", result);
     }
 
-    m_device.set_debug_name(m_swapchain, "Default Swapchain");
+    m_device.set_debug_name(m_swapchain, m_name);
 
     // We need to destroy the old swapchain if specified
     if (old_swapchain != VK_NULL_HANDLE) {

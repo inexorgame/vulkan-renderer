@@ -164,7 +164,8 @@ public:
     ~Device();
 
     Device &operator=(const Device &) = delete;
-    Device &operator=(Device &&) = delete;
+    // TODO: Implement me!
+    Device &operator=(Device &&) noexcept;
 
     [[nodiscard]] VmaAllocator allocator() const {
         return m_allocator;
@@ -175,14 +176,30 @@ public:
     }
 
     /// A wrapper method for beginning, ending and submitting command buffers. This method calls the request method for
-    /// the given command pool, begins the command buffer, executes the lambda, ends recording the command buffer,
-    /// submits it and waits for it.
+    /// the given command pool, begins the command buffer, invokes the recording function, ends recording the command
+    /// buffer, submits it on the specified queue and waits for it. Using this execute method is the preferred way of
+    /// using command buffers in the engine. There is no need to request a command buffer manually, which is why this
+    /// method in CommandPool is not public.
+    ///
+    /// @code{.cpp}
+    /// m_device.execute("Upload Data", VK_QUEUE_TRANSFER_BIT, DebugLabelColor::RED,
+    ///     [](const CommandBuffer &cmd_buf) { /*Do you vkCmd calls in here*/ }
+    ///     /*Both could be a std::vector, an std::array, or std::span of VkSemaphore
+    ///       It's also possible to submit one VkSemaphore as a std::span using {&wait_semaphore, 1}*/
+    ///     wait_semaphores, signal_semaphores)
+    /// @endcode
+    ///
     /// @param name The internal debug name of the command buffer (must not be empty)
     /// @param queue_type The queue type to submit the command buffer to
-    /// @param dbg_label_color The debug label color to use for calling ``begin_debug_label_region``
-    /// @param cmd_buf_recording_func The command buffer recording function to execute
-    /// @param wait_semaphores
-    /// @param signal_semaphores
+    /// @param dbg_label_color The color of the debug label when calling ``begin_debug_label_region``
+    /// @note Debug label colors are only visible in graphics debuggers such as RenderDoc
+    /// @param cmd_buf_recording_func The command buffer recording function to invoke after starting recording
+    /// @note It's technically allowed that the command buffer recording function is empty or a function which does not
+    /// do any vkCmd command calls, but this makes no real sense because an empty command buffer will be submitted. It
+    /// will not be checked if any commands have been recorded into the command buffer, although this could be
+    /// implemented using CommandBuffer wrapper. However, this would be a case for validation layers though.
+    /// @param wait_semaphores The semaphores to wait on before starting command buffer execution (empty by default)
+    /// @param signal_semaphores The semaphores to signal once command buffer execution will finish (empty by default)
     void execute(const std::string &name,
                  VkQueueFlagBits queue_type,
                  DebugLabelColor dbg_label_color,
@@ -196,12 +213,7 @@ public:
     std::optional<std::uint32_t> find_queue_family_index_if(
         const std::function<bool(std::uint32_t index, const VkQueueFamilyProperties &)> &criteria_lambda);
 
-    /// Call vkGetPhysicalDeviceSurfaceCapabilitiesKHR
-    /// @param surface The window surface
-    /// @exception VulkanException vkGetPhysicalDeviceSurfaceCapabilitiesKHR call failed
-    /// @return The surface capabilities
-    [[nodiscard]] VkSurfaceCapabilitiesKHR get_surface_capabilities(VkSurfaceKHR surface) const;
-
+    /// Get the name of the physical device that was created
     [[nodiscard]] const std::string &gpu_name() const {
         return m_gpu_name;
     }
@@ -218,10 +230,13 @@ public:
         return m_max_usable_sample_count;
     }
 
-    /// Set the internal debug name of a Vulkan object
-    /// @tparam VulkanObjectType
-    /// @param vk_object
-    /// @param name
+    /// Automatically detect the type of a Vulkan object and set the internal debug name to it
+    /// @tparam VulkanObjectType The Vulkan object type. This template parameter will be automatically translated into
+    /// the matching ``VkObjectType`` using ``vk_tools::get_vulkan_object_type(vk_object)``. This is the most advanced
+    /// abstraction that we found and it's really easy to use set_debug_name now because it's not possible to make a
+    /// mistake because you don't have to specify the VkObjectType manually when naming a Vulkan object.
+    /// @param vk_object The Vulkan object to assign a name to
+    /// @param name The internal debug name of the Vulkan object (must not be empty!)
     template <typename VulkanObjectType>
     void set_debug_name(const VulkanObjectType vk_object, const std::string &name) const {
         // The get_vulkan_object_type template allows us to turn the template parameter into a VK_OBJECT_TYPE
@@ -229,12 +244,6 @@ public:
         return set_debug_utils_object_name(vk_tools::get_vulkan_object_type(vk_object),
                                            reinterpret_cast<std::uint64_t>(vk_object), name);
     }
-
-    /// Check if a VkSurfaceKHR supports a certain image usage
-    /// @param surface The window surface
-    /// @param usage The requested image usage
-    /// @return ``true`` if the format feature is supported
-    [[nodiscard]] bool surface_supports_usage(VkSurfaceKHR surface, VkImageUsageFlagBits usage) const;
 
     /// Call vkDeviceWaitIdle or vkQueueWaitIdle if a VkQueue is specified as parameter
     /// @param A queue to wait on (``VK_NULL_HANDLE`` by default)
