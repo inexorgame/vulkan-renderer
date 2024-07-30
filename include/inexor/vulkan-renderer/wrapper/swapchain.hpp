@@ -20,7 +20,7 @@ private:
     Device &m_device;
     VkSwapchainKHR m_swapchain{VK_NULL_HANDLE};
     VkSurfaceKHR m_surface{VK_NULL_HANDLE};
-    std::optional<VkSurfaceFormatKHR> m_surface_format{};
+    std::optional<VkSurfaceFormatKHR> m_surface_format;
     std::vector<VkImage> m_imgs;
     std::vector<VkImageView> m_img_views;
     VkExtent2D m_extent{};

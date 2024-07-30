@@ -65,7 +65,7 @@ private:
     glm::vec3 m_position{0.0f, 0.0f, 0.0f};
 
     /// Root cube is empty.
-    std::weak_ptr<Cube> m_parent{};
+    std::weak_ptr<Cube> m_parent;
 
     /// Index of this in m_parent.m_children; undefined behavior if root.
     std::uint8_t m_index_in_parent{};
