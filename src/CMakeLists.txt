@@ -120,8 +120,15 @@ target_include_directories(
 
 # Declare use of dependencies
 FetchContent_MakeAvailable(fmt)
+FetchContent_MakeAvailable(spdlog)
+FetchContent_MakeAvailable(stb)
+FetchContent_MakeAvailable(toml)
+FetchContent_MakeAvailable(Vulkan)
+FetchContent_MakeAvailable(volk)
+FetchContent_MakeAvailable(vma)
 FetchContent_MakeAvailable(glfw)
 FetchContent_MakeAvailable(glm)
+FetchContent_MakeAvailable(tinygltf)
 FetchContent_MakeAvailable(imgui)
 add_library(imgui
     ${imgui_SOURCE_DIR}/imgui.cpp
@@ -129,20 +136,6 @@ add_library(imgui
     ${imgui_SOURCE_DIR}/imgui_tables.cpp
     ${imgui_SOURCE_DIR}/imgui_widgets.cpp)
 target_include_directories(imgui PUBLIC ${imgui_SOURCE_DIR})
-FetchContent_MakeAvailable(spdlog)
-FetchContent_MakeAvailable(stb)
-FetchContent_MakeAvailable(tinygltf)
-FetchContent_MakeAvailable(toml)
-FetchContent_MakeAvailable(vma)
-FetchContent_MakeAvailable(volk)
-FetchContent_MakeAvailable(Vulkan)
-
-# Work around a VMA compile error from its use of snprintf
-target_compile_definitions(VulkanMemoryAllocator PRIVATE VMA_STATS_STRING_ENABLED=0)
-
-if (WIN32)
-   set(VOLK_STATIC_DEFINES VK_USE_PLATFORM_WIN32_KHR)
-endif()
 
 target_link_libraries(inexor-vulkan-renderer
     PUBLIC
@@ -150,7 +143,7 @@ target_link_libraries(inexor-vulkan-renderer
     glfw
     glm::glm
     imgui
-    spdlog::spdlog
+    spdlog::spdlog_header_only
     tinygltf
     toml11::toml11
     volk::volk
