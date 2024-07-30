@@ -13,7 +13,9 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 from argparse import ArgumentParser
 from pathlib import Path
 
-import pkg_resources
+import importlib.metadata as im
+import packaging.version as pv
+import re
 import sys
 
 
@@ -33,21 +35,29 @@ def main():
     with Path(args.req_file).open(mode='r', encoding='UTF-8') as reader:
         dependencies = reader.read()
 
-    success = True
+    success: bool = True
+    rx_pkg: re.Pattern = re.compile(r"(.+)(==|<=|>=)(.+)")
     for pkg in dependencies.split('\n'):
+        match: re.Match = rx_pkg.match(pkg)
+        pkg_name: str = match.group(1)
+        pkg_req: str = match.group(2)
+        pkg_version: pv.Version = pv.parse(match.group(3))
         try:
-            pkg_resources.require(pkg)
-        except pkg_resources.DistributionNotFound:
+            installed_version: pv.Version = pv.parse(im.version(pkg_name))
+            if (
+                pkg_req == "==" and installed_version != pkg_version
+                or pkg_req == "<=" and installed_version > pkg_version
+                or pkg_req == ">=" and installed_version < pkg_version
+            ):
+                success = False
+                if not args.quiet:
+                    print(f"Found: '{installed_version}', but '{pkg_req}{pkg_version}' is required.")
+            elif not args.quiet:
+                print(f"Found: '{pkg}'.")
+        except im.PackageNotFoundError:
             success = False
             if not args.quiet:
                 print(f"Did not found '{pkg}', but is required.")
-        except pkg_resources.VersionConflict as ex:
-            success = False
-            if not args.quiet:
-                print(f"Found: '{ex.dist}', but '{ex.req}' is required.")
-        else:
-            if not args.quiet:
-                print(f"Found: '{pkg}'.")
     exit(0) if success else exit(1)
 
 
