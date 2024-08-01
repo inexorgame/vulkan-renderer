@@ -1,10 +1,12 @@
 #pragma once
 
-#include "inexor/vulkan-renderer/vk_tools/representation.hpp"
+#include "inexor/vulkan-renderer/tools/representation.hpp"
 #include "inexor/vulkan-renderer/wrapper/commands/command_pool.hpp"
+#include "inexor/vulkan-renderer/wrapper/vulkan_exception.hpp"
 
 #include <array>
 #include <functional>
+#include <mutex>
 #include <optional>
 #include <span>
 #include <string>
@@ -249,7 +251,7 @@ public:
     void set_debug_name(const VulkanObjectType vk_object, const std::string &name) const {
         // The get_vulkan_object_type template allows us to convert the template parameter into a VK_OBJECT_TYPE
         // There is no other trivial way in C++ to do this as far as we know
-        return set_debug_utils_object_name(vk_tools::get_vulkan_object_type(vk_object),
+        return set_debug_utils_object_name(tools::get_vulkan_object_type(vk_object),
                                            reinterpret_cast<std::uint64_t>(vk_object), name);
     }
 

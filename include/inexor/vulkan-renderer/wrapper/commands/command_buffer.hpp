@@ -1,7 +1,7 @@
 #pragma once
 
-#include "inexor/vulkan-renderer/render-graph/buffer.hpp"
-#include "inexor/vulkan-renderer/render-graph/image.hpp"
+#include "inexor/vulkan-renderer/rendering/render-graph/buffer.hpp"
+#include "inexor/vulkan-renderer/wrapper/image.hpp"
 #include "inexor/vulkan-renderer/wrapper/synchronization/fence.hpp"
 
 #include <array>
@@ -33,10 +33,9 @@ class Fence;
 namespace inexor::vulkan_renderer::wrapper::commands {
 
 // Using declaration
-using render_graph::Buffer;
-using render_graph::BufferType;
-using render_graph::Image;
 using render_graph::RenderGraph;
+using rendering::render_graph::Buffer;
+using rendering::render_graph::BufferType;
 using wrapper::pipelines::GraphicsPipeline;
 using wrapper::synchronization::Fence;
 

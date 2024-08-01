@@ -1,9 +1,9 @@
 #pragma once
 
-#include <spdlog/spdlog.h>
-#include <volk.h>
-
 #include "inexor/vulkan-renderer/wrapper/commands/command_buffer.hpp"
+#include "inexor/vulkan-renderer/wrapper/vulkan_exception.hpp"
+
+#include <volk.h>
 
 namespace inexor::vulkan_renderer::wrapper {
 // Forward declaration

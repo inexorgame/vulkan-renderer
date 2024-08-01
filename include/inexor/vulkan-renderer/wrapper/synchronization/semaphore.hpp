@@ -10,21 +10,17 @@ class Device;
 class Swapchain;
 } // namespace inexor::vulkan_renderer::wrapper
 
-namespace inexor::vulkan_renderer::render_graph {
+namespace inexor::vulkan_renderer::rendering::render_graph {
 // Forward declaration
 class RenderGraph;
-} // namespace inexor::vulkan_renderer::render_graph
+} // namespace inexor::vulkan_renderer::rendering::render_graph
 
 namespace inexor::vulkan_renderer::wrapper::synchronization {
 
-// Using declaration
-using render_graph::RenderGraph;
-using wrapper::Swapchain;
-
 /// RAII wrapper class for VkSemaphore
 class Semaphore {
-    friend class RenderGraph;
-    friend class Swapchain;
+    friend rendering::render_graph::RenderGraph;
+    friend wrapper::Swapchain;
 
 private:
     const Device &m_device;

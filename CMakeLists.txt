@@ -60,7 +60,7 @@ if(INEXOR_BUILD_DOC)
 endif()
 
 if(INEXOR_BUILD_EXAMPLE)
-    add_subdirectory(example)
+    add_subdirectory(example-app/src)
 endif()
 
 if(INEXOR_BUILD_TESTS)

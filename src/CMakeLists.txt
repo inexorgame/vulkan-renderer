@@ -1,11 +1,4 @@
 set(INEXOR_SOURCE_FILES
-    vulkan-renderer/application.cpp
-    vulkan-renderer/bezier_curve.cpp
-    vulkan-renderer/camera.cpp
-    vulkan-renderer/exception.cpp
-    vulkan-renderer/fps_counter.cpp
-    vulkan-renderer/time_step.cpp
-
     vulkan-renderer/input/keyboard_mouse_data.cpp
 
     vulkan-renderer/io/byte_stream.cpp
@@ -13,28 +6,30 @@ set(INEXOR_SOURCE_FILES
     vulkan-renderer/io/nxoc_parser.cpp
     vulkan-renderer/io/octree_parser.cpp
 
-    vulkan-renderer/renderers/imgui.cpp
+    vulkan-renderer/rendering/imgui/imgui.cpp
+    vulkan-renderer/rendering/imgui/imgui_renderer.cpp
+    vulkan-renderer/rendering/octree/octree_renderer.cpp
+    vulkan-renderer/rendering/render-graph/buffer.cpp
+    vulkan-renderer/rendering/render-graph/graphics_pass.cpp
+    vulkan-renderer/rendering/render-graph/graphics_pass_builder.cpp
+    vulkan-renderer/rendering/render-graph/render_graph.cpp
+    vulkan-renderer/rendering/render-graph/texture.cpp
 
-    vulkan-renderer/render-graph/buffer.cpp
-    vulkan-renderer/render-graph/graphics_pass.cpp
-    vulkan-renderer/render-graph/graphics_pass_builder.cpp
-    vulkan-renderer/render-graph/image.cpp
-    vulkan-renderer/render-graph/render_graph.cpp
-    vulkan-renderer/render-graph/texture.cpp
-
+    vulkan-renderer/tools/camera.cpp
     vulkan-renderer/tools/cla_parser.cpp
-
-    vulkan-renderer/vk_tools/device_info.cpp
-    vulkan-renderer/vk_tools/enumerate.cpp
-    vulkan-renderer/vk_tools/representation.cpp
+    vulkan-renderer/tools/device_info.cpp
+    vulkan-renderer/tools/enumerate.cpp
+    vulkan-renderer/tools/representation.cpp
 
     vulkan-renderer/wrapper/device.cpp
+    vulkan-renderer/wrapper/image.cpp
     vulkan-renderer/wrapper/instance.cpp
     vulkan-renderer/wrapper/make_info.cpp
     vulkan-renderer/wrapper/sampler.cpp
     vulkan-renderer/wrapper/shader.cpp
     vulkan-renderer/wrapper/swapchain.cpp
     vulkan-renderer/wrapper/surface.cpp
+    vulkan-renderer/wrapper/vulkan_exception.cpp
     vulkan-renderer/wrapper/window.cpp
 
     vulkan-renderer/wrapper/commands/command_buffer.cpp

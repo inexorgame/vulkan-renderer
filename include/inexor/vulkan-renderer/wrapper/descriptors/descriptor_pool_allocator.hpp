@@ -16,7 +16,7 @@ namespace inexor::vulkan_renderer::wrapper::descriptors {
 // Forward declaration
 class DescriptorSetAllocator;
 
-/// Allocator for DescriptorPool
+/// Allocator for the DescriptorPool class
 class DescriptorPoolAllocator {
     friend DescriptorSetAllocator;
 
@@ -37,10 +37,12 @@ private:
 
 public:
     DescriptorPoolAllocator(const DescriptorPoolAllocator &) = delete;
+    // TODO: Implement me!
     DescriptorPoolAllocator(DescriptorPoolAllocator &&) noexcept;
     ~DescriptorPoolAllocator() = default;
 
     DescriptorPoolAllocator &operator=(const DescriptorPoolAllocator &) = delete;
+    // TODO: Implement me!
     DescriptorPoolAllocator &operator=(DescriptorPoolAllocator &&) noexcept;
 };
 

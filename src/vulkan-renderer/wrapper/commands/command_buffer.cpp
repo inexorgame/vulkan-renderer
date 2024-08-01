@@ -1,10 +1,10 @@
 #include "inexor/vulkan-renderer/wrapper/commands/command_buffer.hpp"
 
-#include "inexor/vulkan-renderer/exception.hpp"
-#include "inexor/vulkan-renderer/render-graph/buffer.hpp"
+#include "inexor/vulkan-renderer/rendering/render-graph/buffer.hpp"
 #include "inexor/vulkan-renderer/wrapper/device.hpp"
 #include "inexor/vulkan-renderer/wrapper/make_info.hpp"
 #include "inexor/vulkan-renderer/wrapper/pipelines/pipeline.hpp"
+#include "inexor/vulkan-renderer/wrapper/vulkan_exception.hpp"
 
 #include <cassert>
 #include <memory>

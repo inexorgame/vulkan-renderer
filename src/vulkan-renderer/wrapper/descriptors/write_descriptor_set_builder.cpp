@@ -1,7 +1,7 @@
 #include "inexor/vulkan-renderer/wrapper/descriptors/write_descriptor_set_builder.hpp"
 
-#include "inexor/vulkan-renderer/render-graph/buffer.hpp"
-#include "inexor/vulkan-renderer/render-graph/texture.hpp"
+#include "inexor/vulkan-renderer/rendering/render-graph/buffer.hpp"
+#include "inexor/vulkan-renderer/rendering/render-graph/texture.hpp"
 #include "inexor/vulkan-renderer/wrapper/device.hpp"
 #include "inexor/vulkan-renderer/wrapper/make_info.hpp"
 

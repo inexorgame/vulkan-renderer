@@ -28,7 +28,6 @@ class RenderGraph;
 namespace inexor::vulkan_renderer::wrapper::pipelines {
 
 // Forward declaration
-class render_graph::RenderGraph;
 class wrapper::Shader;
 
 // TODO: ComputePipelineBuilder
@@ -38,7 +37,7 @@ class wrapper::Shader;
 /// This means if you forget to specify viewport for example, creation of the graphics pipeline will fail.
 /// It is the reponsibility of the programmer to use validation layers to check for problems.
 class GraphicsPipelineBuilder {
-    friend class RenderGraph;
+    friend rendering::render_graph::RenderGraph;
 
 private:
     /// The device wrapper reference

@@ -1,7 +1,7 @@
 #include "inexor/vulkan-renderer/wrapper/descriptors/descriptor_set_layout_cache.hpp"
 
-#include "inexor/vulkan-renderer/exception.hpp"
 #include "inexor/vulkan-renderer/wrapper/device.hpp"
+#include "inexor/vulkan-renderer/wrapper/vulkan_exception.hpp"
 
 #include <algorithm>
 #include <cassert>

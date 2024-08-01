@@ -1,6 +1,5 @@
 #include "inexor/vulkan-renderer/wrapper/commands/command_pool.hpp"
 
-#include "inexor/vulkan-renderer/exception.hpp"
 #include "inexor/vulkan-renderer/wrapper/device.hpp"
 #include "inexor/vulkan-renderer/wrapper/make_info.hpp"
 
@@ -36,7 +35,7 @@ CommandPool::CommandPool(const Device &device, const VkQueueFlagBits queue_type,
     // Get the thread id as string for naming the command pool and the command buffers
     std::ostringstream thread_id;
     thread_id << std::this_thread::get_id();
-    spdlog::trace("Creating {} command pool for thread ID {}", vk_tools::as_string(queue_type), thread_id.str());
+    spdlog::trace("Creating {} command pool for thread ID {}", tools::as_string(queue_type), thread_id.str());
 
     if (const auto result = vkCreateCommandPool(m_device.device(), &cmd_pool_ci, nullptr, &m_cmd_pool);
         result != VK_SUCCESS) {
@@ -68,7 +67,7 @@ CommandBuffer &CommandPool::request_command_buffer(const std::string &name) cons
         }
     }
 
-    spdlog::trace("Creating {} new command buffer #{}", vk_tools::as_string(m_queue_type), 1 + m_cmd_bufs.size());
+    spdlog::trace("Creating {} new command buffer #{}", tools::as_string(m_queue_type), 1 + m_cmd_bufs.size());
 
     // No free command buffer was found so we need to create a new one
     // Note that there is currently no method for shrinking m_cmd_bufs, but this should not be a problem

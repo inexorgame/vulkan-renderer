@@ -1,8 +1,8 @@
 #include "inexor/vulkan-renderer/wrapper/synchronization/fence.hpp"
 
-#include "inexor/vulkan-renderer/exception.hpp"
 #include "inexor/vulkan-renderer/wrapper/device.hpp"
 #include "inexor/vulkan-renderer/wrapper/make_info.hpp"
+#include "inexor/vulkan-renderer/wrapper/vulkan_exception.hpp"
 
 #include <cassert>
 #include <stdexcept>

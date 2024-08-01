@@ -1,10 +1,10 @@
 #include "inexor/vulkan-renderer/wrapper/swapchain.hpp"
 
-#include "inexor/vulkan-renderer/exception.hpp"
-#include "inexor/vulkan-renderer/vk_tools/enumerate.hpp"
-#include "inexor/vulkan-renderer/vk_tools/representation.hpp"
+#include "inexor/vulkan-renderer/tools/enumerate.hpp"
+#include "inexor/vulkan-renderer/tools/representation.hpp"
 #include "inexor/vulkan-renderer/wrapper/device.hpp"
 #include "inexor/vulkan-renderer/wrapper/make_info.hpp"
+#include "inexor/vulkan-renderer/wrapper/vulkan_exception.hpp"
 #include "inexor/vulkan-renderer/wrapper/window.hpp"
 
 #include <spdlog/spdlog.h>
@@ -73,7 +73,7 @@ Swapchain::choose_composite_alpha(const VkCompositeAlphaFlagBitsKHR request_comp
     for (const auto flag : composite_alpha_flags) {
         if ((flag & supported_composite_alpha) != 0u) {
             spdlog::trace("Swapchain composite alpha '{}' is not supported, selecting '{}'",
-                          vk_tools::as_string(request_composite_alpha), vk_tools::as_string(flag));
+                          tools::as_string(request_composite_alpha), tools::as_string(flag));
             return flag;
         }
     }
@@ -128,7 +128,7 @@ Swapchain::choose_surface_format(const std::vector<VkSurfaceFormatKHR> &availabl
                        requested_format.colorSpace == candidate.colorSpace;
             });
         if (format != available_formats.end()) {
-            spdlog::trace("Selecting swapchain surface format {}", vk_tools::as_string(*format));
+            spdlog::trace("Selecting swapchain surface format {}", tools::as_string(*format));
             return *format;
         }
     }
@@ -152,7 +152,7 @@ Swapchain::choose_surface_format(const std::vector<VkSurfaceFormatKHR> &availabl
                          });
 
         if (format != default_surface_format_priority_list.end()) {
-            spdlog::trace("Selecting swapchain image format {}", vk_tools::as_string(*format));
+            spdlog::trace("Selecting swapchain image format {}", tools::as_string(*format));
             chosen_format = *format;
             break;
         }
@@ -228,7 +228,7 @@ void Swapchain::setup(const std::uint32_t width, const std::uint32_t height, con
         throw VulkanException("Error: vkGetPhysicalDeviceSurfaceCapabilitiesKHR failed!", result);
     }
 
-    m_surface_format = choose_surface_format(vk_tools::get_surface_formats(m_device.m_physical_device, m_surface));
+    m_surface_format = choose_surface_format(tools::get_surface_formats(m_device.m_physical_device, m_surface));
     const VkExtent2D requested_extent{.width = width, .height = height};
 
     static const std::vector<VkPresentModeKHR> default_present_mode_priorities{
@@ -266,13 +266,13 @@ void Swapchain::setup(const std::uint32_t width, const std::uint32_t height, con
                             ? VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR
                             : caps.currentTransform,
         .compositeAlpha = composite_alpha.value(),
-        .presentMode = choose_present_mode(vk_tools::get_surface_present_modes(m_device.m_physical_device, m_surface),
+        .presentMode = choose_present_mode(tools::get_surface_present_modes(m_device.m_physical_device, m_surface),
                                            default_present_mode_priorities, vsync_enabled),
         .clipped = VK_TRUE,
         .oldSwapchain = old_swapchain,
     });
 
-    spdlog::trace("Using swapchain surface transform {}", vk_tools::as_string(swapchain_ci.preTransform));
+    spdlog::trace("Using swapchain surface transform {}", tools::as_string(swapchain_ci.preTransform));
 
     spdlog::trace("Creating swapchain");
 

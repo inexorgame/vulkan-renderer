@@ -1,8 +1,8 @@
 #include "inexor/vulkan-renderer/wrapper/instance.hpp"
 
-#include "inexor/vulkan-renderer/exception.hpp"
-#include "inexor/vulkan-renderer/vk_tools/representation.hpp"
+#include "inexor/vulkan-renderer/tools/representation.hpp"
 #include "inexor/vulkan-renderer/wrapper/make_info.hpp"
+#include "inexor/vulkan-renderer/wrapper/vulkan_exception.hpp"
 
 #include <GLFW/glfw3.h>
 #include <fmt/ranges.h>
@@ -86,7 +86,7 @@ Instance::Instance(const std::string &application_name,
         throw std::invalid_argument("Error: Invalid debug utils messenger callback!");
     }
 
-    spdlog::trace("Initializing Vulkan metaloader");
+    spdlog::trace("Initializing Vulkan metaloader (volk)");
     if (const auto result = volkInitialize(); result != VK_SUCCESS) {
         throw std::runtime_error("Error: Could not initialize Vulkan with volk metaloader! Make sure to update the "
                                  "drivers of your graphics card!");
@@ -104,7 +104,7 @@ Instance::Instance(const std::string &application_name,
 
     std::uint32_t available_api_version = 0;
     if (const auto result = vkEnumerateInstanceVersion(&available_api_version); result != VK_SUCCESS) {
-        spdlog::error("Error: vkEnumerateInstanceVersion returned {}!", vk_tools::as_string(result));
+        spdlog::error("Error: vkEnumerateInstanceVersion returned {}!", tools::as_string(result));
         return;
     }
 
@@ -133,10 +133,8 @@ Instance::Instance(const std::string &application_name,
     });
 
     std::vector<const char *> instance_extension_wishlist = {
-#ifndef NDEBUG
         // VK_EXT_debug_utils
         VK_EXT_DEBUG_UTILS_EXTENSION_NAME,
-#endif
     };
 
     std::uint32_t glfw_extension_count = 0;

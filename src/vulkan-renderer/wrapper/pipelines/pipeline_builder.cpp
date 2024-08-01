@@ -11,6 +11,7 @@ GraphicsPipelineBuilder::GraphicsPipelineBuilder(const Device &device) : m_devic
 }
 
 GraphicsPipelineBuilder::GraphicsPipelineBuilder(GraphicsPipelineBuilder &&other) noexcept : m_device(other.m_device) {
+    // TODO: Check me!
     m_pipeline_rendering_ci = std::move(other.m_pipeline_rendering_ci);
     m_color_attachments = std::move(other.m_color_attachments);
     m_depth_attachment_format = other.m_depth_attachment_format;

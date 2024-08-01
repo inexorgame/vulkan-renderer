@@ -20,7 +20,7 @@ namespace inexor::vulkan_renderer::wrapper {
 // Forward declaration
 class RenderGraph;
 
-// TODO: Support shader specialization constants
+// TODO: Support specialization constants
 
 // We don't want to type that out all the time
 using inexor::vulkan_renderer::wrapper::Device;
