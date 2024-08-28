@@ -326,6 +326,59 @@ File Extension: ``.nxoc`` - Inexor Octree
     } // get_cube
     get_cube()
 
+As ImHex pattern.
+
+.. code-block::
+
+    #pragma description Inexor octree format (nxoc)
+
+    #pragma magic [ 49 6E 65 78 6F 72 20 4F 63 74 72 65 65 ] @ 0x00
+    #pragma endian little
+
+    import std.mem;
+    import std.sys;
+
+    bitfield Indentations {
+        edge_00 : 6;
+        edge_01 : 6;
+        edge_02 : 6;
+        edge_03 : 6;
+        edge_04 : 6;
+        edge_05 : 6;
+        edge_06 : 6;
+        edge_07 : 6;
+        edge_08 : 6;
+        edge_09 : 6;
+        edge_10 : 6;
+        edge_11 : 6;
+    };
+
+    struct Cube {
+        u8 type;
+        
+        match (type) {
+            // empty
+            (0x00): {}
+            // full
+            (0x01): {}
+            // indented
+            (0x02): {
+                Indentations indentations;
+            }
+            // octant
+            (0x03): {
+                Cube children[0x08];
+            }
+        }
+    };
+
+    char identifier[0x0D] @ 0x00;
+    std::assert(identifier == "Inexor Octree", "invalid identifier");
+
+    u32 formatVersion @ 0x0D;
+
+    Cube cubes[while(!std::mem::eof())] @ 0x11 [[inline]];
+
 **Calculating edge indentation value**
 
 The indentation along the edge axis between two corners presented by a unique value. The indentation level starts with 0 at the starting corner and goes to 8 at the ending corner.
