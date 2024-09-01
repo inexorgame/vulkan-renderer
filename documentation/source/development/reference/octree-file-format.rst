@@ -326,6 +326,59 @@ File Extension: ``.nxoc`` - Inexor Octree
     } // get_cube
     get_cube()
 
+As ImHex pattern.
+
+.. code-block::
+
+    #pragma description Inexor octree format (nxoc)
+
+    #pragma magic [ 49 6E 65 78 6F 72 20 4F 63 74 72 65 65 ] @ 0x00
+    #pragma endian little
+
+    import std.mem;
+    import std.sys;
+
+    bitfield Indentations {
+        edge_00 : 6;
+        edge_01 : 6;
+        edge_02 : 6;
+        edge_03 : 6;
+        edge_04 : 6;
+        edge_05 : 6;
+        edge_06 : 6;
+        edge_07 : 6;
+        edge_08 : 6;
+        edge_09 : 6;
+        edge_10 : 6;
+        edge_11 : 6;
+    };
+
+    struct Cube {
+        u8 type;
+        
+        match (type) {
+            // empty
+            (0x00): {}
+            // full
+            (0x01): {}
+            // indented
+            (0x02): {
+                Indentations indentations;
+            }
+            // octant
+            (0x03): {
+                Cube children[0x08];
+            }
+        }
+    };
+
+    char identifier[0x0D] @ 0x00;
+    std::assert(identifier == "Inexor Octree", "invalid identifier");
+
+    u32 formatVersion @ 0x0D;
+
+    Cube cubes[while(!std::mem::eof())] @ 0x11 [[inline]];
+
 **Calculating edge indentation value**
 
 The indentation along the edge axis between two corners presented by a unique value. The indentation level starts with 0 at the starting corner and goes to 8 at the ending corner.
@@ -335,3 +388,77 @@ Using :math:`i` as the indentation value, :math:`s` as the indentation start pos
 :math:`i = 10 * s + o - \frac{s^2 + s}{2}; s, o \in [0, 8]; s <= o`
 
 Resulting into values from 0 to 44.
+
+Inexor IV
+^^^^^^^^^^
+The forth version simplifies reading and writing more by dropping every bit operation and using bytes everywhere. To decrease the size again, a compressing algorithm like zip could be applied by default.
+
+File Extension: ``.nxocc`` - Inexor Octree
+
+.. code-block::
+
+    | ENDIANNESS : little
+    | bit : 1 // A bit, 0 or 1.
+    | uByte : 8 // An unsigned byte.
+    | uInt : 32 // An unsigned integer.
+
+    > uByte (13) // string identifier: "Inexor Octree"
+    > uInt (1) // version
+
+    def get_cube() {
+        > uByte (1) : cube_type // cube type, only the first two bits are used.
+
+        switch (cube_type) {
+            case 0: // empty
+                // nothing
+            case 1: // fully
+                // nothing
+            case 2: // indented
+                for (0..11 : edge_id) {
+                    > uByte (1) // indentation level and offset, see information in Inexor III
+                }
+            case 3: // octants
+                for (0..7 : sub_cube) {
+                    get_cube() // recurse down
+                }
+        }
+    } // get_cube
+    get_cube()
+
+As ImHex pattern.
+
+.. code-block::
+
+    #pragma description Inexor octree format (nxoc)
+
+    #pragma magic [ 49 6E 65 78 6F 72 20 4F 63 74 72 65 65 ] @ 0x00
+    #pragma endian little
+
+    import std.mem;
+    import std.sys;
+
+    struct Cube {
+        u8 type;
+        
+        match (type) {
+            // empty
+            (0x00): {}
+            // full
+            (0x01): {}
+            // indented
+            (0x02): {
+                u8 indentations[0x0C];
+            }
+            // octant
+            (0x03): {
+                Cube children[0x08];
+            }
+        }
+    };
+
+    char identifier[0x0D] @ 0x00;
+    std::assert(identifier == "Inexor Octree", "invalid identifier");
+
+    u32 formatVersion @ 0x0D;
+
+    Cube cubes[while(!std::mem::eof())] @ 0x11 [[inline]];
