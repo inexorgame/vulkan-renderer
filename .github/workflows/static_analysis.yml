@@ -71,7 +71,7 @@ jobs:
           rm -rf ${{ env.INEXOR_VULKAN_SDK_PATH }}/${{ env.INEXOR_VULKAN_VERSION }}/x86_64/lib/cmake/volk/
   
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Configure CMake
         run: |
