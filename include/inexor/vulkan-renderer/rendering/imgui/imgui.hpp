@@ -1,6 +1,6 @@
 ﻿#pragma once
 
-#include "inexor/vulkan-renderer/render-graph/render_graph.hpp"
+#include "inexor/vulkan-renderer/rendering/render-graph/render_graph.hpp"
 
 #include <glm/vec2.hpp>
 #include <imgui.h>
@@ -28,7 +28,7 @@ class RenderGraph;
 class GraphicsPass;
 } // namespace inexor::vulkan_renderer::render_graph
 
-namespace inexor::vulkan_renderer::renderers {
+namespace inexor::vulkan_renderer::rendering::imgui {
 
 // Using declarations
 using render_graph::Buffer;
@@ -111,4 +111,4 @@ public:
     ImGuiRenderer &operator=(ImGuiRenderer &&) = delete;
 };
 
-} // namespace inexor::vulkan_renderer::renderers
+} // namespace inexor::vulkan_renderer::rendering::imgui

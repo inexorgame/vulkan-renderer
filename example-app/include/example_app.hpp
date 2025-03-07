@@ -9,11 +9,13 @@
 
 namespace inexor::example_app {
 
+using namespace inexor::vulkan_renderer;
+
 /// An example application using Inexor vulkan-renderer
 class ExampleApp : public ExampleAppBase {
 private:
-    std::unique_ptr<ImGuiRenderer> m_imgui_renderer;
-    std::unique_ptr<OctreeRenderer> m_octree_renderer;
+    std::unique_ptr<rendering::imgui::ImGuiRenderer> m_imgui_renderer;
+    std::unique_ptr<rendering::octree::OctreeRenderer> m_octree_renderer;
 
 public:
     ExampleApp(int argc, char **argv);

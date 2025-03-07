@@ -1,7 +1,7 @@
-#include "inexor/vulkan-renderer/renderers/imgui.hpp"
+#include "inexor/vulkan-renderer/rendering/imgui/imgui.hpp"
 
-#include "inexor/vulkan-renderer/render-graph/graphics_pass_builder.hpp"
-#include "inexor/vulkan-renderer/render-graph/render_graph.hpp"
+#include "inexor/vulkan-renderer/rendering/render-graph/graphics_pass_builder.hpp"
+#include "inexor/vulkan-renderer/rendering/render-graph/render_graph.hpp"
 #include "inexor/vulkan-renderer/wrapper/make_info.hpp"
 #include "inexor/vulkan-renderer/wrapper/shader.hpp"
 #include "inexor/vulkan-renderer/wrapper/swapchain.hpp"
@@ -10,7 +10,7 @@
 #include <stdexcept>
 #include <utility>
 
-namespace inexor::vulkan_renderer::renderers {
+namespace inexor::vulkan_renderer::rendering {
 
 ImGuiRenderer::ImGuiRenderer(const Device &device,
                              std::weak_ptr<RenderGraph> render_graph,
@@ -233,4 +233,4 @@ void ImGuiRenderer::set_imgui_style() {
     style.Colors[ImGuiCol_ButtonActive] = ImVec4(1.0f, 0.0f, 0.0f, 0.8f);
 }
 
-} // namespace inexor::vulkan_renderer::renderers
+} // namespace inexor::vulkan_renderer::rendering
