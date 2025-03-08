@@ -49,7 +49,7 @@ linkcheck_ignore = [
     r"https://github.com/.*#"  # do not check anchors from GitHub, JS magic
 ]
 
-mermaid_version = "8.9.2"
+mermaid_version = "11.4.1"
 
 # Setup the breathe extension
 breathe_projects = {

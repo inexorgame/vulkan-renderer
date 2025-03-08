@@ -104,7 +104,7 @@ jobs:
           rm -rf ${{ env.INEXOR_VULKAN_SDK_PATH }}/${{ env.INEXOR_VULKAN_VERSION }}/x86_64/lib/cmake/volk/
 
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Configure CMake
         shell: bash
@@ -137,7 +137,7 @@ jobs:
           tar -zcvf "../build_linux_${{ matrix.config.build_type }}_${{ matrix.config.compiler }}.tar.xz" *
 
       - name: Upload Build Artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: build_linux_${{ matrix.config.build_type }}_${{ matrix.config.compiler }}.tar.xz
           path: build_linux_${{ matrix.config.build_type }}_${{ matrix.config.compiler }}.tar.xz
@@ -155,7 +155,7 @@ jobs:
           tar -zcvf "../nightly_linux_${{ matrix.config.build_type }}_${{ matrix.config.compiler }}.tar.xz" *
 
       - name: Upload Nightly Artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: nightly_linux_${{ matrix.config.build_type }}_${{ matrix.config.compiler }}.tar.xz
           path: nightly_linux_${{ matrix.config.build_type }}_${{ matrix.config.compiler }}.tar.xz
@@ -208,7 +208,7 @@ jobs:
           pip3 install wheel setuptools
 
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Configure LLVM
         if: matrix.config.compiler == 'clang'
@@ -251,7 +251,7 @@ jobs:
           7z a -tzip "build_windows_${{ matrix.config.build_type }}_${{ matrix.config.compiler }}" ./build/*
 
       - name: Upload Build Artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: build_windows_${{ matrix.config.build_type }}_${{ matrix.config.compiler }}
           path: build_windows_${{ matrix.config.build_type }}_${{ matrix.config.compiler }}.zip
@@ -268,7 +268,7 @@ jobs:
           7z a -tzip "nightly_windows_${{ matrix.config.build_type }}_${{ matrix.config.compiler }}" ./artifacts/*
 
       - name: Upload Nightly Artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: nightly_windows_${{ matrix.config.build_type }}_${{ matrix.config.compiler }}
           path: nightly_windows_${{ matrix.config.build_type }}_${{ matrix.config.compiler }}.zip
