@@ -92,16 +92,15 @@ target_compile_definitions(
     VK_NO_PROTOTYPES # Required by volk metaloader
 )
 
-# enable multi processor building if VS project
-if(${CMAKE_GENERATOR} MATCHES "Visual Studio.*")
-    target_compile_options(inexor-vulkan-renderer PRIVATE "/MP")
-endif()
-
-# enable exceptions when using MSVC toolchain, makes Clang on windows possible
-# enable correct reporting of the __cplusplus macro so correct code paths are selected
 if(MSVC)
+    # enable multi processor building if VS project
+    target_compile_options(inexor-vulkan-renderer PRIVATE "/MP")
+    # enable exceptions when using MSVC toolchain, makes Clang on windows possible
     target_compile_options(inexor-vulkan-renderer PRIVATE "-EHs")
+    # enable correct reporting of the __cplusplus macro so correct code paths are selected
     target_compile_options(inexor-vulkan-renderer PRIVATE "/Zc:__cplusplus")
+    # Disable useless warnings
+    target_compile_definitions(inexor-vulkan-renderer PRIVATE _SILENCE_ALL_MS_EXT_DEPRECATION_WARNINGS)
 endif()
 
 # Extract the current git sha
@@ -143,6 +142,11 @@ FetchContent_MakeAvailable(Vulkan)
 
 # Work around a VMA compile error from its use of snprintf
 target_compile_definitions(VulkanMemoryAllocator PRIVATE VMA_STATS_STRING_ENABLED=0)
+
+# Disable useless warnings
+target_compile_definitions(spdlog PRIVATE _SILENCE_ALL_MS_EXT_DEPRECATION_WARNINGS)
+# Disable useless warnings
+target_compile_definitions(fmt PRIVATE _SILENCE_ALL_MS_EXT_DEPRECATION_WARNINGS)
 
 if (WIN32)
    set(VOLK_STATIC_DEFINES VK_USE_PLATFORM_WIN32_KHR)

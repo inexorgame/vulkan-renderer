@@ -34,7 +34,6 @@ struct CommandLineOptions {
 class ExampleAppBase {
 private:
     // TODO: This should not be part of ExampleAppBase!
-    const std::string m_wnd_title = "inexor-vulkan-renderer-example";
     std::uint32_t m_wnd_width{1280};
     std::uint32_t m_wnd_height{720};
     Window::Mode m_wnd_mode{Window::Mode::WINDOWED};
@@ -64,7 +63,7 @@ protected:
     std::unique_ptr<Device> m_device;
     // TODO: Why do I need a surface for a device again?
     std::unique_ptr<Surface> m_surface;
-    std::unique_ptr<wrapper::Swapchain> m_swapchain;
+    std::unique_ptr<Swapchain> m_swapchain;
 
     CommandLineOptions m_options;
 
@@ -77,18 +76,18 @@ protected:
     std::shared_ptr<RenderGraph> m_rendergraph;
 
 public:
-    ExampleAppBase(int argc, char **argv);
+    ExampleAppBase();
     virtual ~ExampleAppBase();
 
-    ExampleAppBase(const ExampleAppBase &) = delete;
-    // TODO: Implement me!
+    // ExampleAppBase(const ExampleAppBase &) = delete;
+    //  TODO: Implement me!
     ExampleAppBase(ExampleAppBase &&) noexcept;
 
     ExampleAppBase &operator=(const ExampleAppBase &) = delete;
     // TODO: Implement me!
     ExampleAppBase &operator=(ExampleAppBase &&) noexcept;
 
-    virtual void evaluate_command_line_arguments(const CommandLineArgumentParser &parser) = 0;
+    // virtual void evaluate_command_line_arguments(const CommandLineArgumentParser &parser) = 0;
     virtual void cursor_position_callback(GLFWwindow *, double, double) = 0;
     virtual void keyboard_button_callback(GLFWwindow *, int, int, int, int) = 0;
     virtual void mouse_button_callback(GLFWwindow *, int, int, int) = 0;

@@ -23,17 +23,10 @@ message(STATUS "CXX Compiler executable: ${CMAKE_CXX_COMPILER}")
 message(STATUS "Linker executable: ${CMAKE_LINKER}")
 message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
 
-# The marked constants in application.hpp will be replaced with the following values
 set(INEXOR_ENGINE_NAME "Inexor Engine")
-set(INEXOR_APP_NAME "Inexor Vulkan-renderer example")
-
 set(INEXOR_ENGINE_VERSION_MAJOR 0)
 set(INEXOR_ENGINE_VERSION_MINOR 1)
 set(INEXOR_ENGINE_VERSION_PATCH 0)
-
-set(INEXOR_APP_VERSION_MAJOR 0)
-set(INEXOR_APP_VERSION_MINOR 1)
-set(INEXOR_APP_VERSION_PATCH 0)
 
 # Download dependencies through CMake
 include (cmake/dependencies.cmake)

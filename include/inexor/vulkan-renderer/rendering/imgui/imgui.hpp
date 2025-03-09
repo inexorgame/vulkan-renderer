@@ -51,6 +51,8 @@ class ImGuiRenderer {
 
     // This is the color attachment we will write to
     std::weak_ptr<Swapchain> m_swapchain;
+
+    // TODO: Does this really have to be a member?
     // This is the previous pass we read from
     std::weak_ptr<GraphicsPass> m_previous_pass;
 

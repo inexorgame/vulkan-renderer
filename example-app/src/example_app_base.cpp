@@ -1,6 +1,6 @@
 #include "../include/example_app_base.hpp"
 
-#include "inexor/vulkan-renderer/meta.hpp"
+#include "../include/example_app_meta.hpp"
 #include "inexor/vulkan-renderer/tools/enumerate.hpp"
 
 #include <spdlog/async.h>
@@ -10,20 +10,22 @@
 
 namespace inexor::vulkan_renderer::example_app {
 
-ExampleAppBase::ExampleAppBase(int argc, char **argv) {
+ExampleAppBase::ExampleAppBase() {
+    // Initialize spdlog logging library
     initialize_spdlog();
 
-    CommandLineArgumentParser cla_parser;
-    cla_parser.parse_args(argc, argv);
-    evaluate_command_line_arguments(cla_parser);
+    // Print name and version of engine and app specified in meta.hpp
+    // The values in meta.hpp will be filled by CMake when it configures meta.hpp.in
+    spdlog::trace("{} version: {}.{}.{}", APP_NAME, APP_VERSION[0], APP_VERSION[1], APP_VERSION[2]);
+    spdlog::trace("{} version: {}.{}.{}", ENGINE_NAME, ENGINE_VERSION[0], ENGINE_VERSION[1], ENGINE_VERSION[2]);
 
-    spdlog::trace("Application version: {}.{}.{}", APP_VERSION[0], APP_VERSION[1], APP_VERSION[2]);
-    spdlog::trace("Engine version: {}.{}.{}", ENGINE_VERSION[0], ENGINE_VERSION[1], ENGINE_VERSION[2]);
-
-    // NOTE: We must create the window before the VkInstance, otherwise glfwGetRequiredInstanceExtensions will fail!
-    m_window = std::make_unique<Window>(m_wnd_title, m_wnd_width, m_wnd_height, true, true, m_wnd_mode);
+    // NOTE: We must create the window before VkInstance, otherwise glfwGetRequiredInstanceExtensions will fail!
+    m_window = std::make_unique<Window>(APP_NAME, m_wnd_width, m_wnd_height, true, true, m_wnd_mode);
+    // Setup glfw callbacks
     setup_window_and_input_callbacks();
 
+    /*
+    // Create the Vulkan instance
     m_instance = std::make_unique<Instance>(
         APP_NAME, ENGINE_NAME, VK_MAKE_API_VERSION(0, APP_VERSION[0], APP_VERSION[1], APP_VERSION[2]),
         VK_MAKE_API_VERSION(0, ENGINE_VERSION[0], ENGINE_VERSION[1], ENGINE_VERSION[2]),
@@ -32,6 +34,7 @@ ExampleAppBase::ExampleAppBase(int argc, char **argv) {
     m_surface = std::make_unique<Surface>(m_instance->instance(), m_window->window());
     m_input_data = std::make_unique<KeyboardMouseInputData>();
 
+    // TODO ...
     const VkPhysicalDeviceFeatures required_features{};
 
     std::vector<const char *> required_extensions{
@@ -41,28 +44,28 @@ ExampleAppBase::ExampleAppBase(int argc, char **argv) {
     const auto preferred_gpu =
         Device::pick_best_physical_device(*m_instance, m_surface->surface(), required_features, required_extensions);
 
-    m_device = std::make_unique<Device>(*m_instance, m_surface, preferred_gpu, required_extensions);
+    m_device = std::make_unique<Device>(*m_instance, m_surface, preferred_gpu, required_extensions, required_features);
 
     m_swapchain = std::make_unique<Swapchain>(*m_device, "Default Swapchain", m_surface->surface(), *m_window,
                                               m_options.vsync_enabled);
+    */
 }
 
 ExampleAppBase::~ExampleAppBase() {
-    spdlog::trace("Shutting down vulkan-renderer-example");
+    spdlog::trace("Shutting down {}", APP_NAME);
 }
 
 void ExampleAppBase::initialize_spdlog() {
     spdlog::init_thread_pool(8192, 2);
     auto console_sink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
-    auto file_sink = std::make_shared<spdlog::sinks::basic_file_sink_mt>("vulkan-renderer-example.log", true);
-    auto logger = std::make_shared<spdlog::async_logger>("vulkan-renderer-example",
-                                                         spdlog::sinks_init_list{console_sink, file_sink},
+    auto file_sink = std::make_shared<spdlog::sinks::basic_file_sink_mt>(std::string(APP_NAME) + ".log", true);
+    auto logger = std::make_shared<spdlog::async_logger>(APP_NAME, spdlog::sinks_init_list{console_sink, file_sink},
                                                          spdlog::thread_pool(), spdlog::async_overflow_policy::block);
     logger->set_level(spdlog::level::trace);
     logger->set_pattern("%Y-%m-%d %T.%f %^%l%$ %5t [%-10n] %v");
     logger->flush_on(spdlog::level::trace);
     spdlog::set_default_logger(logger);
-    spdlog::trace("Inexor vulkan-renderer-example, BUILD " + std::string(__DATE__) + ", " + __TIME__);
+    spdlog::trace("{}, BUILD {} {} GIT-SHA {}", APP_NAME, __DATE__, __TIME__, BUILD_GIT);
 }
 
 void ExampleAppBase::recreate_swapchain() {
@@ -111,7 +114,6 @@ ExampleAppBase::validation_layer_debug_messenger_callback(VkDebugUtilsMessageSev
         spdlog::warn("{}", data->pMessage);
     } else if (severity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT) {
         spdlog::critical("{}", data->pMessage);
-        // Throw an exception if --stop-on-validation-error command line argument is specified
         if (m_options.stop_on_validation_error) {
             throw std::runtime_error(
                 "[ExampleAppBase::validation_layer_debug_messenger_callback] Validation error, stopped.");

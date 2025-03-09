@@ -27,7 +27,7 @@ public:
     /// Default constructor
     /// @param argc The number of arguments passed to main()
     /// @param argv The arguments passed to main()
-    ExampleApp(int argc, char **argv);
+    ExampleApp(int argc, char *argv[]);
     ExampleApp(const ExampleApp &) = delete;
     // TODO: Implement me!
     ExampleApp(ExampleApp &&) noexcept;
@@ -37,23 +37,21 @@ public:
     // TODO: Implement me!
     ExampleApp &operator=(ExampleApp &&) noexcept;
 
-    void cursor_position_callback(GLFWwindow *window, double x_pos, double y_pos) override;
+    void evaluate_command_line_arguments(int argc, char *argv[]);
 
-    void keyboard_button_callback(GLFWwindow *window, int key, int scancode, int action, int mods) override;
-
-    void initialize() override;
-
-    void load_toml_configuration_file(const std::string &file_name);
-
-    void mouse_button_callback(GLFWwindow *window, int button, int action, int mods) override;
-
-    void mouse_scroll_callback(GLFWwindow *window, double x_offset, double y_offset) override;
-
-    void run() override;
-
-    void setup_render_graph() override;
-
-    void update_imgui() override;
+    void cursor_position_callback(GLFWwindow *, double, double);
+    void keyboard_button_callback(GLFWwindow *, int, int, int, int);
+    void mouse_button_callback(GLFWwindow *, int, int, int);
+    void mouse_scroll_callback(GLFWwindow *, double, double);
+    void initialize();
+    void process_mouse_input();
+    void process_keyboard_input();
+    void render_frame();
+    void run();
+    void setup_device();
+    void setup_render_graph();
+    void shutdown();
+    void update_imgui();
 };
 
 } // namespace inexor::vulkan_renderer::example_app

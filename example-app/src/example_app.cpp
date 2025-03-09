@@ -1,6 +1,7 @@
 #include "../include/example_app.hpp"
 
-#include "inexor/vulkan-renderer/meta.hpp"
+#include "../include/example_app_meta.hpp"
+#include "inexor/vulkan-renderer/rendering/render-graph/render_graph.hpp"
 
 #include <toml.hpp>
 
@@ -8,25 +9,24 @@
 
 namespace inexor::vulkan_renderer::example_app {
 
-ExampleApp::ExampleApp(int argc, char **argv) : ExampleAppBase(argc, argv) {
-    // TODO: Code here...
+ExampleApp::ExampleApp(int argc, char *argv[]) : ExampleAppBase() {
+    // ...?
 }
 
 void ExampleApp::initialize() {
-    //
+    // ...?
 }
 
 void ExampleApp::run() {
-    // ... ?
+    // ...?
     spdlog::trace("Yep, I'm running...");
 }
 
 void ExampleApp::setup_render_graph() {
     spdlog::trace("Setting up rendergraph");
-    m_rendergraph = std::make_shared<RenderGraph>(*m_device);
-    m_octree_renderer = std::make_unique<rendering::octree::OctreeRenderer>(m_rendergraph);
-    m_imgui_renderer = std::make_unique<rendering::imgui::ImGuiRenderer>(m_rendergraph);
-
+    // m_rendergraph = std::make_shared<RenderGraph>(*m_device);
+    // m_octree_renderer = std::make_unique<rendering::octree::OctreeRenderer>(m_rendergraph);
+    // m_imgui_renderer = std::make_unique<rendering::imgui::ImGuiRenderer>(m_rendergraph);
     // ...?
 }
 
@@ -73,17 +73,31 @@ void ExampleApp::update_imgui() {
     ImGui::Render();
 }
 
+void ExampleApp::evaluate_command_line_arguments(int argc, char *argv[]) {
+    CommandLineArgumentParser cla_parser;
+    cla_parser.parse_args(argc, argv);
+}
+
+void ExampleApp::cursor_position_callback(GLFWwindow *, double, double) {}
+void ExampleApp::keyboard_button_callback(GLFWwindow *, int, int, int, int) {}
+void ExampleApp::mouse_button_callback(GLFWwindow *, int, int, int) {}
+void ExampleApp::mouse_scroll_callback(GLFWwindow *, double, double) {}
+void ExampleApp::process_mouse_input() {}
+void ExampleApp::process_keyboard_input() {}
+void ExampleApp::render_frame() {}
+void ExampleApp::setup_device() {}
+void ExampleApp::shutdown() {}
+
+} // namespace inexor::vulkan_renderer::example_app
+
+using inexor::vulkan_renderer::example_app::ExampleApp;
+
 int main(int argc, char *argv[]) {
     try {
         std::unique_ptr<ExampleApp> my_renderer = std::make_unique<ExampleApp>(argc, argv);
         my_renderer->run();
-    }
-    // We catch whatever inherits from std::exception here
-    catch (std::exception &exception) {
+    } catch (std::exception &exception) {
         spdlog::critical(exception.what());
-        return 1;
     }
     return 0;
 }
-
-} // namespace inexor::vulkan_renderer::example_app
