@@ -1,17 +1,18 @@
 #include "../include/example_app_base.hpp"
 
+#include "inexor/vulkan-renderer/meta.hpp"
+#include "inexor/vulkan-renderer/tools/enumerate.hpp"
+
 #include <spdlog/async.h>
 #include <spdlog/sinks/basic_file_sink.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include <spdlog/spdlog.h>
 
-namespace inexor::example_app {
+namespace inexor::vulkan_renderer::example_app {
 
 ExampleAppBase::ExampleAppBase(int argc, char **argv) {
-    // Setup spdlog logging library
     initialize_spdlog();
 
-    // Parse and evaluate command line arguments
     CommandLineArgumentParser cla_parser;
     cla_parser.parse_args(argc, argv);
     evaluate_command_line_arguments(cla_parser);
@@ -19,7 +20,7 @@ ExampleAppBase::ExampleAppBase(int argc, char **argv) {
     spdlog::trace("Application version: {}.{}.{}", APP_VERSION[0], APP_VERSION[1], APP_VERSION[2]);
     spdlog::trace("Engine version: {}.{}.{}", ENGINE_VERSION[0], ENGINE_VERSION[1], ENGINE_VERSION[2]);
 
-    // NOTE: We must create the window before the VkInstance, otherwise glfwGetRequiredInstanceExtensions fails!
+    // NOTE: We must create the window before the VkInstance, otherwise glfwGetRequiredInstanceExtensions will fail!
     m_window = std::make_unique<Window>(m_wnd_title, m_wnd_width, m_wnd_height, true, true, m_wnd_mode);
     setup_window_and_input_callbacks();
 
@@ -31,10 +32,18 @@ ExampleAppBase::ExampleAppBase(int argc, char **argv) {
     m_surface = std::make_unique<Surface>(m_instance->instance(), m_window->window());
     m_input_data = std::make_unique<KeyboardMouseInputData>();
 
-    m_device = std::make_unique<Device>(*m_instance, m_surface->surface(), physical_device, required_extensions,
-                                        required_features, optional_extensions, optional_features);
+    const VkPhysicalDeviceFeatures required_features{};
 
-    m_swapchain = std::make_shared<Swapchain>(*m_device, "Default Swapchain", m_surface->surface(), *m_window,
+    std::vector<const char *> required_extensions{
+        VK_KHR_SWAPCHAIN_EXTENSION_NAME,
+    };
+
+    const auto preferred_gpu =
+        Device::pick_best_physical_device(*m_instance, m_surface->surface(), required_features, required_extensions);
+
+    m_device = std::make_unique<Device>(*m_instance, m_surface, preferred_gpu, required_extensions);
+
+    m_swapchain = std::make_unique<Swapchain>(*m_device, "Default Swapchain", m_surface->surface(), *m_window,
                                               m_options.vsync_enabled);
 }
 
@@ -54,6 +63,10 @@ void ExampleAppBase::initialize_spdlog() {
     logger->flush_on(spdlog::level::trace);
     spdlog::set_default_logger(logger);
     spdlog::trace("Inexor vulkan-renderer-example, BUILD " + std::string(__DATE__) + ", " + __TIME__);
+}
+
+void ExampleAppBase::recreate_swapchain() {
+    // TODO: Implement!
 }
 
 void ExampleAppBase::setup_window_and_input_callbacks() {
@@ -85,11 +98,7 @@ void ExampleAppBase::setup_window_and_input_callbacks() {
     });
 }
 
-void ExampleAppBase::recreate_swapchain() {
-    // TODO: Implement!
-}
-
-VkBool32 VKAPI_CALL
+PFN_vkDebugUtilsMessengerCallbackEXT
 ExampleAppBase::validation_layer_debug_messenger_callback(VkDebugUtilsMessageSeverityFlagBitsEXT severity,
                                                           VkDebugUtilsMessageTypeFlagsEXT type,
                                                           const VkDebugUtilsMessengerCallbackDataEXT *data,
@@ -102,11 +111,13 @@ ExampleAppBase::validation_layer_debug_messenger_callback(VkDebugUtilsMessageSev
         spdlog::warn("{}", data->pMessage);
     } else if (severity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT) {
         spdlog::critical("{}", data->pMessage);
+        // Throw an exception if --stop-on-validation-error command line argument is specified
+        if (m_options.stop_on_validation_error) {
+            throw std::runtime_error(
+                "[ExampleAppBase::validation_layer_debug_messenger_callback] Validation error, stopped.");
+        }
     }
-    if (m_options.stop_on_validation_error) {
-        throw std::runtime_error("[ExampleApp::validation_layer_debug_messenger_callback] Validation error, stopped.");
-    }
-    return false;
+    return VK_FALSE;
 }
 
-} // namespace inexor::example_app
+} // namespace inexor::vulkan_renderer::example_app

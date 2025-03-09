@@ -12,7 +12,7 @@
 #include <memory>
 #include <string>
 
-namespace inexor::example_app {
+namespace inexor::vulkan_renderer::example_app {
 
 // Using declarations
 using inexor::vulkan_renderer::input::KeyboardMouseInputData;
@@ -33,6 +33,7 @@ struct CommandLineOptions {
 /// A base class for example apps which use Inexor vulkan-renderer
 class ExampleAppBase {
 private:
+    // TODO: This should not be part of ExampleAppBase!
     const std::string m_wnd_title = "inexor-vulkan-renderer-example";
     std::uint32_t m_wnd_width{1280};
     std::uint32_t m_wnd_height{720};
@@ -40,10 +41,6 @@ private:
     bool m_wnd_resized{false};
 
     std::unique_ptr<Window> m_window;
-    std::unique_ptr<Instance> m_instance;
-    std::unique_ptr<Surface> m_surface;
-    std::unique_ptr<Device> m_device;
-    std::shared_ptr<Swapchain> m_swapchain;
     std::unique_ptr<KeyboardMouseInputData> m_input_data;
 
     void initialize_spdlog();
@@ -62,9 +59,16 @@ private:
     void setup_window_and_input_callbacks();
 
 protected:
+    // TODO: What should be protected here?
+    std::unique_ptr<Instance> m_instance;
+    std::unique_ptr<Device> m_device;
+    // TODO: Why do I need a surface for a device again?
+    std::unique_ptr<Surface> m_surface;
+    std::unique_ptr<wrapper::Swapchain> m_swapchain;
+
     CommandLineOptions m_options;
 
-    VKAPI_ATTR VkBool32 VKAPI_CALL
+    PFN_vkDebugUtilsMessengerCallbackEXT
     validation_layer_debug_messenger_callback(VkDebugUtilsMessageSeverityFlagBitsEXT,
                                               VkDebugUtilsMessageTypeFlagsEXT,
                                               const VkDebugUtilsMessengerCallbackDataEXT *,
@@ -93,10 +97,11 @@ public:
     virtual void process_mouse_input() = 0;
     virtual void process_keyboard_input() = 0;
     virtual void render_frame() = 0;
+    virtual void run() = 0;
     virtual void setup_device() = 0;
     virtual void setup_render_graph() = 0;
     virtual void shutdown() = 0;
     virtual void update_imgui() = 0;
 };
 
-} // namespace inexor::example_app
+} // namespace inexor::vulkan_renderer::example_app

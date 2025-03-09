@@ -10,7 +10,7 @@
 #include <stdexcept>
 #include <utility>
 
-namespace inexor::vulkan_renderer::rendering {
+namespace inexor::vulkan_renderer::rendering::imgui {
 
 ImGuiRenderer::ImGuiRenderer(const Device &device,
                              std::weak_ptr<RenderGraph> render_graph,
@@ -233,4 +233,4 @@ void ImGuiRenderer::set_imgui_style() {
     style.Colors[ImGuiCol_ButtonActive] = ImVec4(1.0f, 0.0f, 0.0f, 0.8f);
 }
 
-} // namespace inexor::vulkan_renderer::rendering
+} // namespace inexor::vulkan_renderer::rendering::imgui

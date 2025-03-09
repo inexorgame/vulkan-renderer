@@ -250,6 +250,7 @@ Device::Device(
     : m_physical_device(physical_device) {
     if (!is_device_suitable(build_device_info(physical_device, surface), required_features, required_extensions,
                             true)) {
+        // TODO: fix me! ????
         throw std::runtime_error("Error: The chosen physical device {} is not suitable!");
     }
 
@@ -321,6 +322,7 @@ Device::Device(
                 spdlog::warn("The physical device {} does not support {}!",
                              tools::get_physical_device_name(physical_device),
                              tools::get_device_feature_description(i));
+                // TODO: Invoke callback lambda here?...
             }
         }
     }

@@ -34,14 +34,17 @@ Fence::~Fence() {
 }
 
 void Fence::wait(const std::uint64_t timeout_limit) const {
+    // TODO: Error handling!
     vkWaitForFences(m_device.device(), 1, &m_fence, VK_TRUE, timeout_limit);
 }
 
 void Fence::reset_fence() const {
+    // TODO: Error handling!
     vkResetFences(m_device.device(), 1, &m_fence);
 }
 
 VkResult Fence::status() const {
+    // TODO: Error handling!
     return vkGetFenceStatus(m_device.device(), m_fence);
 }
 

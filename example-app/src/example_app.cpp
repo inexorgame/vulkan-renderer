@@ -1,23 +1,33 @@
 #include "../include/example_app.hpp"
 
+#include "inexor/vulkan-renderer/meta.hpp"
+
 #include <toml.hpp>
 
 #include <memory>
 
-namespace inexor::example_app {
+namespace inexor::vulkan_renderer::example_app {
 
-ExampleApp::ExampleApp(int argc, char **argv) : ExampleAppBase(argc, argv) {}
-
-ExampleApp::~ExampleApp() {}
+ExampleApp::ExampleApp(int argc, char **argv) : ExampleAppBase(argc, argv) {
+    // TODO: Code here...
+}
 
 void ExampleApp::initialize() {
     //
 }
 
+void ExampleApp::run() {
+    // ... ?
+    spdlog::trace("Yep, I'm running...");
+}
+
 void ExampleApp::setup_render_graph() {
     spdlog::trace("Setting up rendergraph");
-    m_octree_renderer = std::make_unique<OctreeRenderer>(m_rendergraph);
-    m_imgui_renderer = std::make_unique<ImGuiRenderer>(m_rendergraph);
+    m_rendergraph = std::make_shared<RenderGraph>(*m_device);
+    m_octree_renderer = std::make_unique<rendering::octree::OctreeRenderer>(m_rendergraph);
+    m_imgui_renderer = std::make_unique<rendering::imgui::ImGuiRenderer>(m_rendergraph);
+
+    // ...?
 }
 
 void ExampleApp::update_imgui() {
@@ -34,7 +44,7 @@ void ExampleApp::update_imgui() {
     ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0);
     ImGui::SetNextWindowPos(ImVec2(10, 10));
     ImGui::SetNextWindowSize(ImVec2(330, 0));
-    ImGui::Begin("Inexor Vulkan-renderer", nullptr,
+    ImGui::Begin("Inexor vulkan-renderer", nullptr,
                  ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
     ImGui::Text("%s", m_device->gpu_name().c_str());
     ImGui::Text("Engine version %d.%d.%d (Git sha %s)", ENGINE_VERSION[0], ENGINE_VERSION[1], ENGINE_VERSION[2],
@@ -63,4 +73,17 @@ void ExampleApp::update_imgui() {
     ImGui::Render();
 }
 
-} // namespace inexor::example_app
+int main(int argc, char *argv[]) {
+    try {
+        std::unique_ptr<ExampleApp> my_renderer = std::make_unique<ExampleApp>(argc, argv);
+        my_renderer->run();
+    }
+    // We catch whatever inherits from std::exception here
+    catch (std::exception &exception) {
+        spdlog::critical(exception.what());
+        return 1;
+    }
+    return 0;
+}
+
+} // namespace inexor::vulkan_renderer::example_app

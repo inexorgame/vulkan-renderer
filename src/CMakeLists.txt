@@ -113,11 +113,6 @@ execute_process(
     OUTPUT_STRIP_TRAILING_WHITESPACE
 )
 
-# Replace variables in header file with CMake values
-configure_file(
-    ${PROJECT_SOURCE_DIR}/include/inexor/vulkan-renderer/meta.hpp.in ${CMAKE_CURRENT_BINARY_DIR}/include/inexor/vulkan-renderer/meta.hpp
-)
-
 target_include_directories(
     inexor-vulkan-renderer
 

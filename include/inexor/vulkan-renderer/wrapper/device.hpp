@@ -70,8 +70,8 @@ struct DeviceInfo {
     bool swapchain_supported{false};
 };
 
-/// A RAII wrapper class for VkDevice, VkPhysicalDevice and VkQueues
-/// @note There is no method ``is_layer_supported`` in this wrapper class because device layers are deprecated
+/// RAII wrapper class for VkDevice, VkPhysicalDevice and VkQueues
+/// @note There is no method ``is_layer_supported`` in this wrapper class because device layers are deprecated!
 class Device {
     friend class CommandBuffer;
     friend class CommandPool;
