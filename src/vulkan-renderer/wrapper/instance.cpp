@@ -142,17 +142,16 @@ Instance::Instance(const std::string &application_name,
     // Because this requires some dynamic libraries to be loaded, this may take even up to some seconds!
     auto *glfw_extensions = glfwGetRequiredInstanceExtensions(&glfw_extension_count);
 
-    if (glfw_extension_count == 0) {
-        throw std::runtime_error(
-            "Error: glfwGetRequiredInstanceExtensions results 0 as number of required instance extensions!");
+    if (glfw_extensions == NULL) {
+        throw std::runtime_error("Error: glfwGetRequiredInstanceExtensions returned NULL!");
     }
 
     spdlog::trace("Required GLFW instance extensions:");
 
     // Add all instance extensions which are required by GLFW to our wishlist.
     for (std::size_t i = 0; i < glfw_extension_count; i++) {
-        spdlog::trace("   - {}", glfw_extensions[i]);              // NOLINT
-        instance_extension_wishlist.push_back(glfw_extensions[i]); // NOLINT
+        spdlog::trace("   - {}", glfw_extensions[i]);
+        instance_extension_wishlist.push_back(glfw_extensions[i]);
     }
 
     // We have to check which instance extensions of our wishlist are available on the current system!
@@ -235,10 +234,21 @@ Instance::Instance(const std::string &application_name,
         result != VK_SUCCESS) {
         // Don't forget to destroy the instance before throwing the exception!
         vkDestroyInstance(m_instance, nullptr);
-        throw VulkanException(
-            "Error: Could not create Vulkan validation layer debug callback! (vkCreateDebugUtilsMessengerEXT failed!)",
-            result);
+        throw VulkanException("Error: vkCreateDebugUtilsMessengerEXT failed!", result);
     }
+}
+
+std::vector<VkPhysicalDevice> Instance::get_physical_devices() const {
+    std::uint32_t count = 0;
+    if (const auto result = vkEnumeratePhysicalDevices(m_instance, &count, nullptr); result != VK_SUCCESS) {
+        throw VulkanException("Error: vkEnumeratePhysicalDevices failed!", result);
+    }
+    std::vector<VkPhysicalDevice> physical_devices(count);
+    if (const auto result = vkEnumeratePhysicalDevices(m_instance, &count, physical_devices.data());
+        result != VK_SUCCESS) {
+        throw VulkanException("Error: vkEnumeratePhysicalDevices failed!", result);
+    }
+    return physical_devices;
 }
 
 Instance::Instance(Instance &&other) noexcept {

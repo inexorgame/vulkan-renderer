@@ -230,7 +230,7 @@ public:
                                                       std::span<const char *> required_extensions);
 
     /// Pick the best physical device automatically
-    /// @param inst The Vulkan instance
+    /// @param inst The Vulkan instance wrapper
     /// @param surface The window surface
     /// @param required_features The required device features
     /// @param required_extensions The required device extensions

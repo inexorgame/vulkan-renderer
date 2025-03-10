@@ -8,14 +8,21 @@
 
 namespace inexor::vulkan_renderer::wrapper {
 
+// Forward declaration
+class Device;
+class Surface;
+
 /// RAII wrapper class for VkInstance and VkDebugUtilsMessengerEXT
 class Instance {
+    friend class Device;
+    friend class Surface;
+
 private:
     VkInstance m_instance{VK_NULL_HANDLE};
     VkDebugUtilsMessengerEXT m_debug_callback{VK_NULL_HANDLE};
 
 public:
-    /// Construct the Vulkan instance and specify the requested instance layers and instance extensions.
+    /// Construct the Vulkan instance and specify the requested instance layers and instance extensions
     /// @param application_name The Vulkan application's internal application name
     /// @param engine_name The Vulkan application's internal engine name
     /// @param application_version The Vulkan application's internal version
@@ -38,12 +45,7 @@ public:
     ~Instance();
 
     Instance &operator=(const Instance &) = delete;
-    Instance &operator=(Instance &&) = default;
-
-    // TODO: Remove get methods and use access to private members via friend declarations!
-    [[nodiscard]] VkInstance instance() const {
-        return m_instance;
-    }
+    Instance &operator=(Instance &&) noexcept;
 
     /// Check if a certain instance layer is available on the system
     /// @param layer_name The name of the instance layer
@@ -55,6 +57,11 @@ public:
     /// @return ``true`` if the instance extension is supported
     [[nodiscard]] static bool is_extension_supported(const std::string &extension_name);
 
+    /// Return all physical devices of the system
+    /// @return The available physical devices
+    [[nodiscard]] std::vector<VkPhysicalDevice> get_physical_devices() const;
+
+    /// Use Vulkan 1.3
     static constexpr std::uint32_t REQUIRED_VK_API_VERSION{VK_API_VERSION_1_3};
 };
 

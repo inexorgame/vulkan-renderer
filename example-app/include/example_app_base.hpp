@@ -67,11 +67,16 @@ protected:
 
     CommandLineOptions m_options;
 
-    PFN_vkDebugUtilsMessengerCallbackEXT
-    validation_layer_debug_messenger_callback(VkDebugUtilsMessageSeverityFlagBitsEXT,
-                                              VkDebugUtilsMessageTypeFlagsEXT,
-                                              const VkDebugUtilsMessengerCallbackDataEXT *,
-                                              void *);
+    ///
+    /// @param
+    /// @param
+    /// @param
+    /// @param
+    /// @return
+    static VkBool32 validation_layer_debug_messenger_callback(VkDebugUtilsMessageSeverityFlagBitsEXT,
+                                                              VkDebugUtilsMessageTypeFlagsEXT,
+                                                              const VkDebugUtilsMessengerCallbackDataEXT *,
+                                                              void *);
 
     std::shared_ptr<RenderGraph> m_rendergraph;
 

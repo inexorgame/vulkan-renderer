@@ -225,12 +225,12 @@ VkPhysicalDevice Device::pick_best_physical_device(std::vector<DeviceInfo> &&phy
     return physical_device_infos.front().physical_device;
 }
 
-VkPhysicalDevice Device::pick_best_physical_device(const Instance &inst,
+VkPhysicalDevice Device::pick_best_physical_device(const Instance &instance,
                                                    const VkSurfaceKHR surface,
                                                    const VkPhysicalDeviceFeatures &required_features,
                                                    const std::span<const char *> required_extensions) {
     // Put together all data that is required to compare the physical devices
-    const auto physical_devices = tools::get_physical_devices(inst.instance());
+    const auto physical_devices = instance.get_physical_devices();
     std::vector<DeviceInfo> infos(physical_devices.size());
     std::transform(physical_devices.begin(), physical_devices.end(), infos.begin(),
                    [&](const VkPhysicalDevice physical_device) { return build_device_info(physical_device, surface); });
@@ -413,7 +413,7 @@ Device::Device(
         .physicalDevice = m_physical_device,
         .device = m_device,
         .pVulkanFunctions = &vma_vulkan_functions,
-        .instance = inst.instance(),
+        .instance = inst.m_instance,
         .vulkanApiVersion = VK_API_VERSION_1_3,
     };
 

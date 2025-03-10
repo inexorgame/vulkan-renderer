@@ -25,19 +25,6 @@ std::vector<VkExtensionProperties> get_extension_properties(const VkPhysicalDevi
     return extensions;
 }
 
-std::vector<VkPhysicalDevice> get_physical_devices(const VkInstance inst) {
-    assert(inst);
-    std::uint32_t count = 0;
-    if (const auto result = vkEnumeratePhysicalDevices(inst, &count, nullptr); result != VK_SUCCESS) {
-        throw VulkanException("Error: vkEnumeratePhysicalDevices failed!", result);
-    }
-    std::vector<VkPhysicalDevice> physical_devices(count);
-    if (const auto result = vkEnumeratePhysicalDevices(inst, &count, physical_devices.data()); result != VK_SUCCESS) {
-        throw VulkanException("Error: vkEnumeratePhysicalDevices failed!", result);
-    }
-    return physical_devices;
-}
-
 std::vector<VkQueueFamilyProperties> get_queue_family_properties(const VkPhysicalDevice physical_device) {
     assert(physical_device);
     std::uint32_t count = 0;

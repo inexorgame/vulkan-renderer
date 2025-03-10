@@ -16,22 +16,24 @@ ExampleAppBase::ExampleAppBase() {
 
     // Print name and version of engine and app specified in meta.hpp
     // The values in meta.hpp will be filled by CMake when it configures meta.hpp.in
-    spdlog::trace("{} version: {}.{}.{}", APP_NAME, APP_VERSION[0], APP_VERSION[1], APP_VERSION[2]);
-    spdlog::trace("{} version: {}.{}.{}", ENGINE_NAME, ENGINE_VERSION[0], ENGINE_VERSION[1], ENGINE_VERSION[2]);
+    spdlog::trace("{}, VERSION: {}.{}.{}", ENGINE_NAME, ENGINE_VERSION[0], ENGINE_VERSION[1], ENGINE_VERSION[2]);
+    spdlog::trace("{}, VERSION: {}.{}.{}, BUILD: {} {}, GIT-SHA: {}", APP_NAME, APP_VERSION[0], APP_VERSION[1],
+                  APP_VERSION[2], __DATE__, __TIME__, BUILD_GIT);
 
     // NOTE: We must create the window before VkInstance, otherwise glfwGetRequiredInstanceExtensions will fail!
     m_window = std::make_unique<Window>(APP_NAME, m_wnd_width, m_wnd_height, true, true, m_wnd_mode);
+
     // Setup glfw callbacks
     setup_window_and_input_callbacks();
 
-    /*
     // Create the Vulkan instance
     m_instance = std::make_unique<Instance>(
         APP_NAME, ENGINE_NAME, VK_MAKE_API_VERSION(0, APP_VERSION[0], APP_VERSION[1], APP_VERSION[2]),
         VK_MAKE_API_VERSION(0, ENGINE_VERSION[0], ENGINE_VERSION[1], ENGINE_VERSION[2]),
         validation_layer_debug_messenger_callback);
 
-    m_surface = std::make_unique<Surface>(m_instance->instance(), m_window->window());
+    m_surface = std::make_unique<Surface>(*m_instance, m_window->window());
+    /*
     m_input_data = std::make_unique<KeyboardMouseInputData>();
 
     // TODO ...
@@ -59,13 +61,12 @@ void ExampleAppBase::initialize_spdlog() {
     spdlog::init_thread_pool(8192, 2);
     auto console_sink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
     auto file_sink = std::make_shared<spdlog::sinks::basic_file_sink_mt>(std::string(APP_NAME) + ".log", true);
-    auto logger = std::make_shared<spdlog::async_logger>(APP_NAME, spdlog::sinks_init_list{console_sink, file_sink},
+    auto logger = std::make_shared<spdlog::async_logger>("main", spdlog::sinks_init_list{console_sink, file_sink},
                                                          spdlog::thread_pool(), spdlog::async_overflow_policy::block);
     logger->set_level(spdlog::level::trace);
-    logger->set_pattern("%Y-%m-%d %T.%f %^%l%$ %5t [%-10n] %v");
+    logger->set_pattern("%Y-%m-%d %T.%f %^%l%$ %5t [%n] %v");
     logger->flush_on(spdlog::level::trace);
     spdlog::set_default_logger(logger);
-    spdlog::trace("{}, BUILD {} {} GIT-SHA {}", APP_NAME, __DATE__, __TIME__, BUILD_GIT);
 }
 
 void ExampleAppBase::recreate_swapchain() {
@@ -101,11 +102,10 @@ void ExampleAppBase::setup_window_and_input_callbacks() {
     });
 }
 
-PFN_vkDebugUtilsMessengerCallbackEXT
-ExampleAppBase::validation_layer_debug_messenger_callback(VkDebugUtilsMessageSeverityFlagBitsEXT severity,
-                                                          VkDebugUtilsMessageTypeFlagsEXT type,
-                                                          const VkDebugUtilsMessengerCallbackDataEXT *data,
-                                                          void *user_data) {
+VkBool32 ExampleAppBase::validation_layer_debug_messenger_callback(VkDebugUtilsMessageSeverityFlagBitsEXT severity,
+                                                                   VkDebugUtilsMessageTypeFlagsEXT type,
+                                                                   const VkDebugUtilsMessengerCallbackDataEXT *data,
+                                                                   void *user_data) {
     if (severity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT) {
         spdlog::trace("{}", data->pMessage);
     } else if (severity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT) {
@@ -114,10 +114,6 @@ ExampleAppBase::validation_layer_debug_messenger_callback(VkDebugUtilsMessageSev
         spdlog::warn("{}", data->pMessage);
     } else if (severity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT) {
         spdlog::critical("{}", data->pMessage);
-        if (m_options.stop_on_validation_error) {
-            throw std::runtime_error(
-                "[ExampleAppBase::validation_layer_debug_messenger_callback] Validation error, stopped.");
-        }
     }
     return VK_FALSE;
 }
