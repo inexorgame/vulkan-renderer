@@ -4,6 +4,7 @@
 #include "inexor/vulkan-renderer/tools/enumerate.hpp"
 #include "inexor/vulkan-renderer/wrapper/instance.hpp"
 #include "inexor/vulkan-renderer/wrapper/make_info.hpp"
+#include "inexor/vulkan-renderer/wrapper/surface.hpp"
 
 #define VMA_IMPLEMENTATION
 
@@ -226,20 +227,21 @@ VkPhysicalDevice Device::pick_best_physical_device(std::vector<DeviceInfo> &&phy
 }
 
 VkPhysicalDevice Device::pick_best_physical_device(const Instance &instance,
-                                                   const VkSurfaceKHR surface,
+                                                   const Surface &surface,
                                                    const VkPhysicalDeviceFeatures &required_features,
                                                    const std::span<const char *> required_extensions) {
     // Put together all data that is required to compare the physical devices
     const auto physical_devices = instance.get_physical_devices();
     std::vector<DeviceInfo> infos(physical_devices.size());
-    std::transform(physical_devices.begin(), physical_devices.end(), infos.begin(),
-                   [&](const VkPhysicalDevice physical_device) { return build_device_info(physical_device, surface); });
+    std::transform(
+        physical_devices.begin(), physical_devices.end(), infos.begin(),
+        [&](const VkPhysicalDevice physical_device) { return build_device_info(physical_device, surface.m_surface); });
     return pick_best_physical_device(std::move(infos), required_features, required_extensions);
 }
 
 Device::Device(
     const Instance &inst,
-    const VkSurfaceKHR surface,
+    const Surface &surface,
     const VkPhysicalDevice physical_device,
     const std::span<const char *> required_extensions,
     const VkPhysicalDeviceFeatures &required_features,
@@ -248,8 +250,8 @@ Device::Device(
     const std::optional<std::function<bool(const std::string &extension_name)>> on_optional_extension_unavailable,
     const std::optional<std::function<bool(const std::string &feature_name)>> on_optional_feature_unavailable)
     : m_physical_device(physical_device) {
-    if (!is_device_suitable(build_device_info(physical_device, surface), required_features, required_extensions,
-                            true)) {
+    if (!is_device_suitable(build_device_info(physical_device, surface.m_surface), required_features,
+                            required_extensions, true)) {
         // TODO: fix me! ????
         throw std::runtime_error("Error: The chosen physical device {} is not suitable!");
     }
@@ -263,7 +265,8 @@ Device::Device(
     // Check if there is one queue family which can be used for both graphics and presentation
     auto queue_candidate =
         find_queue_family_index_if([&](const std::uint32_t index, const VkQueueFamilyProperties &queue_family) {
-            return is_presentation_supported(surface, index) && (queue_family.queueFlags & VK_QUEUE_GRAPHICS_BIT) != 0u;
+            return is_presentation_supported(surface.m_surface, index) &&
+                   (queue_family.queueFlags & VK_QUEUE_GRAPHICS_BIT) != 0u;
         });
 
     if (!queue_candidate) {
@@ -285,31 +288,25 @@ Device::Device(
     // Add another device queue just for data transfer
     queue_candidate =
         find_queue_family_index_if([&](const std::uint32_t index, const VkQueueFamilyProperties &queue_family) {
-            return is_presentation_supported(surface, index) &&
+            return is_presentation_supported(surface.m_surface, index) &&
                    // No graphics bit, only transfer bit
                    (queue_family.queueFlags & VK_QUEUE_GRAPHICS_BIT) == 0u &&
                    (queue_family.queueFlags & VK_QUEUE_TRANSFER_BIT) != 0u;
         });
 
-    bool use_distinct_data_transfer_queue = false;
-
-    if (!use_distinct_data_transfer_queue) {
-        spdlog::warn("The application is forced to avoid distinct data transfer queues");
-        spdlog::warn("Because of this, the graphics queue will be used for data transfer");
-
-        m_transfer_queue_family_index = m_graphics_queue_family_index;
-    }
+    m_transfer_queue_family_index = m_graphics_queue_family_index;
 
     VkPhysicalDeviceFeatures available_features{};
     vkGetPhysicalDeviceFeatures(physical_device, &available_features);
 
-    const auto comparable_required_features = tools::get_device_features_as_vector(required_features);
-    const auto comparable_optional_features =
-        optional_features ? tools::get_device_features_as_vector(optional_features.value()) : std::vector<VkBool32>{};
-    const auto comparable_available_features = tools::get_device_features_as_vector(available_features);
-
     constexpr auto FEATURE_COUNT = sizeof(VkPhysicalDeviceFeatures) / sizeof(VkBool32);
     std::vector<VkBool32> features_to_enable(FEATURE_COUNT, VK_FALSE);
+
+    const auto comparable_required_features = tools::get_device_features_as_vector(required_features);
+    const auto comparable_optional_features = optional_features
+                                                  ? tools::get_device_features_as_vector(optional_features.value())
+                                                  : std::vector<VkBool32>(FEATURE_COUNT, VK_FALSE);
+    const auto comparable_available_features = tools::get_device_features_as_vector(available_features);
 
     for (std::size_t i = 0; i < FEATURE_COUNT; i++) {
         if (comparable_required_features[i] == VK_TRUE) {
@@ -388,6 +385,8 @@ Device::Device(
     vkGetDeviceQueue(m_device, m_present_queue_family_index, 0, &m_present_queue);
     vkGetDeviceQueue(m_device, m_graphics_queue_family_index, 0, &m_graphics_queue);
     vkGetDeviceQueue(m_device, m_compute_queue_family_index, 0, &m_compute_queue);
+    // Use a separate queue for data transfer to GPU.
+    vkGetDeviceQueue(m_device, m_transfer_queue_family_index, 0, &m_transfer_queue);
 
     // TODO: Combine names: "Graphics and Compute Queue" if they are the same!
 
@@ -395,13 +394,7 @@ Device::Device(
     set_debug_name(m_graphics_queue, "Graphics Queue");
     set_debug_name(m_present_queue, "Present Queue");
     set_debug_name(m_compute_queue, "Compute Queue");
-
-    // The use of data transfer queues can be forbidden by using -no_separate_data_queue.
-    if (use_distinct_data_transfer_queue) {
-        // Use a separate queue for data transfer to GPU.
-        vkGetDeviceQueue(m_device, m_transfer_queue_family_index, 0, &m_transfer_queue);
-        set_debug_name(m_transfer_queue, "Transfer Queue");
-    }
+    set_debug_name(m_transfer_queue, "Transfer Queue");
 
     spdlog::trace("Creating VMA allocator");
 

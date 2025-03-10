@@ -76,6 +76,7 @@ class Device {
     friend class CommandBuffer;
     friend class CommandPool;
     friend class Swapchain;
+    friend class Surface;
 
 private:
     VkDevice m_device{VK_NULL_HANDLE};
@@ -135,7 +136,7 @@ public:
     /// The callback function can return true, in which case constructor continue, or return false, in which case an
     /// exception is thrown.
     Device(const Instance &inst,
-           VkSurfaceKHR surface,
+           const Surface &surface,
            VkPhysicalDevice physical_device,
            std::span<const char *> required_extensions,
            const VkPhysicalDeviceFeatures &required_features,
@@ -236,7 +237,7 @@ public:
     /// @param required_extensions The required device extensions
     /// @return The chosen physical device which is most suitable
     static VkPhysicalDevice pick_best_physical_device(const Instance &inst,
-                                                      VkSurfaceKHR surface,
+                                                      const Surface &surface,
                                                       const VkPhysicalDeviceFeatures &required_features,
                                                       std::span<const char *> required_extensions);
 

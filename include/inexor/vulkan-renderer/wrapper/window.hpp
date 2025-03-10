@@ -11,6 +11,8 @@ namespace inexor::vulkan_renderer::wrapper {
 
 /// RAII wrapper class for GLFW windows and VkSurfaceKHR
 class Window {
+    friend class Surface;
+
 public:
     enum class Mode { WINDOWED, FULLSCREEN, WINDOWED_FULLSCREEN };
 
@@ -98,10 +100,6 @@ public:
 
     [[nodiscard]] Mode mode() const {
         return m_mode;
-    }
-
-    [[nodiscard]] GLFWwindow *window() const {
-        return m_window;
     }
 };
 

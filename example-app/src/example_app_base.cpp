@@ -20,7 +20,6 @@ ExampleAppBase::ExampleAppBase() {
     spdlog::trace("{}, VERSION: {}.{}.{}, BUILD: {} {}, GIT-SHA: {}", APP_NAME, APP_VERSION[0], APP_VERSION[1],
                   APP_VERSION[2], __DATE__, __TIME__, BUILD_GIT);
 
-    // NOTE: We must create the window before VkInstance, otherwise glfwGetRequiredInstanceExtensions will fail!
     m_window = std::make_unique<Window>(APP_NAME, m_wnd_width, m_wnd_height, true, true, m_wnd_mode);
 
     // Setup glfw callbacks
@@ -32,11 +31,9 @@ ExampleAppBase::ExampleAppBase() {
         VK_MAKE_API_VERSION(0, ENGINE_VERSION[0], ENGINE_VERSION[1], ENGINE_VERSION[2]),
         validation_layer_debug_messenger_callback);
 
-    m_surface = std::make_unique<Surface>(*m_instance, m_window->window());
-    /*
+    m_surface = std::make_unique<Surface>(*m_instance, *m_window);
     m_input_data = std::make_unique<KeyboardMouseInputData>();
 
-    // TODO ...
     const VkPhysicalDeviceFeatures required_features{};
 
     std::vector<const char *> required_extensions{
@@ -44,13 +41,11 @@ ExampleAppBase::ExampleAppBase() {
     };
 
     const auto preferred_gpu =
-        Device::pick_best_physical_device(*m_instance, m_surface->surface(), required_features, required_extensions);
+        Device::pick_best_physical_device(*m_instance, *m_surface, required_features, required_extensions);
 
-    m_device = std::make_unique<Device>(*m_instance, m_surface, preferred_gpu, required_extensions, required_features);
+    m_device = std::make_unique<Device>(*m_instance, *m_surface, preferred_gpu, required_extensions, required_features);
 
-    m_swapchain = std::make_unique<Swapchain>(*m_device, "Default Swapchain", m_surface->surface(), *m_window,
-                                              m_options.vsync_enabled);
-    */
+    m_swapchain = std::make_unique<Swapchain>(*m_device, "Swapchain", *m_surface, *m_window, m_options.vsync_enabled);
 }
 
 ExampleAppBase::~ExampleAppBase() {
@@ -114,6 +109,7 @@ VkBool32 ExampleAppBase::validation_layer_debug_messenger_callback(VkDebugUtilsM
         spdlog::warn("{}", data->pMessage);
     } else if (severity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT) {
         spdlog::critical("{}", data->pMessage);
+        // TODO: Pass m_options.stop_on_validation_error via user_data pointer!
     }
     return VK_FALSE;
 }

@@ -4,6 +4,7 @@
 #include "inexor/vulkan-renderer/tools/representation.hpp"
 #include "inexor/vulkan-renderer/wrapper/device.hpp"
 #include "inexor/vulkan-renderer/wrapper/make_info.hpp"
+#include "inexor/vulkan-renderer/wrapper/surface.hpp"
 #include "inexor/vulkan-renderer/wrapper/vulkan_exception.hpp"
 #include "inexor/vulkan-renderer/wrapper/window.hpp"
 
@@ -19,7 +20,7 @@ namespace inexor::vulkan_renderer::wrapper {
 
 Swapchain::Swapchain(Device &device,
                      std::string name,
-                     const VkSurfaceKHR surface,
+                     const Surface &surface,
                      const Window &wnd,
                      const bool vsync_enabled)
     : m_device(device), m_surface(surface), m_vsync_enabled(vsync_enabled) {
@@ -28,10 +29,9 @@ Swapchain::Swapchain(Device &device,
     setup(wnd.width(), wnd.height(), vsync_enabled);
 }
 
-Swapchain::Swapchain(Swapchain &&other) noexcept : m_device(other.m_device) {
+Swapchain::Swapchain(Swapchain &&other) noexcept : m_device(other.m_device), m_surface(other.m_surface) {
     // TODO: Check me!
     m_swapchain = std::exchange(other.m_swapchain, VK_NULL_HANDLE);
-    m_surface = std::exchange(other.m_surface, VK_NULL_HANDLE);
     m_surface_format = other.m_surface_format;
     m_imgs = std::move(other.m_imgs);
     m_img_views = std::move(other.m_img_views);
@@ -223,12 +223,14 @@ void Swapchain::present() {
 
 void Swapchain::setup(const std::uint32_t width, const std::uint32_t height, const bool vsync_enabled) {
     VkSurfaceCapabilitiesKHR caps{};
-    if (const auto result = vkGetPhysicalDeviceSurfaceCapabilitiesKHR(m_device.m_physical_device, m_surface, &caps);
+    if (const auto result =
+            vkGetPhysicalDeviceSurfaceCapabilitiesKHR(m_device.m_physical_device, m_surface.m_surface, &caps);
         result != VK_SUCCESS) {
         throw VulkanException("Error: vkGetPhysicalDeviceSurfaceCapabilitiesKHR failed!", result);
     }
 
-    m_surface_format = choose_surface_format(tools::get_surface_formats(m_device.m_physical_device, m_surface));
+    m_surface_format =
+        choose_surface_format(tools::get_surface_formats(m_device.m_physical_device, m_surface.m_surface));
     const VkExtent2D requested_extent{.width = width, .height = height};
 
     static const std::vector<VkPresentModeKHR> default_present_mode_priorities{
@@ -253,7 +255,7 @@ void Swapchain::setup(const std::uint32_t width, const std::uint32_t height, con
     const VkSwapchainKHR old_swapchain = m_swapchain;
 
     const auto swapchain_ci = make_info<VkSwapchainCreateInfoKHR>({
-        .surface = m_surface,
+        .surface = m_surface.m_surface,
         .minImageCount = (caps.maxImageCount != 0) ? std::min(caps.minImageCount + 1, caps.maxImageCount)
                                                    : std::max(caps.minImageCount + 1, caps.minImageCount),
         .imageFormat = m_surface_format.value().format,
@@ -266,8 +268,9 @@ void Swapchain::setup(const std::uint32_t width, const std::uint32_t height, con
                             ? VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR
                             : caps.currentTransform,
         .compositeAlpha = composite_alpha.value(),
-        .presentMode = choose_present_mode(tools::get_surface_present_modes(m_device.m_physical_device, m_surface),
-                                           default_present_mode_priorities, vsync_enabled),
+        .presentMode =
+            choose_present_mode(tools::get_surface_present_modes(m_device.m_physical_device, m_surface.m_surface),
+                                default_present_mode_priorities, vsync_enabled),
         .clipped = VK_TRUE,
         .oldSwapchain = old_swapchain,
     });

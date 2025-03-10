@@ -29,6 +29,7 @@ namespace inexor::vulkan_renderer::wrapper {
 
 // Forward declaration
 class Device;
+class Surface;
 class Window;
 
 // Using declaration
@@ -39,7 +40,6 @@ using rendering::render_graph::RenderGraph;
 
 /// RAII wrapper class for swapchains
 class Swapchain {
-    //
     friend RenderGraph;
     friend GraphicsPassBuilder;
     friend GraphicsPass;
@@ -48,7 +48,7 @@ private:
     Device &m_device;
     std::string m_name;
     VkSwapchainKHR m_swapchain{VK_NULL_HANDLE};
-    VkSurfaceKHR m_surface{VK_NULL_HANDLE};
+    const Surface &m_surface;
     std::optional<VkSurfaceFormatKHR> m_surface_format{};
     std::vector<VkImage> m_imgs;
     std::vector<VkImageView> m_img_views;
@@ -73,7 +73,7 @@ public:
     /// @param width The swapchain image width
     /// @param height The swapchain image height
     /// @param vsync_enabled ``true`` if vertical synchronization is enabled
-    Swapchain(Device &device, std::string name, const VkSurfaceKHR surface, const Window &wnd, bool vsync_enabled);
+    Swapchain(Device &device, std::string name, const Surface &surface, const Window &wnd, bool vsync_enabled);
 
     Swapchain(const Swapchain &) = delete;
     Swapchain(Swapchain &&) noexcept;
