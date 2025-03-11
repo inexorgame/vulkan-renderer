@@ -13,10 +13,10 @@
 namespace inexor::vulkan_renderer::rendering::imgui {
 
 ImGuiRenderer::ImGuiRenderer(const Device &device,
-                             std::weak_ptr<RenderGraph> render_graph,
-                             std::weak_ptr<GraphicsPass> previous_pass,
-                             std::weak_ptr<Swapchain> swapchain,
-                             std::function<void()> on_update_user_data)
+                             const std::weak_ptr<RenderGraph> render_graph,
+                             const std::weak_ptr<GraphicsPass> previous_pass,
+                             const std::weak_ptr<Swapchain> swapchain,
+                             const std::function<void()> on_update_user_data)
     : m_on_update_user_data(std::move(on_update_user_data)), m_previous_pass(std::move(previous_pass)),
       m_swapchain(std::move(swapchain)) {
 

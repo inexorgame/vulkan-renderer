@@ -18,6 +18,8 @@ namespace inexor::vulkan_renderer::example_app {
 
 // Using declarations
 using inexor::vulkan_renderer::input::KeyboardMouseInputData;
+using inexor::vulkan_renderer::rendering::imgui::ImGuiRenderer;
+using inexor::vulkan_renderer::rendering::octree::OctreeRenderer;
 using inexor::vulkan_renderer::rendering::render_graph::RenderGraph;
 using inexor::vulkan_renderer::tools::CommandLineArgumentParser;
 using inexor::vulkan_renderer::wrapper::Device;
@@ -25,6 +27,8 @@ using inexor::vulkan_renderer::wrapper::Instance;
 using inexor::vulkan_renderer::wrapper::Surface;
 using inexor::vulkan_renderer::wrapper::Swapchain;
 using inexor::vulkan_renderer::wrapper::Window;
+using tools::CameraMovement;
+using tools::CameraType;
 
 /// The command line arguments will be parsed into these options
 struct CommandLineOptions {
@@ -48,19 +52,19 @@ private:
     std::unique_ptr<Swapchain> m_swapchain;
 
     std::shared_ptr<RenderGraph> m_rendergraph;
-    std::unique_ptr<rendering::octree::OctreeRenderer> m_octree_renderer;
-    std::unique_ptr<rendering::imgui::ImGuiRenderer> m_imgui_renderer;
+    std::unique_ptr<OctreeRenderer> m_octree_renderer;
+    std::unique_ptr<ImGuiRenderer> m_imgui_renderer;
     // Add your renderer here...
 
     float m_time_passed{0.0f};
     std::unique_ptr<tools::Camera> m_camera;
     std::unique_ptr<input::KeyboardMouseInputData> m_input_data;
 
+    void create_physical_device();
+    void create_window();
     void initialize_spdlog();
-
+    void setup_render_graph();
     void recreate_swapchain();
-
-    void setup_window_and_input_callbacks();
 
     ///
     /// @param
@@ -94,12 +98,9 @@ public:
     void parse_command_line_arguments(int argc, char *argv[]);
     void process_mouse_input();
     void process_keyboard_input();
-    void render_frame();
     void run();
-    void setup_device();
-    void setup_render_graph();
-    void shutdown();
     void update_imgui();
+    void check_octree_collisions();
 };
 
 } // namespace inexor::vulkan_renderer::example_app

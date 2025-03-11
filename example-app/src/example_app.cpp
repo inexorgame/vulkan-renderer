@@ -12,81 +12,70 @@
 namespace inexor::vulkan_renderer::example_app {
 
 ExampleApp::ExampleApp(int argc, char *argv[]) {
-    // The first thing we need to do is to set up spdlog logging library with a logfile
+    parse_command_line_arguments(argc, argv);
+
     initialize_spdlog();
     spdlog::trace("{}, VERSION: {}.{}.{}", ENGINE_NAME, ENGINE_VERSION[0], ENGINE_VERSION[1], ENGINE_VERSION[2]);
     spdlog::trace("{}, VERSION: {}.{}.{}, BUILD: {} {}, GIT-SHA: {}", APP_NAME, APP_VERSION[0], APP_VERSION[1],
                   APP_VERSION[2], __DATE__, __TIME__, BUILD_GIT);
 
-    // Evaluate the command line arguments
-    parse_command_line_arguments(argc, argv);
+    create_window();
+    m_input_data = std::make_unique<KeyboardMouseInputData>();
 
-    // Create a window and set up window and input callbacks
-    m_window = std::make_unique<Window>(APP_NAME, 1920, 1080, true, true, Window::Mode::WINDOWED);
-    setup_window_and_input_callbacks();
-
-    // Create a VkInstance
     m_instance = std::make_unique<Instance>(
         VK_MAKE_API_VERSION(0, USED_VULKAN_API_VERSION[0], USED_VULKAN_API_VERSION[1], USED_VULKAN_API_VERSION[2]),
         APP_NAME, ENGINE_NAME, VK_MAKE_API_VERSION(0, APP_VERSION[0], APP_VERSION[1], APP_VERSION[2]),
         VK_MAKE_API_VERSION(0, ENGINE_VERSION[0], ENGINE_VERSION[1], ENGINE_VERSION[2]),
         validation_layer_debug_messenger_callback);
 
-    // We need to create a surface before we can create the device
     m_surface = std::make_unique<Surface>(*m_instance, *m_window);
 
+    create_physical_device();
+    setup_render_graph();
+}
+
+void ExampleApp::process_mouse_input() {
+    const auto cursor_pos_delta = m_input_data->calculate_cursor_position_delta();
+
+    if (m_camera->type() == CameraType::LOOK_AT && m_input_data->is_mouse_button_pressed(GLFW_MOUSE_BUTTON_LEFT)) {
+        m_camera->rotate(static_cast<float>(cursor_pos_delta[0]), -static_cast<float>(cursor_pos_delta[1]));
+    }
+
+    m_camera->set_movement_state(CameraMovement::FORWARD, m_input_data->is_key_pressed(GLFW_KEY_W));
+    m_camera->set_movement_state(CameraMovement::LEFT, m_input_data->is_key_pressed(GLFW_KEY_A));
+    m_camera->set_movement_state(CameraMovement::BACKWARD, m_input_data->is_key_pressed(GLFW_KEY_S));
+    m_camera->set_movement_state(CameraMovement::RIGHT, m_input_data->is_key_pressed(GLFW_KEY_D));
+}
+
+void ExampleApp::process_keyboard_input() {}
+
+void ExampleApp::create_physical_device() {
     std::vector<const char *> required_extensions = {
         VK_KHR_SWAPCHAIN_EXTENSION_NAME,
+        VK_EXT_DEBUG_MARKER_EXTENSION_NAME,
     };
+    const VkPhysicalDeviceFeatures required_features = {};
 
-    const VkPhysicalDeviceFeatures required_features = {
-        // Add your features here...
-    };
+    /*
+    if(preferred_gpu) {
+        if(is_suitable(preferred_gpu)) {
+            selected_gpu = preferred_gpu;
+        }
+    }
+    else {
+        selected_gpu = pick_best_gpu();
+    }
+    */
 
     const auto selected_gpu =
         Device::pick_best_physical_device(*m_instance, *m_surface, required_features, required_extensions);
 
     m_device = std::make_unique<Device>(*m_instance, *m_surface, selected_gpu, required_extensions, required_features);
-
-    setup_render_graph();
-
-    m_input_data = std::make_unique<KeyboardMouseInputData>();
 }
 
-void ExampleApp::initialize_spdlog() {
-    spdlog::init_thread_pool(8192, 2);
-    auto console_sink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
-    // Spdlog console output is written to a logfile as well
-    auto file_sink = std::make_shared<spdlog::sinks::basic_file_sink_mt>(std::string(APP_NAME) + ".log", true);
-    auto logger = std::make_shared<spdlog::async_logger>("main", spdlog::sinks_init_list{console_sink, file_sink},
-                                                         spdlog::thread_pool(), spdlog::async_overflow_policy::block);
-    logger->set_level(spdlog::level::trace);
-    logger->set_pattern("%Y-%m-%d %T.%f %^%l%$ %5t [%n] %v");
-    logger->flush_on(spdlog::level::trace);
-    spdlog::set_default_logger(logger);
-}
+void ExampleApp::create_window() {
+    m_window = std::make_unique<Window>(APP_NAME, 1920, 1080, true, true, Window::Mode::WINDOWED);
 
-void ExampleApp::parse_command_line_arguments(int argc, char *argv[]) {
-    CommandLineArgumentParser cla_parser;
-    cla_parser.parse_args(argc, argv);
-    m_options.vsync_enabled = cla_parser.arg<bool>("--vsync").value_or(false);
-    m_options.stop_on_validation_error = cla_parser.arg<bool>("--stop-on-validation-error").value_or(false);
-    m_options.preferred_gpu = cla_parser.arg<std::uint32_t>("--gpu");
-    // Add your command line arguments here... (also don't forget to specify them in CommandLineArgumentParser)
-}
-
-void ExampleApp::run() {
-    // ...?
-}
-
-void ExampleApp::setup_render_graph() {
-    spdlog::trace("Setting up rendergraph");
-    m_rendergraph = std::make_shared<RenderGraph>(*m_device);
-    // m_octree_renderer = std::make_unique<rendering::octree::OctreeRenderer>(m_rendergraph);
-    // m_imgui_renderer = std::make_unique<rendering::imgui::ImGuiRenderer>(m_rendergraph);
-}
-
-void ExampleApp::setup_window_and_input_callbacks() {
     /// Because GLFW is a C-style API, we can't use a pointer to non-static class methods as window or input callback.
     /// A good explanation can be found on Stack Overflow:
     /// https://stackoverflow.com/questions/7676971/pointing-to-a-function-that-is-a-class-member-glfw-setkeycallback
@@ -118,6 +107,50 @@ void ExampleApp::setup_window_and_input_callbacks() {
         auto *app = static_cast<ExampleApp *>(glfwGetWindowUserPointer(window));
         app->mouse_scroll_callback(window, xoffset, yoffset);
     });
+}
+
+void ExampleApp::initialize_spdlog() {
+    spdlog::init_thread_pool(8192, 2);
+    auto console_sink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
+    // Spdlog console output is written to a logfile as well
+    auto file_sink = std::make_shared<spdlog::sinks::basic_file_sink_mt>(std::string(APP_NAME) + ".log", true);
+    auto logger = std::make_shared<spdlog::async_logger>("main", spdlog::sinks_init_list{console_sink, file_sink},
+                                                         spdlog::thread_pool(), spdlog::async_overflow_policy::block);
+    logger->set_level(spdlog::level::trace);
+    logger->set_pattern("%Y-%m-%d %T.%f %^%l%$ %5t [%n] %v");
+    logger->flush_on(spdlog::level::trace);
+    spdlog::set_default_logger(logger);
+}
+
+void ExampleApp::parse_command_line_arguments(int argc, char *argv[]) {
+    CommandLineArgumentParser cla_parser;
+    cla_parser.parse_args(argc, argv);
+    m_options.vsync_enabled = cla_parser.arg<bool>("--vsync").value_or(false);
+    m_options.stop_on_validation_error = cla_parser.arg<bool>("--stop-on-validation-error").value_or(false);
+    m_options.preferred_gpu = cla_parser.arg<std::uint32_t>("--gpu");
+    // Add your command line arguments here and also don't forget to specify them in CommandLineArgumentParser
+}
+
+void ExampleApp::run() {
+    while (!m_window->should_close()) {
+        m_window->poll();
+        process_mouse_input();
+        process_keyboard_input();
+        // render_frame();
+        m_camera->update(m_time_passed);
+        check_octree_collisions();
+    }
+}
+
+void ExampleApp::check_octree_collisions() {
+    //
+}
+
+void ExampleApp::setup_render_graph() {
+    spdlog::trace("Setting up rendergraph");
+    m_rendergraph = std::make_shared<RenderGraph>(*m_device);
+    m_octree_renderer = std::make_unique<OctreeRenderer>(m_rendergraph);
+    // m_imgui_renderer = std::make_unique<ImGuiRenderer>(m_rendergraph);
 }
 
 void ExampleApp::update_imgui() {
@@ -174,7 +207,7 @@ VkBool32 ExampleApp::validation_layer_debug_messenger_callback(const VkDebugUtil
         spdlog::warn("{}", data->pMessage);
     } else if (severity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT) {
         spdlog::critical("{}", data->pMessage);
-        // TODO: Pass m_options.stop_on_validation_error via user_data pointer!
+        // TODO: Respect --stop-on-validation-error command line argument!
     }
     return VK_FALSE;
 }
@@ -183,11 +216,6 @@ void ExampleApp::cursor_position_callback(GLFWwindow *, double, double) {}
 void ExampleApp::keyboard_button_callback(GLFWwindow *, int, int, int, int) {}
 void ExampleApp::mouse_button_callback(GLFWwindow *, int, int, int) {}
 void ExampleApp::mouse_scroll_callback(GLFWwindow *, double, double) {}
-void ExampleApp::process_mouse_input() {}
-void ExampleApp::process_keyboard_input() {}
-void ExampleApp::render_frame() {}
-void ExampleApp::setup_device() {}
-void ExampleApp::shutdown() {}
 
 } // namespace inexor::vulkan_renderer::example_app
 

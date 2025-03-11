@@ -91,7 +91,7 @@ std::uint32_t device_type_rating(const DeviceInfo &info) {
 /// @return ``true`` if the required device extension is supported
 bool is_extension_supported(const std::vector<VkExtensionProperties> &extensions, const std::string &extension_name) {
     return std::find_if(extensions.begin(), extensions.end(), [&](const VkExtensionProperties extension) {
-               return extension.extensionName == extension_name;
+               return std::string(extension.extensionName) == extension_name;
            }) != extensions.end();
 }
 
@@ -239,24 +239,16 @@ VkPhysicalDevice Device::pick_best_physical_device(const Instance &instance,
     return pick_best_physical_device(std::move(infos), required_features, required_extensions);
 }
 
-Device::Device(
-    const Instance &inst,
-    const Surface &surface,
-    const VkPhysicalDevice physical_device,
-    const std::span<const char *> required_extensions,
-    const VkPhysicalDeviceFeatures &required_features,
-    const std::optional<std::function<bool(const std::string &extension_name)>> on_optional_extension_unavailable,
-    const std::span<const char *> optional_extensions,
-    const std::optional<std::function<bool(const std::string &feature_name)>> on_optional_feature_unavailable,
-    const std::optional<VkPhysicalDeviceFeatures> optional_features)
+Device::Device(const Instance &inst,
+               const Surface &surface,
+               const VkPhysicalDevice physical_device,
+               const std::span<const char *> required_extensions,
+               const VkPhysicalDeviceFeatures &required_features)
     : m_physical_device(physical_device) {
     const auto device_info = build_device_info(physical_device, surface.m_surface);
     if (!is_device_suitable(device_info, required_features, required_extensions, true)) {
         throw std::runtime_error("Error: The chosen physical device " + device_info.name + " is not suitable!");
     }
-
-    m_gpu_name = tools::get_physical_device_name(m_physical_device);
-    spdlog::trace("Creating device using graphics card: {}", m_gpu_name);
 
     spdlog::trace("Creating Vulkan device queues");
     std::vector<VkDeviceQueueCreateInfo> queues_to_create;
@@ -288,7 +280,7 @@ Device::Device(
     queue_candidate =
         find_queue_family_index_if([&](const std::uint32_t index, const VkQueueFamilyProperties &queue_family) {
             return is_presentation_supported(surface.m_surface, index) &&
-                   // No graphics bit, only transfer bit
+                   // A queue for data transfer only: no graphics bit, only transfer bit!
                    (queue_family.queueFlags & VK_QUEUE_GRAPHICS_BIT) == 0u &&
                    (queue_family.queueFlags & VK_QUEUE_TRANSFER_BIT) != 0u;
         });
@@ -297,40 +289,6 @@ Device::Device(
 
     VkPhysicalDeviceFeatures available_features{};
     vkGetPhysicalDeviceFeatures(physical_device, &available_features);
-
-    constexpr auto FEATURE_COUNT = sizeof(VkPhysicalDeviceFeatures) / sizeof(VkBool32);
-    std::vector<VkBool32> features_to_enable(FEATURE_COUNT, VK_FALSE);
-
-    const auto comparable_required_features = tools::get_device_features_as_vector(required_features);
-    const auto comparable_optional_features = optional_features
-                                                  ? tools::get_device_features_as_vector(optional_features.value())
-                                                  : std::vector<VkBool32>(FEATURE_COUNT, VK_FALSE);
-    const auto comparable_available_features = tools::get_device_features_as_vector(available_features);
-
-    for (std::size_t i = 0; i < FEATURE_COUNT; i++) {
-        if (comparable_required_features[i] == VK_TRUE) {
-            features_to_enable[i] = VK_TRUE;
-        }
-        if (comparable_optional_features[i] == VK_TRUE) {
-            if (comparable_available_features[i] == VK_TRUE) {
-                features_to_enable[i] = VK_TRUE;
-            } else {
-                spdlog::warn("The physical device {} does not support {}!",
-                             tools::get_physical_device_name(physical_device),
-                             tools::get_device_feature_description(i));
-                // TODO: Invoke callback lambda here?...
-            }
-        }
-    }
-
-    spdlog::trace("Enabled device extensions:");
-
-    // Note that the device extensions have already been checked by is_device_suitable at the beginning of the method
-    for (const auto &extension : required_extensions) {
-        spdlog::trace("   - {}", extension);
-    }
-
-    std::memcpy(&m_enabled_features, features_to_enable.data(), features_to_enable.size());
 
     // We want to use dynamic rendering (VK_KHR_dynamic_rendering)
     const auto dyn_rendering_feature = make_info<VkPhysicalDeviceDynamicRenderingFeaturesKHR>({
@@ -348,13 +306,14 @@ Device::Device(
         .pEnabledFeatures = &m_enabled_features,
     });
 
-    spdlog::trace("Creating physical device");
+    m_enabled_features = required_features;
+
+    spdlog::trace("Creating physical device using graphics card: {}", device_info.name);
 
     if (const auto result = vkCreateDevice(m_physical_device, &device_ci, nullptr, &m_device); result != VK_SUCCESS) {
         throw VulkanException("Error: vkCreateDevice failed!", result);
     }
 
-    // Set an internal debug name to this device using Vulkan debug utils (VK_EXT_debug_utils)
     set_debug_name(m_device, "Device");
 
     spdlog::trace(
@@ -379,17 +338,11 @@ Device::Device(
     spdlog::trace("   - Transfer: {}", m_transfer_queue_family_index);
     spdlog::trace("   - Compute: {}", m_compute_queue_family_index);
 
-    // Setup the queues for presentation and graphics
-    // Since we only have one queue per queue family, we acquire queue index 0
     vkGetDeviceQueue(m_device, m_present_queue_family_index, 0, &m_present_queue);
     vkGetDeviceQueue(m_device, m_graphics_queue_family_index, 0, &m_graphics_queue);
     vkGetDeviceQueue(m_device, m_compute_queue_family_index, 0, &m_compute_queue);
-    // Use a separate queue for data transfer to GPU.
     vkGetDeviceQueue(m_device, m_transfer_queue_family_index, 0, &m_transfer_queue);
 
-    // TODO: Combine names: "Graphics and Compute Queue" if they are the same!
-
-    // Set an internal debug name to the queues using Vulkan debug utils (VK_EXT_debug_utils)
     set_debug_name(m_graphics_queue, "Graphics Queue");
     set_debug_name(m_present_queue, "Present Queue");
     set_debug_name(m_compute_queue, "Compute Queue");
@@ -414,8 +367,6 @@ Device::Device(
     if (const auto result = vmaCreateAllocator(&vma_allocator_ci, &m_allocator); result != VK_SUCCESS) {
         throw VulkanException("Error: vmaCreateAllocator failed!", result);
     }
-
-    // TODO: Separte constructor setup into smaller methods again!
 
     // Store the properties of this physical device
     vkGetPhysicalDeviceProperties(m_physical_device, &m_properties);

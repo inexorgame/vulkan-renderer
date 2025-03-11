@@ -124,24 +124,12 @@ public:
     /// @param surface The surface
     /// @param physical_device The physical device to choose
     /// @param required_extensions The required device extensions
-    /// @note If any of the required extensions is not available, an exception is thrown!
     /// @param required_features The required features
-    /// @note If any of the required features is not available, an exception is thrown!
-    /// @param on_optional_extension_unavailable
-    /// @param optional_extensions The optional device extensions
-    /// @param on_optional_feature_unavailable
-    /// @param optional_features The optional device features
     Device(const Instance &inst,
            const Surface &surface,
            VkPhysicalDevice physical_device,
            std::span<const char *> required_extensions,
-           const VkPhysicalDeviceFeatures &required_features,
-           std::optional<std::function<bool(const std::string &extension_name)>> on_optional_extension_unavailable =
-               std::nullopt,
-           std::span<const char *> optional_extensions = {},
-           std::optional<std::function<bool(const std::string &feature_name)>> on_optional_feature_unavailable =
-               std::nullopt,
-           std::optional<VkPhysicalDeviceFeatures> optional_features = std::nullopt);
+           const VkPhysicalDeviceFeatures &required_features);
 
     Device(const Device &) = delete;
     // TODO: Implement me!

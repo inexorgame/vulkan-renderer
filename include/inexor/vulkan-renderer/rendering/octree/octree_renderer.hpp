@@ -6,11 +6,17 @@
 
 namespace inexor::vulkan_renderer::rendering::octree {
 
+using rendering::render_graph::RenderGraph;
+
 /// A rendering class for octrees
 class OctreeRenderer {
 private:
+    // ...?
+
 public:
     OctreeRenderer(std::weak_ptr<RenderGraph> rendergraph);
+    OctreeRenderer(const OctreeRenderer &) = delete;
+    OctreeRenderer(OctreeRenderer &&) noexcept;
     ~OctreeRenderer() = default;
 };
 
