@@ -245,15 +245,14 @@ Device::Device(
     const VkPhysicalDevice physical_device,
     const std::span<const char *> required_extensions,
     const VkPhysicalDeviceFeatures &required_features,
-    const std::span<const char *> optional_extensions,
-    const std::optional<VkPhysicalDeviceFeatures> optional_features,
     const std::optional<std::function<bool(const std::string &extension_name)>> on_optional_extension_unavailable,
-    const std::optional<std::function<bool(const std::string &feature_name)>> on_optional_feature_unavailable)
+    const std::span<const char *> optional_extensions,
+    const std::optional<std::function<bool(const std::string &feature_name)>> on_optional_feature_unavailable,
+    const std::optional<VkPhysicalDeviceFeatures> optional_features)
     : m_physical_device(physical_device) {
-    if (!is_device_suitable(build_device_info(physical_device, surface.m_surface), required_features,
-                            required_extensions, true)) {
-        // TODO: fix me! ????
-        throw std::runtime_error("Error: The chosen physical device {} is not suitable!");
+    const auto device_info = build_device_info(physical_device, surface.m_surface);
+    if (!is_device_suitable(device_info, required_features, required_extensions, true)) {
+        throw std::runtime_error("Error: The chosen physical device " + device_info.name + " is not suitable!");
     }
 
     m_gpu_name = tools::get_physical_device_name(m_physical_device);

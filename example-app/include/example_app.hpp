@@ -18,6 +18,7 @@ namespace inexor::vulkan_renderer::example_app {
 
 // Using declarations
 using inexor::vulkan_renderer::input::KeyboardMouseInputData;
+using inexor::vulkan_renderer::rendering::render_graph::RenderGraph;
 using inexor::vulkan_renderer::tools::CommandLineArgumentParser;
 using inexor::vulkan_renderer::wrapper::Device;
 using inexor::vulkan_renderer::wrapper::Instance;

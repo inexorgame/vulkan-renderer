@@ -31,6 +31,26 @@ ExampleApp::ExampleApp(int argc, char *argv[]) {
         APP_NAME, ENGINE_NAME, VK_MAKE_API_VERSION(0, APP_VERSION[0], APP_VERSION[1], APP_VERSION[2]),
         VK_MAKE_API_VERSION(0, ENGINE_VERSION[0], ENGINE_VERSION[1], ENGINE_VERSION[2]),
         validation_layer_debug_messenger_callback);
+
+    // We need to create a surface before we can create the device
+    m_surface = std::make_unique<Surface>(*m_instance, *m_window);
+
+    std::vector<const char *> required_extensions = {
+        VK_KHR_SWAPCHAIN_EXTENSION_NAME,
+    };
+
+    const VkPhysicalDeviceFeatures required_features = {
+        // Add your features here...
+    };
+
+    const auto selected_gpu =
+        Device::pick_best_physical_device(*m_instance, *m_surface, required_features, required_extensions);
+
+    m_device = std::make_unique<Device>(*m_instance, *m_surface, selected_gpu, required_extensions, required_features);
+
+    setup_render_graph();
+
+    m_input_data = std::make_unique<KeyboardMouseInputData>();
 }
 
 void ExampleApp::initialize_spdlog() {
@@ -44,6 +64,26 @@ void ExampleApp::initialize_spdlog() {
     logger->set_pattern("%Y-%m-%d %T.%f %^%l%$ %5t [%n] %v");
     logger->flush_on(spdlog::level::trace);
     spdlog::set_default_logger(logger);
+}
+
+void ExampleApp::parse_command_line_arguments(int argc, char *argv[]) {
+    CommandLineArgumentParser cla_parser;
+    cla_parser.parse_args(argc, argv);
+    m_options.vsync_enabled = cla_parser.arg<bool>("--vsync").value_or(false);
+    m_options.stop_on_validation_error = cla_parser.arg<bool>("--stop-on-validation-error").value_or(false);
+    m_options.preferred_gpu = cla_parser.arg<std::uint32_t>("--gpu");
+    // Add your command line arguments here... (also don't forget to specify them in CommandLineArgumentParser)
+}
+
+void ExampleApp::run() {
+    // ...?
+}
+
+void ExampleApp::setup_render_graph() {
+    spdlog::trace("Setting up rendergraph");
+    m_rendergraph = std::make_shared<RenderGraph>(*m_device);
+    // m_octree_renderer = std::make_unique<rendering::octree::OctreeRenderer>(m_rendergraph);
+    // m_imgui_renderer = std::make_unique<rendering::imgui::ImGuiRenderer>(m_rendergraph);
 }
 
 void ExampleApp::setup_window_and_input_callbacks() {
@@ -78,26 +118,6 @@ void ExampleApp::setup_window_and_input_callbacks() {
         auto *app = static_cast<ExampleApp *>(glfwGetWindowUserPointer(window));
         app->mouse_scroll_callback(window, xoffset, yoffset);
     });
-}
-
-void ExampleApp::parse_command_line_arguments(int argc, char *argv[]) {
-    CommandLineArgumentParser cla_parser;
-    cla_parser.parse_args(argc, argv);
-    m_options.vsync_enabled = cla_parser.arg<bool>("--vsync").value_or(false);
-    m_options.stop_on_validation_error = cla_parser.arg<bool>("--stop-on-validation-error").value_or(false);
-    m_options.preferred_gpu = cla_parser.arg<std::uint32_t>("--gpu");
-    // Add your command line arguments here... (also don't forget to specify them in CommandLineArgumentParser)
-}
-
-void ExampleApp::run() {
-    // ...?
-}
-
-void ExampleApp::setup_render_graph() {
-    spdlog::trace("Setting up rendergraph");
-    // m_rendergraph = std::make_shared<RenderGraph>(*m_device);
-    // m_octree_renderer = std::make_unique<rendering::octree::OctreeRenderer>(m_rendergraph);
-    // m_imgui_renderer = std::make_unique<rendering::imgui::ImGuiRenderer>(m_rendergraph);
 }
 
 void ExampleApp::update_imgui() {
