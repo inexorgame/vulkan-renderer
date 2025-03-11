@@ -36,6 +36,7 @@ struct CommandLineOptions {
 /// An example app using Inexor vulkan-renderer engine
 class ExampleApp {
 private:
+    CommandLineOptions m_options;
     std::unique_ptr<Instance> m_instance;
 
     // TODO: Move this to window wrapper

@@ -12,16 +12,20 @@
 namespace inexor::vulkan_renderer::example_app {
 
 ExampleApp::ExampleApp(int argc, char *argv[]) {
+    // The first thing we need to do is to set up spdlog logging library with a logfile
     initialize_spdlog();
     spdlog::trace("{}, VERSION: {}.{}.{}", ENGINE_NAME, ENGINE_VERSION[0], ENGINE_VERSION[1], ENGINE_VERSION[2]);
     spdlog::trace("{}, VERSION: {}.{}.{}, BUILD: {} {}, GIT-SHA: {}", APP_NAME, APP_VERSION[0], APP_VERSION[1],
                   APP_VERSION[2], __DATE__, __TIME__, BUILD_GIT);
 
+    // Evaluate the command line arguments
     parse_command_line_arguments(argc, argv);
 
+    // Create a window and set up window and input callbacks
     m_window = std::make_unique<Window>(APP_NAME, 1920, 1080, true, true, Window::Mode::WINDOWED);
     setup_window_and_input_callbacks();
 
+    // Create a VkInstance
     m_instance = std::make_unique<Instance>(
         VK_MAKE_API_VERSION(0, USED_VULKAN_API_VERSION[0], USED_VULKAN_API_VERSION[1], USED_VULKAN_API_VERSION[2]),
         APP_NAME, ENGINE_NAME, VK_MAKE_API_VERSION(0, APP_VERSION[0], APP_VERSION[1], APP_VERSION[2]),
@@ -32,6 +36,7 @@ ExampleApp::ExampleApp(int argc, char *argv[]) {
 void ExampleApp::initialize_spdlog() {
     spdlog::init_thread_pool(8192, 2);
     auto console_sink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
+    // Spdlog console output is written to a logfile as well
     auto file_sink = std::make_shared<spdlog::sinks::basic_file_sink_mt>(std::string(APP_NAME) + ".log", true);
     auto logger = std::make_shared<spdlog::async_logger>("main", spdlog::sinks_init_list{console_sink, file_sink},
                                                          spdlog::thread_pool(), spdlog::async_overflow_policy::block);
@@ -78,7 +83,10 @@ void ExampleApp::setup_window_and_input_callbacks() {
 void ExampleApp::parse_command_line_arguments(int argc, char *argv[]) {
     CommandLineArgumentParser cla_parser;
     cla_parser.parse_args(argc, argv);
-    // TODO: Save options...
+    m_options.vsync_enabled = cla_parser.arg<bool>("--vsync").value_or(false);
+    m_options.stop_on_validation_error = cla_parser.arg<bool>("--stop-on-validation-error").value_or(false);
+    m_options.preferred_gpu = cla_parser.arg<std::uint32_t>("--gpu");
+    // Add your command line arguments here... (also don't forget to specify them in CommandLineArgumentParser)
 }
 
 void ExampleApp::run() {
