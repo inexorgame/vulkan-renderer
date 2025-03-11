@@ -19,7 +19,6 @@ configure_file(
 
 set(INEXOR_EXAMPLE_APP_SOURCE_FILES
     example_app.cpp
-    example_app_base.cpp
     example_app_meta.cpp)
 
 foreach(FILE ${INEXOR_EXAMPLE_APP_SOURCE_FILES})

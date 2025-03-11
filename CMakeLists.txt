@@ -28,6 +28,11 @@ set(INEXOR_ENGINE_VERSION_MAJOR 0)
 set(INEXOR_ENGINE_VERSION_MINOR 1)
 set(INEXOR_ENGINE_VERSION_PATCH 0)
 
+# The version of Vulkan API that is used
+set(INEXOR_VULKAN_VERSION_MAJOR 1)
+set(INEXOR_VULKAN_VERSION_MINOR 3)
+set(INEXOR_VULKAN_VERSION_PATCH 0)
+
 # Download dependencies through CMake
 include (cmake/dependencies.cmake)
 

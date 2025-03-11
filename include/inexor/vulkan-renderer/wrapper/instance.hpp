@@ -23,6 +23,7 @@ private:
 
 public:
     /// Construct the Vulkan instance and specify the requested instance layers and instance extensions
+    /// @param requested_vk_version The requested version of Vulkan API
     /// @param application_name The Vulkan application's internal application name
     /// @param engine_name The Vulkan application's internal engine name
     /// @param application_version The Vulkan application's internal version
@@ -30,7 +31,8 @@ public:
     /// @param debug_callback The debug utils messenger callback (VK_EXT_debug_utils)
     /// @param requested_instance_extensions The instance extensions which are requested (empty by default)
     /// @param requested_instance_layers The instance layers which are requested (empty by default)
-    Instance(const std::string &application_name,
+    Instance(std::uint32_t requested_vk_version,
+             const std::string &application_name,
              const std::string &engine_name,
              std::uint32_t application_version,
              std::uint32_t engine_version,
@@ -60,9 +62,6 @@ public:
     /// Return all physical devices of the system
     /// @return The available physical devices
     [[nodiscard]] std::vector<VkPhysicalDevice> get_physical_devices() const;
-
-    /// Use Vulkan 1.3
-    static constexpr std::uint32_t REQUIRED_VK_API_VERSION{VK_API_VERSION_1_3};
 };
 
 } // namespace inexor::vulkan_renderer::wrapper

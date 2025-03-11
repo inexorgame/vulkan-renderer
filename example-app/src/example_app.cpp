@@ -1,25 +1,88 @@
 #include "../include/example_app.hpp"
 
 #include "../include/example_app_meta.hpp"
-#include "inexor/vulkan-renderer/rendering/render-graph/render_graph.hpp"
 
-#include <toml.hpp>
+#include <spdlog/async.h>
+#include <spdlog/sinks/basic_file_sink.h>
+#include <spdlog/sinks/stdout_color_sinks.h>
+#include <spdlog/spdlog.h>
 
 #include <memory>
 
 namespace inexor::vulkan_renderer::example_app {
 
-ExampleApp::ExampleApp(int argc, char *argv[]) : ExampleAppBase() {
-    // ...?
+ExampleApp::ExampleApp(int argc, char *argv[]) {
+    initialize_spdlog();
+    spdlog::trace("{}, VERSION: {}.{}.{}", ENGINE_NAME, ENGINE_VERSION[0], ENGINE_VERSION[1], ENGINE_VERSION[2]);
+    spdlog::trace("{}, VERSION: {}.{}.{}, BUILD: {} {}, GIT-SHA: {}", APP_NAME, APP_VERSION[0], APP_VERSION[1],
+                  APP_VERSION[2], __DATE__, __TIME__, BUILD_GIT);
+
+    parse_command_line_arguments(argc, argv);
+
+    m_window = std::make_unique<Window>(APP_NAME, 1920, 1080, true, true, Window::Mode::WINDOWED);
+    setup_window_and_input_callbacks();
+
+    m_instance = std::make_unique<Instance>(
+        VK_MAKE_API_VERSION(0, USED_VULKAN_API_VERSION[0], USED_VULKAN_API_VERSION[1], USED_VULKAN_API_VERSION[2]),
+        APP_NAME, ENGINE_NAME, VK_MAKE_API_VERSION(0, APP_VERSION[0], APP_VERSION[1], APP_VERSION[2]),
+        VK_MAKE_API_VERSION(0, ENGINE_VERSION[0], ENGINE_VERSION[1], ENGINE_VERSION[2]),
+        validation_layer_debug_messenger_callback);
 }
 
-void ExampleApp::initialize() {
-    // ...?
+void ExampleApp::initialize_spdlog() {
+    spdlog::init_thread_pool(8192, 2);
+    auto console_sink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
+    auto file_sink = std::make_shared<spdlog::sinks::basic_file_sink_mt>(std::string(APP_NAME) + ".log", true);
+    auto logger = std::make_shared<spdlog::async_logger>("main", spdlog::sinks_init_list{console_sink, file_sink},
+                                                         spdlog::thread_pool(), spdlog::async_overflow_policy::block);
+    logger->set_level(spdlog::level::trace);
+    logger->set_pattern("%Y-%m-%d %T.%f %^%l%$ %5t [%n] %v");
+    logger->flush_on(spdlog::level::trace);
+    spdlog::set_default_logger(logger);
+}
+
+void ExampleApp::setup_window_and_input_callbacks() {
+    /// Because GLFW is a C-style API, we can't use a pointer to non-static class methods as window or input callback.
+    /// A good explanation can be found on Stack Overflow:
+    /// https://stackoverflow.com/questions/7676971/pointing-to-a-function-that-is-a-class-member-glfw-setkeycallback
+    /// In order to fix this, we can pass a lambda to glfwSetKeyCallback, which calls our callbacks internally. There is
+    /// another problem: Inside of the lambda, we need to call the member function. In order to do so, we need to have
+    /// access to the this-pointer. Unfortunately, the this-pointer can't be captured in the lambda capture like
+    /// [this](){}, because the glfw would not accept the lambda then. To fix this problem, we store the this pointer
+    /// using glfwSetWindowUserPointer. Inside of these lambdas, we then cast the pointer to Application* again,
+    /// allowing us to finally use the callbacks.
+    m_window->set_user_ptr(this);
+
+    m_window->set_resize_callback([](GLFWwindow *window, int width, int height) {
+        auto *app = static_cast<ExampleApp *>(glfwGetWindowUserPointer(window));
+        app->m_wnd_resized = true;
+    });
+    m_window->set_keyboard_button_callback([](GLFWwindow *window, int key, int scancode, int action, int mods) {
+        auto *app = static_cast<ExampleApp *>(glfwGetWindowUserPointer(window));
+        app->keyboard_button_callback(window, key, scancode, action, mods);
+    });
+    m_window->set_cursor_position_callback([](GLFWwindow *window, double xpos, double ypos) {
+        auto *app = static_cast<ExampleApp *>(glfwGetWindowUserPointer(window));
+        app->cursor_position_callback(window, xpos, ypos);
+    });
+    m_window->set_mouse_button_callback([](GLFWwindow *window, int button, int action, int mods) {
+        auto *app = static_cast<ExampleApp *>(glfwGetWindowUserPointer(window));
+        app->mouse_button_callback(window, button, action, mods);
+    });
+    m_window->set_mouse_scroll_callback([](GLFWwindow *window, double xoffset, double yoffset) {
+        auto *app = static_cast<ExampleApp *>(glfwGetWindowUserPointer(window));
+        app->mouse_scroll_callback(window, xoffset, yoffset);
+    });
+}
+
+void ExampleApp::parse_command_line_arguments(int argc, char *argv[]) {
+    CommandLineArgumentParser cla_parser;
+    cla_parser.parse_args(argc, argv);
+    // TODO: Save options...
 }
 
 void ExampleApp::run() {
     // ...?
-    spdlog::trace("Yep, I'm running...");
 }
 
 void ExampleApp::setup_render_graph() {
@@ -27,7 +90,6 @@ void ExampleApp::setup_render_graph() {
     // m_rendergraph = std::make_shared<RenderGraph>(*m_device);
     // m_octree_renderer = std::make_unique<rendering::octree::OctreeRenderer>(m_rendergraph);
     // m_imgui_renderer = std::make_unique<rendering::imgui::ImGuiRenderer>(m_rendergraph);
-    // ...?
 }
 
 void ExampleApp::update_imgui() {
@@ -49,9 +111,8 @@ void ExampleApp::update_imgui() {
     ImGui::Text("%s", m_device->gpu_name().c_str());
     ImGui::Text("Engine version %d.%d.%d (Git sha %s)", ENGINE_VERSION[0], ENGINE_VERSION[1], ENGINE_VERSION[2],
                 BUILD_GIT);
-    ImGui::Text("Vulkan API %d.%d.%d", VK_API_VERSION_MAJOR(wrapper::Instance::REQUIRED_VK_API_VERSION),
-                VK_API_VERSION_MINOR(wrapper::Instance::REQUIRED_VK_API_VERSION),
-                VK_API_VERSION_PATCH(wrapper::Instance::REQUIRED_VK_API_VERSION));
+    ImGui::Text("Vulkan API %d.%d.%d", VK_API_VERSION_MAJOR(USED_VULKAN_API_VERSION[0]),
+                VK_API_VERSION_MINOR(USED_VULKAN_API_VERSION[1]), VK_API_VERSION_PATCH(USED_VULKAN_API_VERSION[2]));
     const auto &cam_pos = m_camera->position();
     ImGui::Text("Camera position (%.2f, %.2f, %.2f)", cam_pos.x, cam_pos.y, cam_pos.z);
     const auto &cam_rot = m_camera->rotation();
@@ -73,9 +134,21 @@ void ExampleApp::update_imgui() {
     ImGui::Render();
 }
 
-void ExampleApp::evaluate_command_line_arguments(int argc, char *argv[]) {
-    CommandLineArgumentParser cla_parser;
-    cla_parser.parse_args(argc, argv);
+VkBool32 ExampleApp::validation_layer_debug_messenger_callback(const VkDebugUtilsMessageSeverityFlagBitsEXT severity,
+                                                               const VkDebugUtilsMessageTypeFlagsEXT type,
+                                                               const VkDebugUtilsMessengerCallbackDataEXT *data,
+                                                               void *user_data) {
+    if (severity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT) {
+        spdlog::trace("{}", data->pMessage);
+    } else if (severity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT) {
+        spdlog::info("{}", data->pMessage);
+    } else if (severity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT) {
+        spdlog::warn("{}", data->pMessage);
+    } else if (severity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT) {
+        spdlog::critical("{}", data->pMessage);
+        // TODO: Pass m_options.stop_on_validation_error via user_data pointer!
+    }
+    return VK_FALSE;
 }
 
 void ExampleApp::cursor_position_callback(GLFWwindow *, double, double) {}

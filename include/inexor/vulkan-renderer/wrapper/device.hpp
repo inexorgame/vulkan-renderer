@@ -100,7 +100,7 @@ private:
     std::uint32_t m_compute_queue_family_index{0};
     std::uint32_t m_sparse_binding_queue_family{0};
 
-    /// According to NVidia, we should aim for one command pool per thread
+    /// According to NVidia, we should aim for one command pool per thread and queue
     /// https://developer.nvidia.com/blog/vulkan-dos-donts/
     mutable std::vector<std::unique_ptr<CommandPool>> m_cmd_pools;
     mutable std::mutex m_mutex;
@@ -199,7 +199,7 @@ public:
     /// Find a queue family index that suits a specific criteria
     /// @param criteria_lambda The lambda to sort out unsuitable queue families
     /// @return The queue family index which was found (if any), ``std::nullopt`` otherwise
-    std::optional<std::uint32_t> find_queue_family_index_if(
+    [[nodiscard]] std::optional<std::uint32_t> find_queue_family_index_if(
         const std::function<bool(std::uint32_t index, const VkQueueFamilyProperties &)> &criteria_lambda);
 
     /// Get the name of the physical device that was created
@@ -226,9 +226,9 @@ public:
     /// @exception std::runtime_error There are no physical devices are available at all
     /// @exception std::runtime_error No suitable physical device could be determined
     /// @return The chosen physical device which is most suitable
-    static VkPhysicalDevice pick_best_physical_device(std::vector<DeviceInfo> &&physical_device_infos,
-                                                      const VkPhysicalDeviceFeatures &required_features,
-                                                      std::span<const char *> required_extensions);
+    static [[nodiscard]] VkPhysicalDevice pick_best_physical_device(std::vector<DeviceInfo> &&physical_device_infos,
+                                                                    const VkPhysicalDeviceFeatures &required_features,
+                                                                    std::span<const char *> required_extensions);
 
     /// Pick the best physical device automatically
     /// @param inst The Vulkan instance wrapper
@@ -236,10 +236,10 @@ public:
     /// @param required_features The required device features
     /// @param required_extensions The required device extensions
     /// @return The chosen physical device which is most suitable
-    static VkPhysicalDevice pick_best_physical_device(const Instance &inst,
-                                                      const Surface &surface,
-                                                      const VkPhysicalDeviceFeatures &required_features,
-                                                      std::span<const char *> required_extensions);
+    static [[nodiscard]] VkPhysicalDevice pick_best_physical_device(const Instance &inst,
+                                                                    const Surface &surface,
+                                                                    const VkPhysicalDeviceFeatures &required_features,
+                                                                    std::span<const char *> required_extensions);
 
     /// Automatically detect the type of a Vulkan object and set the internal debug name to it
     /// @tparam VulkanObjectType The Vulkan object type. This template parameter will be automatically translated into

@@ -545,7 +545,7 @@ void Device::set_debug_utils_object_name(const VkObjectType obj_type,
     });
 
     if (const auto result = vkSetDebugUtilsObjectNameEXT(m_device, &dbg_obj_name); result != VK_SUCCESS) {
-        throw VulkanException("Error: Failed to assign debug name using debug utils", result);
+        throw VulkanException("Error: vkSetDebugUtilsObjectNameEXT failed!", result);
     }
 }
 
