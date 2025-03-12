@@ -27,6 +27,7 @@ using inexor::vulkan_renderer::wrapper::Instance;
 using inexor::vulkan_renderer::wrapper::Surface;
 using inexor::vulkan_renderer::wrapper::Swapchain;
 using inexor::vulkan_renderer::wrapper::Window;
+using tools::Camera;
 using tools::CameraMovement;
 using tools::CameraType;
 
@@ -57,14 +58,25 @@ private:
     // Add your renderer here...
 
     float m_time_passed{0.0f};
-    std::unique_ptr<tools::Camera> m_camera;
-    std::unique_ptr<input::KeyboardMouseInputData> m_input_data;
+    Camera m_camera;
+    KeyboardMouseInputData m_input_data;
 
     void create_physical_device();
     void create_window();
     void initialize_spdlog();
     void setup_render_graph();
     void recreate_swapchain();
+
+    /// Because GLFW is a C-style API, we can't use a pointer to non-static class methods as window or input callback.
+    /// A good explanation can be found on Stack Overflow:
+    /// https://stackoverflow.com/questions/7676971/pointing-to-a-function-that-is-a-class-member-glfw-setkeycallback
+    /// In order to fix this, we can pass a lambda to glfwSetKeyCallback, which calls our callbacks internally. There is
+    /// another problem: Inside of the lambda, we need to call the member function. In order to do so, we need to have
+    /// access to the this-pointer. Unfortunately, the this-pointer can't be captured in the lambda capture like
+    /// [this](){}, because the glfw would not accept the lambda then. To fix this problem, we store the this pointer
+    /// using glfwSetWindowUserPointer. Inside of these lambdas, we then cast the pointer to Application* again,
+    /// allowing us to finally use the callbacks.
+    void setup_window_input_callbacks();
 
     ///
     /// @param

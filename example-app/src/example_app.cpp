@@ -19,8 +19,8 @@ ExampleApp::ExampleApp(int argc, char *argv[]) {
     spdlog::trace("{}, VERSION: {}.{}.{}, BUILD: {} {}, GIT-SHA: {}", APP_NAME, APP_VERSION[0], APP_VERSION[1],
                   APP_VERSION[2], __DATE__, __TIME__, BUILD_GIT);
 
-    create_window();
-    m_input_data = std::make_unique<KeyboardMouseInputData>();
+    m_window = std::make_unique<Window>(APP_NAME, 1920, 1080, true, true, Window::Mode::WINDOWED);
+    setup_window_input_callbacks();
 
     m_instance = std::make_unique<Instance>(
         VK_MAKE_API_VERSION(0, USED_VULKAN_API_VERSION[0], USED_VULKAN_API_VERSION[1], USED_VULKAN_API_VERSION[2]),
@@ -35,16 +35,16 @@ ExampleApp::ExampleApp(int argc, char *argv[]) {
 }
 
 void ExampleApp::process_mouse_input() {
-    const auto cursor_pos_delta = m_input_data->calculate_cursor_position_delta();
+    // TODO: This here is really "update_camera" code...
+    const auto cursor_pos_delta = m_input_data.calculate_cursor_position_delta();
 
-    if (m_camera->type() == CameraType::LOOK_AT && m_input_data->is_mouse_button_pressed(GLFW_MOUSE_BUTTON_LEFT)) {
-        m_camera->rotate(static_cast<float>(cursor_pos_delta[0]), -static_cast<float>(cursor_pos_delta[1]));
+    if (m_camera.type() == CameraType::LOOK_AT && m_input_data.is_mouse_button_pressed(GLFW_MOUSE_BUTTON_LEFT)) {
+        m_camera.rotate(static_cast<float>(cursor_pos_delta[0]), -static_cast<float>(cursor_pos_delta[1]));
     }
-
-    m_camera->set_movement_state(CameraMovement::FORWARD, m_input_data->is_key_pressed(GLFW_KEY_W));
-    m_camera->set_movement_state(CameraMovement::LEFT, m_input_data->is_key_pressed(GLFW_KEY_A));
-    m_camera->set_movement_state(CameraMovement::BACKWARD, m_input_data->is_key_pressed(GLFW_KEY_S));
-    m_camera->set_movement_state(CameraMovement::RIGHT, m_input_data->is_key_pressed(GLFW_KEY_D));
+    m_camera.set_movement_state(CameraMovement::FORWARD, m_input_data.is_key_pressed(GLFW_KEY_W));
+    m_camera.set_movement_state(CameraMovement::LEFT, m_input_data.is_key_pressed(GLFW_KEY_A));
+    m_camera.set_movement_state(CameraMovement::BACKWARD, m_input_data.is_key_pressed(GLFW_KEY_S));
+    m_camera.set_movement_state(CameraMovement::RIGHT, m_input_data.is_key_pressed(GLFW_KEY_D));
 }
 
 void ExampleApp::process_keyboard_input() {}
@@ -52,20 +52,8 @@ void ExampleApp::process_keyboard_input() {}
 void ExampleApp::create_physical_device() {
     std::vector<const char *> required_extensions = {
         VK_KHR_SWAPCHAIN_EXTENSION_NAME,
-        VK_EXT_DEBUG_MARKER_EXTENSION_NAME,
     };
     const VkPhysicalDeviceFeatures required_features = {};
-
-    /*
-    if(preferred_gpu) {
-        if(is_suitable(preferred_gpu)) {
-            selected_gpu = preferred_gpu;
-        }
-    }
-    else {
-        selected_gpu = pick_best_gpu();
-    }
-    */
 
     const auto selected_gpu =
         Device::pick_best_physical_device(*m_instance, *m_surface, required_features, required_extensions);
@@ -73,18 +61,7 @@ void ExampleApp::create_physical_device() {
     m_device = std::make_unique<Device>(*m_instance, *m_surface, selected_gpu, required_extensions, required_features);
 }
 
-void ExampleApp::create_window() {
-    m_window = std::make_unique<Window>(APP_NAME, 1920, 1080, true, true, Window::Mode::WINDOWED);
-
-    /// Because GLFW is a C-style API, we can't use a pointer to non-static class methods as window or input callback.
-    /// A good explanation can be found on Stack Overflow:
-    /// https://stackoverflow.com/questions/7676971/pointing-to-a-function-that-is-a-class-member-glfw-setkeycallback
-    /// In order to fix this, we can pass a lambda to glfwSetKeyCallback, which calls our callbacks internally. There is
-    /// another problem: Inside of the lambda, we need to call the member function. In order to do so, we need to have
-    /// access to the this-pointer. Unfortunately, the this-pointer can't be captured in the lambda capture like
-    /// [this](){}, because the glfw would not accept the lambda then. To fix this problem, we store the this pointer
-    /// using glfwSetWindowUserPointer. Inside of these lambdas, we then cast the pointer to Application* again,
-    /// allowing us to finally use the callbacks.
+void ExampleApp::setup_window_input_callbacks() {
     m_window->set_user_ptr(this);
 
     m_window->set_resize_callback([](GLFWwindow *window, int width, int height) {
@@ -112,7 +89,6 @@ void ExampleApp::create_window() {
 void ExampleApp::initialize_spdlog() {
     spdlog::init_thread_pool(8192, 2);
     auto console_sink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
-    // Spdlog console output is written to a logfile as well
     auto file_sink = std::make_shared<spdlog::sinks::basic_file_sink_mt>(std::string(APP_NAME) + ".log", true);
     auto logger = std::make_shared<spdlog::async_logger>("main", spdlog::sinks_init_list{console_sink, file_sink},
                                                          spdlog::thread_pool(), spdlog::async_overflow_policy::block);
@@ -128,7 +104,6 @@ void ExampleApp::parse_command_line_arguments(int argc, char *argv[]) {
     m_options.vsync_enabled = cla_parser.arg<bool>("--vsync").value_or(false);
     m_options.stop_on_validation_error = cla_parser.arg<bool>("--stop-on-validation-error").value_or(false);
     m_options.preferred_gpu = cla_parser.arg<std::uint32_t>("--gpu");
-    // Add your command line arguments here and also don't forget to specify them in CommandLineArgumentParser
 }
 
 void ExampleApp::run() {
@@ -137,7 +112,7 @@ void ExampleApp::run() {
         process_mouse_input();
         process_keyboard_input();
         // render_frame();
-        m_camera->update(m_time_passed);
+        m_camera.update(m_time_passed);
         check_octree_collisions();
     }
 }
@@ -156,10 +131,10 @@ void ExampleApp::setup_render_graph() {
 void ExampleApp::update_imgui() {
     ImGuiIO &io = ImGui::GetIO();
     io.DeltaTime = m_time_passed + 0.00001f;
-    auto cursor_pos = m_input_data->get_cursor_pos();
+    auto cursor_pos = m_input_data.get_cursor_pos();
     io.MousePos = ImVec2(static_cast<float>(cursor_pos[0]), static_cast<float>(cursor_pos[1]));
-    io.MouseDown[0] = m_input_data->is_mouse_button_pressed(GLFW_MOUSE_BUTTON_LEFT);
-    io.MouseDown[1] = m_input_data->is_mouse_button_pressed(GLFW_MOUSE_BUTTON_RIGHT);
+    io.MouseDown[0] = m_input_data.is_mouse_button_pressed(GLFW_MOUSE_BUTTON_LEFT);
+    io.MouseDown[1] = m_input_data.is_mouse_button_pressed(GLFW_MOUSE_BUTTON_RIGHT);
     io.DisplaySize =
         ImVec2(static_cast<float>(m_swapchain->extent().width), static_cast<float>(m_swapchain->extent().height));
 
@@ -174,18 +149,18 @@ void ExampleApp::update_imgui() {
                 BUILD_GIT);
     ImGui::Text("Vulkan API %d.%d.%d", VK_API_VERSION_MAJOR(USED_VULKAN_API_VERSION[0]),
                 VK_API_VERSION_MINOR(USED_VULKAN_API_VERSION[1]), VK_API_VERSION_PATCH(USED_VULKAN_API_VERSION[2]));
-    const auto &cam_pos = m_camera->position();
+    const auto &cam_pos = m_camera.position();
     ImGui::Text("Camera position (%.2f, %.2f, %.2f)", cam_pos.x, cam_pos.y, cam_pos.z);
-    const auto &cam_rot = m_camera->rotation();
+    const auto &cam_rot = m_camera.rotation();
     ImGui::Text("Camera rotation: (%.2f, %.2f, %.2f)", cam_rot.x, cam_rot.y, cam_rot.z);
-    const auto &cam_front = m_camera->front();
+    const auto &cam_front = m_camera.front();
     ImGui::Text("Camera vector front: (%.2f, %.2f, %.2f)", cam_front.x, cam_front.y, cam_front.z);
-    const auto &cam_right = m_camera->right();
+    const auto &cam_right = m_camera.right();
     ImGui::Text("Camera vector right: (%.2f, %.2f, %.2f)", cam_right.x, cam_right.y, cam_right.z);
-    const auto &cam_up = m_camera->up();
+    const auto &cam_up = m_camera.up();
     ImGui::Text("Camera vector up (%.2f, %.2f, %.2f)", cam_up.x, cam_up.y, cam_up.z);
-    ImGui::Text("Yaw: %.2f pitch: %.2f roll: %.2f", m_camera->yaw(), m_camera->pitch(), m_camera->roll());
-    const auto cam_fov = m_camera->fov();
+    ImGui::Text("Yaw: %.2f pitch: %.2f roll: %.2f", m_camera.yaw(), m_camera.pitch(), m_camera.roll());
+    const auto cam_fov = m_camera.fov();
     ImGui::Text("Field of view: %d", static_cast<std::uint32_t>(cam_fov));
     ImGui::PushItemWidth(150.0f);
     ImGui::PopItemWidth();

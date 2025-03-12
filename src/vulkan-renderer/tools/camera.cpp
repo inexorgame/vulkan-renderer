@@ -13,6 +13,8 @@ Camera::Camera(const glm::vec3 &position,
     update_matrices();
 }
 
+Camera::Camera() : Camera({0.0f, 0.0f, 0.0f}, 0.0f, 0.0f, 1920.0f, 1080.0f) {}
+
 void Camera::update_vectors() {
     if (m_type == CameraType::LOOK_AT) {
         glm::vec3 front;

@@ -90,7 +90,7 @@ private:
     [[nodiscard]] bool is_moving() const;
 
 public:
-    /// @brief Default constructor.
+    /// Default constructor
     /// @param position The camera's position.
     /// @param yaw The camera's yaw angle in degrees.
     /// @param pitch The camera's pitch angle in degrees.
@@ -98,7 +98,8 @@ public:
     /// @param window_height The height of the window.
     Camera(const glm::vec3 &position, float yaw, float pitch, float window_width, float window_height);
 
-    // TODO: Add more overloaded constructors.
+    /// Default constructor
+    Camera();
 
     /// @brief Set the camera type.
     /// @note We will implement more camera types in the future.
