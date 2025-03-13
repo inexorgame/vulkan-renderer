@@ -49,8 +49,23 @@ Window::~Window() {
     glfwTerminate();
 }
 
-void Window::get_framebuffer_size(int *width, int *height) {
-    glfwGetFramebufferSize(m_window, width, height);
+void Window::announce_resize() {
+    m_resized = true;
+}
+
+bool Window::check_resize() {
+    if (m_resized) {
+        m_resized = false;
+        return true;
+    }
+    return false;
+}
+
+std::pair<std::uint32_t, std::uint32_t> Window::get_framebuffer_size() {
+    int window_width = 0;
+    int window_height = 0;
+    glfwGetFramebufferSize(m_window, &window_width, &window_height);
+    return std::make_pair(window_width, window_height);
 }
 
 void Window::poll() {

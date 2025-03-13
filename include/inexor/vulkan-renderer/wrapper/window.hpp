@@ -6,6 +6,7 @@
 
 #include <cstdint>
 #include <string>
+#include <utility>
 
 namespace inexor::vulkan_renderer::wrapper {
 
@@ -21,6 +22,7 @@ private:
     std::uint32_t m_height;
     Mode m_mode;
     GLFWwindow *m_window{nullptr};
+    bool m_resized{false};
 
 public:
     /// Default constructor
@@ -43,10 +45,16 @@ public:
     Window &operator=(const Window &) = delete;
     Window &operator=(Window &&) = delete;
 
+    /// Check if the window has been resized
+    /// @return ``true`` if the window has been resized
+    bool check_resize();
+
+    /// Notify that the window has been resized
+    void announce_resize();
+
     /// Get the framebuffer size
-    /// @param width [out] The width of the framebuffer
-    /// @param height [out] The height of the framebuffer
-    void get_framebuffer_size(int *width, int *height);
+    /// @return A std::pair of int which contains width and height of the window.
+    std::pair<std::uint32_t, std::uint32_t> get_framebuffer_size();
 
     /// Change the window title
     /// @param title The new title of the window.

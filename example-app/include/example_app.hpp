@@ -14,6 +14,8 @@
 
 #include <spdlog/spdlog.h>
 
+#include <chrono>
+
 namespace inexor::vulkan_renderer::example_app {
 
 // Using declarations
@@ -44,9 +46,6 @@ class ExampleApp {
 private:
     CommandLineOptions m_options;
     std::unique_ptr<Instance> m_instance;
-
-    // TODO: Move this to window wrapper
-    bool m_wnd_resized{false};
     std::unique_ptr<Window> m_window;
     std::unique_ptr<Surface> m_surface;
     std::unique_ptr<Device> m_device;
@@ -55,17 +54,20 @@ private:
     std::shared_ptr<RenderGraph> m_rendergraph;
     std::unique_ptr<OctreeRenderer> m_octree_renderer;
     std::unique_ptr<ImGuiRenderer> m_imgui_renderer;
-    // Add your renderer here...
 
     float m_time_passed{0.0f};
     Camera m_camera;
     KeyboardMouseInputData m_input_data;
+    std::chrono::time_point<std::chrono::high_resolution_clock> m_duration{std::chrono::high_resolution_clock::now()};
+    std::chrono::time_point<std::chrono::high_resolution_clock> m_last_time{std::chrono::high_resolution_clock::now()};
 
     void create_physical_device();
     void create_window();
     void initialize_spdlog();
     void setup_render_graph();
     void recreate_swapchain();
+    void render_frame();
+    void update_time();
 
     /// Because GLFW is a C-style API, we can't use a pointer to non-static class methods as window or input callback.
     /// A good explanation can be found on Stack Overflow:

@@ -15,23 +15,25 @@ ExampleApp::ExampleApp(int argc, char *argv[]) {
     parse_command_line_arguments(argc, argv);
 
     initialize_spdlog();
-    spdlog::trace("{}, VERSION: {}.{}.{}", ENGINE_NAME, ENGINE_VERSION[0], ENGINE_VERSION[1], ENGINE_VERSION[2]);
-    spdlog::trace("{}, VERSION: {}.{}.{}, BUILD: {} {}, GIT-SHA: {}", APP_NAME, APP_VERSION[0], APP_VERSION[1],
-                  APP_VERSION[2], __DATE__, __TIME__, BUILD_GIT);
+    spdlog::trace("{}, VERSION: {}.{}.{}", ENGINE_NAME, VK_VERSION_MAJOR(ENGINE_VERSION),
+                  VK_VERSION_MINOR(ENGINE_VERSION), VK_VERSION_PATCH(ENGINE_VERSION));
+    spdlog::trace("{}, VERSION: {}.{}.{}, BUILD: {} {}, GIT-SHA: {}", APP_NAME, VK_VERSION_MAJOR(APP_VERSION),
+                  VK_VERSION_MINOR(APP_VERSION), VK_VERSION_PATCH(APP_VERSION), __DATE__, __TIME__, BUILD_GIT);
 
     m_window = std::make_unique<Window>(APP_NAME, 1920, 1080, true, true, Window::Mode::WINDOWED);
     setup_window_input_callbacks();
 
-    m_instance = std::make_unique<Instance>(
-        VK_MAKE_API_VERSION(0, USED_VULKAN_API_VERSION[0], USED_VULKAN_API_VERSION[1], USED_VULKAN_API_VERSION[2]),
-        APP_NAME, ENGINE_NAME, VK_MAKE_API_VERSION(0, APP_VERSION[0], APP_VERSION[1], APP_VERSION[2]),
-        VK_MAKE_API_VERSION(0, ENGINE_VERSION[0], ENGINE_VERSION[1], ENGINE_VERSION[2]),
-        validation_layer_debug_messenger_callback);
+    m_instance = std::make_unique<Instance>(USED_VULKAN_API_VERSION, APP_NAME, ENGINE_NAME, APP_VERSION, ENGINE_VERSION,
+                                            validation_layer_debug_messenger_callback);
 
     m_surface = std::make_unique<Surface>(*m_instance, *m_window);
 
     create_physical_device();
+
+    m_swapchain = std::make_unique<Swapchain>(*m_device, APP_NAME, *m_surface, *m_window, m_options.vsync_enabled);
+
     setup_render_graph();
+    recreate_swapchain();
 }
 
 void ExampleApp::process_mouse_input() {
@@ -66,7 +68,7 @@ void ExampleApp::setup_window_input_callbacks() {
 
     m_window->set_resize_callback([](GLFWwindow *window, int width, int height) {
         auto *app = static_cast<ExampleApp *>(glfwGetWindowUserPointer(window));
-        app->m_wnd_resized = true;
+        app->m_window->announce_resize();
     });
     m_window->set_keyboard_button_callback([](GLFWwindow *window, int key, int scancode, int action, int mods) {
         auto *app = static_cast<ExampleApp *>(glfwGetWindowUserPointer(window));
@@ -106,14 +108,44 @@ void ExampleApp::parse_command_line_arguments(int argc, char *argv[]) {
     m_options.preferred_gpu = cla_parser.arg<std::uint32_t>("--gpu");
 }
 
+void ExampleApp::recreate_swapchain() {
+    m_window->wait_for_focus();
+    m_device->wait_idle();
+
+    const auto window_size = m_window->get_framebuffer_size();
+    m_swapchain->setup(window_size.first, window_size.second, m_options.vsync_enabled);
+
+    // TODO: Do we really need to recreate ImGui overlay?
+
+    // TODO: Aren't we "recompiling" rendergraph on every frame anyways?
+    // Split "compile" into the things we really need to do on a per-frame basis
+    m_rendergraph->compile();
+}
+
 void ExampleApp::run() {
     while (!m_window->should_close()) {
         m_window->poll();
         process_mouse_input();
         process_keyboard_input();
-        // render_frame();
+        render_frame();
         m_camera.update(m_time_passed);
         check_octree_collisions();
+        update_time();
+    }
+}
+
+void ExampleApp::update_time() {
+    using namespace std::chrono;
+    const auto current_time = high_resolution_clock::now();
+    // Update the duration it took to render
+    const auto m_time_duration = duration<float, seconds::period>(current_time - m_last_time).count();
+    m_last_time = current_time;
+}
+
+void ExampleApp::render_frame() {
+    if (m_window->check_resize()) {
+        recreate_swapchain();
+        return;
     }
 }
 
@@ -145,10 +177,10 @@ void ExampleApp::update_imgui() {
     ImGui::Begin("Inexor vulkan-renderer", nullptr,
                  ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
     ImGui::Text("%s", m_device->gpu_name().c_str());
-    ImGui::Text("Engine version %d.%d.%d (Git sha %s)", ENGINE_VERSION[0], ENGINE_VERSION[1], ENGINE_VERSION[2],
-                BUILD_GIT);
-    ImGui::Text("Vulkan API %d.%d.%d", VK_API_VERSION_MAJOR(USED_VULKAN_API_VERSION[0]),
-                VK_API_VERSION_MINOR(USED_VULKAN_API_VERSION[1]), VK_API_VERSION_PATCH(USED_VULKAN_API_VERSION[2]));
+    ImGui::Text("Engine version %d.%d.%d (Git sha %s)", VK_VERSION_MAJOR(ENGINE_VERSION),
+                VK_VERSION_MINOR(ENGINE_VERSION), VK_VERSION_PATCH(ENGINE_VERSION), BUILD_GIT);
+    ImGui::Text("Vulkan API %d.%d.%d", VK_API_VERSION_MAJOR(USED_VULKAN_API_VERSION),
+                VK_API_VERSION_MINOR(USED_VULKAN_API_VERSION), VK_API_VERSION_PATCH(USED_VULKAN_API_VERSION));
     const auto &cam_pos = m_camera.position();
     ImGui::Text("Camera position (%.2f, %.2f, %.2f)", cam_pos.x, cam_pos.y, cam_pos.z);
     const auto &cam_rot = m_camera.rotation();

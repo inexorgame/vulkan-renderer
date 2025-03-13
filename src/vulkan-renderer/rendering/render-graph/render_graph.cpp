@@ -128,6 +128,10 @@ void RenderGraph::create_graphics_pipelines() {
 }
 
 void RenderGraph::determine_pass_order() {
+    if (m_graphics_passes.empty()) {
+        throw std::runtime_error("[RenderGraph::determine_pass_order]: No graphics passes specified!");
+    }
+
     // Pop elements from the stack to get the correct order
     std::vector<std::shared_ptr<GraphicsPass>> ordered_passes;
     std::unordered_map<std::shared_ptr<GraphicsPass>, bool> visited;
