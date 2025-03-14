@@ -167,8 +167,6 @@ private:
     /// also correct, it makes no sense to do it this way because vertex buffer and index buffer are updated on a
     /// per-frame basis coherently anyways. So it doesn't really matter.
     /// -----------------------------------------------------------------------------------------------------------------
-
-    /// The vertex buffers, index buffers, and uniform buffers
     std::vector<std::shared_ptr<Buffer>> m_buffers;
 
     /// -----------------------------------------------------------------------------------------------------------------
@@ -191,8 +189,6 @@ private:
     /// allowed to have an on_update function. The on_update function is called per-frame (if it's not std::nullopt).
     /// The on_update function allows for dynamic textures which are updated every frame. Note that so far, our code
     /// base does not use this feature yet.
-
-    /// The textures
     std::vector<std::shared_ptr<Texture>> m_textures;
 
     /// -----------------------------------------------------------------------------------------------------------------
@@ -366,7 +362,13 @@ public:
     /// Compile the rendergraph
     void compile();
 
+    /// Return the const reference to the device wrapper
+    const auto &device() const noexcept {
+        return m_device;
+    }
+
     /// Return the rendergraph's graphics pass builder instance
+    // TODO: Do we still need this?
     GraphicsPassBuilder &get_graphics_pass_builder() {
         return m_graphics_pass_builder;
     }

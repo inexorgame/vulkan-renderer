@@ -157,6 +157,15 @@ void ExampleApp::setup_render_graph() {
     spdlog::trace("Setting up rendergraph");
     m_rendergraph = std::make_shared<RenderGraph>(*m_device);
     m_octree_renderer = std::make_unique<OctreeRenderer>(m_rendergraph);
+
+    /*
+        ImGuiRenderer(const Device &device,
+                  std::weak_ptr<RenderGraph> render_graph,
+                  std::weak_ptr<GraphicsPass> previous_pass,
+                  std::weak_ptr<Swapchain> swapchain,
+                  std::function<void()> on_update_user_data);
+    */
+
     // m_imgui_renderer = std::make_unique<ImGuiRenderer>(m_rendergraph);
 }
 

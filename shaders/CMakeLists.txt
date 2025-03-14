@@ -5,8 +5,8 @@ endif()
 
 set(
     SHADERS
-    main.vert
-    main.frag
+    octree.vert
+    octree.frag
     ui.frag
     ui.vert
 )
