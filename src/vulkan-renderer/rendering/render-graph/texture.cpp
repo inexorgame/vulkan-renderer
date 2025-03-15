@@ -61,7 +61,7 @@ void Texture::create() {
         .tiling = VK_IMAGE_TILING_OPTIMAL,
         .usage = [&]() -> VkImageUsageFlags {
             switch (m_usage) {
-            case TextureUsage::NORMAL: {
+            case TextureUsage::DEFAULT: {
                 return VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
             }
             case TextureUsage::COLOR_ATTACHMENT: {

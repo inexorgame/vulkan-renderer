@@ -7,6 +7,19 @@ namespace inexor::vulkan_renderer::rendering::octree {
 OctreeRenderer::OctreeRenderer(const std::weak_ptr<RenderGraph> rendergraph,
                                const std::weak_ptr<Texture> back_buffer,
                                const std::weak_ptr<Texture> depth_buffer) {
+    if (rendergraph.expired()) {
+        throw std::invalid_argument(
+            "[OctreeRenderer::OctreeRenderer] Error: Parameter 'rendergraph' is an invalid pointer!");
+    }
+    if (back_buffer.expired()) {
+        throw std::invalid_argument(
+            "[OctreeRenderer::OctreeRenderer] Error: Parameter 'back_buffer' is an invalid pointer!");
+    }
+    if (depth_buffer.expired()) {
+        throw std::invalid_argument(
+            "[OctreeRenderer::OctreeRenderer] Error: Parameter 'depth_buffer' is an invalid pointer!");
+    }
+
     auto rg = rendergraph.lock();
 
     m_octree_fragment =

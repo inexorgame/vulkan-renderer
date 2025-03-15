@@ -6,7 +6,6 @@ set(INEXOR_SOURCE_FILES
     vulkan-renderer/io/nxoc_parser.cpp
     vulkan-renderer/io/octree_parser.cpp
 
-    vulkan-renderer/rendering/imgui/imgui.cpp
     vulkan-renderer/rendering/imgui/imgui_renderer.cpp
     vulkan-renderer/rendering/octree/octree_renderer.cpp
     vulkan-renderer/rendering/render-graph/buffer.cpp

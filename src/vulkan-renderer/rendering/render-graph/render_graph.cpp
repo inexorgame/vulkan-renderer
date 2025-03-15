@@ -189,7 +189,7 @@ void RenderGraph::fill_graphics_pass_rendering_info(GraphicsPass &pass) {
         auto get_image_layout = [&]() {
             switch (attachment->m_usage) {
             case TextureUsage::COLOR_ATTACHMENT:
-            case TextureUsage::NORMAL: {
+            case TextureUsage::DEFAULT: {
                 return VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
             }
             case TextureUsage::DEPTH_ATTACHMENT:
@@ -223,7 +223,7 @@ void RenderGraph::fill_graphics_pass_rendering_info(GraphicsPass &pass) {
 
         switch (attachment.lock()->m_usage) {
         case TextureUsage::COLOR_ATTACHMENT:
-        case TextureUsage::NORMAL: {
+        case TextureUsage::DEFAULT: {
             pass.m_color_attachments.push_back(rendering_info);
             break;
         }
@@ -394,7 +394,7 @@ void RenderGraph::update_textures() {
     bool any_update_required = false;
     for (const auto &texture : m_textures) {
         // Check if this texture needs an update
-        if (texture->m_usage == TextureUsage::NORMAL) {
+        if (texture->m_usage == TextureUsage::DEFAULT) {
             texture->m_on_check_for_updates();
         }
         if (texture->m_update_requested) {

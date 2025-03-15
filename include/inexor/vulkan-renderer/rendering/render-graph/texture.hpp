@@ -28,9 +28,10 @@ class WriteDescriptorSetBuilder;
 namespace inexor::vulkan_renderer::rendering::render_graph {
 
 /// Specifies the use of the texture
-/// NOTE: All usages which are not TextureUsage::NORMAL are for internal usage inside of rendergraph only
+/// NOTE: All usages which are not TextureUsage::DEFAULT are for internal usage inside of rendergraph only
+/// TODO: Do we even really need DEFAULT? Why not use COLOR_ATTACHMENT instead?
 enum class TextureUsage {
-    NORMAL,
+    DEFAULT,
     COLOR_ATTACHMENT,
     DEPTH_ATTACHMENT,
     STENCIL_ATTACHMENT,

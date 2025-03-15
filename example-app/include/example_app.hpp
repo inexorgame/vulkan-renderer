@@ -1,7 +1,7 @@
 #pragma once
 
 #include "inexor/vulkan-renderer/input/keyboard_mouse_data.hpp"
-#include "inexor/vulkan-renderer/rendering/imgui/imgui.hpp"
+#include "inexor/vulkan-renderer/rendering/imgui/imgui_renderer.hpp"
 #include "inexor/vulkan-renderer/rendering/octree/octree_renderer.hpp"
 #include "inexor/vulkan-renderer/rendering/render-graph/render_graph.hpp"
 #include "inexor/vulkan-renderer/tools/camera.hpp"
@@ -19,7 +19,6 @@
 
 namespace inexor::vulkan_renderer::example_app {
 
-// Using declarations
 using input::KeyboardMouseInputData;
 using rendering::imgui::ImGuiRenderer;
 using rendering::octree::OctreeRenderer;
@@ -61,7 +60,7 @@ private:
     std::unique_ptr<Window> m_window;
     std::unique_ptr<Surface> m_surface;
     std::unique_ptr<Device> m_device;
-    std::unique_ptr<Swapchain> m_swapchain;
+    std::shared_ptr<Swapchain> m_swapchain;
 
     std::shared_ptr<RenderGraph> m_rendergraph;
     ModelViewProjMatrix matrix{};
