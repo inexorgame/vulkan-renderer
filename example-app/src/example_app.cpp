@@ -1,6 +1,9 @@
 #include "../include/example_app.hpp"
 
 #include "../include/example_app_meta.hpp"
+#include "inexor/vulkan-renderer/wrapper/descriptors/descriptor_set_allocator.hpp"
+#include "inexor/vulkan-renderer/wrapper/descriptors/descriptor_set_layout_builder.hpp"
+#include "inexor/vulkan-renderer/wrapper/descriptors/write_descriptor_set_builder.hpp"
 
 #include <spdlog/async.h>
 #include <spdlog/sinks/basic_file_sink.h>
@@ -10,6 +13,10 @@
 #include <memory>
 
 namespace inexor::vulkan_renderer::example_app {
+
+using wrapper::descriptors::DescriptorSetAllocator;
+using wrapper::descriptors::DescriptorSetLayoutBuilder;
+using wrapper::descriptors::WriteDescriptorSetBuilder;
 
 ExampleApp::ExampleApp(int argc, char *argv[]) {
     parse_command_line_arguments(argc, argv);
@@ -156,17 +163,43 @@ void ExampleApp::check_octree_collisions() {
 void ExampleApp::setup_render_graph() {
     spdlog::trace("Setting up rendergraph");
     m_rendergraph = std::make_shared<RenderGraph>(*m_device);
-    m_octree_renderer = std::make_unique<OctreeRenderer>(m_rendergraph);
 
-    /*
-        ImGuiRenderer(const Device &device,
-                  std::weak_ptr<RenderGraph> render_graph,
-                  std::weak_ptr<GraphicsPass> previous_pass,
-                  std::weak_ptr<Swapchain> swapchain,
-                  std::function<void()> on_update_user_data);
-    */
+    // Create a uniform buffer for the model/view/proj matrix
+    m_mvp_matrix_buffer = m_rendergraph->add_buffer("model/view/proj", BufferType::UNIFORM_BUFFER, [&]() {
+        matrix.model = glm::mat4(1.0f);
+        matrix.view = m_camera.perspective_matrix();
+        matrix.proj = m_camera.view_matrix();
+        matrix.proj[1][1] *= -1;
+        m_mvp_matrix_buffer.lock()->request_update(matrix);
+    });
 
-    // m_imgui_renderer = std::make_unique<ImGuiRenderer>(m_rendergraph);
+    // Add a resource descriptor for the uniform buffer
+    m_rendergraph->add_resource_descriptor(
+        [&](DescriptorSetLayoutBuilder &builder) {
+            // Create the descriptor set layout
+            m_desc_set_layout = builder.add_uniform_buffer(VK_SHADER_STAGE_VERTEX_BIT).build("model/view/proj");
+        },
+        [&](DescriptorSetAllocator &allocator) {
+            // Allocate the descriptor set
+            m_desc_set = allocator.allocate("model/view/proj", m_desc_set_layout);
+        },
+        [&](WriteDescriptorSetBuilder &builder) {
+            // Build the write descriptor set
+            return builder.add_uniform_buffer_update(m_desc_set, m_mvp_matrix_buffer).build();
+        });
+
+    // TODO: Get info from swapchain
+    m_back_buffer = m_rendergraph->add_texture("Back", TextureUsage::COLOR_ATTACHMENT, m_swapchain->image_format(),
+                                               1920, 1080, VK_SAMPLE_COUNT_1_BIT);
+
+    // TODO: Get info from swapchain
+    m_depth_buffer = m_rendergraph->add_texture("Depth", TextureUsage::DEPTH_ATTACHMENT, VK_FORMAT_D32_SFLOAT_S8_UINT,
+                                                1920, 1080, VK_SAMPLE_COUNT_1_BIT);
+
+    m_octree_renderer = std::make_unique<OctreeRenderer>(m_rendergraph, m_back_buffer, m_depth_buffer);
+
+    m_imgui_renderer =
+        std::make_unique<ImGuiRenderer>(m_rendergraph, m_octree_renderer->get_pass(), m_swapchain, []() {});
 }
 
 void ExampleApp::update_imgui() {

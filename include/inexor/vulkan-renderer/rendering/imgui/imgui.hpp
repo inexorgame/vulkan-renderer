@@ -92,13 +92,11 @@ class ImGuiRenderer {
 
 public:
     /// Default constructor
-    /// @param device The device wrapper
     /// @param render_graph The rendergraph
     /// @param previous_pass The previous pass
     /// @param swapchain The swapchain to render to
     /// @param on_update_user_data The user-specified ImGui update function
-    ImGuiRenderer(const Device &device,
-                  std::weak_ptr<RenderGraph> render_graph,
+    ImGuiRenderer(std::weak_ptr<RenderGraph> render_graph,
                   std::weak_ptr<GraphicsPass> previous_pass,
                   std::weak_ptr<Swapchain> swapchain,
                   std::function<void()> on_update_user_data);

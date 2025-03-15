@@ -252,6 +252,8 @@ public:
     /// @return A const reference to the this pointer (allowing method calls to be chained)
     const CommandBuffer &end_debug_label_region() const;
 
+    // TODO: Make begin_rendering and end_rendering private and allow only rendergraph to access it!
+
     /// Call vkCmdEndRendering
     /// @note We don't need to call it ``vkCmdEndRenderingKHR`` anymore since it's part of Vulkan 1.3's core
     /// @note ``end_render_pass`` has been deprecated because of dynamic rendering (``VK_KHR_dynamic_rendering``)

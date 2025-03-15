@@ -54,6 +54,11 @@ private:
     VkExtent2D m_extent{0, 0};
     /// The graphics passes this pass reads from
     std::vector<std::weak_ptr<GraphicsPass>> m_graphics_pass_reads;
+
+    /// TODO: Do we need this?
+    /// A weak pointer to the previous graphics pass
+    std::weak_ptr<GraphicsPass> m_previous_pass{};
+
     /// A weak pointer to the next graphics pass
     std::weak_ptr<GraphicsPass> m_next_pass{};
 

@@ -12,6 +12,7 @@
 #include "inexor/vulkan-renderer/wrapper/swapchain.hpp"
 #include "inexor/vulkan-renderer/wrapper/window.hpp"
 
+#include <glm/glm.hpp>
 #include <spdlog/spdlog.h>
 
 #include <chrono>
@@ -19,19 +20,23 @@
 namespace inexor::vulkan_renderer::example_app {
 
 // Using declarations
-using inexor::vulkan_renderer::input::KeyboardMouseInputData;
-using inexor::vulkan_renderer::rendering::imgui::ImGuiRenderer;
-using inexor::vulkan_renderer::rendering::octree::OctreeRenderer;
-using inexor::vulkan_renderer::rendering::render_graph::RenderGraph;
-using inexor::vulkan_renderer::tools::CommandLineArgumentParser;
-using inexor::vulkan_renderer::wrapper::Device;
-using inexor::vulkan_renderer::wrapper::Instance;
-using inexor::vulkan_renderer::wrapper::Surface;
-using inexor::vulkan_renderer::wrapper::Swapchain;
-using inexor::vulkan_renderer::wrapper::Window;
+using input::KeyboardMouseInputData;
+using rendering::imgui::ImGuiRenderer;
+using rendering::octree::OctreeRenderer;
+using rendering::render_graph::Buffer;
+using rendering::render_graph::BufferType;
+using rendering::render_graph::RenderGraph;
+using rendering::render_graph::Texture;
+using rendering::render_graph::TextureUsage;
 using tools::Camera;
 using tools::CameraMovement;
 using tools::CameraType;
+using tools::CommandLineArgumentParser;
+using wrapper::Device;
+using wrapper::Instance;
+using wrapper::Surface;
+using wrapper::Swapchain;
+using wrapper::Window;
 
 /// The command line arguments will be parsed into these options
 struct CommandLineOptions {
@@ -39,6 +44,13 @@ struct CommandLineOptions {
     bool vsync_enabled{true};
     std::optional<std::uint32_t> preferred_gpu{std::nullopt};
     // Add your option here...
+};
+
+/// The model, view, and projection matrix used in a uniform buffer for rendering
+struct ModelViewProjMatrix {
+    glm::mat4 model;
+    glm::mat4 view;
+    glm::mat4 proj;
 };
 
 /// An example app using Inexor vulkan-renderer engine
@@ -52,12 +64,20 @@ private:
     std::unique_ptr<Swapchain> m_swapchain;
 
     std::shared_ptr<RenderGraph> m_rendergraph;
+    ModelViewProjMatrix matrix{};
+    VkDescriptorSetLayout m_desc_set_layout{VK_NULL_HANDLE};
+    VkDescriptorSet m_desc_set{VK_NULL_HANDLE};
+    std::weak_ptr<Buffer> m_mvp_matrix_buffer;
+    std::weak_ptr<Texture> m_back_buffer;
+    std::weak_ptr<Texture> m_depth_buffer;
+
     std::unique_ptr<OctreeRenderer> m_octree_renderer;
     std::unique_ptr<ImGuiRenderer> m_imgui_renderer;
 
     float m_time_passed{0.0f};
     Camera m_camera;
     KeyboardMouseInputData m_input_data;
+
     std::chrono::time_point<std::chrono::high_resolution_clock> m_duration{std::chrono::high_resolution_clock::now()};
     std::chrono::time_point<std::chrono::high_resolution_clock> m_last_time{std::chrono::high_resolution_clock::now()};
 

@@ -45,7 +45,6 @@ using wrapper::descriptors::WriteDescriptorSetBuilder;
 /// RAII wrapper for buffer resources inside of the rendergraph
 /// A buffer resource can be a vertex buffer, index buffer, or uniform buffer
 class Buffer {
-    //
     friend class RenderGraph;
     friend class GraphicsPass;
     friend class CommandBuffer;

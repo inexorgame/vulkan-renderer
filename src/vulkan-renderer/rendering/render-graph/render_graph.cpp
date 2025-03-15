@@ -432,6 +432,7 @@ void RenderGraph::update_write_descriptor_sets() {
                   std::back_inserter(m_write_descriptor_sets));
     }
     // NOTE: We batch all descriptor set updates into one function call for optimal performance
+    // TODO: write a method in device wrapper for this?
     vkUpdateDescriptorSets(m_device.device(), static_cast<std::uint32_t>(m_write_descriptor_sets.size()),
                            m_write_descriptor_sets.data(), 0, nullptr);
 }

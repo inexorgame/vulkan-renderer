@@ -3,6 +3,7 @@
 namespace inexor::vulkan_renderer::rendering::imgui {
 
 ImGuiRenderer::ImGuiRenderer(const std::weak_ptr<RenderGraph> rendergraph) {
+    auto rg = rendergraph.lock();
     // TODO: Setup ImGui rendering
 }
 
