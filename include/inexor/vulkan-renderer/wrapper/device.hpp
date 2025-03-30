@@ -237,7 +237,7 @@ public:
         // The get_vulkan_object_type template allows us to convert the template parameter into a VK_OBJECT_TYPE
         // There is no other trivial way in C++ to do this as far as we know
         return set_debug_utils_object_name(tools::get_vulkan_object_type(vk_object),
-                                           reinterpret_cast<std::uint64_t>(vk_object), name);
+                                           reinterpret_cast<std::uint64_t>(vk_object), name); // NOLINT
     }
 
     /// Call vkDeviceWaitIdle or vkQueueWaitIdle if a VkQueue is specified as parameter

@@ -14,6 +14,7 @@
 
 namespace inexor::vulkan_renderer::example_app {
 
+// Using declarations
 using wrapper::descriptors::DescriptorSetAllocator;
 using wrapper::descriptors::DescriptorSetLayoutBuilder;
 using wrapper::descriptors::WriteDescriptorSetBuilder;
@@ -47,13 +48,13 @@ void ExampleApp::process_mouse_input() {
     // TODO: This here is really "update_camera" code...
     const auto cursor_pos_delta = m_input_data.calculate_cursor_position_delta();
 
-    if (m_camera.type() == CameraType::LOOK_AT && m_input_data.is_mouse_button_pressed(GLFW_MOUSE_BUTTON_LEFT)) {
-        m_camera.rotate(static_cast<float>(cursor_pos_delta[0]), -static_cast<float>(cursor_pos_delta[1]));
+    if (m_camera->type() == CameraType::LOOK_AT && m_input_data.is_mouse_button_pressed(GLFW_MOUSE_BUTTON_LEFT)) {
+        m_camera->rotate(static_cast<float>(cursor_pos_delta[0]), -static_cast<float>(cursor_pos_delta[1]));
     }
-    m_camera.set_movement_state(CameraMovement::FORWARD, m_input_data.is_key_pressed(GLFW_KEY_W));
-    m_camera.set_movement_state(CameraMovement::LEFT, m_input_data.is_key_pressed(GLFW_KEY_A));
-    m_camera.set_movement_state(CameraMovement::BACKWARD, m_input_data.is_key_pressed(GLFW_KEY_S));
-    m_camera.set_movement_state(CameraMovement::RIGHT, m_input_data.is_key_pressed(GLFW_KEY_D));
+    m_camera->set_movement_state(CameraMovement::FORWARD, m_input_data.is_key_pressed(GLFW_KEY_W));
+    m_camera->set_movement_state(CameraMovement::LEFT, m_input_data.is_key_pressed(GLFW_KEY_A));
+    m_camera->set_movement_state(CameraMovement::BACKWARD, m_input_data.is_key_pressed(GLFW_KEY_S));
+    m_camera->set_movement_state(CameraMovement::RIGHT, m_input_data.is_key_pressed(GLFW_KEY_D));
 }
 
 void ExampleApp::process_keyboard_input() {}
@@ -135,7 +136,7 @@ void ExampleApp::run() {
         process_mouse_input();
         process_keyboard_input();
         render_frame();
-        m_camera.update(m_time_passed);
+        m_camera->update(m_time_passed);
         check_octree_collisions();
         update_time();
     }
@@ -164,42 +165,23 @@ void ExampleApp::setup_render_graph() {
     spdlog::trace("Setting up rendergraph");
     m_rendergraph = std::make_shared<RenderGraph>(*m_device);
 
-    // Create a uniform buffer for the model/view/proj matrix
-    m_mvp_matrix_buffer = m_rendergraph->add_buffer("model/view/proj", BufferType::UNIFORM_BUFFER, [&]() {
-        matrix.model = glm::mat4(1.0f);
-        matrix.view = m_camera.perspective_matrix();
-        matrix.proj = m_camera.view_matrix();
-        matrix.proj[1][1] *= -1;
-        m_mvp_matrix_buffer.lock()->request_update(matrix);
-    });
+    const auto swapchain_img_extent = m_swapchain->extent();
+    m_back_buffer =
+        m_rendergraph->add_texture("Back", TextureUsage::COLOR_ATTACHMENT, m_swapchain->image_format(),
+                                   swapchain_img_extent.width, swapchain_img_extent.height, VK_SAMPLE_COUNT_1_BIT);
 
-    // Add a resource descriptor for the uniform buffer
-    m_rendergraph->add_resource_descriptor(
-        [&](DescriptorSetLayoutBuilder &builder) {
-            // Create the descriptor set layout
-            m_desc_set_layout = builder.add_uniform_buffer(VK_SHADER_STAGE_VERTEX_BIT).build("model/view/proj");
-        },
-        [&](DescriptorSetAllocator &allocator) {
-            // Allocate the descriptor set
-            m_desc_set = allocator.allocate("model/view/proj", m_desc_set_layout);
-        },
-        [&](WriteDescriptorSetBuilder &builder) {
-            // Build the write descriptor set
-            return builder.add_uniform_buffer_update(m_desc_set, m_mvp_matrix_buffer).build();
-        });
-
-    // TODO: Get info from swapchain
-    m_back_buffer = m_rendergraph->add_texture("Back", TextureUsage::COLOR_ATTACHMENT, m_swapchain->image_format(),
-                                               1920, 1080, VK_SAMPLE_COUNT_1_BIT);
-
-    // TODO: Get info from swapchain
-    m_depth_buffer = m_rendergraph->add_texture("Depth", TextureUsage::DEPTH_ATTACHMENT, VK_FORMAT_D32_SFLOAT_S8_UINT,
-                                                1920, 1080, VK_SAMPLE_COUNT_1_BIT);
+    m_depth_buffer =
+        m_rendergraph->add_texture("Depth", TextureUsage::DEPTH_ATTACHMENT, VK_FORMAT_D32_SFLOAT_S8_UINT,
+                                   swapchain_img_extent.width, swapchain_img_extent.height, VK_SAMPLE_COUNT_1_BIT);
 
     m_octree_renderer = std::make_unique<OctreeRenderer>(m_rendergraph, m_back_buffer, m_depth_buffer);
 
-    m_imgui_renderer =
-        std::make_unique<ImGuiRenderer>(m_rendergraph, m_octree_renderer->get_pass(), m_swapchain, []() {});
+    m_camera = std::make_shared<Camera>(glm::vec3{0.0f, 0.0f, 0.0f}, 0.0f, 0.0f, swapchain_img_extent.width,
+                                        swapchain_img_extent.height);
+    m_octree_renderer->set_camera(m_camera);
+
+    m_imgui_renderer = std::make_unique<ImGuiRenderer>(m_rendergraph, m_octree_renderer->get_pass(), m_swapchain,
+                                                       [&]() { update_imgui(); });
 }
 
 void ExampleApp::update_imgui() {
@@ -223,18 +205,18 @@ void ExampleApp::update_imgui() {
                 VK_VERSION_MINOR(ENGINE_VERSION), VK_VERSION_PATCH(ENGINE_VERSION), BUILD_GIT);
     ImGui::Text("Vulkan API %d.%d.%d", VK_API_VERSION_MAJOR(USED_VULKAN_API_VERSION),
                 VK_API_VERSION_MINOR(USED_VULKAN_API_VERSION), VK_API_VERSION_PATCH(USED_VULKAN_API_VERSION));
-    const auto &cam_pos = m_camera.position();
+    const auto &cam_pos = m_camera->position();
     ImGui::Text("Camera position (%.2f, %.2f, %.2f)", cam_pos.x, cam_pos.y, cam_pos.z);
-    const auto &cam_rot = m_camera.rotation();
+    const auto &cam_rot = m_camera->rotation();
     ImGui::Text("Camera rotation: (%.2f, %.2f, %.2f)", cam_rot.x, cam_rot.y, cam_rot.z);
-    const auto &cam_front = m_camera.front();
+    const auto &cam_front = m_camera->front();
     ImGui::Text("Camera vector front: (%.2f, %.2f, %.2f)", cam_front.x, cam_front.y, cam_front.z);
-    const auto &cam_right = m_camera.right();
+    const auto &cam_right = m_camera->right();
     ImGui::Text("Camera vector right: (%.2f, %.2f, %.2f)", cam_right.x, cam_right.y, cam_right.z);
-    const auto &cam_up = m_camera.up();
+    const auto &cam_up = m_camera->up();
     ImGui::Text("Camera vector up (%.2f, %.2f, %.2f)", cam_up.x, cam_up.y, cam_up.z);
-    ImGui::Text("Yaw: %.2f pitch: %.2f roll: %.2f", m_camera.yaw(), m_camera.pitch(), m_camera.roll());
-    const auto cam_fov = m_camera.fov();
+    ImGui::Text("Yaw: %.2f pitch: %.2f roll: %.2f", m_camera->yaw(), m_camera->pitch(), m_camera->roll());
+    const auto cam_fov = m_camera->fov();
     ImGui::Text("Field of view: %d", static_cast<std::uint32_t>(cam_fov));
     ImGui::PushItemWidth(150.0f);
     ImGui::PopItemWidth();

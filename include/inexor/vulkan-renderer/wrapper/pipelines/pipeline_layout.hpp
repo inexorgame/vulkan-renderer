@@ -19,24 +19,24 @@ namespace inexor::vulkan_renderer::wrapper::pipelines {
 // Forward declaration
 class GraphicsPipeline;
 
-// Using declaration
+// Using declarations
 using commands::CommandBuffer;
 using render_graph::RenderGraph;
 
 /// RAII wrapper class for VkPipelineLayout
 class PipelineLayout {
+public:
+    // Friend declarations
     friend class RenderGraph;
     friend class GraphicsPipeline;
     friend class CommandBuffer;
 
-private:
     const Device &m_device;
     std::string m_name;
 
     // There is no get method for this because only rendergraph needs to access it through friend class
     VkPipelineLayout m_pipeline_layout{VK_NULL_HANDLE};
 
-public:
     /// Call vkCreatePipelineLayout
     /// @note The constructor is private because only friend class RenderGraph needs access to it
     /// @param device The device wrapper
@@ -51,11 +51,11 @@ public:
     PipelineLayout(const PipelineLayout &) = delete;
     PipelineLayout(PipelineLayout &&) noexcept;
 
+    PipelineLayout &operator=(const PipelineLayout &) = delete;
+    PipelineLayout &operator=(PipelineLayout &&other) noexcept;
+
     /// Call vkDestroyPipelineLayout
     ~PipelineLayout();
-
-    PipelineLayout &operator=(const PipelineLayout &) = delete;
-    PipelineLayout &operator=(PipelineLayout &&other) noexcept = delete;
 };
 
 } // namespace inexor::vulkan_renderer::wrapper::pipelines

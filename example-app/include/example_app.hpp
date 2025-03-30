@@ -12,13 +12,13 @@
 #include "inexor/vulkan-renderer/wrapper/swapchain.hpp"
 #include "inexor/vulkan-renderer/wrapper/window.hpp"
 
-#include <glm/glm.hpp>
 #include <spdlog/spdlog.h>
 
 #include <chrono>
 
 namespace inexor::vulkan_renderer::example_app {
 
+// Using declarations
 using input::KeyboardMouseInputData;
 using rendering::imgui::ImGuiRenderer;
 using rendering::octree::OctreeRenderer;
@@ -45,13 +45,6 @@ struct CommandLineOptions {
     // Add your option here...
 };
 
-/// The model, view, and projection matrix used in a uniform buffer for rendering
-struct ModelViewProjMatrix {
-    glm::mat4 model;
-    glm::mat4 view;
-    glm::mat4 proj;
-};
-
 /// An example app using Inexor vulkan-renderer engine
 class ExampleApp {
 private:
@@ -61,20 +54,14 @@ private:
     std::unique_ptr<Surface> m_surface;
     std::unique_ptr<Device> m_device;
     std::shared_ptr<Swapchain> m_swapchain;
-
     std::shared_ptr<RenderGraph> m_rendergraph;
-    ModelViewProjMatrix matrix{};
-    VkDescriptorSetLayout m_desc_set_layout{VK_NULL_HANDLE};
-    VkDescriptorSet m_desc_set{VK_NULL_HANDLE};
-    std::weak_ptr<Buffer> m_mvp_matrix_buffer;
     std::weak_ptr<Texture> m_back_buffer;
     std::weak_ptr<Texture> m_depth_buffer;
-
     std::unique_ptr<OctreeRenderer> m_octree_renderer;
     std::unique_ptr<ImGuiRenderer> m_imgui_renderer;
 
     float m_time_passed{0.0f};
-    Camera m_camera;
+    std::shared_ptr<Camera> m_camera;
     KeyboardMouseInputData m_input_data;
 
     std::chrono::time_point<std::chrono::high_resolution_clock> m_duration{std::chrono::high_resolution_clock::now()};
@@ -99,6 +86,10 @@ private:
     /// allowing us to finally use the callbacks.
     void setup_window_input_callbacks();
 
+    /// A swap function for move assignment constructor and move assignment operator
+    /// @param other A reference to the other instance of ExampleApp to swap with
+    void swap(ExampleApp &other);
+
     ///
     /// @param
     /// @param
@@ -112,16 +103,14 @@ private:
 
 public:
     /// Default constructor
-    /// @param argc The number of arguments passed to main()
-    /// @param argv The arguments passed to main()
+    /// @param argc The number of arguments passed to the main function
+    /// @param argv The arguments passed to the main function
     ExampleApp(int argc, char *argv[]);
     ExampleApp(const ExampleApp &) = delete;
-    // TODO: Implement me!
     ExampleApp(ExampleApp &&) noexcept;
     ~ExampleApp() = default;
 
     ExampleApp &operator=(const ExampleApp &) = delete;
-    // TODO: Implement me!
     ExampleApp &operator=(ExampleApp &&) noexcept;
 
     void cursor_position_callback(GLFWwindow *, double, double);
