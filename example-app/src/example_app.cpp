@@ -45,12 +45,12 @@ ExampleApp::ExampleApp(int argc, char *argv[]) {
 }
 
 void ExampleApp::process_mouse_input() {
-    // TODO: This here is really "update_camera" code...
     const auto cursor_pos_delta = m_input_data.calculate_cursor_position_delta();
 
     if (m_camera->type() == CameraType::LOOK_AT && m_input_data.is_mouse_button_pressed(GLFW_MOUSE_BUTTON_LEFT)) {
         m_camera->rotate(static_cast<float>(cursor_pos_delta[0]), -static_cast<float>(cursor_pos_delta[1]));
     }
+
     m_camera->set_movement_state(CameraMovement::FORWARD, m_input_data.is_key_pressed(GLFW_KEY_W));
     m_camera->set_movement_state(CameraMovement::LEFT, m_input_data.is_key_pressed(GLFW_KEY_A));
     m_camera->set_movement_state(CameraMovement::BACKWARD, m_input_data.is_key_pressed(GLFW_KEY_S));

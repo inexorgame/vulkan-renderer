@@ -1,5 +1,6 @@
 #pragma once
 
+#include "inexor/vulkan-renderer/rendering/render-graph/buffer.hpp"
 #include "inexor/vulkan-renderer/world/indentation.hpp"
 
 #include <glm/gtx/vector_angle.hpp>
@@ -22,6 +23,20 @@ class ByteStream;
 class NXOCParser;
 } // namespace inexor::vulkan_renderer::io
 
+// Forward declaration
+namespace inexor::vulkan_renderer::rendering::octree {
+class OctreeRenderer;
+} // namespace inexor::vulkan_renderer::rendering::octree
+
+using inexor::vulkan_renderer::rendering::octree::OctreeRenderer;
+
+// Forward declaration
+namespace inexor::vulkan_renderer::rendering::render_graph {
+class Buffer;
+} // namespace inexor::vulkan_renderer::rendering::render_graph
+
+using inexor::vulkan_renderer::rendering::render_graph::Buffer;
+
 void swap(inexor::vulkan_renderer::world::Cube &lhs, inexor::vulkan_renderer::world::Cube &rhs) noexcept;
 
 namespace inexor::vulkan_renderer::world {
@@ -34,6 +49,7 @@ using PolygonCache = std::shared_ptr<std::vector<Polygon>>;
 class Cube : public std::enable_shared_from_this<Cube> {
     friend void ::swap(Cube &lhs, Cube &rhs) noexcept;
     friend class io::NXOCParser;
+    friend class OctreeRenderer;
 
 public:
     /// Maximum of sub cubes (children)
@@ -89,6 +105,16 @@ private:
     /// Optimized implementations of 90°, 180° and 270° rotations.
     template <int Rotations>
     void rotate(const RotationAxis::Type &axis);
+
+    // For now, we store vertex and index buffer in each root cube as a member here
+    // Once we have a proper material system, this might change
+    std::weak_ptr<Buffer> m_vertex_buffer;
+    std::weak_ptr<Buffer> m_index_buffer;
+    std::uint32_t m_index_count;
+
+    // TODO: There could be the possibility to render some child cube of a root cube,
+    // in which case it would make the most sense to store all vertices in the root cube
+    // and to use indices into that vertex and index buffer for rendering of the child cube.
 
 public:
     /// Create an empty cube.
@@ -188,7 +214,8 @@ public:
 /// @param max_depth The maximum of nested octants.
 /// @param position The position where the root cube is placed.
 /// @param seed The seed used for the random number generator.
-std::shared_ptr<world::Cube> create_random_world(std::uint32_t max_depth, const glm::vec3 &position,
+std::shared_ptr<world::Cube> create_random_world(std::uint32_t max_depth,
+                                                 const glm::vec3 &position,
                                                  std::optional<std::uint32_t> seed = std::nullopt);
 
 } // namespace inexor::vulkan_renderer::world

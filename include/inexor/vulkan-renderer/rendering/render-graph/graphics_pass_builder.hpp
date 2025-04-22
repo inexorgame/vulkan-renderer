@@ -62,6 +62,8 @@ public:
     [[nodiscard]] GraphicsPassBuilder &conditionally_reads_from(std::weak_ptr<GraphicsPass> graphics_pass,
                                                                 bool condition);
 
+    // TODO: Implement reads_from for vertex/index buffers!
+
     /// Specify that this graphics pass A reads from another graphics pass B, meaning B should be rendered before A
     /// @param graphics_pass The graphics pass which is read by this graphics pass
     /// @return A const reference to the this pointer (allowing method calls to be chained)

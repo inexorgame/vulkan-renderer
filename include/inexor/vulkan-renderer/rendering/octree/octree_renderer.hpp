@@ -54,22 +54,16 @@ private:
     std::weak_ptr<GraphicsPass> m_octree_pass;
     std::shared_ptr<GraphicsPipeline> m_octree_pipeline;
 
-    // TODO: Render multiple octrees...
-    std::weak_ptr<Buffer> m_vertex_buffer;
-    std::weak_ptr<Buffer> m_index_buffer;
-    std::weak_ptr<Buffer> m_mvp_matrix_buffer;
+    std::weak_ptr<Buffer> m_mvp_matrix;
 
     /// The camera used for rendering
     std::weak_ptr<Camera> m_camera;
 
-    // TODO: Render multiple octrees...
-    std::vector<OctreeVertex> m_octree_vertices;
-    std::vector<std::uint32_t> m_octree_indices;
-
     VkDescriptorSetLayout m_desc_set_layout{VK_NULL_HANDLE};
     VkDescriptorSet m_desc_set{VK_NULL_HANDLE};
 
-    std::vector<std::weak_ptr<Cube>> m_root_cubes;
+    /// The cubes we use for rendering
+    std::vector<std::weak_ptr<Cube>> m_cubes;
 
 public:
     /// Default constructor
@@ -87,20 +81,22 @@ public:
     OctreeRenderer &operator=(const OctreeRenderer &) = delete;
     OctreeRenderer &operator=(OctreeRenderer &&) = delete;
 
-    /// Add a new root cube to the octree renderer
-    /// @param root_cube The root cube to add to the renderer
-    void add_root_cube(std::weak_ptr<Cube> root_cube);
+    /// Add a new cube to the octree renderer
+    /// @param cube The root cube to add to the renderer
+    void add_octree(std::weak_ptr<Cube> cube);
 
     // Return the octree graphics pass
     [[nodiscard]] std::weak_ptr<GraphicsPass> get_pass() const {
         return m_octree_pass;
     }
 
-    /// Set the camera
+    /// Remove a cube from the octree renderer
+    /// @param cube The cube to remove
+    void remove_octree(std::weak_ptr<Cube> cube);
+
+    /// Set the camera used as view matrix for octree rendering
     /// @param camera The new camera to use for rendering
-    void set_camera(std::weak_ptr<Camera> camera) {
-        m_camera = camera;
-    }
+    void set_camera(std::weak_ptr<Camera> camera);
 };
 
 } // namespace inexor::vulkan_renderer::rendering::octree

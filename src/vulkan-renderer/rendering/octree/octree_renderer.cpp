@@ -26,10 +26,14 @@ OctreeRenderer::OctreeRenderer(const std::weak_ptr<RenderGraph> rendergraph,
         throw std::invalid_argument(
             "[OctreeRenderer::OctreeRenderer] Error: Parameter 'depth_buffer' is not a valid pointer!");
     }
-    // Get the rendergraph to work with here
-    auto rg = rendergraph.lock();
 
-    // Add a resource descriptor for the uniform buffer
+    auto rg = rendergraph.lock();
+    if (rg == nullptr) {
+        throw std::invalid_argument(
+            "[OctreeRenderer::OctreeRenderer] Error: Parameter 'rendergraph' is not a valid pointer!");
+    }
+
+    // Descriptor management
     rg->add_resource_descriptor(
         [&](DescriptorSetLayoutBuilder &builder) {
             m_desc_set_layout = builder.add_uniform_buffer(VK_SHADER_STAGE_VERTEX_BIT).build("model/view/proj");
@@ -38,14 +42,16 @@ OctreeRenderer::OctreeRenderer(const std::weak_ptr<RenderGraph> rendergraph,
             m_desc_set = allocator.allocate("model/view/proj", m_desc_set_layout);
         },
         [&](WriteDescriptorSetBuilder &builder) {
-            return builder.add_uniform_buffer_update(m_desc_set, m_mvp_matrix_buffer).build();
+            return builder.add_uniform_buffer_update(m_desc_set, m_mvp_matrix).build();
         });
 
+    // Load the shaders used for octree rendering
     m_octree_fragment =
         std::make_shared<Shader>(rg->device(), "Octree", VK_SHADER_STAGE_VERTEX_BIT, "shaders/octree.vert.spv");
     m_octree_vertex =
         std::make_shared<Shader>(rg->device(), "Octree", VK_SHADER_STAGE_FRAGMENT_BIT, "shaders/octree.frag.spv");
 
+    // Set the callback for creation of the graphics pipeline
     rg->add_graphics_pipeline([&](GraphicsPipelineBuilder &builder) {
         m_octree_pipeline = builder.add_shader(m_octree_fragment)
                                 .add_shader(m_octree_fragment)
@@ -64,40 +70,43 @@ OctreeRenderer::OctreeRenderer(const std::weak_ptr<RenderGraph> rendergraph,
                                 .build("Octree");
     });
 
-    m_octree_pass =
-        rg->add_graphics_pass(rg->get_graphics_pass_builder()
-                                  .set_on_record([&](const CommandBuffer &cmd_buf) {
-                                      // TODO: We could move the pipeline and other stuff to Cube wrapper?
-                                      for (const auto &root_cube : m_root_cubes) {
-                                          cmd_buf
-                                              .bind_pipeline(m_octree_pipeline)
-                                              // TODO: Bind the root_cube's vertex buffer
-                                              .bind_vertex_buffer(m_vertex_buffer)
-                                              // TODO: Bind the root_cube's index buffer
-                                              .bind_index_buffer(m_index_buffer)
-                                              .bind_descriptor_set(m_desc_set, m_octree_pipeline)
-                                              // TODO: Render the root cube's number of vertices
-                                              .draw_indexed(static_cast<std::uint32_t>(m_octree_indices.size()));
-                                      }
-                                  })
-                                  .writes_to(back_buffer)
-                                  .writes_to(depth_buffer)
-                                  .build("Octree", DebugLabelColor::RED));
+    // Add the graphics pass for octree rendering
+    m_octree_pass = rg->add_graphics_pass(rg->get_graphics_pass_builder()
+                                              .set_on_record([&](const CommandBuffer &cmd_buf) {
+                                                  for (const auto &cube : m_cubes) {
+                                                      auto cb = cube.lock();
+                                                      if (cb != nullptr) {
+                                                          cmd_buf.bind_pipeline(m_octree_pipeline)
+                                                              .bind_vertex_buffer(cb->m_vertex_buffer)
+                                                              .bind_index_buffer(cb->m_index_buffer)
+                                                              .bind_descriptor_set(m_desc_set, m_octree_pipeline)
+                                                              .draw_indexed(cb->m_index_count);
+                                                      }
+                                                      // Note: We deliberately don't do error handling if the cube is
+                                                      // nullptr because this is performance critical code, so there is
+                                                      // no else block here
+                                                  }
+                                              })
+                                              .writes_to(back_buffer)
+                                              .writes_to(depth_buffer)
+                                              .build("Octree", DebugLabelColor::RED));
 }
 
-void OctreeRenderer::add_root_cube(std::weak_ptr<Cube> root_cube) {
-    // TODO: Create vertex and index buffer for the Cube here and store it in Cube wrapper?
-    /*
-        m_vertex_buffer = rg->add_buffer("Octree", BufferType::VERTEX_BUFFER,
-                                     [&]() { m_vertex_buffer.lock()->request_update(m_octree_vertices); });
+void OctreeRenderer::add_octree(std::weak_ptr<Cube> cube) {
+    m_cubes.emplace_back(std::move(cube));
+}
 
-        m_index_buffer = rg->add_buffer("Octree", BufferType::INDEX_BUFFER,
-                                    [&]() { m_index_buffer.lock()->request_update(m_octree_indices); });
-    */
-    // TODO: We could also store vertex and index buffersin OctreeRenderer here
-    // std::vector<std::weak_ptr<Buffer>> m_vertex_buffers;
-    // std::vector<std::weak_ptr<Buffer>> m_index_buffers;
-    m_root_cubes.emplace_back(std::move(root_cube));
+void OctreeRenderer::remove_octree(const std::weak_ptr<Cube> cube) {
+    m_cubes.erase(std::remove_if(m_cubes.begin(), m_cubes.end(),
+                                 [&cube](const std::weak_ptr<Cube> &cube_to_remove) {
+                                     return !cube_to_remove.owner_before(cube) && !cube.owner_before(cube_to_remove);
+                                 }),
+                  m_cubes.end());
+}
+
+void OctreeRenderer::set_camera(const std::weak_ptr<Camera> camera) {
+    m_camera = camera;
+    // TODO: Update mvp matrix!
 }
 
 } // namespace inexor::vulkan_renderer::rendering::octree
