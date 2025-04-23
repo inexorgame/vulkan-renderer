@@ -90,12 +90,7 @@ public:
                   std::weak_ptr<Swapchain> swapchain,
                   std::function<void()> on_update_user_imgui_data);
 
-    ImGuiRenderer(const ImGuiRenderer &) = delete;
-    ImGuiRenderer(ImGuiRenderer &&) = delete;
     ~ImGuiRenderer();
-
-    ImGuiRenderer &operator=(const ImGuiRenderer &) = delete;
-    ImGuiRenderer &operator=(ImGuiRenderer &&) = delete;
 };
 
 } // namespace inexor::vulkan_renderer::rendering::imgui

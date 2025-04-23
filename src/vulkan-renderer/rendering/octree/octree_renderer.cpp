@@ -5,15 +5,20 @@
 #include "inexor/vulkan-renderer/wrapper/descriptors/descriptor_set_layout_builder.hpp"
 #include "inexor/vulkan-renderer/wrapper/descriptors/write_descriptor_set_builder.hpp"
 
+#include <utility>
+
 namespace inexor::vulkan_renderer::rendering::octree {
 
+// Using declarations
 using wrapper::descriptors::DescriptorSetAllocator;
 using wrapper::descriptors::DescriptorSetLayoutBuilder;
 using wrapper::descriptors::WriteDescriptorSetBuilder;
 
 OctreeRenderer::OctreeRenderer(const std::weak_ptr<RenderGraph> rendergraph,
+                               std::weak_ptr<Swapchain> swapchain,
                                const std::weak_ptr<Texture> back_buffer,
-                               const std::weak_ptr<Texture> depth_buffer) {
+                               const std::weak_ptr<Texture> depth_buffer)
+    : m_swapchain(std::move(swapchain)) {
     if (rendergraph.expired()) {
         throw std::invalid_argument(
             "[OctreeRenderer::OctreeRenderer] Error: Parameter 'rendergraph' is not a valid pointer!");
@@ -26,7 +31,10 @@ OctreeRenderer::OctreeRenderer(const std::weak_ptr<RenderGraph> rendergraph,
         throw std::invalid_argument(
             "[OctreeRenderer::OctreeRenderer] Error: Parameter 'depth_buffer' is not a valid pointer!");
     }
-
+    if (m_swapchain.expired()) {
+        throw std::invalid_argument(
+            "[ImGuiRenderer::ImGuiRenderer] Error: Parameter 'swapchain' is not a valid pointer!");
+    }
     auto rg = rendergraph.lock();
     if (rg == nullptr) {
         throw std::invalid_argument(
@@ -36,13 +44,13 @@ OctreeRenderer::OctreeRenderer(const std::weak_ptr<RenderGraph> rendergraph,
     // Descriptor management
     rg->add_resource_descriptor(
         [&](DescriptorSetLayoutBuilder &builder) {
-            m_desc_set_layout = builder.add_uniform_buffer(VK_SHADER_STAGE_VERTEX_BIT).build("model/view/proj");
+            m_descriptor_set_layout = builder.add_uniform_buffer(VK_SHADER_STAGE_VERTEX_BIT).build("model/view/proj");
         },
         [&](DescriptorSetAllocator &allocator) {
-            m_desc_set = allocator.allocate("model/view/proj", m_desc_set_layout);
+            m_descriptor_set = allocator.allocate("model/view/proj", m_descriptor_set_layout);
         },
         [&](WriteDescriptorSetBuilder &builder) {
-            return builder.add_uniform_buffer_update(m_desc_set, m_mvp_matrix).build();
+            return builder.add_uniform_buffer_update(m_descriptor_set, m_mvp_matrix).build();
         });
 
     // Load the shaders used for octree rendering
@@ -53,8 +61,14 @@ OctreeRenderer::OctreeRenderer(const std::weak_ptr<RenderGraph> rendergraph,
 
     // Set the callback for creation of the graphics pipeline
     rg->add_graphics_pipeline([&](GraphicsPipelineBuilder &builder) {
-        m_octree_pipeline = builder.add_shader(m_octree_fragment)
+        auto swapchain = m_swapchain.lock();
+        m_octree_pipeline = builder.add_shader(m_octree_vertex)
                                 .add_shader(m_octree_fragment)
+                                .set_vertex_input_bindings({{
+                                    .binding = 0,
+                                    .stride = sizeof(OctreeVertex),
+                                    .inputRate = VK_VERTEX_INPUT_RATE_VERTEX,
+                                }})
                                 .set_vertex_input_attributes(std::vector<VkVertexInputAttributeDescription>{
                                     {
                                         .location = 0,
@@ -67,6 +81,12 @@ OctreeRenderer::OctreeRenderer(const std::weak_ptr<RenderGraph> rendergraph,
                                         .offset = offsetof(OctreeVertex, color),
                                     },
                                 })
+                                .set_scissor(swapchain->extent())
+                                .set_viewport(swapchain->extent())
+                                .add_default_color_blend_attachment()
+                                .set_multisampling(VK_SAMPLE_COUNT_1_BIT, std::nullopt)
+                                .add_color_attachment_format(swapchain->image_format())
+                                .set_descriptor_set_layout(m_descriptor_set_layout)
                                 .build("Octree");
     });
 
@@ -79,7 +99,7 @@ OctreeRenderer::OctreeRenderer(const std::weak_ptr<RenderGraph> rendergraph,
                                                           cmd_buf.bind_pipeline(m_octree_pipeline)
                                                               .bind_vertex_buffer(cb->m_vertex_buffer)
                                                               .bind_index_buffer(cb->m_index_buffer)
-                                                              .bind_descriptor_set(m_desc_set, m_octree_pipeline)
+                                                              .bind_descriptor_set(m_descriptor_set, m_octree_pipeline)
                                                               .draw_indexed(cb->m_index_count);
                                                       }
                                                       // Note: We deliberately don't do error handling if the cube is

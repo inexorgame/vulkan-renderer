@@ -1,9 +1,18 @@
 #include "inexor/vulkan-renderer/rendering/imgui/imgui_renderer.hpp"
 
+#include "inexor/vulkan-renderer/wrapper/descriptors/descriptor_set_allocator.hpp"
+#include "inexor/vulkan-renderer/wrapper/descriptors/descriptor_set_layout_builder.hpp"
+#include "inexor/vulkan-renderer/wrapper/descriptors/write_descriptor_set_builder.hpp"
+
 #include <stdexcept>
 #include <utility>
 
 namespace inexor::vulkan_renderer::rendering::imgui {
+
+// Using declarations
+using wrapper::descriptors::DescriptorSetAllocator;
+using wrapper::descriptors::DescriptorSetLayoutBuilder;
+using wrapper::descriptors::WriteDescriptorSetBuilder;
 
 ImGuiRenderer::ImGuiRenderer(std::weak_ptr<RenderGraph> rendergraph,
                              std::weak_ptr<GraphicsPass> previous_pass,
@@ -32,7 +41,12 @@ ImGuiRenderer::ImGuiRenderer(std::weak_ptr<RenderGraph> rendergraph,
     set_imgui_style();
 
     auto rg = rendergraph.lock();
+    if (rg == nullptr) {
+        throw std::invalid_argument(
+            "[ImGuiRenderer::ImGuiRenderer] Error: Parameter 'rendergraph' is not a valid pointer!");
+    }
 
+    // Load the shaders used for ImGui rendering
     m_vertex_shader =
         std::make_shared<Shader>(rg->device(), "ImGui", VK_SHADER_STAGE_VERTEX_BIT, "shaders/ui.vert.spv");
     m_fragment_shader =
@@ -77,6 +91,19 @@ ImGuiRenderer::ImGuiRenderer(std::weak_ptr<RenderGraph> rendergraph,
                             }
                         });
 
+    // Descriptor management
+    rg->add_resource_descriptor(
+        [&](DescriptorSetLayoutBuilder &builder) {
+            m_descriptor_set_layout =
+                builder.add_combined_image_sampler(VK_SHADER_STAGE_FRAGMENT_BIT).build("ImGui|Texture");
+        },
+        [&](DescriptorSetAllocator &allocator) {
+            m_descriptor_set = allocator.allocate("ImGui|Texture", m_descriptor_set_layout);
+        },
+        [&](WriteDescriptorSetBuilder &builder) {
+            return builder.add_combined_image_sampler_update(m_descriptor_set, m_imgui_texture).build();
+        });
+
     // Setup the ImGui graphics pipeline
     rg->add_graphics_pipeline([&](GraphicsPipelineBuilder &builder) {
         m_imgui_pipeline =
@@ -107,6 +134,7 @@ ImGuiRenderer::ImGuiRenderer(std::weak_ptr<RenderGraph> rendergraph,
                 })
                 .add_default_color_blend_attachment()
                 .add_color_attachment_format(m_swapchain.lock()->image_format())
+                // TODO: I am not sure if this is correct here...
                 .set_dynamic_states({
                     VK_DYNAMIC_STATE_VIEWPORT,
                     VK_DYNAMIC_STATE_SCISSOR,

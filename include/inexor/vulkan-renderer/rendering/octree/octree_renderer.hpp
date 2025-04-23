@@ -10,6 +10,7 @@
 #include "inexor/vulkan-renderer/wrapper/pipelines/pipeline_builder.hpp"
 #include "inexor/vulkan-renderer/wrapper/pipelines/pipeline_layout.hpp"
 #include "inexor/vulkan-renderer/wrapper/shader.hpp"
+#include "inexor/vulkan-renderer/wrapper/swapchain.hpp"
 
 #include <glm/glm.hpp>
 #include <glm/vec3.hpp>
@@ -28,6 +29,7 @@ using world::Cube;
 using wrapper::DebugLabelColor;
 using wrapper::GraphicsPass;
 using wrapper::Shader;
+using wrapper::Swapchain;
 using wrapper::commands::CommandBuffer;
 using wrapper::pipelines::GraphicsPipeline;
 using wrapper::pipelines::GraphicsPipelineBuilder;
@@ -54,13 +56,16 @@ private:
     std::weak_ptr<GraphicsPass> m_octree_pass;
     std::shared_ptr<GraphicsPipeline> m_octree_pipeline;
 
+    // This swapchain is the color attachment we will write to
+    std::weak_ptr<Swapchain> m_swapchain;
+
     std::weak_ptr<Buffer> m_mvp_matrix;
 
     /// The camera used for rendering
     std::weak_ptr<Camera> m_camera;
 
-    VkDescriptorSetLayout m_desc_set_layout{VK_NULL_HANDLE};
-    VkDescriptorSet m_desc_set{VK_NULL_HANDLE};
+    VkDescriptorSetLayout m_descriptor_set_layout{VK_NULL_HANDLE};
+    VkDescriptorSet m_descriptor_set{VK_NULL_HANDLE};
 
     /// The cubes we use for rendering
     std::vector<std::weak_ptr<Cube>> m_cubes;
@@ -71,6 +76,7 @@ public:
     /// @param back_buffer The back buffer to render to
     /// @param depth_buffer The depth buffer to render to
     OctreeRenderer(std::weak_ptr<RenderGraph> rendergraph,
+                   std::weak_ptr<Swapchain> swapchain,
                    std::weak_ptr<Texture> back_buffer,
                    std::weak_ptr<Texture> depth_buffer);
 
@@ -86,6 +92,7 @@ public:
     void add_octree(std::weak_ptr<Cube> cube);
 
     // Return the octree graphics pass
+    // TODO: Why do we need this again?
     [[nodiscard]] std::weak_ptr<GraphicsPass> get_pass() const {
         return m_octree_pass;
     }

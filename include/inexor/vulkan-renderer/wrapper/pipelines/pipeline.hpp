@@ -33,8 +33,8 @@ class GraphicsPipeline {
 
 private:
     const Device &m_device;
-    std::unique_ptr<PipelineLayout> m_pipeline_layout{nullptr};
-    VkPipeline m_pipeline{VK_NULL_HANDLE};
+    std::unique_ptr<PipelineLayout> m_pipeline_layout;
+    VkPipeline m_pipeline;
     std::string m_name;
 
 public:

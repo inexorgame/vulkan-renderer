@@ -76,7 +76,7 @@ std::shared_ptr<GraphicsPipeline> GraphicsPipelineBuilder::build(std::string nam
         .pDynamicStates = m_dynamic_states.data(),
     });
 
-    const auto pipeline_ci = make_info<VkGraphicsPipelineCreateInfo>({
+    auto pipeline_ci = make_info<VkGraphicsPipelineCreateInfo>({
         // NOTE: This is one of those rare cases where pNext is actually not nullptr!
         .pNext = &m_pipeline_rendering_ci,
         .stageCount = static_cast<std::uint32_t>(m_shader_stages.size()),
@@ -95,8 +95,9 @@ std::shared_ptr<GraphicsPipeline> GraphicsPipelineBuilder::build(std::string nam
         .renderPass = VK_NULL_HANDLE,
     });
 
-    auto graphics_pipeline = std::make_shared<GraphicsPipeline>(m_device, std::vector{m_descriptor_set_layout},
-                                                                m_push_constant_ranges, pipeline_ci, std::move(name));
+    auto graphics_pipeline =
+        std::make_shared<GraphicsPipeline>(m_device, std::vector{m_descriptor_set_layout}, m_push_constant_ranges,
+                                           std::move(pipeline_ci), std::move(name));
 
     // NOTE: We reset the data of the builder here so it can be re-used
     reset();
@@ -107,14 +108,13 @@ std::shared_ptr<GraphicsPipeline> GraphicsPipelineBuilder::build(std::string nam
 
 void GraphicsPipelineBuilder::reset() {
     m_pipeline_rendering_ci = make_info<VkPipelineRenderingCreateInfo>();
-    m_color_attachments = {};
+    m_color_attachments.clear();
     m_depth_attachment_format = VK_FORMAT_UNDEFINED;
     m_stencil_attachment_format = VK_FORMAT_UNDEFINED;
 
-    m_shader_stages = {};
-
-    m_vertex_input_binding_descriptions = {};
-    m_vertex_input_attribute_descriptions = {};
+    m_shader_stages.clear();
+    m_vertex_input_binding_descriptions.clear();
+    m_vertex_input_attribute_descriptions.clear();
     m_vertex_input_sci = make_info<VkPipelineVertexInputStateCreateInfo>();
 
     m_input_assembly_sci = make_info<VkPipelineInputAssemblyStateCreateInfo>({
@@ -124,8 +124,9 @@ void GraphicsPipelineBuilder::reset() {
 
     m_tesselation_sci = make_info<VkPipelineTessellationStateCreateInfo>();
 
-    m_viewports = {};
-    m_scissors = {};
+    m_viewports.clear();
+    m_scissors.clear();
+
     m_viewport_sci = make_info<VkPipelineViewportStateCreateInfo>();
 
     m_rasterization_sci = make_info<VkPipelineRasterizationStateCreateInfo>({
@@ -144,11 +145,13 @@ void GraphicsPipelineBuilder::reset() {
     m_depth_stencil_sci = make_info<VkPipelineDepthStencilStateCreateInfo>();
     m_color_blend_sci = make_info<VkPipelineColorBlendStateCreateInfo>();
 
-    m_dynamic_states = {};
+    m_dynamic_states.clear();
     m_dynamic_states_sci = make_info<VkPipelineDynamicStateCreateInfo>();
 
     m_pipeline_layout = VK_NULL_HANDLE;
-    m_color_blend_attachment_states = {};
+    m_color_blend_attachment_states.clear();
+
+    m_push_constant_ranges.clear();
 }
 
 GraphicsPipelineBuilder &GraphicsPipelineBuilder::add_color_attachment_format(const VkFormat format) {

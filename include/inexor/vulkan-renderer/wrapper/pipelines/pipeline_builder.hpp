@@ -49,61 +49,61 @@ private:
     // allowing one instance of GraphicsPipelineBuilder to be reused
 
     // With the builder we can either call add_shader or set_shaders
-    std::vector<VkPipelineShaderStageCreateInfo> m_shader_stages{};
+    std::vector<VkPipelineShaderStageCreateInfo> m_shader_stages;
 
-    std::vector<VkVertexInputBindingDescription> m_vertex_input_binding_descriptions{};
-    std::vector<VkVertexInputAttributeDescription> m_vertex_input_attribute_descriptions{};
+    std::vector<VkVertexInputBindingDescription> m_vertex_input_binding_descriptions;
+    std::vector<VkVertexInputAttributeDescription> m_vertex_input_attribute_descriptions;
     // With the builder we can fill vertex binding descriptions and vertex attribute descriptions in here
-    VkPipelineVertexInputStateCreateInfo m_vertex_input_sci{};
+    VkPipelineVertexInputStateCreateInfo m_vertex_input_sci;
 
     // With the builder we can set topology in here
-    VkPipelineInputAssemblyStateCreateInfo m_input_assembly_sci{};
+    VkPipelineInputAssemblyStateCreateInfo m_input_assembly_sci;
 
     // With the builder we can set the patch control point count in here
-    VkPipelineTessellationStateCreateInfo m_tesselation_sci{};
+    VkPipelineTessellationStateCreateInfo m_tesselation_sci;
 
-    std::vector<VkViewport> m_viewports{};
-    std::vector<VkRect2D> m_scissors{};
+    std::vector<VkViewport> m_viewports;
+    std::vector<VkRect2D> m_scissors;
     // With the builder we can set viewport(s) and scissor(s) in here
-    VkPipelineViewportStateCreateInfo m_viewport_sci{};
+    VkPipelineViewportStateCreateInfo m_viewport_sci;
 
     // With the builder we can set polygon mode, cull mode, front face, and line width
     // TODO: Implement methods to enable depth bias and for setting the depth bias parameters
-    VkPipelineRasterizationStateCreateInfo m_rasterization_sci{};
+    VkPipelineRasterizationStateCreateInfo m_rasterization_sci;
 
     // With the builder we can't set individial fields of this struct,
     // since it's easier to specify an entire VkPipelineDepthStencilStateCreateInfo struct to the builder instead
-    VkPipelineDepthStencilStateCreateInfo m_depth_stencil_sci{};
+    VkPipelineDepthStencilStateCreateInfo m_depth_stencil_sci;
 
     /// This is used for dynamic rendering
-    VkFormat m_depth_attachment_format{};
-    VkFormat m_stencil_attachment_format{};
-    std::vector<VkFormat> m_color_attachments{};
+    VkFormat m_depth_attachment_format;
+    VkFormat m_stencil_attachment_format;
+    std::vector<VkFormat> m_color_attachments;
 
-    VkPipelineRenderingCreateInfo m_pipeline_rendering_ci{};
+    VkPipelineRenderingCreateInfo m_pipeline_rendering_ci;
 
     // With the builder we can set rasterization samples and min sample shading
     // TODO: Expose more multisampling parameters if desired
-    VkPipelineMultisampleStateCreateInfo m_multisample_sci{};
+    VkPipelineMultisampleStateCreateInfo m_multisample_sci;
 
     // With the builder we can't set individial fields of this struct,
     // since it's easier to specify an entire VkPipelineColorBlendStateCreateInfo struct to the builder instead
-    VkPipelineColorBlendStateCreateInfo m_color_blend_sci{};
+    VkPipelineColorBlendStateCreateInfo m_color_blend_sci;
 
-    std::vector<VkDynamicState> m_dynamic_states{};
+    std::vector<VkDynamicState> m_dynamic_states;
     // This will be filled in the build() method
-    VkPipelineDynamicStateCreateInfo m_dynamic_states_sci{};
+    VkPipelineDynamicStateCreateInfo m_dynamic_states_sci;
 
     /// The layout of the graphics pipeline
-    VkPipelineLayout m_pipeline_layout{VK_NULL_HANDLE};
+    VkPipelineLayout m_pipeline_layout;
 
     // With the builder we can either call add_color_blend_attachment or set_color_blend_attachments
-    std::vector<VkPipelineColorBlendAttachmentState> m_color_blend_attachment_states{};
+    std::vector<VkPipelineColorBlendAttachmentState> m_color_blend_attachment_states;
 
     /// The push constant ranges of the graphics pass
-    std::vector<VkPushConstantRange> m_push_constant_ranges{};
+    std::vector<VkPushConstantRange> m_push_constant_ranges;
 
-    VkDescriptorSetLayout m_descriptor_set_layout{VK_NULL_HANDLE};
+    VkDescriptorSetLayout m_descriptor_set_layout;
 
     /// Reset all data in this class so the builder can be re-used
     /// @note This is called by the constructor

@@ -33,10 +33,8 @@ VkDescriptorPool DescriptorPoolAllocator::request_new_descriptor_pool() {
 
     // This might fail because there's not enough memory left for creating the new descriptor pool
     // In this case, DescriptorPool wrapper will throw a VulkanException
-    m_pools.emplace_back(m_device, DEFAULT_POOL_SIZES, DEFAULT_MAX_DESCRIPTOR_COUNT, "descriptor pool");
-
-    // Return the descriptor pool that was just created
-    return m_pools.back().descriptor_pool();
+    return m_pools.emplace_back(m_device, DEFAULT_POOL_SIZES, DEFAULT_MAX_DESCRIPTOR_COUNT, "descriptor pool")
+        .descriptor_pool();
 }
 
 } // namespace inexor::vulkan_renderer::wrapper::descriptors
