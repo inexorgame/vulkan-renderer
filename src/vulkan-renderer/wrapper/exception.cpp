@@ -9,8 +9,14 @@ InexorException::InexorException(std::string message, std::source_location locat
                          "\n\tFUNCTION:  " + std::string(location.function_name()) + "\n\tLINE:\t  " +
                          std::to_string(location.line()) + "\n\tERROR:\t  " + std::string(message)) {}
 
-VulkanException::VulkanException(std::string message, const VkResult result, const std::source_location location)
-    : InexorException(message.append(" (")
+VulkanException::VulkanException(std::string message,
+                                 const VkResult result,
+                                 const std::string object_name,
+                                 const std::source_location location)
+    : InexorException(message.append("[")
+                          .append(object_name)
+                          .append("]")
+                          .append(" (")
                           .append(tools::as_string(result))
                           .append(": ")
                           .append(tools::result_to_description(result))

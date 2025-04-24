@@ -28,7 +28,7 @@ set(INEXOR_SOURCE_FILES
     vulkan-renderer/wrapper/shader.cpp
     vulkan-renderer/wrapper/swapchain.cpp
     vulkan-renderer/wrapper/surface.cpp
-    vulkan-renderer/wrapper/vulkan_exception.cpp
+    vulkan-renderer/wrapper/exception.cpp
     vulkan-renderer/wrapper/window.cpp
 
     vulkan-renderer/wrapper/commands/command_buffer.cpp

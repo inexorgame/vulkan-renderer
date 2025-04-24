@@ -3,9 +3,9 @@
 #include "inexor/vulkan-renderer/tools/enumerate.hpp"
 #include "inexor/vulkan-renderer/tools/representation.hpp"
 #include "inexor/vulkan-renderer/wrapper/device.hpp"
+#include "inexor/vulkan-renderer/wrapper/exception.hpp"
 #include "inexor/vulkan-renderer/wrapper/make_info.hpp"
 #include "inexor/vulkan-renderer/wrapper/surface.hpp"
-#include "inexor/vulkan-renderer/wrapper/vulkan_exception.hpp"
 #include "inexor/vulkan-renderer/wrapper/window.hpp"
 
 #include <spdlog/spdlog.h>
@@ -244,11 +244,11 @@ void Swapchain::setup(const std::uint32_t width, const std::uint32_t height, con
         choose_composite_alpha(VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR, caps.supportedCompositeAlpha);
 
     if (!composite_alpha) {
-        throw std::runtime_error("Error: Could not find suitable composite alpha!");
+        throw InexorException("Error: Could not find suitable composite alpha!");
     }
 
     if ((caps.supportedUsageFlags & VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT) == 0u) {
-        throw std::runtime_error(
+        throw InexorException(
             "Error: Swapchain image usage flag bit VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT is not supported!");
     }
 
@@ -302,7 +302,7 @@ void Swapchain::setup(const std::uint32_t width, const std::uint32_t height, con
     m_imgs = get_swapchain_images();
 
     if (m_imgs.empty()) {
-        throw std::runtime_error("Error: Swapchain image count is 0!");
+        throw InexorException("Error: get_swapchain_images() returned empty vector!");
     }
 
     spdlog::trace("Creating {} swapchain image views", m_imgs.size());

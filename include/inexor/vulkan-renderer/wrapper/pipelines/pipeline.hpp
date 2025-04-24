@@ -8,12 +8,12 @@
 #include <vector>
 
 namespace inexor::vulkan_renderer::wrapper {
-// Forward declarations
+// Forward declaration
 class Device;
 } // namespace inexor::vulkan_renderer::wrapper
 
 namespace inexor::vulkan_renderer::wrapper::commands {
-// Forward declarations
+// Forward declaration
 class CommandBuffer;
 } // namespace inexor::vulkan_renderer::wrapper::commands
 
@@ -24,7 +24,7 @@ class RenderGraph;
 
 namespace inexor::vulkan_renderer::wrapper::pipelines {
 
-// TODO: Implement compute pipelines
+// TODO: Implement RAII wrapper for ComputePipeline
 
 /// RAII wrapper for graphics pipelines
 class GraphicsPipeline {
@@ -45,8 +45,8 @@ public:
     /// @param pipeline_ci The pipeline create info
     /// @param name The internal debug name of the graphics pipeline
     GraphicsPipeline(const Device &device,
-                     std::vector<VkDescriptorSetLayout> descriptor_set_layouts,
-                     std::vector<VkPushConstantRange> push_constant_ranges,
+                     std::span<const VkDescriptorSetLayout> descriptor_set_layouts,
+                     std::span<const VkPushConstantRange> push_constant_ranges,
                      VkGraphicsPipelineCreateInfo pipeline_ci,
                      std::string name);
 

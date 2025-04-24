@@ -2,6 +2,7 @@
 
 #include "inexor/vulkan-renderer/tools/device_info.hpp"
 #include "inexor/vulkan-renderer/tools/enumerate.hpp"
+#include "inexor/vulkan-renderer/wrapper/exception.hpp"
 #include "inexor/vulkan-renderer/wrapper/instance.hpp"
 #include "inexor/vulkan-renderer/wrapper/make_info.hpp"
 #include "inexor/vulkan-renderer/wrapper/surface.hpp"
@@ -215,13 +216,13 @@ VkPhysicalDevice Device::pick_best_physical_device(std::vector<DeviceInfo> &&phy
                                                    const VkPhysicalDeviceFeatures &required_features,
                                                    const std::span<const char *> required_extensions) {
     if (physical_device_infos.empty()) {
-        throw std::runtime_error("Error: There are no physical devices available!");
+        throw InexorException("Error: There are no physical devices available!");
     }
     std::sort(physical_device_infos.begin(), physical_device_infos.end(), [&](const auto &lhs, const auto &rhs) {
         return compare_physical_devices(required_features, required_extensions, lhs, rhs);
     });
     if (!is_device_suitable(physical_device_infos.front(), required_features, required_extensions, true)) {
-        throw std::runtime_error("Error: Could not determine a suitable physical device!");
+        throw InexorException("Error: Could not determine a suitable physical device!");
     }
     return physical_device_infos.front().physical_device;
 }
@@ -247,7 +248,7 @@ Device::Device(const Instance &inst,
     : m_physical_device(physical_device) {
     const auto device_info = build_device_info(physical_device, surface.m_surface);
     if (!is_device_suitable(device_info, required_features, required_extensions, true)) {
-        throw std::runtime_error("Error: The chosen physical device " + device_info.name + " is not suitable!");
+        throw InexorException("Error: The chosen physical device " + device_info.name + " is not suitable!");
     }
 
     spdlog::trace("Creating Vulkan device queues");
@@ -261,7 +262,7 @@ Device::Device(const Instance &inst,
         });
 
     if (!queue_candidate) {
-        throw std::runtime_error("Error: Could not find a queue for both graphics and presentation!");
+        throw InexorException("Error: Could not find a queue for both graphics and presentation!");
     }
 
     spdlog::trace("One queue for both graphics and presentation will be used");
@@ -327,7 +328,7 @@ Device::Device(const Instance &inst,
         });
 
     if (!compute_queue_candidate) {
-        throw std::runtime_error("Error: Could not find a compute queue!");
+        throw InexorException("Error: Could not find a compute queue!");
     }
 
     m_compute_queue_family_index = compute_queue_candidate.value();
@@ -485,8 +486,7 @@ void Device::set_debug_utils_object_name(const VkObjectType obj_type,
                                          const std::uint64_t obj_handle,
                                          const std::string &name) const {
     if (!obj_handle) {
-        throw std::runtime_error(
-            "[Device::set_debug_utils_object_name] Error: Parameter 'obj_handle' is an invalid pointer!");
+        throw InexorException("Parameter 'obj_handle' is invalid!");
     }
     const auto dbg_obj_name = wrapper::make_info<VkDebugUtilsObjectNameInfoEXT>({
         .objectType = obj_type,
@@ -497,6 +497,11 @@ void Device::set_debug_utils_object_name(const VkObjectType obj_type,
     if (const auto result = vkSetDebugUtilsObjectNameEXT(m_device, &dbg_obj_name); result != VK_SUCCESS) {
         throw VulkanException("Error: vkSetDebugUtilsObjectNameEXT failed!", result);
     }
+}
+
+void Device::update_descriptor_sets(const std::span<VkWriteDescriptorSet> write_descriptor_sets) {
+    vkUpdateDescriptorSets(m_device, static_cast<std::uint32_t>(write_descriptor_sets.size()),
+                           write_descriptor_sets.data(), 0, nullptr);
 }
 
 void Device::wait_idle(const VkQueue queue) const {

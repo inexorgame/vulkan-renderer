@@ -1,7 +1,6 @@
 #pragma once
 
 #include "inexor/vulkan-renderer/wrapper/commands/command_buffer.hpp"
-#include "inexor/vulkan-renderer/wrapper/vulkan_exception.hpp"
 
 #include <volk.h>
 

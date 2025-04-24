@@ -1,8 +1,8 @@
 #include "inexor/vulkan-renderer/wrapper/descriptors/descriptor_pool.hpp"
 
 #include "inexor/vulkan-renderer/wrapper/device.hpp"
+#include "inexor/vulkan-renderer/wrapper/exception.hpp"
 #include "inexor/vulkan-renderer/wrapper/make_info.hpp"
-#include "inexor/vulkan-renderer/wrapper/vulkan_exception.hpp"
 
 #include <utility>
 
@@ -14,10 +14,10 @@ DescriptorPool::DescriptorPool(const Device &device,
                                std::string name)
     : m_device(device), m_pool_sizes(pool_sizes), m_name(std::move(name)) {
     if (m_name.empty()) {
-        throw std::invalid_argument("Error: Internal debug name for descriptor pool must not be empty!");
+        throw InexorException("Error: Parameter 'name' is an empty string!");
     }
     if (m_pool_sizes.empty()) {
-        throw std::invalid_argument("Error: Descriptor pool sizes must not be empty!");
+        throw InexorException("Error: Parameter 'pool_sizes' is empty!");
     }
 
     const auto descriptor_pool_ci = make_info<VkDescriptorPoolCreateInfo>({
@@ -28,7 +28,7 @@ DescriptorPool::DescriptorPool(const Device &device,
 
     if (const auto result = vkCreateDescriptorPool(m_device.device(), &descriptor_pool_ci, nullptr, &m_descriptor_pool);
         result != VK_SUCCESS) {
-        throw VulkanException("Error: vkCreateDescriptorPool failed for descriptor pool " + m_name + " !", result);
+        throw VulkanException("Error: vkCreateDescriptorPool failed!", result, m_name);
     }
     m_device.set_debug_name(m_descriptor_pool, m_name);
 }

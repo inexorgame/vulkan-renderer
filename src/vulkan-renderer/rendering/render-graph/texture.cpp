@@ -2,9 +2,9 @@
 
 #include "inexor/vulkan-renderer/wrapper/commands/command_buffer.hpp"
 #include "inexor/vulkan-renderer/wrapper/device.hpp"
+#include "inexor/vulkan-renderer/wrapper/exception.hpp"
 #include "inexor/vulkan-renderer/wrapper/make_info.hpp"
 #include "inexor/vulkan-renderer/wrapper/sampler.hpp"
-#include "inexor/vulkan-renderer/wrapper/vulkan_exception.hpp"
 
 #include <stdexcept>
 #include <utility>
@@ -12,6 +12,7 @@
 namespace inexor::vulkan_renderer::rendering::render_graph {
 
 // Using declaration
+using wrapper::InexorException;
 using wrapper::VulkanException;
 
 Texture::Texture(const Device &device,
@@ -26,7 +27,7 @@ Texture::Texture(const Device &device,
     : m_device(device), m_name(std::move(name)), m_usage(usage), m_format(format), m_width(width), m_height(height),
       m_channels(channels), m_samples(samples), m_on_check_for_updates(std::move(on_check_for_updates)) {
     if (m_name.empty()) {
-        throw std::invalid_argument("[Texture::Texture] Error: Parameter 'name' is empty!");
+        throw InexorException("Error: Parameter 'name' is an empty string!");
     }
     m_image = std::make_shared<Image>(m_device, m_name);
 
@@ -149,7 +150,7 @@ void Texture::update(const CommandBuffer &cmd_buf) {
     if (const auto result = vmaCreateBuffer(m_device.allocator(), &staging_buffer_ci, &staging_buffer_alloc_ci,
                                             &m_staging_buffer, &m_staging_buffer_alloc, &m_staging_buffer_alloc_info);
         result != VK_SUCCESS) {
-        throw VulkanException("Error: vmaCreateBuffer failed for staging buffer " + m_name + "!", result);
+        throw VulkanException("Error: vmaCreateBuffer failed!", result, m_name);
     }
 
     // Copy the texture data into the staging buffer
@@ -159,7 +160,7 @@ void Texture::update(const CommandBuffer &cmd_buf) {
     // NOTE: vmaFlushAllocation checks internally if the memory is host coherent, in which case it don't flush
     if (const auto result = vmaFlushAllocation(m_device.allocator(), m_staging_buffer_alloc, 0, VK_WHOLE_SIZE);
         result != VK_SUCCESS) {
-        throw VulkanException("Error: vmaFlushAllocation failed for buffer " + m_name + " !", result);
+        throw VulkanException("Error: vmaFlushAllocation failed!", result, m_name);
     }
 
     const std::string staging_buf_name = "staging:" + m_name;
@@ -198,10 +199,10 @@ void Texture::update(const CommandBuffer &cmd_buf) {
 
 void Texture::request_update(void *src_texture_data, const std::size_t src_texture_data_size) {
     if (src_texture_data == nullptr) {
-        throw std::invalid_argument("[Texture::request_update] Error: Parameter 'texture_src_data' is nullptr!");
+        throw InexorException("Error: Parameter 'texture_src_data' is nullptr!");
     }
     if (src_texture_data_size == 0) {
-        throw std::invalid_argument("[Texture::request_update] Error: Parameter 'src_texture_data_size' is 0!");
+        throw InexorException("Error: Parameter 'src_texture_data_size' is 0!");
     }
     m_update_requested = true;
     m_src_texture_data = src_texture_data;

@@ -1,5 +1,7 @@
 #include "inexor/vulkan-renderer/wrapper/window.hpp"
 
+#include "inexor/vulkan-renderer/wrapper/exception.hpp"
+
 #include <spdlog/spdlog.h>
 
 #include <cassert>
@@ -15,10 +17,10 @@ Window::Window(const std::string &title,
                const Mode mode)
     : m_width(width), m_height(height), m_mode(mode) {
     if (title.empty()) {
-        throw std::invalid_argument("[Window::Window] Error: Parameter 'title' is empty!");
+        throw InexorException("Error: Parameter 'title' is an empty string!");
     }
     if (glfwInit() != GLFW_TRUE) {
-        throw std::runtime_error("[Window::Window] Failed to initialise GLFW!");
+        throw InexorException("Error: glfwInit() failed!");
     }
 
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
@@ -40,7 +42,7 @@ Window::Window(const std::string &title,
     m_window = glfwCreateWindow(static_cast<int>(width), static_cast<int>(height), title.c_str(), monitor, nullptr);
 
     if (m_window == nullptr) {
-        throw std::runtime_error("[Window::Window] Error: glfwCreateWindow failed for window " + title + " !");
+        throw InexorException("Error: glfwCreateWindow failed for window " + title + " !");
     }
 }
 

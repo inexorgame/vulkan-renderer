@@ -1,8 +1,8 @@
 #include "inexor/vulkan-renderer/wrapper/pipelines/pipeline_layout.hpp"
 
 #include "inexor/vulkan-renderer/wrapper/device.hpp"
+#include "inexor/vulkan-renderer/wrapper/exception.hpp"
 #include "inexor/vulkan-renderer/wrapper/make_info.hpp"
-#include "inexor/vulkan-renderer/wrapper/vulkan_exception.hpp"
 
 #include <utility>
 
@@ -14,7 +14,7 @@ PipelineLayout::PipelineLayout(const Device &device,
                                const std::span<const VkPushConstantRange> push_constant_ranges)
     : m_device(device), m_name(std::move(name)) {
     if (m_name.empty()) {
-        throw std::invalid_argument("[PipelineLayout::PipelineLayout] Error: Parameter 'name' is emtpy!");
+        throw InexorException("Error: Parameter 'name' is an emtpy string!");
     }
 
     const auto pipeline_layout_ci = wrapper::make_info<VkPipelineLayoutCreateInfo>({
@@ -26,7 +26,7 @@ PipelineLayout::PipelineLayout(const Device &device,
 
     if (const auto result = vkCreatePipelineLayout(m_device.device(), &pipeline_layout_ci, nullptr, &m_pipeline_layout);
         result != VK_SUCCESS) {
-        throw VulkanException("Error: vkCreatePipelineLayout failed for pipeline layout " + m_name + "!", result);
+        throw VulkanException("Error: vkCreatePipelineLayout failed!", result, m_name);
     }
 
     m_device.set_debug_name(m_pipeline_layout, m_name);

@@ -1,7 +1,7 @@
 #include "inexor/vulkan-renderer/wrapper/descriptors/descriptor_set_layout.hpp"
 
 #include "inexor/vulkan-renderer/wrapper/device.hpp"
-#include "inexor/vulkan-renderer/wrapper/vulkan_exception.hpp"
+#include "inexor/vulkan-renderer/wrapper/exception.hpp"
 
 #include <utility>
 
@@ -12,13 +12,12 @@ DescriptorSetLayout::DescriptorSetLayout(const Device &device,
                                          std::string name)
     : m_device(device), m_name(std::move(name)) {
     if (m_name.empty()) {
-        throw std::runtime_error("Error: Internal debug name for descriptor set layout must not be empty!");
+        throw InexorException("Error: Parameter 'name' is an empty string!");
     }
     if (const auto result = vkCreateDescriptorSetLayout(m_device.device(), &descriptor_set_layout_ci, nullptr,
                                                         &m_descriptor_set_layout);
         result != VK_SUCCESS) {
-        throw VulkanException("Error: vkCreateDescriptorSetLayout failed for descriptor set layout " + m_name + " !",
-                              result);
+        throw VulkanException("Error: vkCreateDescriptorSetLayout failed!", result, m_name);
     }
     m_device.set_debug_name(m_descriptor_set_layout, m_name);
 }

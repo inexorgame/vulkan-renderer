@@ -3,6 +3,7 @@
 #include "inexor/vulkan-renderer/wrapper/descriptors/descriptor_set_allocator.hpp"
 #include "inexor/vulkan-renderer/wrapper/descriptors/descriptor_set_layout_builder.hpp"
 #include "inexor/vulkan-renderer/wrapper/descriptors/write_descriptor_set_builder.hpp"
+#include "inexor/vulkan-renderer/wrapper/exception.hpp"
 
 #include <stdexcept>
 #include <utility>
@@ -10,6 +11,7 @@
 namespace inexor::vulkan_renderer::rendering::imgui {
 
 // Using declarations
+using wrapper::InexorException;
 using wrapper::descriptors::DescriptorSetAllocator;
 using wrapper::descriptors::DescriptorSetLayoutBuilder;
 using wrapper::descriptors::WriteDescriptorSetBuilder;
@@ -21,12 +23,10 @@ ImGuiRenderer::ImGuiRenderer(std::weak_ptr<RenderGraph> rendergraph,
     : m_on_update_user_imgui_data(std::move(on_update_user_imgui_data)), m_previous_pass(std::move(previous_pass)),
       m_swapchain(std::move(swapchain)) {
     if (rendergraph.expired()) {
-        throw std::invalid_argument(
-            "[ImGuiRenderer::ImGuiRenderer] Error: Parameter 'rendergraph' is not a valid pointer!");
+        throw InexorException("Error: Parameter 'rendergraph' is an invalid pointer!");
     }
     if (m_swapchain.expired()) {
-        throw std::invalid_argument(
-            "[ImGuiRenderer::ImGuiRenderer] Error: Parameter 'swapchain' is not a valid pointer!");
+        throw InexorException("Error: Parameter 'swapchain' is an invalid pointer!");
     }
     // NOTE: It's valid for previous_pass to be an invalid pointer (in that case there is no previous pass!)
 
@@ -42,8 +42,7 @@ ImGuiRenderer::ImGuiRenderer(std::weak_ptr<RenderGraph> rendergraph,
 
     auto rg = rendergraph.lock();
     if (rg == nullptr) {
-        throw std::invalid_argument(
-            "[ImGuiRenderer::ImGuiRenderer] Error: Parameter 'rendergraph' is not a valid pointer!");
+        InexorException("Error: Parameter 'rendergraph' is an invalid pointer!");
     }
 
     // Load the shaders used for ImGui rendering
@@ -106,47 +105,44 @@ ImGuiRenderer::ImGuiRenderer(std::weak_ptr<RenderGraph> rendergraph,
 
     // Setup the ImGui graphics pipeline
     rg->add_graphics_pipeline([&](GraphicsPipelineBuilder &builder) {
-        m_imgui_pipeline =
-            builder
-                .set_vertex_input_bindings({
-                    {
-                        .binding = 0,
-                        .stride = sizeof(ImDrawVert),
-                        .inputRate = VK_VERTEX_INPUT_RATE_VERTEX,
-                    },
-                })
-                .set_vertex_input_attributes({
-                    {
-                        .location = 0,
-                        .format = VK_FORMAT_R32G32_SFLOAT,
-                        .offset = offsetof(ImDrawVert, pos),
-                    },
-                    {
-                        .location = 1,
-                        .format = VK_FORMAT_R32G32_SFLOAT,
-                        .offset = offsetof(ImDrawVert, uv),
-                    },
-                    {
-                        .location = 2,
-                        .format = VK_FORMAT_R8G8B8A8_UNORM,
-                        .offset = offsetof(ImDrawVert, col),
-                    },
-                })
-                .add_default_color_blend_attachment()
-                .add_color_attachment_format(m_swapchain.lock()->image_format())
-                // TODO: I am not sure if this is correct here...
-                .set_dynamic_states({
-                    VK_DYNAMIC_STATE_VIEWPORT,
-                    VK_DYNAMIC_STATE_SCISSOR,
-                })
-                // NOTE: Even thoguh viewport and scissor are dynamic states, we still need to specify 1 for each
-                .set_scissor(m_swapchain.lock()->extent())
-                .set_viewport(m_swapchain.lock()->extent())
-                .add_shader(m_vertex_shader)
-                .add_shader(m_fragment_shader)
-                .set_descriptor_set_layout(m_descriptor_set_layout)
-                .add_push_constant_range(VK_SHADER_STAGE_VERTEX_BIT, sizeof(m_push_const_block))
-                .build("ImGui");
+        m_imgui_pipeline = builder
+                               .set_vertex_input_bindings({
+                                   {
+                                       .binding = 0,
+                                       .stride = sizeof(ImDrawVert),
+                                       .inputRate = VK_VERTEX_INPUT_RATE_VERTEX,
+                                   },
+                               })
+                               .set_vertex_input_attributes({
+                                   {
+                                       .location = 0,
+                                       .format = VK_FORMAT_R32G32_SFLOAT,
+                                       .offset = offsetof(ImDrawVert, pos),
+                                   },
+                                   {
+                                       .location = 1,
+                                       .format = VK_FORMAT_R32G32_SFLOAT,
+                                       .offset = offsetof(ImDrawVert, uv),
+                                   },
+                                   {
+                                       .location = 2,
+                                       .format = VK_FORMAT_R8G8B8A8_UNORM,
+                                       .offset = offsetof(ImDrawVert, col),
+                                   },
+                               })
+                               .add_default_color_blend_attachment()
+                               .add_color_attachment_format(m_swapchain.lock()->image_format())
+                               .set_dynamic_states({
+                                   VK_DYNAMIC_STATE_VIEWPORT,
+                                   VK_DYNAMIC_STATE_SCISSOR,
+                               })
+                               .set_scissor(m_swapchain.lock()->extent())
+                               .set_viewport(m_swapchain.lock()->extent())
+                               .add_shader(m_vertex_shader)
+                               .add_shader(m_fragment_shader)
+                               .set_descriptor_set_layout(m_descriptor_set_layout)
+                               .add_push_constant_range(VK_SHADER_STAGE_VERTEX_BIT, sizeof(m_push_const_block))
+                               .build("ImGui");
         return m_imgui_pipeline;
     });
 
@@ -169,10 +165,12 @@ ImGuiRenderer::ImGuiRenderer(std::weak_ptr<RenderGraph> rendergraph,
                     .push_constant(m_imgui_pipeline, m_push_const_block, VK_SHADER_STAGE_VERTEX_BIT)
                     .bind_vertex_buffer(m_vertex_buffer)
                     .bind_index_buffer(m_index_buffer)
-                    .set_viewport(VkViewport{.width = ImGui::GetIO().DisplaySize.x,
-                                             .height = ImGui::GetIO().DisplaySize.y,
-                                             .minDepth = 0.0f,
-                                             .maxDepth = 1.0f});
+                    .set_viewport({
+                        .width = ImGui::GetIO().DisplaySize.x,
+                        .height = ImGui::GetIO().DisplaySize.y,
+                        .minDepth = 0.0f,
+                        .maxDepth = 1.0f,
+                    });
 
                 std::uint32_t index_offset = 0;
                 std::int32_t vertex_offset = 0;
@@ -180,12 +178,16 @@ ImGuiRenderer::ImGuiRenderer(std::weak_ptr<RenderGraph> rendergraph,
                     const ImDrawList *cmd_list = draw_data->CmdLists[i];
                     for (std::int32_t j = 0; j < cmd_list->CmdBuffer.Size; j++) {
                         const ImDrawCmd &draw_cmd = cmd_list->CmdBuffer[j];
-                        VkRect2D scissor{};
-                        scissor.offset.x = std::max((int32_t)(draw_cmd.ClipRect.x), 0);
-                        scissor.offset.y = std::max((int32_t)(draw_cmd.ClipRect.y), 0);
-                        scissor.extent.width = (uint32_t)(draw_cmd.ClipRect.z - draw_cmd.ClipRect.x);
-                        scissor.extent.height = (uint32_t)(draw_cmd.ClipRect.w - draw_cmd.ClipRect.y);
-                        cmd_buf.set_scissor(scissor);
+                        cmd_buf.set_scissor({
+                            .offset{
+                                .x = std::max(static_cast<int32_t>(draw_cmd.ClipRect.x), 0),
+                                .y = std::max(static_cast<int32_t>(draw_cmd.ClipRect.y), 0),
+                            },
+                            .extent{
+                                .width = static_cast<uint32_t>(draw_cmd.ClipRect.z - draw_cmd.ClipRect.x),
+                                .height = static_cast<uint32_t>(draw_cmd.ClipRect.w - draw_cmd.ClipRect.y),
+                            },
+                        });
                         cmd_buf.draw_indexed(draw_cmd.ElemCount, 1, index_offset, vertex_offset);
                         index_offset += draw_cmd.ElemCount;
                     }
@@ -218,22 +220,22 @@ void ImGuiRenderer::load_font_data_from_file() {
 
 void ImGuiRenderer::set_imgui_style() {
     ImGuiStyle &style = ImGui::GetStyle();
-    style.Colors[ImGuiCol_TitleBg] = ImVec4(1.0f, 0.0f, 0.0f, 1.0f);
-    style.Colors[ImGuiCol_TitleBgActive] = ImVec4(1.0f, 0.0f, 0.0f, 1.0f);
-    style.Colors[ImGuiCol_TitleBgCollapsed] = ImVec4(1.0f, 0.0f, 0.0f, 0.1f);
-    style.Colors[ImGuiCol_MenuBarBg] = ImVec4(1.0f, 0.0f, 0.0f, 0.4f);
-    style.Colors[ImGuiCol_Header] = ImVec4(0.8f, 0.0f, 0.0f, 0.4f);
-    style.Colors[ImGuiCol_HeaderActive] = ImVec4(1.0f, 0.0f, 0.0f, 0.4f);
-    style.Colors[ImGuiCol_HeaderHovered] = ImVec4(1.0f, 0.0f, 0.0f, 0.4f);
-    style.Colors[ImGuiCol_FrameBg] = ImVec4(0.0f, 0.0f, 0.0f, 0.8f);
-    style.Colors[ImGuiCol_CheckMark] = ImVec4(1.0f, 0.0f, 0.0f, 0.8f);
-    style.Colors[ImGuiCol_SliderGrab] = ImVec4(1.0f, 0.0f, 0.0f, 0.4f);
-    style.Colors[ImGuiCol_SliderGrabActive] = ImVec4(1.0f, 0.0f, 0.0f, 0.8f);
-    style.Colors[ImGuiCol_FrameBgHovered] = ImVec4(1.0f, 1.0f, 1.0f, 0.1f);
-    style.Colors[ImGuiCol_FrameBgActive] = ImVec4(1.0f, 1.0f, 1.0f, 0.2f);
-    style.Colors[ImGuiCol_Button] = ImVec4(1.0f, 0.0f, 0.0f, 0.4f);
-    style.Colors[ImGuiCol_ButtonHovered] = ImVec4(1.0f, 0.0f, 0.0f, 0.6f);
-    style.Colors[ImGuiCol_ButtonActive] = ImVec4(1.0f, 0.0f, 0.0f, 0.8f);
+    style.Colors[ImGuiCol_TitleBg] = {1.0f, 0.0f, 0.0f, 1.0f};
+    style.Colors[ImGuiCol_TitleBgActive] = {1.0f, 0.0f, 0.0f, 1.0f};
+    style.Colors[ImGuiCol_TitleBgCollapsed] = {1.0f, 0.0f, 0.0f, 0.1f};
+    style.Colors[ImGuiCol_MenuBarBg] = {1.0f, 0.0f, 0.0f, 0.4f};
+    style.Colors[ImGuiCol_Header] = {0.8f, 0.0f, 0.0f, 0.4f};
+    style.Colors[ImGuiCol_HeaderActive] = {1.0f, 0.0f, 0.0f, 0.4f};
+    style.Colors[ImGuiCol_HeaderHovered] = {1.0f, 0.0f, 0.0f, 0.4f};
+    style.Colors[ImGuiCol_FrameBg] = {0.0f, 0.0f, 0.0f, 0.8f};
+    style.Colors[ImGuiCol_CheckMark] = {1.0f, 0.0f, 0.0f, 0.8f};
+    style.Colors[ImGuiCol_SliderGrab] = {1.0f, 0.0f, 0.0f, 0.4f};
+    style.Colors[ImGuiCol_SliderGrabActive] = {1.0f, 0.0f, 0.0f, 0.8f};
+    style.Colors[ImGuiCol_FrameBgHovered] = {1.0f, 1.0f, 1.0f, 0.1f};
+    style.Colors[ImGuiCol_FrameBgActive] = {1.0f, 1.0f, 1.0f, 0.2f};
+    style.Colors[ImGuiCol_Button] = {1.0f, 0.0f, 0.0f, 0.4f};
+    style.Colors[ImGuiCol_ButtonHovered] = {1.0f, 0.0f, 0.0f, 0.6f};
+    style.Colors[ImGuiCol_ButtonActive] = {1.0f, 0.0f, 0.0f, 0.8f};
 }
 
 } // namespace inexor::vulkan_renderer::rendering::imgui

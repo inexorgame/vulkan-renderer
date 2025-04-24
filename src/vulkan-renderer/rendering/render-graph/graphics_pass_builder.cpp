@@ -1,8 +1,13 @@
 #include "inexor/vulkan-renderer/rendering/render-graph/graphics_pass_builder.hpp"
 
+#include "inexor/vulkan-renderer/wrapper/exception.hpp"
+
 #include <utility>
 
 namespace inexor::vulkan_renderer::rendering::render_graph {
+
+// Using declaration
+using wrapper::InexorException;
 
 GraphicsPassBuilder::GraphicsPassBuilder() {
     reset();
@@ -34,7 +39,7 @@ GraphicsPassBuilder &GraphicsPassBuilder::conditionally_reads_from(std::weak_ptr
 
 GraphicsPassBuilder &GraphicsPassBuilder::reads_from(std::weak_ptr<GraphicsPass> graphics_pass) {
     if (graphics_pass.expired()) {
-        throw std::invalid_argument("[GraphicsPassBuilder::reads_from] Error: 'graphics_pass' is an invalid pointer!");
+        throw InexorException("Error: Parameter 'graphics_pass' is an invalid pointer!");
     }
     m_graphics_pass_reads.push_back(std::move(graphics_pass));
     return *this;
@@ -60,8 +65,7 @@ GraphicsPassBuilder::writes_to(std::variant<std::weak_ptr<Texture>, std::weak_pt
         auto &texture = std::get<std::weak_ptr<Texture>>(write_attachment);
         // Check if the std::weak_ptr<Texture> is still a valid pointer
         if (texture.expired()) {
-            throw std::invalid_argument(
-                "[GraphicsPassBuilder::writes_to] Error: parameter 'write_attachment' is an std::weak_ptr<Texture>!");
+            throw InexorException("Error: Parameter 'write_attachment' is an invalid pointer!");
         }
         // It's a std::weak_ptr<Texture> and the memory is valid
         m_write_attachments.emplace_back(std::move(texture), std::move(clear_value));
@@ -70,8 +74,7 @@ GraphicsPassBuilder::writes_to(std::variant<std::weak_ptr<Texture>, std::weak_pt
         auto &swapchain = std::get<std::weak_ptr<Swapchain>>(write_attachment);
         // Check if the std::weak_ptr<Swapchain> is still a valid pointer
         if (swapchain.expired()) {
-            throw std::invalid_argument("[GraphicsPassBuilder::writes_to] Error: Parameter 'write_attachment' is an "
-                                        "invalid std::weak_ptr<Swapchain>!");
+            throw InexorException("Error: Parameter 'write_attachment' is an invalid pointer!");
         }
         m_write_swapchains.emplace_back(std::move(swapchain), std::move(clear_value));
     }

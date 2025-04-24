@@ -2,13 +2,16 @@
 
 #include "inexor/vulkan-renderer/wrapper/commands/command_buffer.hpp"
 #include "inexor/vulkan-renderer/wrapper/device.hpp"
+#include "inexor/vulkan-renderer/wrapper/exception.hpp"
 #include "inexor/vulkan-renderer/wrapper/pipelines/pipeline_builder.hpp"
 #include "inexor/vulkan-renderer/wrapper/swapchain.hpp"
-#include "inexor/vulkan-renderer/wrapper/vulkan_exception.hpp"
 
 #include <unordered_set>
 
 namespace inexor::vulkan_renderer::rendering::render_graph {
+
+// Using declaration
+using wrapper::InexorException;
 
 RenderGraph::RenderGraph(Device &device)
     : m_device(device), m_graphics_pipeline_builder(device), m_descriptor_set_layout_builder(device),
@@ -79,9 +82,7 @@ void RenderGraph::check_for_cycles() {
 
     for (const auto &pass : m_graphics_passes) {
         if (dfs_detect_cycle(pass)) {
-            throw std::runtime_error("[RenderGraph::check_for_cycles] Error: Rendergraph is not acyclic! "
-                                     "A cycle was detected for graphics pass " +
-                                     pass->m_name + "!");
+            throw InexorException("Error: A cycle was detected in rendergraph for graphics pass " + pass->m_name + "!");
         }
     }
 }
@@ -127,7 +128,7 @@ void RenderGraph::create_graphics_pipelines() {
 
 void RenderGraph::determine_pass_order() {
     if (m_graphics_passes.empty()) {
-        throw std::runtime_error("[RenderGraph::determine_pass_order]: No graphics passes specified!");
+        throw InexorException("Error: No graphics passes specified!");
     }
 
     // Pop elements from the stack to get the correct order
@@ -180,7 +181,7 @@ void RenderGraph::fill_graphics_pass_rendering_info(GraphicsPass &pass) {
 
     /// Fill the VkRenderingattachmentInfo for a color, depth, or stencil attachment
     /// @param write_attachment The attachment this graphics pass writes to
-    ///
+    /// @param clear_value The clear value
     auto fill_rendering_info_for_attachment = [&](const std::weak_ptr<Texture> &write_attachment,
                                                   const std::optional<VkClearValue> &clear_value) {
         const auto &attachment = write_attachment.lock();
@@ -420,8 +421,9 @@ void RenderGraph::update_textures() {
 
 void RenderGraph::update_write_descriptor_sets() {
     m_write_descriptor_sets.clear();
-    // NOTE: We don't reserve memory for the vector because we don't know how many write descriptor sets will exist in
-    // total. Because we call update_descriptor_sets() only once during rendergraph compilation, this is not a problem.
+    // NOTE: We don't reserve memory for the std::vector because we don't know how many write descriptor sets will exist
+    // in total (each resource descriptor can have an arbitrary number of write descriptor sets). Because we call
+    // update_write_descriptor_sets() only once during rendergraph compilation, this is not a problem.
     for (const auto &descriptor : m_resource_descriptors) {
         // Call descriptor set builder function for each descriptor
         auto write_descriptor_sets = std::invoke(std::get<2>(descriptor), m_write_descriptor_set_builder);
@@ -430,9 +432,7 @@ void RenderGraph::update_write_descriptor_sets() {
                   std::back_inserter(m_write_descriptor_sets));
     }
     // NOTE: We batch all descriptor set updates into one function call for optimal performance
-    // TODO: write a method in device wrapper for this?
-    vkUpdateDescriptorSets(m_device.device(), static_cast<std::uint32_t>(m_write_descriptor_sets.size()),
-                           m_write_descriptor_sets.data(), 0, nullptr);
+    m_device.update_descriptor_sets(m_write_descriptor_sets);
 }
 
 } // namespace inexor::vulkan_renderer::rendering::render_graph

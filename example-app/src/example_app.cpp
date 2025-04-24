@@ -65,6 +65,8 @@ void ExampleApp::create_physical_device() {
     };
     const VkPhysicalDeviceFeatures required_features = {};
 
+    // TODO: Respect gpu device selection again!
+
     const auto selected_gpu =
         Device::pick_best_physical_device(*m_instance, *m_surface, required_features, required_extensions);
 
@@ -145,7 +147,6 @@ void ExampleApp::run() {
 void ExampleApp::update_time() {
     using namespace std::chrono;
     const auto current_time = high_resolution_clock::now();
-    // Update the duration it took to render
     const auto m_time_duration = duration<float, seconds::period>(current_time - m_last_time).count();
     m_last_time = current_time;
 }
@@ -158,7 +159,7 @@ void ExampleApp::render_frame() {
 }
 
 void ExampleApp::check_octree_collisions() {
-    //
+    // TODO: Implement!
 }
 
 void ExampleApp::setup_render_graph() {
@@ -174,10 +175,11 @@ void ExampleApp::setup_render_graph() {
         m_rendergraph->add_texture("Depth", TextureUsage::DEPTH_ATTACHMENT, VK_FORMAT_D32_SFLOAT_S8_UINT,
                                    swapchain_img_extent.width, swapchain_img_extent.height, VK_SAMPLE_COUNT_1_BIT);
 
-    m_octree_renderer = std::make_unique<OctreeRenderer>(m_rendergraph, m_swapchain, m_back_buffer, m_depth_buffer);
+    m_octree_renderer = std::make_unique<OctreeRenderer>(m_rendergraph, m_back_buffer, m_depth_buffer);
 
     m_camera = std::make_shared<Camera>(glm::vec3{0.0f, 0.0f, 0.0f}, 0.0f, 0.0f, swapchain_img_extent.width,
                                         swapchain_img_extent.height);
+
     m_octree_renderer->set_camera(m_camera);
 
     m_imgui_renderer = std::make_unique<ImGuiRenderer>(m_rendergraph, m_octree_renderer->get_pass(), m_swapchain,

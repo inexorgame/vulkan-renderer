@@ -1,10 +1,14 @@
 #include "inexor/vulkan-renderer/rendering/render-graph/graphics_pass.hpp"
 
+#include "inexor/vulkan-renderer/wrapper/exception.hpp"
 #include "inexor/vulkan-renderer/wrapper/make_info.hpp"
 
 #include <utility>
 
 namespace inexor::vulkan_renderer::rendering::render_graph {
+
+// Using declaration
+using wrapper::InexorException;
 
 GraphicsPass::GraphicsPass(
     std::string name,
@@ -18,31 +22,31 @@ GraphicsPass::GraphicsPass(
         for (const auto &write_attachment : write_attachments) {
             const auto &attachment = write_attachment.first.lock();
             if (attachment->m_width != m_extent.width) {
-                throw std::invalid_argument("[GraphicsPass::GraphicsPass] Error: Width of graphics pass " + m_name +
-                                            " is already specified (" + std::to_string(m_extent.width) +
-                                            "), but width of write attachment " + attachment->m_name + " (" +
-                                            std::to_string(attachment->m_width) + ") does not match!");
+                throw InexorException("Error: Width of graphics pass " + m_name + " is already specified (" +
+                                      std::to_string(m_extent.width) + "), but width of write attachment " +
+                                      attachment->m_name + " (" + std::to_string(attachment->m_width) +
+                                      ") does not match!");
             }
             if (attachment->m_height != m_extent.height) {
-                throw std::invalid_argument("[GraphicsPass::GraphicsPass] Error: Height of graphics pass " + m_name +
-                                            " is already specified (" + std::to_string(m_extent.height) +
-                                            "), but width of write attachment " + attachment->m_name + " (" +
-                                            std::to_string(attachment->m_height) + ") does not match!");
+                throw InexorException("Error: Height of graphics pass " + m_name + " is already specified (" +
+                                      std::to_string(m_extent.height) + "), but width of write attachment " +
+                                      attachment->m_name + " (" + std::to_string(attachment->m_height) +
+                                      ") does not match!");
             }
         }
         for (const auto &write_swapchain : write_swapchains) {
             const auto &swapchain = write_swapchain.first.lock();
             if (swapchain->m_extent.width != m_extent.width) {
-                throw std::invalid_argument("[GraphicsPass::GraphicsPass] Error: Width of graphics pass " + m_name +
-                                            " is already specified (" + std::to_string(m_extent.width) +
-                                            "), but width of write swapchain " + swapchain->m_name + " (" +
-                                            std::to_string(swapchain->m_extent.width) + ") does not match!");
+                throw InexorException("Error: Width of graphics pass " + m_name + " is already specified (" +
+                                      std::to_string(m_extent.width) + "), but width of write swapchain " +
+                                      swapchain->m_name + " (" + std::to_string(swapchain->m_extent.width) +
+                                      ") does not match!");
             }
             if (swapchain->m_extent.height != m_extent.height) {
-                throw std::invalid_argument("[GraphicsPass::GraphicsPass] Error: Height of graphics pass " + m_name +
-                                            " is already specified (" + std::to_string(m_extent.height) +
-                                            "), but width of write swapchain " + swapchain->m_name + " (" +
-                                            std::to_string(swapchain->m_extent.height) + ") does not match!");
+                throw InexorException("Error: Height of graphics pass " + m_name + " is already specified (" +
+                                      std::to_string(m_extent.height) + "), but width of write swapchain " +
+                                      swapchain->m_name + " (" + std::to_string(swapchain->m_extent.height) +
+                                      ") does not match!");
             }
         }
     }
@@ -61,10 +65,10 @@ GraphicsPass::GraphicsPass(
     }
     // Check if either width or height is 0
     if (m_extent.width == 0) {
-        throw std::runtime_error("[GraphicsPass::GraphicsPass] Error: m_extent.width is 0!");
+        throw InexorException("Error: m_extent.width is 0!");
     }
     if (m_extent.height == 0) {
-        throw std::runtime_error("[GraphicsPass::GraphicsPass] Error: m_extent.height is 0!");
+        throw InexorException("Error: m_extent.height is 0!");
     }
 
     // Store the other data

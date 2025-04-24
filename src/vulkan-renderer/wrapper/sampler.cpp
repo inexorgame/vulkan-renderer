@@ -1,8 +1,8 @@
 #include "inexor/vulkan-renderer/wrapper/sampler.hpp"
 
 #include "inexor/vulkan-renderer/wrapper/device.hpp"
+#include "inexor/vulkan-renderer/wrapper/exception.hpp"
 #include "inexor/vulkan-renderer/wrapper/make_info.hpp"
-#include "inexor/vulkan-renderer/wrapper/vulkan_exception.hpp"
 
 #include <utility>
 
@@ -12,7 +12,7 @@ Sampler::Sampler(const Device &device, std::string name, const VkSamplerCreateIn
     : m_device(device), m_name(std::move(name)) {
     if (const auto result = vkCreateSampler(m_device.device(), &sampler_ci, nullptr, &m_sampler);
         result != VK_SUCCESS) {
-        throw VulkanException("[Sampler::Sampler] Error: vkCreateSampler failed for sampler " + m_name + " !", result);
+        throw VulkanException("Error: vkCreateSampler!", result, m_name);
     }
     m_device.set_debug_name(m_sampler, m_name);
 }

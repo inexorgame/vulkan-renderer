@@ -55,20 +55,15 @@ private:
     std::shared_ptr<Shader> m_octree_fragment;
     std::weak_ptr<GraphicsPass> m_octree_pass;
     std::shared_ptr<GraphicsPipeline> m_octree_pipeline;
-
-    // This swapchain is the color attachment we will write to
-    std::weak_ptr<Swapchain> m_swapchain;
-
     std::weak_ptr<Buffer> m_mvp_matrix;
-
-    /// The camera used for rendering
     std::weak_ptr<Camera> m_camera;
 
     VkDescriptorSetLayout m_descriptor_set_layout{VK_NULL_HANDLE};
     VkDescriptorSet m_descriptor_set{VK_NULL_HANDLE};
-
-    /// The cubes we use for rendering
     std::vector<std::weak_ptr<Cube>> m_cubes;
+
+    VkFormat m_back_buffer_img_format;
+    VkExtent2D m_back_buffer_extent;
 
 public:
     /// Default constructor
@@ -76,7 +71,6 @@ public:
     /// @param back_buffer The back buffer to render to
     /// @param depth_buffer The depth buffer to render to
     OctreeRenderer(std::weak_ptr<RenderGraph> rendergraph,
-                   std::weak_ptr<Swapchain> swapchain,
                    std::weak_ptr<Texture> back_buffer,
                    std::weak_ptr<Texture> depth_buffer);
 

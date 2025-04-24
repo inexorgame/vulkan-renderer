@@ -1,8 +1,8 @@
 #include "inexor/vulkan-renderer/wrapper/shader.hpp"
 
 #include "inexor/vulkan-renderer/wrapper/device.hpp"
+#include "inexor/vulkan-renderer/wrapper/exception.hpp"
 #include "inexor/vulkan-renderer/wrapper/make_info.hpp"
-#include "inexor/vulkan-renderer/wrapper/vulkan_exception.hpp"
 
 #include <cassert>
 #include <fstream>
@@ -14,12 +14,12 @@ namespace inexor::vulkan_renderer::wrapper {
 Shader::Shader(const Device &device, std::string name, const VkShaderStageFlagBits type, std::string file_name)
     : m_device(device), m_name(std::move(name)), m_shader_stage(type), m_file_name(file_name) {
     if (m_name.empty()) {
-        throw std::runtime_error("[Shader::Shader] Error: Parameter 'name' is empty!");
+        throw InexorException("Error: Parameter 'name' is an empty string!");
     }
     // Open the file stream at the end of the file to read file size
     std::ifstream shader_file(file_name.c_str(), std::ios::ate | std::ios::binary | std::ios::in);
     if (!shader_file) {
-        throw std::runtime_error("[Shader::Shader] Error: Could not open shader file " + file_name + "!");
+        throw InexorException("Error: Could not open shader file " + file_name + "!");
     }
 
     // Read the size of the file
@@ -43,7 +43,7 @@ Shader::Shader(const Device &device, std::string name, const VkShaderStageFlagBi
 
     if (const auto result = vkCreateShaderModule(m_device.device(), &shader_module_ci, nullptr, &m_shader_module);
         result != VK_SUCCESS) {
-        throw VulkanException("Error: vkCreateShaderModule failed for shader " + file_name + "!", result);
+        throw VulkanException("Error: vkCreateShaderModule failed!", result, file_name);
     }
     m_device.set_debug_name(m_shader_module, file_name);
 }

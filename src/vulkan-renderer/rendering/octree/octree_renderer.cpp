@@ -4,41 +4,34 @@
 #include "inexor/vulkan-renderer/wrapper/descriptors/descriptor_set_allocator.hpp"
 #include "inexor/vulkan-renderer/wrapper/descriptors/descriptor_set_layout_builder.hpp"
 #include "inexor/vulkan-renderer/wrapper/descriptors/write_descriptor_set_builder.hpp"
+#include "inexor/vulkan-renderer/wrapper/exception.hpp"
 
 #include <utility>
 
 namespace inexor::vulkan_renderer::rendering::octree {
 
 // Using declarations
+using wrapper::InexorException;
 using wrapper::descriptors::DescriptorSetAllocator;
 using wrapper::descriptors::DescriptorSetLayoutBuilder;
 using wrapper::descriptors::WriteDescriptorSetBuilder;
 
 OctreeRenderer::OctreeRenderer(const std::weak_ptr<RenderGraph> rendergraph,
-                               std::weak_ptr<Swapchain> swapchain,
                                const std::weak_ptr<Texture> back_buffer,
-                               const std::weak_ptr<Texture> depth_buffer)
-    : m_swapchain(std::move(swapchain)) {
+                               const std::weak_ptr<Texture> depth_buffer) {
     if (rendergraph.expired()) {
-        throw std::invalid_argument(
-            "[OctreeRenderer::OctreeRenderer] Error: Parameter 'rendergraph' is not a valid pointer!");
+        throw InexorException("Error: Parameter 'rendergraph' is an invalid pointer!");
     }
     if (back_buffer.expired()) {
-        throw std::invalid_argument(
-            "[OctreeRenderer::OctreeRenderer] Error: Parameter 'back_buffer' is not a valid pointer!");
+        throw InexorException("Error: Parameter 'back_buffer' is an invalid pointer!");
     }
     if (depth_buffer.expired()) {
-        throw std::invalid_argument(
-            "[OctreeRenderer::OctreeRenderer] Error: Parameter 'depth_buffer' is not a valid pointer!");
+        throw InexorException("Error: Parameter 'depth_buffer' is an invalid pointer!");
     }
-    if (m_swapchain.expired()) {
-        throw std::invalid_argument(
-            "[ImGuiRenderer::ImGuiRenderer] Error: Parameter 'swapchain' is not a valid pointer!");
-    }
+
     auto rg = rendergraph.lock();
     if (rg == nullptr) {
-        throw std::invalid_argument(
-            "[OctreeRenderer::OctreeRenderer] Error: Parameter 'rendergraph' is not a valid pointer!");
+        throw InexorException("Error: Parameter 'rendergraph' is an invalid pointer!");
     }
 
     // Descriptor management
@@ -59,9 +52,11 @@ OctreeRenderer::OctreeRenderer(const std::weak_ptr<RenderGraph> rendergraph,
     m_octree_vertex =
         std::make_shared<Shader>(rg->device(), "Octree", VK_SHADER_STAGE_FRAGMENT_BIT, "shaders/octree.frag.spv");
 
+    m_back_buffer_img_format = back_buffer.lock()->format();
+    m_back_buffer_extent = back_buffer.lock()->extent();
+
     // Set the callback for creation of the graphics pipeline
     rg->add_graphics_pipeline([&](GraphicsPipelineBuilder &builder) {
-        auto swapchain = m_swapchain.lock();
         m_octree_pipeline = builder.add_shader(m_octree_vertex)
                                 .add_shader(m_octree_fragment)
                                 .set_vertex_input_bindings({{
@@ -81,11 +76,11 @@ OctreeRenderer::OctreeRenderer(const std::weak_ptr<RenderGraph> rendergraph,
                                         .offset = offsetof(OctreeVertex, color),
                                     },
                                 })
-                                .set_scissor(swapchain->extent())
-                                .set_viewport(swapchain->extent())
+                                .set_scissor(m_back_buffer_extent)
+                                .set_viewport(m_back_buffer_extent)
                                 .add_default_color_blend_attachment()
                                 .set_multisampling(VK_SAMPLE_COUNT_1_BIT, std::nullopt)
-                                .add_color_attachment_format(swapchain->image_format())
+                                .add_color_attachment_format(m_back_buffer_img_format)
                                 .set_descriptor_set_layout(m_descriptor_set_layout)
                                 .build("Octree");
     });
@@ -93,6 +88,7 @@ OctreeRenderer::OctreeRenderer(const std::weak_ptr<RenderGraph> rendergraph,
     // Add the graphics pass for octree rendering
     m_octree_pass = rg->add_graphics_pass(rg->get_graphics_pass_builder()
                                               .set_on_record([&](const CommandBuffer &cmd_buf) {
+                                                  // Render all the cubes passed to the octree renderer
                                                   for (const auto &cube : m_cubes) {
                                                       auto cb = cube.lock();
                                                       if (cb != nullptr) {

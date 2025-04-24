@@ -1,8 +1,8 @@
 #include "inexor/vulkan-renderer/wrapper/image.hpp"
 
 #include "inexor/vulkan-renderer/wrapper/device.hpp"
+#include "inexor/vulkan-renderer/wrapper/exception.hpp"
 #include "inexor/vulkan-renderer/wrapper/sampler.hpp"
-#include "inexor/vulkan-renderer/wrapper/vulkan_exception.hpp"
 
 namespace inexor::vulkan_renderer::wrapper {
 
@@ -29,7 +29,7 @@ void Image::create(VkImageCreateInfo img_ci, VkImageViewCreateInfo img_view_ci) 
     if (const auto result =
             vmaCreateImage(m_device.allocator(), &m_img_ci, &m_alloc_ci, &m_img, &m_alloc, &m_alloc_info);
         result != VK_SUCCESS) {
-        throw VulkanException("Error: vmaCreateImage failed for image " + m_name + "!", result);
+        throw VulkanException("Error: vmaCreateImage failed!", result, m_name);
     }
     // Set the image's internal debug name in Vulkan Memory Allocator (VMA)
     vmaSetAllocationName(m_device.allocator(), m_alloc, m_name.c_str());
@@ -42,7 +42,7 @@ void Image::create(VkImageCreateInfo img_ci, VkImageViewCreateInfo img_view_ci) 
     // Create the image view
     if (const auto result = vkCreateImageView(m_device.device(), &m_img_view_ci, nullptr, &m_img_view);
         result != VK_SUCCESS) {
-        throw VulkanException("Error: vkCreateImageView failed for image view " + m_name + "!", result);
+        throw VulkanException("Error: vkCreateImageView failed!", result, m_name);
     }
     m_device.set_debug_name(m_img_view, m_name);
 }

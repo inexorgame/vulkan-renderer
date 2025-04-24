@@ -1,8 +1,8 @@
 #include "inexor/vulkan-renderer/wrapper/synchronization/fence.hpp"
 
 #include "inexor/vulkan-renderer/wrapper/device.hpp"
+#include "inexor/vulkan-renderer/wrapper/exception.hpp"
 #include "inexor/vulkan-renderer/wrapper/make_info.hpp"
-#include "inexor/vulkan-renderer/wrapper/vulkan_exception.hpp"
 
 #include <cassert>
 #include <stdexcept>
@@ -19,7 +19,7 @@ Fence::Fence(const Device &device, const std::string &name, const bool in_signal
     });
 
     if (const auto result = vkCreateFence(m_device.device(), &fence_ci, nullptr, &m_fence); result != VK_SUCCESS) {
-        throw VulkanException("Error: vkCreateFence failed for fence " + name + "!", result);
+        throw VulkanException("Error: vkCreateFence failed!", result, name);
     }
     m_device.set_debug_name(m_fence, m_name);
 }
@@ -36,13 +36,13 @@ Fence::~Fence() {
 void Fence::wait(const std::uint64_t timeout_limit) const {
     if (const auto result = vkWaitForFences(m_device.device(), 1, &m_fence, VK_TRUE, timeout_limit);
         result != VK_SUCCESS) {
-        throw VulkanException("[Fence::wait] Error: vkWaitForFences failed!", result);
+        throw VulkanException("Error: vkWaitForFences failed!", result, m_name);
     }
 }
 
 void Fence::reset_fence() const {
     if (const auto result = vkResetFences(m_device.device(), 1, &m_fence); result != VK_SUCCESS) {
-        throw VulkanException("[Fence::reset_fence] Error: vkResetFences failed!", result);
+        throw VulkanException("Error: vkResetFences failed!", result, m_name);
     }
 }
 

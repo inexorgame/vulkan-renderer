@@ -1,10 +1,14 @@
 #include "inexor/vulkan-renderer/wrapper/pipelines/pipeline_builder.hpp"
 
 #include "inexor/vulkan-renderer/wrapper/device.hpp"
+#include "inexor/vulkan-renderer/wrapper/exception.hpp"
 
 #include <utility>
 
 namespace inexor::vulkan_renderer::wrapper::pipelines {
+
+// Using declaration
+using wrapper::InexorException;
 
 GraphicsPipelineBuilder::GraphicsPipelineBuilder(const Device &device) : m_device(device) {
     reset();
@@ -37,7 +41,7 @@ GraphicsPipelineBuilder::GraphicsPipelineBuilder(GraphicsPipelineBuilder &&other
 
 std::shared_ptr<GraphicsPipeline> GraphicsPipelineBuilder::build(std::string name) {
     if (name.empty()) {
-        throw std::invalid_argument("[GraphicsPipelineBuilder::build] Error: 'name' is empty!");
+        throw InexorException("Error: Parameter 'name' is an empty string!");
     }
     // NOTE: Inside of GraphicsPipelineBuilder, we carry out no error checks when it comes to the data which is used to
     // build the graphics pipeline. This is because validation of this data is job of the validation layers, and not the

@@ -2,7 +2,6 @@
 
 #include "inexor/vulkan-renderer/tools/representation.hpp"
 #include "inexor/vulkan-renderer/wrapper/commands/command_pool.hpp"
-#include "inexor/vulkan-renderer/wrapper/vulkan_exception.hpp"
 
 #include <array>
 #include <functional>
@@ -239,6 +238,10 @@ public:
         return set_debug_utils_object_name(tools::get_vulkan_object_type(vk_object),
                                            reinterpret_cast<std::uint64_t>(vk_object), name); // NOLINT
     }
+
+    /// Call vkUpdateDescriptorSets
+    /// @param write_descriptor_sets The write descriptor sets
+    void update_descriptor_sets(std::span<VkWriteDescriptorSet> write_descriptor_sets);
 
     /// Call vkDeviceWaitIdle or vkQueueWaitIdle if a VkQueue is specified as parameter
     /// @param A queue to wait on (``VK_NULL_HANDLE`` by default)

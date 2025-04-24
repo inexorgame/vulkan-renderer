@@ -2,8 +2,8 @@
 
 #include "inexor/vulkan-renderer/wrapper/commands/command_buffer.hpp"
 #include "inexor/vulkan-renderer/wrapper/device.hpp"
+#include "inexor/vulkan-renderer/wrapper/exception.hpp"
 #include "inexor/vulkan-renderer/wrapper/make_info.hpp"
-#include "inexor/vulkan-renderer/wrapper/vulkan_exception.hpp"
 
 #include <spdlog/spdlog.h>
 
@@ -12,13 +12,14 @@
 namespace inexor::vulkan_renderer::rendering::render_graph {
 
 // Using declaration
+using wrapper::InexorException;
 using wrapper::VulkanException;
 
 Buffer::Buffer(const Device &device, std::string buffer_name, BufferType buffer_type, std::function<void()> on_update)
     : m_device(device), m_name(std::move(buffer_name)), m_on_check_for_update(std::move(on_update)),
       m_buffer_type(buffer_type) {
     if (m_name.empty()) {
-        throw std::invalid_argument("[Buffer::Buffer] Error: Parameter 'name' is empty!");
+        throw InexorException("Error: Parameter 'name' is an empty string!");
     }
 }
 
@@ -44,7 +45,7 @@ Buffer::~Buffer() {
 
 void Buffer::create(const CommandBuffer &cmd_buf) {
     if (m_src_data_size == 0) {
-        spdlog::warn("[Buffer::create_buffer] Warning: Can't create buffer of size 0!");
+        spdlog::warn("Warning: Can't create buffer of size 0!");
         return;
     }
 
@@ -80,7 +81,7 @@ void Buffer::create(const CommandBuffer &cmd_buf) {
     if (const auto result =
             vmaCreateBuffer(m_device.allocator(), &buffer_ci, &alloc_ci, &m_buffer, &m_alloc, &m_alloc_info);
         result != VK_SUCCESS) {
-        throw VulkanException("Error: vmaCreateBuffer failed for buffer " + m_name + " !", result);
+        throw VulkanException("Error: vmaCreateBuffer failed!", result, m_name);
     }
 
     // Set the buffer's internal debug name in Vulkan Memory Allocator (VMA)
@@ -102,7 +103,7 @@ void Buffer::create(const CommandBuffer &cmd_buf) {
         // NOTE: vmaFlushAllocation checks internally if the memory is host coherent, in which case it don't flush
         if (const auto result = vmaFlushAllocation(m_device.allocator(), m_alloc, 0, VK_WHOLE_SIZE);
             result != VK_SUCCESS) {
-            throw VulkanException("Error: vmaFlushAllocation failed for buffer " + m_name + " !", result);
+            throw VulkanException("Error: vmaFlushAllocation failed for buffer!", result, m_name);
         }
     } else {
         // Make sure to destroy the previous staging buffer
@@ -127,7 +128,7 @@ void Buffer::create(const CommandBuffer &cmd_buf) {
                 vmaCreateBuffer(m_device.allocator(), &staging_buf_ci, &staging_buf_alloc_ci, &m_staging_buffer,
                                 &m_staging_buffer_alloc, &m_staging_buffer_alloc_info);
             result != VK_SUCCESS) {
-            throw VulkanException("Error: vmaCreateBuffer failed for staging buffer " + m_name + " !", result);
+            throw VulkanException("Error: vmaCreateBuffer failed!", result, m_name);
         }
 
         const std::string staging_buf_name = "staging:" + m_name;
@@ -142,7 +143,7 @@ void Buffer::create(const CommandBuffer &cmd_buf) {
         // NOTE: vmaFlushAllocation checks internally if the memory is host coherent, in which case it don't flush
         if (const auto result = vmaFlushAllocation(m_device.allocator(), m_staging_buffer_alloc, 0, VK_WHOLE_SIZE);
             result != VK_SUCCESS) {
-            throw VulkanException("Error: vmaFlushAllocation failed for staging buffer " + m_name + " !", result);
+            throw VulkanException("Error: vmaFlushAllocation failed!", result, m_name);
         };
 
         cmd_buf.insert_debug_label("[Buffer::staging-update|" + m_name + "]",

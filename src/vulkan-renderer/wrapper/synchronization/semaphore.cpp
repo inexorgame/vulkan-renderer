@@ -1,8 +1,8 @@
 #include "inexor/vulkan-renderer/wrapper/synchronization/semaphore.hpp"
 
 #include "inexor/vulkan-renderer/wrapper/device.hpp"
+#include "inexor/vulkan-renderer/wrapper/exception.hpp"
 #include "inexor/vulkan-renderer/wrapper/make_info.hpp"
-#include "inexor/vulkan-renderer/wrapper/vulkan_exception.hpp"
 
 #include <cassert>
 #include <utility>
@@ -16,7 +16,7 @@ Semaphore::Semaphore(const Device &device, const std::string &name) : m_device(d
 
     if (const auto result = vkCreateSemaphore(m_device.device(), &semaphore_ci, nullptr, &m_semaphore);
         result != VK_SUCCESS) {
-        throw VulkanException("Error: vkCreateSemaphore failed for " + m_name + " !", result);
+        throw VulkanException("Error: vkCreateSemaphore failed!", result, m_name);
     }
     m_device.set_debug_name(m_semaphore, m_name);
 }

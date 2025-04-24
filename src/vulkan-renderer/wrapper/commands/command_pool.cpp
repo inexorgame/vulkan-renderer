@@ -1,6 +1,7 @@
 #include "inexor/vulkan-renderer/wrapper/commands/command_pool.hpp"
 
 #include "inexor/vulkan-renderer/wrapper/device.hpp"
+#include "inexor/vulkan-renderer/wrapper/exception.hpp"
 #include "inexor/vulkan-renderer/wrapper/make_info.hpp"
 
 #include <spdlog/spdlog.h>
@@ -39,7 +40,7 @@ CommandPool::CommandPool(const Device &device, const VkQueueFlagBits queue_type,
 
     if (const auto result = vkCreateCommandPool(m_device.device(), &cmd_pool_ci, nullptr, &m_cmd_pool);
         result != VK_SUCCESS) {
-        throw VulkanException("Error: vkCreateCommandPool failed for command pool " + m_name + "!", result);
+        throw VulkanException("Error: vkCreateCommandPool failed!", result, m_name);
     }
     m_device.set_debug_name(m_cmd_pool, m_name);
 }

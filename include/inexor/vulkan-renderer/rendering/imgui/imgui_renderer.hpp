@@ -81,10 +81,10 @@ private:
 
 public:
     /// Default constructor
-    /// @param rendergraph
-    /// @param previous_pass
-    /// @param swapchain
-    /// @param on_update_user_imgui_data
+    /// @param rendergraph The rendergraph
+    /// @param previous_pass The previous pass
+    /// @param swapchain The swapchain to render the ImGui overlay to
+    /// @param on_update_user_imgui_data The user-defined ImGui data update callback
     ImGuiRenderer(std::weak_ptr<RenderGraph> rendergraph,
                   std::weak_ptr<GraphicsPass> previous_pass,
                   std::weak_ptr<Swapchain> swapchain,

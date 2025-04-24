@@ -1,8 +1,8 @@
 #include "inexor/vulkan-renderer/wrapper/instance.hpp"
 
 #include "inexor/vulkan-renderer/tools/representation.hpp"
+#include "inexor/vulkan-renderer/wrapper/exception.hpp"
 #include "inexor/vulkan-renderer/wrapper/make_info.hpp"
-#include "inexor/vulkan-renderer/wrapper/vulkan_exception.hpp"
 
 #include <GLFW/glfw3.h>
 #include <fmt/ranges.h>
@@ -78,19 +78,18 @@ Instance::Instance(const std::uint32_t requested_vk_version,
                    const std::vector<std::string> &requested_instance_extensions,
                    const std::vector<std::string> &requested_instance_layers) {
     if (application_name.empty()) {
-        throw std::invalid_argument("Error: Application name is empty!");
+        throw InexorException("Error: Application name is an empty string!");
     }
     if (engine_name.empty()) {
-        throw std::invalid_argument("Error: Engine name is empty!");
+        throw InexorException("Error: Engine name is empty!");
     }
     if (debug_callback == nullptr) {
-        throw std::invalid_argument("Error: Invalid debug utils messenger callback!");
+        throw InexorException("Error: Invalid debug utils messenger callback!");
     }
 
     spdlog::trace("Initializing Vulkan metaloader (volk)");
     if (const auto result = volkInitialize(); result != VK_SUCCESS) {
-        throw std::runtime_error("Error: Could not initialize Vulkan with volk metaloader! Make sure to update the "
-                                 "drivers of your graphics card!");
+        throw InexorException("Error: Could not initialize Vulkan with volk metaloader! Update graphics drivers!");
     }
 
     spdlog::trace("Initialising Vulkan instance");
@@ -122,7 +121,7 @@ Instance::Instance(const std::uint32_t requested_vk_version,
             std::to_string(VK_API_VERSION_MAJOR(available_api_version)),
             std::to_string(VK_API_VERSION_MINOR(available_api_version)),
             std::to_string(VK_API_VERSION_PATCH(available_api_version)));
-        throw std::runtime_error(exception_message);
+        throw InexorException(exception_message);
     }
 
     const auto app_info = make_info<VkApplicationInfo>({
@@ -144,7 +143,7 @@ Instance::Instance(const std::uint32_t requested_vk_version,
     auto *glfw_extensions = glfwGetRequiredInstanceExtensions(&glfw_extension_count);
 
     if (glfw_extensions == NULL) {
-        throw std::runtime_error("Error: glfwGetRequiredInstanceExtensions returned NULL!");
+        throw InexorException("Error: glfwGetRequiredInstanceExtensions returned NULL!");
     }
 
     spdlog::trace("Required GLFW instance extensions:");
@@ -218,7 +217,7 @@ Instance::Instance(const std::uint32_t requested_vk_version,
     if (!is_extension_supported(VK_EXT_DEBUG_UTILS_EXTENSION_NAME)) {
         // Don't forget to destroy the instance before throwing the exception!
         vkDestroyInstance(m_instance, nullptr);
-        throw std::runtime_error("Error: VK_EXT_DEBUG_UTILS_EXTENSION_NAME is not supported!");
+        throw InexorException("Error: VK_EXT_DEBUG_UTILS_EXTENSION_NAME is not supported!");
     }
 
     const auto dbg_messenger_ci = make_info<VkDebugUtilsMessengerCreateInfoEXT>({

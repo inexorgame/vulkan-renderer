@@ -317,6 +317,8 @@ public:
     /// Add a new graphics pipeline to the rendergraph
     /// @param on_pipeline_create A function to create the graphics pipeline using GraphicsPipelineBuilder
     /// @note Move semantics is used to std::move on_pipeline_create
+    /// @warning A common mistake is to pass a lambda as ``OnCreateGraphicsPipeline`` function and referencing in the lambda
+    /// whose a non-member local variable whose lifetime will have expired once the lambda is invoked!
     void add_graphics_pipeline(OnCreateGraphicsPipeline on_pipeline_create);
 
     /// Add an buffer to rendergraph

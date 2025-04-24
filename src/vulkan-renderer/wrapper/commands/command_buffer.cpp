@@ -2,9 +2,9 @@
 
 #include "inexor/vulkan-renderer/rendering/render-graph/buffer.hpp"
 #include "inexor/vulkan-renderer/wrapper/device.hpp"
+#include "inexor/vulkan-renderer/wrapper/exception.hpp"
 #include "inexor/vulkan-renderer/wrapper/make_info.hpp"
 #include "inexor/vulkan-renderer/wrapper/pipelines/pipeline.hpp"
-#include "inexor/vulkan-renderer/wrapper/vulkan_exception.hpp"
 
 #include <cassert>
 #include <memory>
@@ -15,11 +15,10 @@ namespace inexor::vulkan_renderer::wrapper::commands {
 CommandBuffer::CommandBuffer(const wrapper::Device &device, const VkCommandPool cmd_pool, std::string name)
     : m_device(device), m_name(std::move(name)) {
     if (m_name.empty()) {
-        throw std::invalid_argument("[CommandBuffer::CommandBuffer] Error: Parameter 'name' is empty!");
+        throw InexorException("Error: Parameter 'name' is an empty string!");
     }
     if (!cmd_pool) {
-        throw std::invalid_argument(
-            "[CommandBuffer::CommandBuffer] Error: Parameter 'cmd_pool' is an invalid pointer!");
+        throw InexorException("Error: Parameter 'cmd_pool' is an invalid pointer!");
     }
 
     const auto cmd_buf_ai = make_info<VkCommandBufferAllocateInfo>({
@@ -32,7 +31,7 @@ CommandBuffer::CommandBuffer(const wrapper::Device &device, const VkCommandPool 
     // freed if the corresponding command pool is destroyed. Command buffers are not freed in the destructor.
     if (const auto result = vkAllocateCommandBuffers(m_device.device(), &cmd_buf_ai, &m_cmd_buf);
         result != VK_SUCCESS) {
-        throw VulkanException("Error: vkAllocateCommandBuffers failed!", result);
+        throw VulkanException("Error: vkAllocateCommandBuffers failed!", result, m_name);
     }
     m_device.set_debug_name(m_cmd_buf, m_name);
     m_cmd_buf_execution_completed = std::make_unique<synchronization::Fence>(m_device, m_name, false);
@@ -56,7 +55,7 @@ const CommandBuffer &CommandBuffer::begin_command_buffer(const VkCommandBufferUs
 const CommandBuffer &CommandBuffer::begin_debug_label_region(std::string name, std::array<float, 4> color) const {
     if (name.empty()) {
         // NOTE: Despite Vulkan spec allowing name to be empty, we strictly enforce this rule in our code base!
-        throw std::invalid_argument("[CommandBuffer::begin_debug_label_region] Error: Parameter 'name' is empty!");
+        throw InexorException("Error: Parameter 'name' is empty!");
     }
     auto label = make_info<VkDebugUtilsLabelEXT>({
         .pLabelName = name.c_str(),
@@ -74,11 +73,10 @@ const CommandBuffer &CommandBuffer::begin_rendering(const VkRenderingInfo &rende
 const CommandBuffer &CommandBuffer::bind_descriptor_set(const VkDescriptorSet descriptor_set,
                                                         const std::weak_ptr<GraphicsPipeline> pipeline) const {
     if (!descriptor_set) {
-        throw std::invalid_argument(
-            "[CommandBuffer::bind_descriptor_set] Error: Parameter 'descriptor_set' is invalid!");
+        throw InexorException("Error: Parameter 'descriptor_set' is invalid!");
     }
     if (pipeline.expired()) {
-        throw std::invalid_argument("[CommandBuffer::bind_descriptor_set] Error: Parameter 'pipeline' is invalid!");
+        throw InexorException("Error: Parameter 'pipeline' is an invalid pointer!");
     }
     vkCmdBindDescriptorSets(m_cmd_buf, VK_PIPELINE_BIND_POINT_GRAPHICS,
                             pipeline.lock()->m_pipeline_layout->m_pipeline_layout, 0, 1, &descriptor_set, 0, nullptr);
@@ -89,11 +87,11 @@ const CommandBuffer &CommandBuffer::bind_index_buffer(const std::weak_ptr<Buffer
                                                       const VkIndexType index_type,
                                                       const VkDeviceSize offset) const {
     if (buffer.expired()) {
-        throw std::invalid_argument("[CommandBuffer::bind_index_buffer] Error: Parameter 'buffer' is invalid!");
+        throw InexorException("Error: Parameter 'buffer' is an invalid pointer!");
     }
     if (buffer.lock()->m_buffer_type != BufferType::INDEX_BUFFER) {
-        throw std::invalid_argument("Error: Rendergraph buffer resource " + buffer.lock()->m_name +
-                                    " is not an index buffer!");
+        throw InexorException("Error: Rendergraph buffer resource " + buffer.lock()->m_name +
+                              " is not an index buffer!");
     }
     vkCmdBindIndexBuffer(m_cmd_buf, buffer.lock()->m_buffer, offset, index_type);
     return *this;
@@ -102,7 +100,7 @@ const CommandBuffer &CommandBuffer::bind_index_buffer(const std::weak_ptr<Buffer
 const CommandBuffer &CommandBuffer::bind_pipeline(const std::weak_ptr<GraphicsPipeline> pipeline,
                                                   const VkPipelineBindPoint bind_point) const {
     if (pipeline.expired()) {
-        throw std::invalid_argument("[CommandBuffer::bind_pipeline] Error: Parameter 'pipeline' is invalid!");
+        throw InexorException("Error: Parameter 'pipeline' is an invalid pointer!");
     }
     vkCmdBindPipeline(m_cmd_buf, bind_point, pipeline.lock()->m_pipeline);
     return *this;
@@ -110,11 +108,11 @@ const CommandBuffer &CommandBuffer::bind_pipeline(const std::weak_ptr<GraphicsPi
 
 const CommandBuffer &CommandBuffer::bind_vertex_buffer(const std::weak_ptr<Buffer> buffer) const {
     if (buffer.expired()) {
-        throw std::invalid_argument("[CommandBuffer::bind_vertex_buffer] Error: Parameter 'buffer' is invaldi!");
+        throw InexorException("Error: Parameter 'buffer' is an invalid pointer!");
     }
     if (buffer.lock()->m_buffer_type != BufferType::VERTEX_BUFFER) {
-        throw std::invalid_argument("Error: Rendergraph buffer resource " + buffer.lock()->m_name +
-                                    " is not a vertex buffer!");
+        throw InexorException("Error: Rendergraph buffer resource " + buffer.lock()->m_name +
+                              " is not a vertex buffer!");
     }
     vkCmdBindVertexBuffers(m_cmd_buf, 0, 1, &buffer.lock()->m_buffer, std::vector<VkDeviceSize>(1, 0).data());
     return *this;
@@ -127,7 +125,7 @@ const CommandBuffer &CommandBuffer::change_image_layout(const VkImage img,
                                                         const VkPipelineStageFlags src_mask,
                                                         const VkPipelineStageFlags dst_mask) const {
     if (!img) {
-        throw std::invalid_argument("[CommandBuffer::change_image_layout] Error: Parameter 'img' is invalid!");
+        throw InexorException("Error: Parameter 'img' is invalid!");
     }
 
     auto barrier = make_info<VkImageMemoryBarrier>({
@@ -216,10 +214,10 @@ const CommandBuffer &CommandBuffer::copy_buffer(const VkBuffer src_buf,
                                                 const VkBuffer dst_buf,
                                                 const std::span<const VkBufferCopy> copy_regions) const {
     if (!src_buf) {
-        throw std::invalid_argument("[CommandBuffer::copy_buffer] Error: Parameter 'src_buf' is invalid!");
+        throw InexorException("Error: Parameter 'src_buf' is invalid!");
     }
     if (!dst_buf) {
-        throw std::invalid_argument("[CommandBuffer::copy_buffer] Error: Parameter 'dst_buf' is invalid!");
+        throw InexorException("Error: Parameter 'dst_buf' is invalid!");
     }
     vkCmdCopyBuffer(m_cmd_buf, src_buf, dst_buf, static_cast<std::uint32_t>(copy_regions.size()), copy_regions.data());
     return *this;
@@ -241,10 +239,10 @@ const CommandBuffer &CommandBuffer::copy_buffer_to_image(const VkBuffer src_buf,
                                                          const VkImage dst_img,
                                                          const VkBufferImageCopy &copy_region) const {
     if (!src_buf) {
-        throw std::invalid_argument("[CommandBuffer::copy_buffer_to_image] Error: Parameter 'src_buf' is invalid!");
+        throw InexorException("Error: Parameter 'src_buf' is invalid!");
     }
     if (!dst_img) {
-        throw std::invalid_argument("[CommandBuffer::copy_buffer_to_image] Error: Parameter 'dst_img' is invalid!");
+        throw InexorException("Error: Parameter 'dst_img' is invalid!");
     }
     vkCmdCopyBufferToImage(m_cmd_buf, src_buf, dst_img, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &copy_region);
     return *this;
@@ -385,8 +383,7 @@ const CommandBuffer &CommandBuffer::pipeline_image_memory_barrier(const VkPipeli
                                                                   const VkImageLayout new_img_layout,
                                                                   const VkImage img) const {
     if (!img) {
-        throw std::invalid_argument(
-            "[CommandBuffer::pipeline_image_memory_barrier] Error: Parameter 'img' is invalid!");
+        throw InexorException("Error: Parameter 'img' is invalid!");
     }
     return pipeline_image_memory_barrier(src_stage_flags, dst_stage_flags,
                                          wrapper::make_info<VkImageMemoryBarrier>({
@@ -410,8 +407,7 @@ const CommandBuffer &CommandBuffer::pipeline_image_memory_barrier(const VkPipeli
 
 const CommandBuffer &CommandBuffer::pipeline_image_memory_barrier_after_copy_buffer_to_image(const VkImage img) const {
     if (!img) {
-        throw std::invalid_argument("[CommandBuffer::pipeline_image_memory_barrier_after_copy_buffer_to_image] Error: "
-                                    "Parameter 'img' is invalid!");
+        throw InexorException("Error: Parameter 'img' is invalid!");
     }
     return pipeline_image_memory_barrier(VK_PIPELINE_STAGE_TRANSFER_BIT,           // src_stage_flags
                                          VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,    // dst_stage_flags
@@ -424,8 +420,7 @@ const CommandBuffer &CommandBuffer::pipeline_image_memory_barrier_after_copy_buf
 
 const CommandBuffer &CommandBuffer::pipeline_image_memory_barrier_before_copy_buffer_to_image(const VkImage img) const {
     if (!img) {
-        throw std::invalid_argument("[CommandBuffer::pipeline_image_memory_barrier_before_copy_buffer_to_image] Error: "
-                                    "Parameter 'img' is invalid!");
+        throw InexorException("Error: Parameter 'img' is invalid!");
     }
     return pipeline_image_memory_barrier(VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,    // src_stage_flags
                                          VK_PIPELINE_STAGE_TRANSFER_BIT,       // dst_stage_flags
@@ -466,7 +461,7 @@ const CommandBuffer &CommandBuffer::full_barrier() const {
 
 const CommandBuffer &CommandBuffer::insert_debug_label(std::string name, std::array<float, 4> color) const {
     if (name.empty()) {
-        throw std::invalid_argument("[] Error: Parameter 'name' is empty!");
+        throw InexorException("Error: Parameter 'name' is an empty string!");
     }
     auto label = make_info<VkDebugUtilsLabelEXT>({
         .pLabelName = name.c_str(),
@@ -482,13 +477,13 @@ const CommandBuffer &CommandBuffer::push_constants(const VkPipelineLayout layout
                                                    const void *data,
                                                    const VkDeviceSize offset) const {
     if (!layout) {
-        throw std::invalid_argument("[CommandBuffer::push_constants] Error: Parameter 'layout' is invalid!");
+        throw InexorException("Error: Parameter 'layout' is invalid!");
     }
     if (size == 0) {
-        throw std::invalid_argument("[CommandBuffer::push_constants] Error: Parameter 'size' is 0!");
+        throw InexorException("Error: Parameter 'size' is 0!");
     }
     if (!data) {
-        throw std::invalid_argument("[CommandBuffer::push_constants] Error: Parameter 'data' is 0!");
+        throw InexorException("Error: Parameter 'data' is 0!");
     }
     vkCmdPushConstants(m_cmd_buf, layout, stage, static_cast<std::uint32_t>(offset), size, data);
     return *this;
@@ -547,7 +542,7 @@ void CommandBuffer::submit_and_wait(const VkQueueFlagBits queue_type,
     };
 
     if (const auto result = vkQueueSubmit(get_queue(), 1, &submit_info, m_cmd_buf_execution_completed->m_fence)) {
-        throw VulkanException("[CommandBuffer::submit] Error: vkQueueSubmit failed!", result);
+        throw VulkanException("Error: vkQueueSubmit failed!", result, m_name);
     }
     m_cmd_buf_execution_completed->wait();
 }
