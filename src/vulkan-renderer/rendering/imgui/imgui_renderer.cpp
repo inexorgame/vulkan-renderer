@@ -40,10 +40,8 @@ ImGuiRenderer::ImGuiRenderer(std::weak_ptr<RenderGraph> rendergraph,
     spdlog::trace("Setting ImGui style");
     set_imgui_style();
 
+    // NOTE: We already checked if rendergraph is a valid pointer earlier, so we don't need to check if rg is valid
     auto rg = rendergraph.lock();
-    if (rg == nullptr) {
-        InexorException("Error: Parameter 'rendergraph' is an invalid pointer!");
-    }
 
     // Load the shaders used for ImGui rendering
     m_vertex_shader =

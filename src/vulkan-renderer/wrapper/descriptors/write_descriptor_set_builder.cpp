@@ -27,13 +27,18 @@ WriteDescriptorSetBuilder::add_uniform_buffer_update(const VkDescriptorSet descr
     if (!descriptor_set) {
         throw InexorException("Error: Parameter 'descriptor_set' is invalid!");
     }
+    if (uniform_buffer.expired()) {
+        throw InexorException("Error: Parameter 'uniform_buffer' is not a valid pointer!");
+    }
     if (uniform_buffer.lock()->m_buffer_type != BufferType::UNIFORM_BUFFER) {
         throw InexorException("Error: Buffer " + uniform_buffer.lock()->m_name + " is not a uniform buffer!");
     }
+
     const auto &buffer = uniform_buffer.lock();
     if (!buffer->m_descriptor_buffer_info.buffer) {
         throw InexorException("Error: Descriptor buffer info of uniform buffer '" + buffer->m_name + "' is invalid!");
     }
+
     m_write_descriptor_sets.emplace_back(wrapper::make_info<VkWriteDescriptorSet>({
         .dstSet = descriptor_set,
         .dstBinding = m_binding,
@@ -54,7 +59,7 @@ WriteDescriptorSetBuilder::add_combined_image_sampler_update(const VkDescriptorS
         throw InexorException("Error: Parameter 'descriptor_set' is invalid!");
     }
     if (image_texture.expired()) {
-        throw InexorException("Error: Parameter 'texture' is invalid!");
+        throw InexorException("Error: Parameter 'image_texture' is invalid!");
     }
 
     const auto &texture = image_texture.lock();
@@ -66,6 +71,7 @@ WriteDescriptorSetBuilder::add_combined_image_sampler_update(const VkDescriptorS
         throw InexorException("Error: 'Texture::m_descriptor_img_info.sampler' of texture '" + texture->m_name +
                               "' is invalid!");
     }
+
     m_write_descriptor_sets.emplace_back(wrapper::make_info<VkWriteDescriptorSet>({
         .dstSet = descriptor_set,
         .dstBinding = m_binding,

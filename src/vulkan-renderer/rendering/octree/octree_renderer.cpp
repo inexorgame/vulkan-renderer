@@ -29,10 +29,8 @@ OctreeRenderer::OctreeRenderer(const std::weak_ptr<RenderGraph> rendergraph,
         throw InexorException("Error: Parameter 'depth_buffer' is an invalid pointer!");
     }
 
+    // NOTE: We already checked if rendergraph is a valid pointer earlier, so we don't need to check if rg is valid
     auto rg = rendergraph.lock();
-    if (rg == nullptr) {
-        throw InexorException("Error: Parameter 'rendergraph' is an invalid pointer!");
-    }
 
     // Descriptor management
     rg->add_resource_descriptor(
@@ -45,6 +43,15 @@ OctreeRenderer::OctreeRenderer(const std::weak_ptr<RenderGraph> rendergraph,
         [&](WriteDescriptorSetBuilder &builder) {
             return builder.add_uniform_buffer_update(m_descriptor_set, m_mvp_matrix).build();
         });
+
+    m_mvp_matrix = rg->add_buffer("model/view/proj", BufferType::UNIFORM_BUFFER, [&]() {
+        m_mvp_data.model = glm::mat4(1.0f);
+        m_mvp_data.view = m_camera.lock()->view_matrix();
+        m_mvp_data.proj = m_camera.lock()->perspective_matrix();
+        m_mvp_data.proj[1][1] *= -1;
+        // Update the uniform buffer for model/view/projection matrix
+        m_mvp_matrix.lock()->request_update(m_mvp_data);
+    });
 
     // Load the shaders used for octree rendering
     m_octree_fragment =

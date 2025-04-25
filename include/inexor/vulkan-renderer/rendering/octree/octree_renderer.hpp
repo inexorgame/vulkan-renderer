@@ -65,6 +65,8 @@ private:
     VkFormat m_back_buffer_img_format;
     VkExtent2D m_back_buffer_extent;
 
+    ModelViewProjMatrix m_mvp_data;
+
 public:
     /// Default constructor
     /// @param rendergraph The rendergraph used to build octree renderer on

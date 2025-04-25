@@ -369,14 +369,14 @@ void RenderGraph::update_buffers() {
     bool any_update_required = false;
     for (const auto &buffer : m_buffers) {
         std::invoke(buffer->m_on_check_for_update);
+        // TODO: A command buffer copy command is only required if the memory is not updated through std::memcpy!
         if (buffer->m_update_requested) {
             any_update_required = true;
         }
     }
 
-    // TODO: Use dedicated transfer queue instead of transfer queue for buffer updates!
-
     // Only start recording and submitting a command buffer on transfer queue if any update is required
+    // TODO: Use dedicated transfer queue instead of transfer queue for buffer updates!
     if (any_update_required) {
         m_device.execute("[RenderGraph::update_buffers]", VK_QUEUE_GRAPHICS_BIT, DebugLabelColor::MAGENTA,
                          [&](const CommandBuffer &cmd_buf) {
@@ -406,7 +406,8 @@ void RenderGraph::update_textures() {
             any_update_required = true;
         }
     }
-    // Only start recording and submitting a command buffer on transfer queue if any update is required
+    // Only start recording and submitting a command buffer if any update is required
+    // TODO: Use dedicated transfer queue instead of transfer queue for texture updates!
     if (any_update_required) {
         m_device.execute("[RenderGraph::update_textures]", VK_QUEUE_GRAPHICS_BIT, DebugLabelColor::LIME,
                          [&](const CommandBuffer &cmd_buf) {
@@ -431,7 +432,7 @@ void RenderGraph::update_write_descriptor_sets() {
     // in total (each resource descriptor can have an arbitrary number of write descriptor sets). Because we call
     // update_write_descriptor_sets() only once during rendergraph compilation, this is not a problem.
     for (const auto &descriptor : m_resource_descriptors) {
-        // Call descriptor set builder function for each descriptor
+        // Call descriptor set builder function (OnBuildWriteDescriptorSets) for each descriptor
         auto write_descriptor_sets = std::invoke(std::get<2>(descriptor), m_write_descriptor_set_builder);
         // Store the results of the function that was called
         std::move(write_descriptor_sets.begin(), write_descriptor_sets.end(),

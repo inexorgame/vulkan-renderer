@@ -6,7 +6,7 @@ namespace inexor::vulkan_renderer::wrapper {
 
 InexorException::InexorException(std::string message, std::source_location location)
     : std::runtime_error("\n\tFILE:\t  " + std::string(location.file_name()) +
-                         "\n\tFUNCTION:  " + std::string(location.function_name()) + "\n\tLINE:\t  " +
+                         "\n\tFUNCTION: " + std::string(location.function_name()) + "\n\tLINE:\t  " +
                          std::to_string(location.line()) + "\n\tERROR:\t  " + std::string(message)) {}
 
 VulkanException::VulkanException(std::string message,
