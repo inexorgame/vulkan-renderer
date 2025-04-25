@@ -343,9 +343,10 @@ void RenderGraph::record_command_buffer_for_pass(const CommandBuffer &cmd_buf, G
 void RenderGraph::render() {
     update_buffers();
     update_textures();
-    // TODO: Optimize this: Only call if any data changed and try to accumulate write descriptor sets
+    // TODO: Only call if any data changed and try to accumulate write descriptor sets
     update_write_descriptor_sets();
 
+    // TODO: Don't record everything into one command buffer!
     m_device.execute(
         "[RenderGraph::render]", VK_QUEUE_GRAPHICS_BIT, DebugLabelColor::CYAN,
         [&](const CommandBuffer &cmd_buf) {
@@ -355,6 +356,8 @@ void RenderGraph::render() {
             }
         },
         m_swapchains_imgs_available);
+
+    // TODO: Do the present call(s) for the swapchain(s) on the queue(s) for presenting
 }
 
 void RenderGraph::reset() {
@@ -370,6 +373,9 @@ void RenderGraph::update_buffers() {
             any_update_required = true;
         }
     }
+
+    // TODO: Use dedicated transfer queue instead of transfer queue for buffer updates!
+
     // Only start recording and submitting a command buffer on transfer queue if any update is required
     if (any_update_required) {
         m_device.execute("[RenderGraph::update_buffers]", VK_QUEUE_GRAPHICS_BIT, DebugLabelColor::MAGENTA,

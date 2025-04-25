@@ -156,6 +156,8 @@ void ExampleApp::render_frame() {
         recreate_swapchain();
         return;
     }
+
+    m_rendergraph->render();
 }
 
 void ExampleApp::check_octree_collisions() {
