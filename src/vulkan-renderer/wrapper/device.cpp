@@ -317,8 +317,7 @@ Device::Device(const Instance &inst,
 
     set_debug_name(m_device, "Device");
 
-    spdlog::trace(
-        "Loading Vulkan entrypoints directly from driver with volk metaloader (bypass Vulkan loader dispatch code)");
+    spdlog::trace("Loading Vulkan entrypoints directly from driver with volk metaloader");
     volkLoadDevice(m_device);
 
     // TODO: Refactor: Compute queue but no graphics queue? (Refactor selection)
