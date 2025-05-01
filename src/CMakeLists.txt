@@ -8,6 +8,7 @@ set(INEXOR_SOURCE_FILES
 
     vulkan-renderer/rendering/imgui/imgui_renderer.cpp
     vulkan-renderer/rendering/octree/octree_renderer.cpp
+    vulkan-renderer/rendering/octree/octree_vertices.cpp
     vulkan-renderer/rendering/render-graph/buffer.cpp
     vulkan-renderer/rendering/render-graph/graphics_pass.cpp
     vulkan-renderer/rendering/render-graph/graphics_pass_builder.cpp

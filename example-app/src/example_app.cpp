@@ -41,6 +41,7 @@ ExampleApp::ExampleApp(int argc, char *argv[]) {
     m_swapchain = std::make_unique<Swapchain>(*m_device, APP_NAME, *m_surface, *m_window, m_options.vsync_enabled);
 
     setup_render_graph();
+    setup_octree_rendering();
     recreate_swapchain();
 }
 
@@ -101,12 +102,13 @@ void ExampleApp::setup_window_input_callbacks() {
 void ExampleApp::initialize_spdlog() {
     spdlog::init_thread_pool(8192, 2);
     auto console_sink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
+    // A copy of the console output will be saved to a logfile
     auto file_sink = std::make_shared<spdlog::sinks::basic_file_sink_mt>(std::string(APP_NAME) + ".log", true);
     auto logger = std::make_shared<spdlog::async_logger>("main", spdlog::sinks_init_list{console_sink, file_sink},
                                                          spdlog::thread_pool(), spdlog::async_overflow_policy::block);
+    logger->flush_on(spdlog::level::trace);
     logger->set_level(spdlog::level::trace);
     logger->set_pattern("%Y-%m-%d %T.%f %^%l%$ %5t [%n] %v");
-    logger->flush_on(spdlog::level::trace);
     spdlog::set_default_logger(logger);
 }
 
@@ -156,7 +158,6 @@ void ExampleApp::render_frame() {
         recreate_swapchain();
         return;
     }
-
     m_rendergraph->render();
 }
 
@@ -177,15 +178,28 @@ void ExampleApp::setup_render_graph() {
         m_rendergraph->add_texture("Depth", TextureUsage::DEPTH_ATTACHMENT, VK_FORMAT_D32_SFLOAT_S8_UINT,
                                    swapchain_img_extent.width, swapchain_img_extent.height, VK_SAMPLE_COUNT_1_BIT);
 
-    m_octree_renderer = std::make_unique<OctreeRenderer>(m_rendergraph, m_back_buffer, m_depth_buffer);
-
     m_camera = std::make_shared<Camera>(glm::vec3{0.0f, 0.0f, 0.0f}, 0.0f, 0.0f, swapchain_img_extent.width,
                                         swapchain_img_extent.height);
+
+    m_octree_renderer = std::make_unique<OctreeRenderer>(m_rendergraph, m_back_buffer, m_depth_buffer);
 
     m_octree_renderer->set_camera(m_camera);
 
     m_imgui_renderer = std::make_unique<ImGuiRenderer>(m_rendergraph, m_octree_renderer->get_pass(), m_swapchain,
                                                        [&]() { update_imgui(); });
+}
+
+void ExampleApp::setup_octree_rendering() {
+    // Create 3 random worlds
+    m_octrees.clear();
+    m_octrees.push_back(world::create_random_world(2, {0.0f, 0.0f, 0.0f}, std::optional(42)));
+    m_octrees.push_back(world::create_random_world(2, {10.0f, 0.0f, 0.0f}, std::optional(60)));
+    m_octrees.push_back(world::create_random_world(2, {20.0f, 0.0f, 0.0f}, std::optional(30)));
+
+    // Register all octrees that were created to the octree renderer
+    for (const auto &octree : m_octrees) {
+        m_octree_renderer->add_octree(octree);
+    }
 }
 
 void ExampleApp::update_imgui() {
@@ -254,10 +268,9 @@ void ExampleApp::mouse_scroll_callback(GLFWwindow *, double, double) {}
 
 } // namespace inexor::vulkan_renderer::example_app
 
-using inexor::vulkan_renderer::example_app::ExampleApp;
-
 int main(int argc, char *argv[]) {
     try {
+        using inexor::vulkan_renderer::example_app::ExampleApp;
         std::unique_ptr<ExampleApp> my_renderer = std::make_unique<ExampleApp>(argc, argv);
         my_renderer->run();
     } catch (std::exception &exception) {

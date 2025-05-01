@@ -30,6 +30,7 @@ enum class BufferType {
     VERTEX_BUFFER,
     INDEX_BUFFER,
     UNIFORM_BUFFER,
+    // TODO: Support more buffer types (storage buffer, indirect buffer..)
 };
 
 // Forward declaration

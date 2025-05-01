@@ -217,7 +217,7 @@ public:
     /// @param min_sample_shading A minimum fraction of sample shading
     /// @return A reference to the dereferenced this pointer (allows method calls to be chained)
     [[nodiscard]] GraphicsPipelineBuilder &set_multisampling(VkSampleCountFlagBits sample_count,
-                                                             std::optional<float> min_sample_shading);
+                                                             std::optional<float> min_sample_shading = std::nullopt);
 
     /// Store the pipeline layout
     /// @param layout The pipeline layout

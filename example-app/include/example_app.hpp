@@ -6,6 +6,7 @@
 #include "inexor/vulkan-renderer/rendering/render-graph/render_graph.hpp"
 #include "inexor/vulkan-renderer/tools/camera.hpp"
 #include "inexor/vulkan-renderer/tools/cla_parser.hpp"
+#include "inexor/vulkan-renderer/world/cube.hpp"
 #include "inexor/vulkan-renderer/wrapper/device.hpp"
 #include "inexor/vulkan-renderer/wrapper/instance.hpp"
 #include "inexor/vulkan-renderer/wrapper/surface.hpp"
@@ -31,6 +32,7 @@ using tools::Camera;
 using tools::CameraMovement;
 using tools::CameraType;
 using tools::CommandLineArgumentParser;
+using world::Cube;
 using wrapper::Device;
 using wrapper::Instance;
 using wrapper::Surface;
@@ -57,7 +59,10 @@ private:
     std::shared_ptr<RenderGraph> m_rendergraph;
     std::weak_ptr<Texture> m_back_buffer;
     std::weak_ptr<Texture> m_depth_buffer;
+    
+    std::vector<std::shared_ptr<Cube>> m_octrees;
     std::unique_ptr<OctreeRenderer> m_octree_renderer;
+
     std::unique_ptr<ImGuiRenderer> m_imgui_renderer;
 
     float m_time_passed{0.0f};
@@ -70,6 +75,7 @@ private:
     void create_physical_device();
     void create_window();
     void initialize_spdlog();
+    void setup_octree_rendering();
     void setup_render_graph();
     void recreate_swapchain();
     void render_frame();
@@ -90,28 +96,22 @@ private:
     /// @param other A reference to the other instance of ExampleApp to swap with
     void swap(ExampleApp &other);
 
-    ///
-    /// @param
-    /// @param
-    /// @param
-    /// @param
-    /// @return
-    static VkBool32 validation_layer_debug_messenger_callback(VkDebugUtilsMessageSeverityFlagBitsEXT,
-                                                              VkDebugUtilsMessageTypeFlagsEXT,
-                                                              const VkDebugUtilsMessengerCallbackDataEXT *,
-                                                              void *);
+    /// The callback for validation messages (VK_EXT_debug_utils)
+    /// @param severity The severity of the message (info, warning, error)
+    /// @param type The type of message (validation, performance)
+    /// @param data Additional data related to the message
+    /// @param user_data Additional user-defined data related to the message
+    /// @return This will always return ``VK_FALSE``, meaning the app will continue to run
+    static VkBool32 validation_layer_debug_messenger_callback(VkDebugUtilsMessageSeverityFlagBitsEXT severity,
+                                                              VkDebugUtilsMessageTypeFlagsEXT type,
+                                                              const VkDebugUtilsMessengerCallbackDataEXT *data,
+                                                              void *user_data);
 
 public:
     /// Default constructor
     /// @param argc The number of arguments passed to the main function
     /// @param argv The arguments passed to the main function
     ExampleApp(int argc, char *argv[]);
-    ExampleApp(const ExampleApp &) = delete;
-    ExampleApp(ExampleApp &&) noexcept;
-    ~ExampleApp() = default;
-
-    ExampleApp &operator=(const ExampleApp &) = delete;
-    ExampleApp &operator=(ExampleApp &&) noexcept;
 
     void cursor_position_callback(GLFWwindow *, double, double);
     void keyboard_button_callback(GLFWwindow *, int, int, int, int);

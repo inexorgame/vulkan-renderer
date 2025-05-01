@@ -13,7 +13,6 @@
 #include "inexor/vulkan-renderer/wrapper/swapchain.hpp"
 
 #include <glm/glm.hpp>
-#include <glm/vec3.hpp>
 
 #include <memory>
 
@@ -35,12 +34,6 @@ using wrapper::pipelines::GraphicsPipeline;
 using wrapper::pipelines::GraphicsPipelineBuilder;
 using wrapper::pipelines::PipelineLayout;
 
-/// A data structure for octree vertices
-struct OctreeVertex {
-    glm::vec3 pos;
-    glm::vec3 color;
-};
-
 /// The model, view, and projection matrix used in a uniform buffer for rendering
 struct ModelViewProjMatrix {
     glm::mat4 model;
@@ -55,8 +48,6 @@ private:
     std::shared_ptr<Shader> m_octree_fragment;
     std::weak_ptr<GraphicsPass> m_octree_pass;
     std::shared_ptr<GraphicsPipeline> m_octree_pipeline;
-    std::weak_ptr<Buffer> m_mvp_matrix;
-    std::weak_ptr<Camera> m_camera;
 
     VkDescriptorSetLayout m_descriptor_set_layout{VK_NULL_HANDLE};
     VkDescriptorSet m_descriptor_set{VK_NULL_HANDLE};
@@ -65,7 +56,10 @@ private:
     VkFormat m_back_buffer_img_format;
     VkExtent2D m_back_buffer_extent;
 
-    ModelViewProjMatrix m_mvp_data;
+    ModelViewProjMatrix m_mvp_data{};
+    std::weak_ptr<Buffer> m_mvp_matrix;
+
+    std::weak_ptr<Camera> m_camera;
 
 public:
     /// Default constructor

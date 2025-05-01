@@ -407,12 +407,13 @@ void RenderGraph::update_textures() {
         }
     }
     // Only start recording and submitting a command buffer if any update is required
-    // TODO: Use dedicated transfer queue instead of transfer queue for texture updates!
+    // TODO: Use dedicated transfer queue instead of graphics queue for texture updates!
     if (any_update_required) {
         m_device.execute("[RenderGraph::update_textures]", VK_QUEUE_GRAPHICS_BIT, DebugLabelColor::LIME,
                          [&](const CommandBuffer &cmd_buf) {
                              for (const auto &texture : m_textures) {
                                  if (texture->m_update_requested) {
+                                     // TODO: Remove set_suboperation_debug_name entirely and use debug label?
                                      cmd_buf.set_suboperation_debug_name("[Texture|Destroy:" + texture->m_name + "]");
                                      texture->destroy();
                                      cmd_buf.set_suboperation_debug_name("[Texture|Create:" + texture->m_name + "]");
