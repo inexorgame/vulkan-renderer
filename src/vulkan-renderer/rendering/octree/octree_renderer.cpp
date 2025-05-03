@@ -50,6 +50,7 @@ OctreeRenderer::OctreeRenderer(const std::weak_ptr<RenderGraph> rendergraph,
             return builder.add_uniform_buffer_update(m_descriptor_set, m_mvp_matrix).build();
         });
 
+    // TODO: Replace with push_constant_range!
     // Setup uniform buffer for model/view/projection matrix
     m_mvp_matrix = rg->add_buffer("model/view/proj", BufferType::UNIFORM_BUFFER, [&]() {
         const auto camera = m_camera.lock();
@@ -65,9 +66,9 @@ OctreeRenderer::OctreeRenderer(const std::weak_ptr<RenderGraph> rendergraph,
 
     // Load the shaders used for octree rendering
     m_octree_fragment =
-        std::make_shared<Shader>(rg->device(), "Octree", VK_SHADER_STAGE_VERTEX_BIT, "shaders/octree.vert.spv");
+        std::make_shared<Shader>(rg->device(), "Octree|vert", VK_SHADER_STAGE_VERTEX_BIT, "shaders/octree.vert.spv");
     m_octree_vertex =
-        std::make_shared<Shader>(rg->device(), "Octree", VK_SHADER_STAGE_FRAGMENT_BIT, "shaders/octree.frag.spv");
+        std::make_shared<Shader>(rg->device(), "Octree|frag", VK_SHADER_STAGE_FRAGMENT_BIT, "shaders/octree.frag.spv");
 
     // Store the image format and extent of the back buffer
     m_back_buffer_img_format = back_buffer.lock()->format();
@@ -104,21 +105,32 @@ OctreeRenderer::OctreeRenderer(const std::weak_ptr<RenderGraph> rendergraph,
     });
 
     // Add the graphics pass for octree rendering
-    m_octree_pass = rg->add_graphics_pass(rg->get_graphics_pass_builder()
-                                              .set_on_record([&](const CommandBuffer &cmd_buf) {
-                                                  // Render all the cubes passed to the octree renderer
-                                                  for (const auto &cube : m_cubes) {
-                                                      auto cb = cube.lock();
-                                                      cmd_buf.bind_pipeline(m_octree_pipeline)
-                                                          .bind_vertex_buffer(cb->m_vertex_buffer)
-                                                          .bind_index_buffer(cb->m_index_buffer)
-                                                          .bind_descriptor_set(m_descriptor_set, m_octree_pipeline)
-                                                          .draw_indexed(cb->m_index_count);
-                                                  }
-                                              })
-                                              .writes_to(back_buffer)
-                                              .writes_to(depth_buffer)
-                                              .build("Octree", DebugLabelColor::RED));
+    m_octree_pass = rg->add_graphics_pass(
+        rg->get_graphics_pass_builder()
+            // TODO: We need to specify from which buffer(s) the graphics pass reads so rendergraph knows about it!
+            .set_on_record([&](const CommandBuffer &cmd_buf) {
+                // NOTE: This is one of those cases where we only have 1 pipeline per stage, meaning that in principle
+                // we could bind the pipeline in the rendergraph automatically before invoking the set_on_record command
+                // buffer recording function. However, to stay consistent, we should not bind pipelines in rendergraph
+                // automatically, since we explicitely mention that it's the job of the programmer to do this manually!
+                // The pipeline must be bound only once for rendering all octrees
+                cmd_buf.bind_pipeline(m_octree_pipeline);
+
+                // Render all the cubes passed to the octree renderer
+                for (const auto &cube : m_cubes) {
+                    auto cb = cube.lock();
+                    // TODO: Merge all vertex buffers of same type into one big buffer
+                    // and use offsets when drawing?
+                    cmd_buf.bind_vertex_buffer(cb->m_vertex_buffer)
+                        .bind_index_buffer(cb->m_index_buffer)
+                        // TODO: Do we need to bind descriptor set in the loop or only once before?
+                        .bind_descriptor_set(m_descriptor_set, m_octree_pipeline)
+                        .draw_indexed(cb->m_index_count);
+                }
+            })
+            .writes_to(back_buffer)
+            .writes_to(depth_buffer)
+            .build("Octree", DebugLabelColor::RED));
 }
 
 void OctreeRenderer::add_octree(std::weak_ptr<Cube> cube) {

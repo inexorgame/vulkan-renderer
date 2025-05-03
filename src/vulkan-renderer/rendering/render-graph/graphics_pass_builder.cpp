@@ -24,6 +24,7 @@ std::shared_ptr<GraphicsPass> GraphicsPassBuilder::build(std::string name, const
     auto graphics_pass = std::make_shared<GraphicsPass>(
         std::move(name), std::move(m_on_record_cmd_buffer), std::move(m_graphics_pass_reads),
         std::move(m_write_attachments), std::move(m_write_swapchains), pass_debug_color);
+    // NOTE: We could use RAII here to bind the call of reset() to some destructor call like a scope_guard does.
     reset();
     return graphics_pass;
 }

@@ -399,7 +399,7 @@ void Cube::update_polygon_cache() const {
         m_polygon_cache_valid = true;
         return;
     }
-    // This point should not be reached.
+    // TODO: Replace this with std::unreachable() once we will migrate to C++23
     assert(false);
 }
 void Cube::invalidate_polygon_cache() const {

@@ -16,6 +16,18 @@ namespace inexor::vulkan_renderer::rendering::octree {
 // 2) Each material comes with its own vertex structure (VkVertexInputAttributeDescription,
 // VkVertexInputBindingDescription), which means for every material we will likely need a separate vertex buffer!
 
+struct MaterialBase {
+    std::string name;
+    std::shared_ptr<Shader> vertex_shader;
+    std::shared_ptr<Shader> fragment_shader;
+    std::shared_ptr<PipelineLayout> pipeline_layout;
+    std::shared_ptr<GraphicsPipeline> pipeline;
+    VkPushConstantRange push_constant;
+    std::shared_ptr<DescriptorSetLayout> descriptor_set_layout;
+    std::vector<VkVertexInputBindingDescription> vertex_input_bindings;
+    std::vector<VkVertexInputAttributeDescription> vertex_input_attributes;
+};
+
 // This data applies to the entire octree, and not individual vertices
 struct OctreeMaterial {
     glm::vec3 position;
@@ -25,6 +37,8 @@ struct OctreeMaterial {
     std::weak_ptr<Buffer> vertex_buffer;
     std::weak_ptr<Buffer> index_buffer;
 };
+
+struct OctreeMaterialInstance : public OctreeMaterial {};
 
 /// A data structure for colored octree vertices
 struct SimpleColoredVertex {
