@@ -4,7 +4,7 @@
 #include "inexor/vulkan-renderer/wrapper/device.hpp"
 #include "inexor/vulkan-renderer/wrapper/exception.hpp"
 #include "inexor/vulkan-renderer/wrapper/make_info.hpp"
-#include "inexor/vulkan-renderer/wrapper/pipelines/pipeline.hpp"
+#include "inexor/vulkan-renderer/wrapper/pipelines/graphics_pipeline.hpp"
 
 #include <cassert>
 #include <memory>

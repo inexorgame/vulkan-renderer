@@ -1,4 +1,4 @@
-#include "inexor/vulkan-renderer/wrapper/pipelines/pipeline_builder.hpp"
+#include "inexor/vulkan-renderer/wrapper/pipelines/graphics_pipeline_builder.hpp"
 
 #include "inexor/vulkan-renderer/wrapper/device.hpp"
 #include "inexor/vulkan-renderer/wrapper/exception.hpp"
@@ -10,11 +10,13 @@ namespace inexor::vulkan_renderer::wrapper::pipelines {
 // Using declaration
 using wrapper::InexorException;
 
-GraphicsPipelineBuilder::GraphicsPipelineBuilder(const Device &device) : m_device(device) {
+GraphicsPipelineBuilder::GraphicsPipelineBuilder(const Device &device, const PipelineCache &pipeline_cache)
+    : m_device(device), m_pipeline_cache(pipeline_cache) {
     reset();
 }
 
-GraphicsPipelineBuilder::GraphicsPipelineBuilder(GraphicsPipelineBuilder &&other) noexcept : m_device(other.m_device) {
+GraphicsPipelineBuilder::GraphicsPipelineBuilder(GraphicsPipelineBuilder &&other) noexcept
+    : m_device(other.m_device), m_pipeline_cache(other.m_pipeline_cache) {
     // TODO: Check me!
     m_pipeline_rendering_ci = std::move(other.m_pipeline_rendering_ci);
     m_color_attachments = std::move(other.m_color_attachments);
@@ -100,8 +102,8 @@ std::shared_ptr<GraphicsPipeline> GraphicsPipelineBuilder::build(std::string nam
     });
 
     auto graphics_pipeline =
-        std::make_shared<GraphicsPipeline>(m_device, std::vector{m_descriptor_set_layout}, m_push_constant_ranges,
-                                           std::move(pipeline_ci), std::move(name));
+        std::make_shared<GraphicsPipeline>(m_device, m_pipeline_cache, std::vector{m_descriptor_set_layout},
+                                           m_push_constant_ranges, std::move(pipeline_ci), std::move(name));
 
     // NOTE: We reset the data of the builder here so it can be re-used
     reset();

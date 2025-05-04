@@ -167,7 +167,10 @@ void ExampleApp::check_octree_collisions() {
 
 void ExampleApp::setup_render_graph() {
     spdlog::trace("Setting up rendergraph");
-    m_rendergraph = std::make_shared<RenderGraph>(*m_device);
+
+    m_pipeline_cache = std::make_unique<PipelineCache>(*m_device, "vulkan_pipeline_cache.bin");
+
+    m_rendergraph = std::make_shared<RenderGraph>(*m_device, *m_pipeline_cache);
 
     const auto swapchain_img_extent = m_swapchain->extent();
     m_back_buffer =

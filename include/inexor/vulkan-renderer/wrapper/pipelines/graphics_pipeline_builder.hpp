@@ -3,7 +3,7 @@
 #include <vulkan/vulkan_core.h>
 
 #include "inexor/vulkan-renderer/wrapper/make_info.hpp"
-#include "inexor/vulkan-renderer/wrapper/pipelines/pipeline.hpp"
+#include "inexor/vulkan-renderer/wrapper/pipelines/graphics_pipeline.hpp"
 #include "inexor/vulkan-renderer/wrapper/shader.hpp"
 
 #include <spdlog/spdlog.h>
@@ -28,7 +28,7 @@ class RenderGraph;
 namespace inexor::vulkan_renderer::wrapper::pipelines {
 
 // Forward declaration
-class wrapper::Shader;
+class PipelineCache;
 
 // TODO: ComputePipelineBuilder
 
@@ -42,6 +42,9 @@ class GraphicsPipelineBuilder {
 private:
     /// The device wrapper reference
     const Device &m_device;
+
+    /// The Vulkan pipeline cache
+    const PipelineCache &m_pipeline_cache;
 
     // We are not using member initializers here:
     // Note that all members are initialized in the reset() method
@@ -111,7 +114,8 @@ private:
 
     /// Default constructor is private, so only rendergraph can access it
     /// @param device The device wrapper
-    explicit GraphicsPipelineBuilder(const Device &device);
+    /// @param pipeline_cache The Vulkan pipeline cache
+    GraphicsPipelineBuilder(const Device &device, const PipelineCache &pipeline_cache);
 
 public:
     GraphicsPipelineBuilder(const GraphicsPipelineBuilder &) = delete;

@@ -9,6 +9,7 @@
 #include "inexor/vulkan-renderer/world/cube.hpp"
 #include "inexor/vulkan-renderer/wrapper/device.hpp"
 #include "inexor/vulkan-renderer/wrapper/instance.hpp"
+#include "inexor/vulkan-renderer/wrapper/pipelines/pipeline_cache.hpp"
 #include "inexor/vulkan-renderer/wrapper/surface.hpp"
 #include "inexor/vulkan-renderer/wrapper/swapchain.hpp"
 #include "inexor/vulkan-renderer/wrapper/window.hpp"
@@ -38,6 +39,7 @@ using wrapper::Instance;
 using wrapper::Surface;
 using wrapper::Swapchain;
 using wrapper::Window;
+using wrapper::pipelines::PipelineCache;
 
 /// The command line arguments will be parsed into these options
 struct CommandLineOptions {
@@ -51,6 +53,7 @@ struct CommandLineOptions {
 class ExampleApp {
 private:
     CommandLineOptions m_options;
+    std::unique_ptr<PipelineCache> m_pipeline_cache;
     std::unique_ptr<Instance> m_instance;
     std::unique_ptr<Window> m_window;
     std::unique_ptr<Surface> m_surface;
@@ -59,7 +62,7 @@ private:
     std::shared_ptr<RenderGraph> m_rendergraph;
     std::weak_ptr<Texture> m_back_buffer;
     std::weak_ptr<Texture> m_depth_buffer;
-    
+
     std::vector<std::shared_ptr<Cube>> m_octrees;
     std::unique_ptr<OctreeRenderer> m_octree_renderer;
 

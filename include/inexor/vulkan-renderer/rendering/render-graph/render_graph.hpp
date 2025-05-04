@@ -9,8 +9,8 @@
 #include "inexor/vulkan-renderer/wrapper/descriptors/descriptor_set_layout_builder.hpp"
 #include "inexor/vulkan-renderer/wrapper/descriptors/descriptor_set_layout_cache.hpp"
 #include "inexor/vulkan-renderer/wrapper/descriptors/write_descriptor_set_builder.hpp"
-#include "inexor/vulkan-renderer/wrapper/pipelines/pipeline.hpp"
-#include "inexor/vulkan-renderer/wrapper/pipelines/pipeline_builder.hpp"
+#include "inexor/vulkan-renderer/wrapper/pipelines/graphics_pipeline.hpp"
+#include "inexor/vulkan-renderer/wrapper/pipelines/graphics_pipeline_builder.hpp"
 #include "inexor/vulkan-renderer/wrapper/pipelines/pipeline_layout.hpp"
 
 #include <spdlog/spdlog.h>
@@ -42,6 +42,7 @@ using wrapper::descriptors::DescriptorSetLayoutCache;
 using wrapper::descriptors::WriteDescriptorSetBuilder;
 using wrapper::pipelines::GraphicsPipeline;
 using wrapper::pipelines::GraphicsPipelineBuilder;
+using wrapper::pipelines::PipelineCache;
 using wrapper::pipelines::PipelineLayout;
 
 /// A rendergraph is a generic solution for rendering architecture.
@@ -299,7 +300,8 @@ public:
     /// Default constructor
     /// @note device and swapchain are not taken as a const reference because rendergraph needs to modify both
     /// @param device The device wrapper
-    RenderGraph(Device &device);
+    /// @param pipeline_cache The pipeline cache
+    RenderGraph(Device &device, const PipelineCache &pipeline_cache);
 
     RenderGraph(const RenderGraph &) = delete;
     // TODO: Implement me!

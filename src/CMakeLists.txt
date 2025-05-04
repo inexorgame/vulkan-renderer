@@ -43,8 +43,9 @@ set(INEXOR_SOURCE_FILES
     vulkan-renderer/wrapper/descriptors/descriptor_set_layout_cache.cpp
     vulkan-renderer/wrapper/descriptors/write_descriptor_set_builder.cpp
 
-    vulkan-renderer/wrapper/pipelines/pipeline.cpp
-    vulkan-renderer/wrapper/pipelines/pipeline_builder.cpp
+    vulkan-renderer/wrapper/pipelines/graphics_pipeline.cpp
+    vulkan-renderer/wrapper/pipelines/graphics_pipeline_builder.cpp
+    vulkan-renderer/wrapper/pipelines/pipeline_cache.cpp
     vulkan-renderer/wrapper/pipelines/pipeline_layout.cpp
 
     vulkan-renderer/wrapper/synchronization/fence.cpp

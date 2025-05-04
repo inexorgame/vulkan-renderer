@@ -3,7 +3,8 @@
 #include "inexor/vulkan-renderer/wrapper/commands/command_buffer.hpp"
 #include "inexor/vulkan-renderer/wrapper/device.hpp"
 #include "inexor/vulkan-renderer/wrapper/exception.hpp"
-#include "inexor/vulkan-renderer/wrapper/pipelines/pipeline_builder.hpp"
+#include "inexor/vulkan-renderer/wrapper/pipelines/graphics_pipeline_builder.hpp"
+#include "inexor/vulkan-renderer/wrapper/pipelines/pipeline_cache.hpp"
 #include "inexor/vulkan-renderer/wrapper/swapchain.hpp"
 
 #include <unordered_set>
@@ -13,8 +14,8 @@ namespace inexor::vulkan_renderer::rendering::render_graph {
 // Using declaration
 using wrapper::InexorException;
 
-RenderGraph::RenderGraph(Device &device)
-    : m_device(device), m_graphics_pipeline_builder(device), m_descriptor_set_layout_builder(device),
+RenderGraph::RenderGraph(Device &device, const PipelineCache &pipeline_cache)
+    : m_device(device), m_graphics_pipeline_builder(device, pipeline_cache), m_descriptor_set_layout_builder(device),
       m_descriptor_set_allocator(m_device), m_write_descriptor_set_builder(m_device) {}
 
 std::weak_ptr<GraphicsPass> RenderGraph::add_graphics_pass(std::shared_ptr<GraphicsPass> pass) {

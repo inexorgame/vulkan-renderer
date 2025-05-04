@@ -155,6 +155,12 @@ VkPhysicalDeviceDynamicRenderingFeatures make_info(VkPhysicalDeviceDynamicRender
 }
 
 template <>
+VkPipelineCacheCreateInfo make_info(VkPipelineCacheCreateInfo info) {
+    info.sType = VK_STRUCTURE_TYPE_PIPELINE_CACHE_CREATE_INFO;
+    return info;
+}
+
+template <>
 VkPipelineColorBlendStateCreateInfo make_info(VkPipelineColorBlendStateCreateInfo info) {
     info.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
     return info;

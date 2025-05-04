@@ -1,14 +1,16 @@
-#include "inexor/vulkan-renderer/wrapper/pipelines/pipeline.hpp"
+#include "inexor/vulkan-renderer/wrapper/pipelines/graphics_pipeline.hpp"
 
 #include "inexor/vulkan-renderer/wrapper/device.hpp"
 #include "inexor/vulkan-renderer/wrapper/exception.hpp"
 #include "inexor/vulkan-renderer/wrapper/make_info.hpp"
+#include "inexor/vulkan-renderer/wrapper/pipelines/pipeline_cache.hpp"
 
 #include <utility>
 
 namespace inexor::vulkan_renderer::wrapper::pipelines {
 
 GraphicsPipeline::GraphicsPipeline(const Device &device,
+                                   const PipelineCache &pipeline_cache,
                                    std::span<const VkDescriptorSetLayout> descriptor_set_layouts,
                                    std::span<const VkPushConstantRange> push_constant_ranges,
                                    VkGraphicsPipelineCreateInfo pipeline_ci,
@@ -22,9 +24,8 @@ GraphicsPipeline::GraphicsPipeline(const Device &device,
     // Set the pipeline layout in the pipeline create info struct
     pipeline_ci.layout = m_pipeline_layout->m_pipeline_layout;
 
-    // Then create the graphics pipeline
-    if (const auto result =
-            vkCreateGraphicsPipelines(m_device.device(), nullptr, 1, &pipeline_ci, nullptr, &m_pipeline);
+    if (const auto result = vkCreateGraphicsPipelines(m_device.device(), pipeline_cache.m_pipeline_cache, 1,
+                                                      &pipeline_ci, nullptr, &m_pipeline);
         result != VK_SUCCESS) {
         throw VulkanException("Error: vkCreateGraphicsPipelines failed!", result, m_name);
     }
@@ -32,6 +33,7 @@ GraphicsPipeline::GraphicsPipeline(const Device &device,
 }
 
 GraphicsPipeline::GraphicsPipeline(GraphicsPipeline &&other) noexcept : m_device(other.m_device) {
+    // TODO: Check me!
     m_pipeline = std::exchange(other.m_pipeline, VK_NULL_HANDLE);
     m_pipeline_layout = std::exchange(other.m_pipeline_layout, nullptr);
     m_name = std::move(other.m_name);

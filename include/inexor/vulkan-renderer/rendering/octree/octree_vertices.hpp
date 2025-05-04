@@ -16,6 +16,7 @@ namespace inexor::vulkan_renderer::rendering::octree {
 // 2) Each material comes with its own vertex structure (VkVertexInputAttributeDescription,
 // VkVertexInputBindingDescription), which means for every material we will likely need a separate vertex buffer!
 
+/*
 struct MaterialBase {
     std::string name;
     std::shared_ptr<Shader> vertex_shader;
@@ -27,6 +28,7 @@ struct MaterialBase {
     std::vector<VkVertexInputBindingDescription> vertex_input_bindings;
     std::vector<VkVertexInputAttributeDescription> vertex_input_attributes;
 };
+*/
 
 // This data applies to the entire octree, and not individual vertices
 struct OctreeMaterial {
