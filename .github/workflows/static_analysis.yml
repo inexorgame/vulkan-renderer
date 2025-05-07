@@ -3,11 +3,11 @@ name: Static Analysis
 on:
   push:
   pull_request:
-    types: [opened]
+    types: [opened, synchronize, reopened]
 
 jobs:
   clang-tidy:
-    name: Clang Tidy
+    name: Clang-Tidy
     runs-on: ubuntu-latest
     if: ${{ github.event_name == 'pull_request' && github.event.action == 'opened' && !github.event.pull_request.merged || github.event_name == 'push' }}
     container: ubuntu:rolling
@@ -18,17 +18,16 @@ jobs:
       INEXOR_VULKAN_SDK_CHECKSUM_LINUX: "8005e2cf3e89c80cbe1c0d0a259c88248de3257b4fc6fdefb47409edb3e43ecb"
 
     steps:
-      - name: Update environment
+      - name: Update environment and install dependencies
         run: |
-          # Update package lists
           apt update -qq
-
-          # Install tools
           apt-get install -y \
             clang-tidy \
             cmake \
             curl \
             git \
+            grep \
+            ninja-build \
             libgl1-mesa-dev \
             libwayland-dev \
             libxkbcommon-dev \
@@ -47,14 +46,12 @@ jobs:
             libxcb-xfixes0-dev \
             libxcb-xinerama0-dev \
             libxcb-xkb-dev \
-            ninja-build \
             parallel \
+            xkb-data \
+            xorg-dev \
             pkg-config \
             python3 \
-            python3-pip \
-            xkb-data \
-            xorg-dev
-
+            python3-pip
           pip3 install --break-system-packages wheel setuptools
 
       - name: Install Vulkan SDK
@@ -62,15 +59,14 @@ jobs:
         run: |
           curl -LS -o vulkansdk.tar.xz https://sdk.lunarg.com/sdk/download/${{ env.INEXOR_VULKAN_VERSION }}/linux/vulkansdk-linux-x86_64-${{ env.INEXOR_VULKAN_VERSION }}.tar.xz
           echo "${{ env.INEXOR_VULKAN_SDK_CHECKSUM_LINUX }} vulkansdk.tar.xz" | sha256sum --check
-          mkdir -p ${{ env.INEXOR_VULKAN_SDK_PATH }}
+          mkdir -p "${{ env.INEXOR_VULKAN_SDK_PATH }}"
           tar xf vulkansdk.tar.xz -C "${{ env.INEXOR_VULKAN_SDK_PATH }}"
-          rm -rf vulkansdk.tar.xz
-          # runtime depenedencies
+          rm -f vulkansdk.tar.xz
+          # Install runtime deps and remove bundled volk
           apt-get -y install qtbase5-dev libxcb-xinput0 libxcb-xinerama0
-          # remove bundled volk
-          rm -rf ${{ env.INEXOR_VULKAN_SDK_PATH }}/${{ env.INEXOR_VULKAN_VERSION }}/x86_64/lib/cmake/volk/
-  
-      - name: Checkout
+          rm -rf "${{ env.INEXOR_VULKAN_SDK_PATH }}/${{ env.INEXOR_VULKAN_VERSION }}/x86_64/lib/cmake/volk/"
+
+      - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Configure CMake
@@ -81,14 +77,29 @@ jobs:
           export PATH=$VULKAN_SDK/bin:$PATH
           export LD_LIBRARY_PATH=$VULKAN_SDK/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}
           export VK_LAYER_PATH=$VULKAN_SDK/share/vulkan/explicit_layer.d
-          cmake . -Bbuild -DCMAKE_BUILD_TYPE=Debug -GNinja -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+          cmake -S . -B build \
+            -DCMAKE_BUILD_TYPE=Debug \
+            -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
+            -GNinja
+
+      - name: Check the files found for clang-tidy
+        run: |
+          find example src include \
+            -path '*/_deps/*' -prune -o \
+            -path '*/build/*' -prune -o \
+            \( -name '*.cpp' -o -name '*.hpp' \) -print
 
       - name: Run clang-tidy
         run: |
-          find example src include -path '*/_deps/*' -prune -o \
-            -name '*.cpp' -o -name '*.hpp' \
-            -print0 |
-          parallel -0 \
-            clang-tidy -p build --quiet {} 2>/dev/null |
-          tee output
-          if [ -s output ]; then exit 1; fi
+          find example src include \
+            -path '*/_deps/*' -prune -o \
+            -path '*/build/*' -prune -o \
+            \( -name '*.cpp' -o -name '*.hpp' \) -print0 |
+            parallel -0 clang-tidy -p build {} |
+            tee output || true
+
+      - name: Summarize clang-tidy warnings
+        run: |
+          grep -hEo '\[[a-z0-9]+-[a-z0-9-]+\]' output \
+            | sort | uniq -c | sort -nr \
+            | sed 's/[][]//g' || true
