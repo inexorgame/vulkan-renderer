@@ -181,8 +181,9 @@ void ExampleApp::setup_render_graph() {
         m_rendergraph->add_texture("Depth", TextureUsage::DEPTH_ATTACHMENT, VK_FORMAT_D32_SFLOAT_S8_UINT,
                                    swapchain_img_extent.width, swapchain_img_extent.height, VK_SAMPLE_COUNT_1_BIT);
 
-    m_camera = std::make_shared<Camera>(glm::vec3{0.0f, 0.0f, 0.0f}, 0.0f, 0.0f, swapchain_img_extent.width,
-                                        swapchain_img_extent.height);
+    m_camera = std::make_shared<Camera>(glm::vec3{0.0f, 0.0f, 0.0f}, 0.0f, 0.0f,
+                                        static_cast<float>(swapchain_img_extent.width),
+                                        static_cast<float>(swapchain_img_extent.height));
 
     m_octree_renderer = std::make_unique<OctreeRenderer>(m_rendergraph, m_back_buffer, m_depth_buffer);
 

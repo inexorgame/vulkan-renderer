@@ -1,9 +1,9 @@
 #pragma once
 
-#include "inexor/vulkan-renderer/rendering/render-graph/buffer.hpp"
-#include "inexor/vulkan-renderer/rendering/render-graph/graphics_pass.hpp"
-#include "inexor/vulkan-renderer/rendering/render-graph/render_graph.hpp"
-#include "inexor/vulkan-renderer/rendering/render-graph/texture.hpp"
+#include "inexor/vulkan-renderer/render-graph/buffer.hpp"
+#include "inexor/vulkan-renderer/render-graph/graphics_pass.hpp"
+#include "inexor/vulkan-renderer/render-graph/render_graph.hpp"
+#include "inexor/vulkan-renderer/render-graph/texture.hpp"
 #include "inexor/vulkan-renderer/tools/camera.hpp"
 #include "inexor/vulkan-renderer/world/cube.hpp"
 #include "inexor/vulkan-renderer/wrapper/pipelines/graphics_pipeline.hpp"

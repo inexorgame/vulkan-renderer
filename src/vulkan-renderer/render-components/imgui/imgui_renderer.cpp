@@ -1,4 +1,4 @@
-#include "inexor/vulkan-renderer/rendering/imgui/imgui_renderer.hpp"
+#include "inexor/vulkan-renderer/render-components/imgui/imgui_renderer.hpp"
 
 #include "inexor/vulkan-renderer/wrapper/descriptors/descriptor_set_allocator.hpp"
 #include "inexor/vulkan-renderer/wrapper/descriptors/descriptor_set_layout_builder.hpp"
@@ -88,18 +88,18 @@ ImGuiRenderer::ImGuiRenderer(std::weak_ptr<RenderGraph> rendergraph,
                             }
                         });
 
+    using wrapper::descriptors::DescriptorType;
+
     // Descriptor management
     rg->add_resource_descriptor(
         [&](DescriptorSetLayoutBuilder &builder) {
-            m_descriptor_set_layout =
-                builder.add_combined_image_sampler(VK_SHADER_STAGE_FRAGMENT_BIT).build("ImGui|Texture");
+            m_descriptor_set_layout = builder.add(DescriptorType::COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT)
+                                          .build("ImGui|Texture");
         },
         [&](DescriptorSetAllocator &allocator) {
             m_descriptor_set = allocator.allocate("ImGui|Texture", m_descriptor_set_layout);
         },
-        [&](WriteDescriptorSetBuilder &builder) {
-            return builder.add_combined_image_sampler_update(m_descriptor_set, m_imgui_texture).build();
-        });
+        [&](WriteDescriptorSetBuilder &builder) { return builder.add(m_descriptor_set, m_imgui_texture).build(); });
 
     // Setup the ImGui graphics pipeline
     rg->add_graphics_pipeline([&](GraphicsPipelineBuilder &builder) {

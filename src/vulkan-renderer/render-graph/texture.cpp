@@ -1,4 +1,4 @@
-#include "inexor/vulkan-renderer/rendering/render-graph/texture.hpp"
+#include "inexor/vulkan-renderer/render-graph/texture.hpp"
 
 #include "inexor/vulkan-renderer/wrapper/commands/command_buffer.hpp"
 #include "inexor/vulkan-renderer/wrapper/device.hpp"

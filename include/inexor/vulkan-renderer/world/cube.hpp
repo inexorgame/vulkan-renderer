@@ -1,6 +1,6 @@
 #pragma once
 
-#include "inexor/vulkan-renderer/rendering/render-graph/buffer.hpp"
+#include "inexor/vulkan-renderer/render-graph/buffer.hpp"
 #include "inexor/vulkan-renderer/world/indentation.hpp"
 
 #include <glm/gtx/vector_angle.hpp>

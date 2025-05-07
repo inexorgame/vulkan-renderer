@@ -1,8 +1,14 @@
 #pragma once
 
+#include "inexor/vulkan-renderer/render-graph/buffer.hpp"
+#include "inexor/vulkan-renderer/render-graph/texture.hpp"
+#include "inexor/vulkan-renderer/wrapper/exception.hpp"
+#include "inexor/vulkan-renderer/wrapper/make_info.hpp"
+
 #include <volk.h>
 
 #include <memory>
+#include <variant>
 #include <vector>
 
 namespace inexor::vulkan_renderer::wrapper {
@@ -39,26 +45,56 @@ public:
     /// @param device The device wrapper
     explicit WriteDescriptorSetBuilder(const Device &device);
 
-    WriteDescriptorSetBuilder(const WriteDescriptorSetBuilder &) = default;
-    WriteDescriptorSetBuilder(WriteDescriptorSetBuilder &&) noexcept;
-    ~WriteDescriptorSetBuilder() = default;
+    /// Add a new entry to the write descriptor set builder
+    /// @param descriptor_set The descriptor set
+    /// @param descriptor_data Either a buffer or a texture
+    /// @param descriptor_count The descriptor count (``1`` by default)
+    [[nodiscard]] auto add(const VkDescriptorSet descriptor_set,
+                           std::variant<std::weak_ptr<Texture>, std::weak_ptr<Buffer>> descriptor_data,
+                           std::uint32_t descriptor_count = 1) {
+        if (!descriptor_set) {
+            throw InexorException("Error: Parameter 'descriptor_set' is invalid!");
+        }
 
-    WriteDescriptorSetBuilder &operator=(const WriteDescriptorSetBuilder &) = default;
-    WriteDescriptorSetBuilder &operator=(WriteDescriptorSetBuilder &&) = delete;
+        auto write_descriptor_set = wrapper::make_info<VkWriteDescriptorSet>({
+            .dstSet = descriptor_set,
+            .dstBinding = m_binding,
+            .dstArrayElement = 0,
+            .descriptorCount = descriptor_count,
+        });
 
-    /// Add a write descriptor set for a uniform buffer
-    /// @param descriptor_set The destination descriptor set
-    /// @param uniform_buffer The rendergraph uniform buffer
-    /// @return A reference to the dereferenced ``this`` pointer
-    WriteDescriptorSetBuilder &add_uniform_buffer_update(VkDescriptorSet descriptor_set,
-                                                         std::weak_ptr<Buffer> uniform_buffer);
+        // This short code is presented to you by the magic of variant-based polymorphism :)
+        // Handle the variant type (either Texture or Buffer)
+        std::visit(
+            [&write_descriptor_set](auto &&descriptor) {
+                using T = std::decay_t<decltype(descriptor)>;
+                if constexpr (std::is_same_v<T, std::weak_ptr<Texture>>) {
+                    if (auto texture = descriptor.lock(); texture) {
+                        write_descriptor_set.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+                        write_descriptor_set.pImageInfo = &texture->m_descriptor_img_info;
+                    } else {
+                        throw InexorException("Error: Texture is expired!");
+                    }
+                } else if constexpr (std::is_same_v<T, std::weak_ptr<Buffer>>) {
+                    if (auto buffer = descriptor.lock(); buffer) {
+                        // TODO: Distinguish type by buffer->type! (uniform ? storage? ..)
+                        write_descriptor_set.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+                        write_descriptor_set.pBufferInfo = &buffer->m_descriptor_buffer_info;
+                    } else {
+                        throw InexorException("Error: Buffer is expired!");
+                    }
+                } else {
+                    // TODO: Support more descriptor types
+                    throw InexorException("Error: Invalid descriptor type in std::variant!");
+                }
+            },
+            descriptor_data);
 
-    /// Add a write descriptor set for a combined image sampler
-    /// @param descriptor_set The destination descriptor set
-    /// @param texture_image The rendergraph texture
-    /// @return A reference to the dereferenced ``this`` pointer
-    WriteDescriptorSetBuilder &add_combined_image_sampler_update(VkDescriptorSet descriptor_set,
-                                                                 std::weak_ptr<Texture> texture_image);
+        m_write_descriptor_sets.push_back(write_descriptor_set);
+        m_binding++;
+        return *this;
+    }
+
     /// Return the write descriptor sets and reset the builder
     /// @return A std::vector of VkWriteDescriptorSet
     [[nodiscard]] std::vector<VkWriteDescriptorSet> build();

@@ -27,6 +27,7 @@ PipelineCache::PipelineCache(const Device &device, std::string cache_file_name)
         result != VK_SUCCESS) {
         throw VulkanException("vkCreatePipelineCache failed!", result, "m_pipeline_cache");
     }
+    m_device.set_debug_name(m_pipeline_cache, "Pipeline Cache");
 }
 
 PipelineCache::~PipelineCache() {

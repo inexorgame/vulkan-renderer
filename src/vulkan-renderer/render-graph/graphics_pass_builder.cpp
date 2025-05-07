@@ -1,4 +1,4 @@
-#include "inexor/vulkan-renderer/rendering/render-graph/graphics_pass_builder.hpp"
+#include "inexor/vulkan-renderer/render-graph/graphics_pass_builder.hpp"
 
 #include "inexor/vulkan-renderer/wrapper/exception.hpp"
 

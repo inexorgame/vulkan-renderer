@@ -1,6 +1,6 @@
-#include "inexor/vulkan-renderer/rendering/octree/octree_renderer.hpp"
+#include "inexor/vulkan-renderer/render-components/octree/octree_renderer.hpp"
 
-#include "inexor/vulkan-renderer/rendering/octree/octree_vertices.hpp"
+#include "inexor/vulkan-renderer/render-components/octree/octree_vertices.hpp"
 #include "inexor/vulkan-renderer/wrapper/commands/command_buffer.hpp"
 #include "inexor/vulkan-renderer/wrapper/descriptors/descriptor_set_allocator.hpp"
 #include "inexor/vulkan-renderer/wrapper/descriptors/descriptor_set_layout_builder.hpp"
@@ -33,10 +33,13 @@ OctreeRenderer::OctreeRenderer(const std::weak_ptr<RenderGraph> rendergraph,
     // NOTE: We already checked if rendergraph is a valid pointer earlier, we don't need to check here if rg is valid
     auto rg = rendergraph.lock();
 
+    using wrapper::descriptors::DescriptorType;
+
     // Descriptor management for the model/view/projection uniform buffer
     rg->add_resource_descriptor(
         [&](DescriptorSetLayoutBuilder &builder) {
-            m_descriptor_set_layout = builder.add_uniform_buffer(VK_SHADER_STAGE_VERTEX_BIT).build("model/view/proj");
+            m_descriptor_set_layout =
+                builder.add(DescriptorType::UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT).build("model/view/proj");
         },
         [&](DescriptorSetAllocator &allocator) {
             m_descriptor_set = allocator.allocate("model/view/proj", m_descriptor_set_layout);
@@ -47,7 +50,7 @@ OctreeRenderer::OctreeRenderer(const std::weak_ptr<RenderGraph> rendergraph,
             // TODO: Multiply view and perspective matrix on cpu and pass as one matrix!
             // TODO: Use one big descriptor (array?) and pass view*perspective and array index as push constant!
             // This will require changes to DescriptorSetLayoutBuilder and more!
-            return builder.add_uniform_buffer_update(m_descriptor_set, m_mvp_matrix).build();
+            return builder.add(m_descriptor_set, m_mvp_matrix).build();
         });
 
     // TODO: Replace with push_constant_range!
@@ -115,12 +118,10 @@ OctreeRenderer::OctreeRenderer(const std::weak_ptr<RenderGraph> rendergraph,
                 // automatically, since we explicitely mention that it's the job of the programmer to do this manually!
                 // The pipeline must be bound only once for rendering all octrees
                 cmd_buf.bind_pipeline(m_octree_pipeline);
-
-                // Render all the cubes passed to the octree renderer
+                // Render all the cubes which are registered to the octree renderer
                 for (const auto &cube : m_cubes) {
                     auto cb = cube.lock();
-                    // TODO: Merge all vertex buffers of same type into one big buffer
-                    // and use offsets when drawing?
+                    // TODO: Merge all vertex buffers of same type into one big buffer and use offsets when drawing?
                     cmd_buf.bind_vertex_buffer(cb->m_vertex_buffer)
                         .bind_index_buffer(cb->m_index_buffer)
                         // TODO: Do we need to bind descriptor set in the loop or only once before?

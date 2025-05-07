@@ -6,14 +6,15 @@ set(INEXOR_SOURCE_FILES
     vulkan-renderer/io/nxoc_parser.cpp
     vulkan-renderer/io/octree_parser.cpp
 
-    vulkan-renderer/rendering/imgui/imgui_renderer.cpp
-    vulkan-renderer/rendering/octree/octree_renderer.cpp
-    vulkan-renderer/rendering/octree/octree_vertices.cpp
-    vulkan-renderer/rendering/render-graph/buffer.cpp
-    vulkan-renderer/rendering/render-graph/graphics_pass.cpp
-    vulkan-renderer/rendering/render-graph/graphics_pass_builder.cpp
-    vulkan-renderer/rendering/render-graph/render_graph.cpp
-    vulkan-renderer/rendering/render-graph/texture.cpp
+    vulkan-renderer/render-components/imgui/imgui_renderer.cpp
+    vulkan-renderer/render-components/octree/octree_renderer.cpp
+    vulkan-renderer/render-components/octree/octree_vertices.cpp
+    
+    vulkan-renderer/render-graph/buffer.cpp
+    vulkan-renderer/render-graph/graphics_pass.cpp
+    vulkan-renderer/render-graph/graphics_pass_builder.cpp
+    vulkan-renderer/render-graph/render_graph.cpp
+    vulkan-renderer/render-graph/texture.cpp
 
     vulkan-renderer/tools/camera.cpp
     vulkan-renderer/tools/cla_parser.cpp

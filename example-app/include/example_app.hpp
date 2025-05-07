@@ -1,9 +1,9 @@
 #pragma once
 
 #include "inexor/vulkan-renderer/input/keyboard_mouse_data.hpp"
-#include "inexor/vulkan-renderer/rendering/imgui/imgui_renderer.hpp"
-#include "inexor/vulkan-renderer/rendering/octree/octree_renderer.hpp"
-#include "inexor/vulkan-renderer/rendering/render-graph/render_graph.hpp"
+#include "inexor/vulkan-renderer/render-components/imgui/imgui_renderer.hpp"
+#include "inexor/vulkan-renderer/render-components/octree/octree_renderer.hpp"
+#include "inexor/vulkan-renderer/render-graph/render_graph.hpp"
 #include "inexor/vulkan-renderer/tools/camera.hpp"
 #include "inexor/vulkan-renderer/tools/cla_parser.hpp"
 #include "inexor/vulkan-renderer/world/cube.hpp"

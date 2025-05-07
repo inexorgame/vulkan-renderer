@@ -13,6 +13,7 @@ DescriptorPoolAllocator::DescriptorPoolAllocator(DescriptorPoolAllocator &&other
 }
 
 VkDescriptorPool DescriptorPoolAllocator::request_new_descriptor_pool() {
+    // TODO: Expose this as a parameter!
     // When creating a new descriptor pool we use these pool sizes as default values
     // Adapt to other pool types as needed in the future
     const std::vector<VkDescriptorPoolSize> DEFAULT_POOL_SIZES{
