@@ -1,0 +1,52 @@
+name: Build Code
+
+on:
+  push:
+  pull_request:
+    types: [opened]
+
+jobs:
+  linux:
+    name: Build Code [DOCKER]
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Docker build
+        run: |
+          docker login --username "${{ secrets.GH_DOCKER_USERNAME }}" --password "${{ secrets.GH_DOCKER_PASSWORD }}" ghcr.io
+          docker pull ghcr.io/iamnothanni/inexor-vulkan-renderer:latest
+          
+          # Debug: List files in the workspace to confirm CMakeLists.txt exists
+          ls -alh ${{ github.workspace }}
+          
+          docker run --rm -v ${{ github.workspace }}:/workspace -w /workspace ghcr.io/iamnothanni/inexor-vulkan-renderer:latest bash -c "
+            # Debug: List files inside the container workspace
+            ls -alh /workspace
+            
+            # Ensure environment variables are set
+            echo \"Vulkan SDK Path: $VULKAN_SDK\"
+            echo \"CC: $CC\"
+            echo \"CXX: $CXX\"
+            
+            # Set the environment variables needed for the build
+            export CC=${{ matrix.config.cc }}
+            export CXX=${{ matrix.config.cxx }}
+            export VULKAN_SDK=\"${{ env.INEXOR_VULKAN_SDK_PATH }}/${{ env.INEXOR_VULKAN_VERSION }}/x86_64\"
+            export PATH=\$VULKAN_SDK/bin:\$PATH
+            export LD_LIBRARY_PATH=\$VULKAN_SDK/lib\${LD_LIBRARY_PATH:+:\$LD_LIBRARY_PATH}
+            export VK_LAYER_PATH=\$VULKAN_SDK/share/vulkan/explicit_layer.d
+            
+            # Debug: Verify environment variables
+            echo \"PATH: \$PATH\"
+            echo \"LD_LIBRARY_PATH: \$LD_LIBRARY_PATH\"
+            echo \"VK_LAYER_PATH: \$VK_LAYER_PATH\"
+            
+            # Configure the project with CMake
+            cmake . -B build -DCMAKE_BUILD_TYPE=${{ matrix.config.build_type }} -DINEXOR_BUILD_BENCHMARKS=OFF -DINEXOR_BUILD_TESTS=OFF -DCMAKE_CXX_FLAGS=\"-Wall -Wextra\" -GNinja
+            
+            # Build the project
+            cmake --build build
+          "
