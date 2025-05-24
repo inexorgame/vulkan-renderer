@@ -1,6 +1,6 @@
 #pragma once
 
-#include "inexor/vulkan-renderer/render-graph/buffer.hpp"
+#include "inexor/vulkan-renderer/render-graph/buffer_resource.hpp"
 #include "inexor/vulkan-renderer/wrapper/image.hpp"
 #include "inexor/vulkan-renderer/wrapper/synchronization/fence.hpp"
 
@@ -33,9 +33,9 @@ class Fence;
 namespace inexor::vulkan_renderer::wrapper::commands {
 
 // Using declaration
+using render_graph::BufferResource;
+using render_graph::BufferType;
 using render_graph::RenderGraph;
-using rendering::render_graph::Buffer;
-using rendering::render_graph::BufferType;
 using wrapper::pipelines::GraphicsPipeline;
 using wrapper::synchronization::Fence;
 
@@ -76,15 +76,9 @@ public:
     /// @param name The internal debug marker name of the command buffer (must not be empty)
     CommandBuffer(const wrapper::Device &device, VkCommandPool cmd_pool, std::string name);
 
-    CommandBuffer(const CommandBuffer &) = delete;
-    CommandBuffer(CommandBuffer &&) noexcept;
-
     /// @note Command buffers are allocated from a command pool, meaning the memory required for this will be
     /// freed if the corresponding command pool is destroyed. Command buffers are not freed in the Destructor.
     ~CommandBuffer() = default;
-
-    CommandBuffer &operator=(const CommandBuffer &) = delete;
-    CommandBuffer &operator=(CommandBuffer &&) = delete;
 
     /// Call vkCmdBeginDebugUtilsLabelEXT
     /// @param name The name of the debug label
@@ -106,7 +100,7 @@ public:
     /// @param descriptor_set The descriptor set to bind
     /// @param pipeline The graphics pipeline whose pipeline layout will be used
     /// @return A const reference to the this pointer (allowing method calls to be chained)
-    const CommandBuffer &bind_descriptor_set(VkDescriptorSet desc_set, std::weak_ptr<GraphicsPipeline> pipeline) const;
+    const CommandBuffer &bind_descriptor_set(VkDescriptorSet desc_set, const GraphicsPipeline &pipeline) const;
 
     // TODO: Implement more parameters of vkCmdBindDescriptorSets in bind_descriptor_set if necessary
     // TODO: Implement bind_descriptor_sets if binding multiple descriptor sets is necessary
@@ -116,7 +110,7 @@ public:
     /// @param index_type The index type to use (``VK_INDEX_TYPE_UINT32`` by default)
     /// @param offset The offset (``0`` by default)
     /// @return A const reference to the this pointer (allowing method calls to be chained)
-    const CommandBuffer &bind_index_buffer(std::weak_ptr<Buffer> buffer,
+    const CommandBuffer &bind_index_buffer(VkBuffer buffer,
                                            VkIndexType index_type = VK_INDEX_TYPE_UINT32, // NOLINT
                                            VkDeviceSize offset = 0) const;
 
@@ -124,7 +118,7 @@ public:
     /// @param pipeline The graphics pipeline to bind
     /// @param bind_point The pipeline bind point (``VK_PIPELINE_BIND_POINT_GRAPHICS`` by default)
     /// @return A const reference to the this pointer (allowing method calls to be chained)
-    const CommandBuffer &bind_pipeline(std::weak_ptr<GraphicsPipeline> pipeline, // NOLINT
+    const CommandBuffer &bind_pipeline(VkPipeline pipeline,
                                        VkPipelineBindPoint bind_point = VK_PIPELINE_BIND_POINT_GRAPHICS) const;
 
     /// Call vkCmdBindVertexBuffers
@@ -132,7 +126,7 @@ public:
     /// ``pOffsets`` in ``vkCmdBindVertexBuffers`` do not need to be exposed.
     /// @param buffer The vertex buffer to bind
     /// @return A const reference to the this pointer (allowing method calls to be chained)
-    const CommandBuffer &bind_vertex_buffer(std::weak_ptr<Buffer> buffer) const;
+    const CommandBuffer &bind_vertex_buffer(VkBuffer buffer) const;
 
     /// Call vkCmdPipelineBarrier
     /// @param img The image
@@ -414,12 +408,11 @@ public:
     /// @param offset The offset value (``0`` by default)
     /// @return A const reference to the this pointer (allowing method calls to be chained)
     template <typename T>
-    const CommandBuffer &push_constant(const std::weak_ptr<wrapper::pipelines::GraphicsPipeline> pipeline,
+    const CommandBuffer &push_constant(const VkPipelineLayout layout,
                                        const T &data, // NOLINT
                                        const VkShaderStageFlags stage,
                                        const VkDeviceSize offset = 0) const {
-        return push_constants(pipeline.lock()->m_pipeline_layout->m_pipeline_layout, stage, sizeof(data), &data,
-                              offset);
+        return push_constants(layout, stage, sizeof(data), &data, offset);
     }
 
     /// Set the scissor

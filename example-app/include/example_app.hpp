@@ -1,9 +1,9 @@
 #pragma once
 
 #include "inexor/vulkan-renderer/input/keyboard_mouse_data.hpp"
-#include "inexor/vulkan-renderer/render-components/imgui/imgui_renderer.hpp"
-#include "inexor/vulkan-renderer/render-components/octree/octree_renderer.hpp"
 #include "inexor/vulkan-renderer/render-graph/render_graph.hpp"
+#include "inexor/vulkan-renderer/render-modules/imgui_renderer.hpp"
+#include "inexor/vulkan-renderer/render-modules/octree_renderer.hpp"
 #include "inexor/vulkan-renderer/tools/camera.hpp"
 #include "inexor/vulkan-renderer/tools/cla_parser.hpp"
 #include "inexor/vulkan-renderer/world/cube.hpp"
@@ -22,13 +22,13 @@ namespace inexor::vulkan_renderer::example_app {
 
 // Using declarations
 using input::KeyboardMouseInputData;
-using rendering::imgui::ImGuiRenderer;
-using rendering::octree::OctreeRenderer;
-using rendering::render_graph::Buffer;
-using rendering::render_graph::BufferType;
-using rendering::render_graph::RenderGraph;
-using rendering::render_graph::Texture;
-using rendering::render_graph::TextureUsage;
+using render_graph::Buffer;
+using render_graph::BufferType;
+using render_graph::RenderGraph;
+using render_graph::TextureResource;
+using render_graph::TextureUsage;
+using render_modules::ImGuiRenderer;
+using render_modules::OctreeRenderer;
 using tools::Camera;
 using tools::CameraMovement;
 using tools::CameraType;
@@ -60,8 +60,9 @@ private:
     std::unique_ptr<Device> m_device;
     std::shared_ptr<Swapchain> m_swapchain;
     std::shared_ptr<RenderGraph> m_rendergraph;
-    std::weak_ptr<Texture> m_back_buffer;
-    std::weak_ptr<Texture> m_depth_buffer;
+
+    std::weak_ptr<TextureResource> m_back_buffer;
+    std::weak_ptr<TextureResource> m_depth_buffer;
 
     std::vector<std::shared_ptr<Cube>> m_octrees;
     std::unique_ptr<OctreeRenderer> m_octree_renderer;

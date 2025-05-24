@@ -38,8 +38,12 @@ private:
     glm::vec3 m_up{directions::DEFAULT_UP};
     /// The world vector which indicates "upwards".
     glm::vec3 m_world_up{directions::DEFAULT_UP};
+    /// The view matrix
     glm::mat4 m_view_matrix{};
+    /// The perspective matrix
     glm::mat4 m_perspective_matrix{};
+    // We multiply the view matrix with the perspective matrix in advance and pass this to shaders
+    glm::mat4 m_view_perspective_matrix{};
 
     /// The camera's yaw angle.
     float m_yaw{0.0f};
@@ -79,18 +83,12 @@ private:
 
     float m_vertical_fov{0.0f};
 
-    bool m_update_vertical_fov{false};
-    bool m_update_view_matrix{false};
-    bool m_update_perspective_matrix{false};
-
     void update_vectors();
-
-    void update_matrices();
 
     [[nodiscard]] bool is_moving() const;
 
 public:
-    /// Default constructor
+    /// Detailed constructor
     /// @param position The camera's position.
     /// @param yaw The camera's yaw angle in degrees.
     /// @param pitch The camera's pitch angle in degrees.
@@ -216,14 +214,18 @@ public:
     /// @param delta_time The change in time since the last frame.
     void update(float delta_time);
 
-    [[nodiscard]] const glm::mat4 &view_matrix() {
-        update_matrices();
+    [[nodiscard]] const auto &get_view_matrix() const {
         return m_view_matrix;
     }
 
-    [[nodiscard]] const glm::mat4 &perspective_matrix() {
-        update_matrices();
+    [[nodiscard]] const auto &get_perspective_matrix() const {
         return m_perspective_matrix;
     }
+
+    [[nodiscard]] const auto &get_view_perspective_matrix() const {
+        return m_view_perspective_matrix;
+    }
+
+    void update_matrices();
 };
 } // namespace inexor::vulkan_renderer::tools

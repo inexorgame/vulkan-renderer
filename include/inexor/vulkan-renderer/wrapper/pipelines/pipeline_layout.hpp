@@ -23,20 +23,21 @@ class GraphicsPipeline;
 using commands::CommandBuffer;
 using render_graph::RenderGraph;
 
+// TODO: Implement a cache for pipeline layout caches similar to descriptor set layout cache!
+
 /// RAII wrapper class for VkPipelineLayout
 class PipelineLayout {
-public:
-    // Friend declarations
-    friend class RenderGraph;
-    friend class GraphicsPipeline;
-    friend class CommandBuffer;
+private:
+    // TODO: Check which ones really need access at the end
+    friend RenderGraph;
+    friend GraphicsPipeline;
+    friend CommandBuffer;
 
     const Device &m_device;
     std::string m_name;
-
-    // There is no get method for this because only rendergraph needs to access it through friend class
     VkPipelineLayout m_pipeline_layout{VK_NULL_HANDLE};
 
+public:
     /// Call vkCreatePipelineLayout
     /// @note The constructor is private because only friend class RenderGraph needs access to it
     /// @param device The device wrapper
@@ -47,12 +48,6 @@ public:
                    std::string name,
                    std::span<const VkDescriptorSetLayout> descriptor_set_layouts,
                    std::span<const VkPushConstantRange> push_constant_ranges);
-
-    PipelineLayout(const PipelineLayout &) = delete;
-    PipelineLayout(PipelineLayout &&) noexcept;
-
-    PipelineLayout &operator=(const PipelineLayout &) = delete;
-    PipelineLayout &operator=(PipelineLayout &&other) noexcept;
 
     /// Call vkDestroyPipelineLayout
     ~PipelineLayout();

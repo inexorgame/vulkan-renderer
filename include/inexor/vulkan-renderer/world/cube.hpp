@@ -1,6 +1,6 @@
 #pragma once
 
-#include "inexor/vulkan-renderer/render-graph/buffer.hpp"
+#include "inexor/vulkan-renderer/render-graph/buffer_resource.hpp"
 #include "inexor/vulkan-renderer/world/indentation.hpp"
 
 #include <glm/gtx/vector_angle.hpp>
@@ -24,18 +24,18 @@ class NXOCParser;
 } // namespace inexor::vulkan_renderer::io
 
 // Forward declaration
-namespace inexor::vulkan_renderer::rendering::octree {
+namespace inexor::vulkan_renderer::render_modules::octree {
 class OctreeRenderer;
-} // namespace inexor::vulkan_renderer::rendering::octree
+} // namespace inexor::vulkan_renderer::octree
 
-using inexor::vulkan_renderer::rendering::octree::OctreeRenderer;
+using inexor::vulkan_renderer::render_modules::octree::OctreeRenderer;
 
 // Forward declaration
-namespace inexor::vulkan_renderer::rendering::render_graph {
+namespace inexor::vulkan_renderer::render_graph {
 class Buffer;
-} // namespace inexor::vulkan_renderer::rendering::render_graph
+} // namespace inexor::vulkan_renderer::render_graph
 
-using inexor::vulkan_renderer::rendering::render_graph::Buffer;
+using inexor::vulkan_renderer::render_graph::Buffer;
 
 void swap(inexor::vulkan_renderer::world::Cube &lhs, inexor::vulkan_renderer::world::Cube &rhs) noexcept;
 

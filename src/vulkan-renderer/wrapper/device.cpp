@@ -498,7 +498,7 @@ void Device::set_debug_utils_object_name(const VkObjectType obj_type,
     }
 }
 
-void Device::update_descriptor_sets(const std::span<VkWriteDescriptorSet> write_descriptor_sets) {
+void Device::update_descriptor_sets(const std::span<const VkWriteDescriptorSet> write_descriptor_sets) {
     vkUpdateDescriptorSets(m_device, static_cast<std::uint32_t>(write_descriptor_sets.size()),
                            write_descriptor_sets.data(), 0, nullptr);
 }

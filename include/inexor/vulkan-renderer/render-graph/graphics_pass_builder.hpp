@@ -1,8 +1,8 @@
 #pragma once
 
-#include "inexor/vulkan-renderer/render-graph/buffer.hpp"
+#include "inexor/vulkan-renderer/render-graph/buffer_resource.hpp"
 #include "inexor/vulkan-renderer/render-graph/graphics_pass.hpp"
-#include "inexor/vulkan-renderer/render-graph/texture.hpp"
+#include "inexor/vulkan-renderer/render-graph/texture_resource.hpp"
 #include "inexor/vulkan-renderer/wrapper/make_info.hpp"
 #include "inexor/vulkan-renderer/wrapper/swapchain.hpp"
 
@@ -16,7 +16,7 @@ namespace inexor::vulkan_renderer::wrapper::commands {
 class CommandBuffer;
 } // namespace inexor::vulkan_renderer::wrapper::commands
 
-namespace inexor::vulkan_renderer::rendering::render_graph {
+namespace inexor::vulkan_renderer::render_graph {
 
 // Using declaration
 using wrapper::DebugLabelColor;
@@ -27,25 +27,25 @@ using wrapper::commands::CommandBuffer;
 class GraphicsPassBuilder {
 private:
     /// Add members which describe data related to graphics passes here
-    OnRecordCommandBufferForPass m_on_record_cmd_buffer{};
+    std::function<void(const CommandBuffer &)> m_on_record_cmd_buffer{};
     /// The graphics passes which are read by this graphics pass
-    std::vector<std::weak_ptr<GraphicsPass>> m_graphics_pass_reads{};
+    std::vector<std::weak_ptr<GraphicsPass>> m_graphics_pass_reads;
+    /// The buffers which are read by this graphics pass
+    std::vector<std::weak_ptr<BufferResource>> m_buffer_reads;
+    /// The buffers which are written to by this graphics pass
+    std::vector<std::weak_ptr<BufferResource>> m_buffer_writes;
+    /// The textures which are read by this graphics pass
+    std::vector<std::weak_ptr<TextureResource>> m_texture_reads;
     /// The texture resources this graphics pass writes to
-    std::vector<std::pair<std::weak_ptr<Texture>, std::optional<VkClearValue>>> m_write_attachments{};
-    /// The swapchain this graphics pass writes to
-    std::vector<std::pair<std::weak_ptr<Swapchain>, std::optional<VkClearValue>>> m_write_swapchains{};
+    std::vector<std::pair<std::weak_ptr<TextureResource>, std::optional<VkClearValue>>> m_write_attachments;
+    /// The swapchains which are written to by this graphics pass
+    std::vector<std::pair<std::weak_ptr<Swapchain>, std::optional<VkClearValue>>> m_write_swapchains;
 
     /// Reset the data of the graphics pass builder
     void reset();
 
 public:
     GraphicsPassBuilder();
-    GraphicsPassBuilder(const GraphicsPassBuilder &) = delete;
-    GraphicsPassBuilder(GraphicsPassBuilder &&) noexcept;
-    ~GraphicsPassBuilder() = default;
-
-    GraphicsPassBuilder &operator=(const GraphicsPassBuilder &) = delete;
-    GraphicsPassBuilder &operator=(GraphicsPassBuilder &&) = delete;
 
     /// Build the graphics pass
     /// @param name The name of the graphics pass
@@ -58,29 +58,40 @@ public:
     /// which case the read is not added.
     /// @param condition The condition under which the pass is read from
     /// @param graphics_pass The graphics pass (can be an invalid pointer)
-    /// @return A const reference to the this pointer (allowing method calls to be chained)
+    /// @return A const reference to the dereferenced this pointer (allowing method calls to be chained)
     [[nodiscard]] GraphicsPassBuilder &conditionally_reads_from(std::weak_ptr<GraphicsPass> graphics_pass,
                                                                 bool condition);
 
-    // TODO: Implement reads_from for vertex/index buffers!
+    // TODO: use std::variant<std::weak_ptr<GraphicsPass>, std::weak_ptr<BufferResource>> for combining both reads_from
+    // into one!
+
+    /// Specify that this graphcis reads from a certain buffer
+    /// @param buffer The buffer the graphics pass reads from
+    /// @return A const reference to the dereferenced this pointer (allowing method calls to be chained)
+    [[nodiscard]] GraphicsPassBuilder &reads_from(std::weak_ptr<BufferResource> buffer);
+
+    /// Specify that this graphcis reads from a certain texture
+    /// @param texture The texture the graphics pass reads from
+    /// @return A const reference to the dereferenced this pointer (allowing method calls to be chained)
+    [[nodiscard]] GraphicsPassBuilder &reads_from(std::weak_ptr<TextureResource> texture);
 
     /// Specify that this graphics pass A reads from another graphics pass B, meaning B should be rendered before A
     /// @param graphics_pass The graphics pass which is read by this graphics pass
-    /// @return A const reference to the this pointer (allowing method calls to be chained)
+    /// @return A const reference to the dereferenced this pointer (allowing method calls to be chained)
     [[nodiscard]] GraphicsPassBuilder &reads_from(std::weak_ptr<GraphicsPass> graphics_pass);
 
     /// Set the function which will be called when the command buffer for rendering of the pass is being recorded
     /// @param on_record_cmd_buffer The command buffer recording function
-    /// @return A const reference to the this pointer (allowing method calls to be chained)
-    [[nodiscard]] GraphicsPassBuilder &set_on_record(OnRecordCommandBufferForPass on_record_cmd_buffer);
+    /// @return A const reference to the dereferenced this pointer (allowing method calls to be chained)
+    [[nodiscard]] GraphicsPassBuilder &set_on_record(std::function<void(const CommandBuffer &)> on_record_cmd_buffer);
 
     /// Specify that this graphics pass writes to an either a std::weak_ptr<Texture> or a std::weak_ptr<Swapchain>
     /// @param attachment The attachment (either a std::weak_ptr<Texture> or a std::weak_ptr<Swapchain>)
     /// @param clear_value The optional clear value of the attachment (``std::nullopt`` by default)
-    /// @return A const reference to the this pointer (allowing method calls to be chained)
+    /// @return A const reference to the dereferenced this pointer (allowing method calls to be chained)
     [[nodiscard]] GraphicsPassBuilder &
-    writes_to(std::variant<std::weak_ptr<Texture>, std::weak_ptr<Swapchain>> write_attachment,
+    writes_to(std::variant<std::weak_ptr<TextureResource>, std::weak_ptr<Swapchain>> write_attachment,
               std::optional<VkClearValue> clear_value = std::nullopt);
 };
 
-} // namespace inexor::vulkan_renderer::rendering::render_graph
+} // namespace inexor::vulkan_renderer::render_graph

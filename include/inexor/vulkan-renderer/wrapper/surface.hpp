@@ -9,11 +9,12 @@ namespace inexor::vulkan_renderer::wrapper {
 class Device;
 class Instance;
 class Window;
+class Swapchain;
 
 /// RAII wrapper class for VkSurfaceKHR
 class Surface {
-    friend class Device;
-    friend class Swapchain;
+    friend Device;
+    friend Swapchain;
 
 private:
     const Instance &m_instance;
@@ -25,14 +26,8 @@ public:
     /// @param instance The Vulkan instance
     /// @param window The GLFW window to create the surface with
     Surface(const Instance &instance, const Window &window);
-    Surface(const Surface &) = delete;
-    // TODO: Implement me!
-    Surface(Surface &&) noexcept;
-    ~Surface();
 
-    Surface &operator=(const Surface &) = delete;
-    // TODO: Implement me!
-    Surface &operator=(Surface &&) noexcept;
+    ~Surface();
 };
 
 } // namespace inexor::vulkan_renderer::wrapper

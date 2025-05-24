@@ -13,6 +13,7 @@
 namespace inexor::vulkan_renderer::wrapper {
 // Forward declarations
 class Swapchain;
+class Surface;
 } // namespace inexor::vulkan_renderer::wrapper
 
 namespace inexor::vulkan_renderer::wrapper::commands {
@@ -52,6 +53,7 @@ enum class DebugLabelColor {
 // Using declarations
 using commands::CommandBuffer;
 using commands::CommandPool;
+using wrapper::Surface;
 using wrapper::Swapchain;
 
 // Forward declaration
@@ -72,10 +74,10 @@ struct DeviceInfo {
 /// RAII wrapper class for VkDevice, VkPhysicalDevice and VkQueues
 /// @note There is no method ``is_layer_supported`` in this wrapper class because device layers are deprecated!
 class Device {
-    friend class CommandBuffer;
-    friend class CommandPool;
-    friend class Swapchain;
-    friend class Surface;
+    friend CommandBuffer;
+    friend CommandPool;
+    friend Swapchain;
+    friend Surface;
 
 private:
     VkDevice m_device{VK_NULL_HANDLE};
@@ -93,10 +95,10 @@ private:
     VkQueue m_transfer_queue{VK_NULL_HANDLE};
     VkQueue m_sprase_binding_queue{VK_NULL_HANDLE};
 
-    std::uint32_t m_present_queue_family_index{0};
     std::uint32_t m_graphics_queue_family_index{0};
-    std::uint32_t m_transfer_queue_family_index{0};
+    std::uint32_t m_present_queue_family_index{0};
     std::uint32_t m_compute_queue_family_index{0};
+    std::uint32_t m_transfer_queue_family_index{0};
     std::uint32_t m_sparse_binding_queue_family{0};
 
     /// According to NVidia, we should aim for one command pool per thread and queue
@@ -130,14 +132,7 @@ public:
            std::span<const char *> required_extensions,
            const VkPhysicalDeviceFeatures &required_features);
 
-    Device(const Device &) = delete;
-    // TODO: Implement me!
-    Device(Device &&) noexcept;
     ~Device();
-
-    Device &operator=(const Device &) = delete;
-    // TODO: Implement me!
-    Device &operator=(Device &&) noexcept;
 
     [[nodiscard]] VmaAllocator allocator() const {
         return m_allocator;
@@ -241,7 +236,7 @@ public:
 
     /// Call vkUpdateDescriptorSets
     /// @param write_descriptor_sets The write descriptor sets
-    void update_descriptor_sets(std::span<VkWriteDescriptorSet> write_descriptor_sets);
+    void update_descriptor_sets(std::span<const VkWriteDescriptorSet> write_descriptor_sets);
 
     /// Call vkDeviceWaitIdle or vkQueueWaitIdle if a VkQueue is specified as parameter
     /// @param A queue to wait on (``VK_NULL_HANDLE`` by default)

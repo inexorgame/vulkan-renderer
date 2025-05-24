@@ -37,7 +37,7 @@ class PipelineCache;
 /// This means if you forget to specify viewport for example, creation of the graphics pipeline will fail.
 /// It is the reponsibility of the programmer to use validation layers to check for problems.
 class GraphicsPipelineBuilder {
-    friend rendering::render_graph::RenderGraph;
+    friend render_graph::RenderGraph;
 
 private:
     /// The device wrapper reference
@@ -114,17 +114,9 @@ private:
 
     /// Default constructor is private, so only rendergraph can access it
     /// @param device The device wrapper
-    /// @param pipeline_cache The Vulkan pipeline cache
-    GraphicsPipelineBuilder(const Device &device, const PipelineCache &pipeline_cache);
+    GraphicsPipelineBuilder(const Device &device);
 
 public:
-    GraphicsPipelineBuilder(const GraphicsPipelineBuilder &) = delete;
-    GraphicsPipelineBuilder(GraphicsPipelineBuilder &&other) noexcept;
-    ~GraphicsPipelineBuilder() = default;
-
-    GraphicsPipelineBuilder &operator=(const GraphicsPipelineBuilder &) = delete;
-    GraphicsPipelineBuilder &operator=(GraphicsPipelineBuilder &&) = delete;
-
     /// Adds a color attachment
     /// @param format The format of the color attachment
     /// @return A reference to the dereferenced this pointer (allows method calls to be chained)
@@ -149,14 +141,19 @@ public:
     add_push_constant_range(VkShaderStageFlags shader_stage, std::uint32_t size, std::uint32_t offset = 0);
 
     /// Add a shader to the graphics pipeline
-    /// @param shader The shader
+    /// @param shader The shader to add
     /// @return A reference to the dereferenced this pointer (allows method calls to be chained)
-    [[nodiscard]] GraphicsPipelineBuilder &add_shader(std::weak_ptr<Shader> shader);
+    [[nodiscard]] GraphicsPipelineBuilder &add_shader(const Shader &shader);
+
+    /// Add multiple shader to the graphics pipeline
+    /// @param shaders The shaders to add
+    /// @return A reference to the dereferenced this pointer (allows method calls to be chained)
+    [[nodiscard]] GraphicsPipelineBuilder &add_shaders(std::span<const Shader> shaders);
 
     /// Build the graphics pipeline with specified pipeline create flags
     /// @param name The debug name of the graphics pipeline
     /// @return The unique pointer instance of ``GraphicsPipeline`` that was created
-    [[nodiscard]] std::shared_ptr<GraphicsPipeline> build(std::string name);
+    [[nodiscard]] GraphicsPipeline build(std::string name);
 
     /// Set the color blend manually
     /// @param color_blend The color blend
@@ -184,7 +181,7 @@ public:
     /// Set the descriptor set layout
     /// @param descriptor_set_layout The descriptor set layout
     /// @return A reference to the dereferenced this pointer (allows method calls to be chained)
-    [[nodiscard]] GraphicsPipelineBuilder &set_descriptor_set_layout(VkDescriptorSetLayout descriptor_set_layout);
+    [[nodiscard]] GraphicsPipelineBuilder &set_descriptor_set_layout(const DescriptorSetLayout &descriptor_set_layout);
 
     /// Set the depth stencil
     /// @warning Disabling culling can have performance impacts!

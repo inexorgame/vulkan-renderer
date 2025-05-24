@@ -5,18 +5,21 @@
 
 #include <utility>
 
-namespace inexor::vulkan_renderer::rendering::render_graph {
+namespace inexor::vulkan_renderer::render_graph {
 
 // Using declaration
 using wrapper::InexorException;
 
 GraphicsPass::GraphicsPass(
     std::string name,
-    OnRecordCommandBufferForPass on_record_cmd_buffer,
+    std::function<void(const CommandBuffer &)> on_record_cmd_buffer,
     std::vector<std::weak_ptr<GraphicsPass>> graphics_pass_reads,
-    std::vector<std::pair<std::weak_ptr<Texture>, std::optional<VkClearValue>>> write_attachments,
-    std::vector<std::pair<std::weak_ptr<Swapchain>, std::optional<VkClearValue>>> write_swapchains,
-    const wrapper::DebugLabelColor pass_debug_label_color) {
+    std::vector<std::weak_ptr<BufferResource>> buffer_reads,
+    std::vector<std::weak_ptr<BufferResource>> buffer_writes,
+    std::vector<std::weak_ptr<TextureResource>> texture_reads,
+    std::vector<std::pair<std::weak_ptr<Texture>, std::optional<VkClearValue>>> texture_writes,
+    std::vector<std::pair<std::weak_ptr<Swapchain>, std::optional<VkClearValue>>> swapchain_writes,
+    wrapper::DebugLabelColor pass_debug_label_color) {
     // If an extent has already been specified, all attachments must match this!
     if (m_extent.width != 0 && m_extent.height != 0) {
         for (const auto &write_attachment : write_attachments) {
@@ -80,22 +83,6 @@ GraphicsPass::GraphicsPass(
     m_write_swapchains = std::move(write_swapchains);
 }
 
-GraphicsPass::GraphicsPass(GraphicsPass &&other) noexcept {
-    // TODO: Check me!
-    m_name = std::move(other.m_name);
-    m_on_record_cmd_buffer = std::move(other.m_on_record_cmd_buffer);
-    m_descriptor_set_layout = std::exchange(other.m_descriptor_set_layout, nullptr);
-    m_descriptor_set = std::exchange(other.m_descriptor_set, VK_NULL_HANDLE);
-    m_rendering_info = std::move(other.m_rendering_info);
-    m_write_attachments = std::move(other.m_write_attachments);
-    m_write_swapchains = std::move(other.m_write_swapchains);
-    m_color_attachments = std::move(other.m_color_attachments);
-    m_depth_attachment = std::move(other.m_depth_attachment);
-    m_stencil_attachment = std::move(other.m_stencil_attachment);
-    m_graphics_pass_reads = std::move(other.m_graphics_pass_reads);
-    m_debug_label_color = other.m_debug_label_color;
-}
-
 /// Reset the rendering info
 void GraphicsPass::reset_rendering_info() {
     m_rendering_info = wrapper::make_info<VkRenderingInfo>();
@@ -106,4 +93,4 @@ void GraphicsPass::reset_rendering_info() {
     m_stencil_attachment = wrapper::make_info<VkRenderingAttachmentInfo>();
 }
 
-} // namespace inexor::vulkan_renderer::rendering::render_graph
+} // namespace inexor::vulkan_renderer::render_graph

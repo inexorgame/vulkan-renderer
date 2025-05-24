@@ -1,5 +1,6 @@
 #include "inexor/vulkan-renderer/wrapper/descriptors/descriptor_set_allocator.hpp"
 
+#include "inexor/vulkan-renderer/wrapper/descriptors/descriptor_set_layout.hpp"
 #include "inexor/vulkan-renderer/wrapper/device.hpp"
 #include "inexor/vulkan-renderer/wrapper/exception.hpp"
 #include "inexor/vulkan-renderer/wrapper/make_info.hpp"
@@ -24,12 +25,11 @@ DescriptorSetAllocator::DescriptorSetAllocator(DescriptorSetAllocator &&other) n
 }
 
 VkDescriptorSet DescriptorSetAllocator::allocate(const std::string &name,
-                                                 const VkDescriptorSetLayout descriptor_set_layout) {
-    assert(descriptor_set_layout);
+                                                 const DescriptorSetLayout &descriptor_set_layout) {
     auto descriptor_set_ai = make_info<VkDescriptorSetAllocateInfo>({
         .descriptorPool = m_current_pool,
         .descriptorSetCount = 1,
-        .pSetLayouts = &descriptor_set_layout,
+        .pSetLayouts = &descriptor_set_layout.m_descriptor_set_layout,
     });
     // Attempt to allocate a new descriptor set from the current descriptor pool
     VkDescriptorSet new_descriptor_set = VK_NULL_HANDLE;

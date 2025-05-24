@@ -41,7 +41,7 @@ GraphicsPipelineBuilder::GraphicsPipelineBuilder(GraphicsPipelineBuilder &&other
     m_color_blend_attachment_states = std::move(other.m_color_blend_attachment_states);
 }
 
-std::shared_ptr<GraphicsPipeline> GraphicsPipelineBuilder::build(std::string name) {
+GraphicsPipeline GraphicsPipelineBuilder::build(std::string name) {
     if (name.empty()) {
         throw InexorException("Error: Parameter 'name' is an empty string!");
     }
@@ -101,9 +101,8 @@ std::shared_ptr<GraphicsPipeline> GraphicsPipelineBuilder::build(std::string nam
         .renderPass = VK_NULL_HANDLE,
     });
 
-    auto graphics_pipeline =
-        std::make_shared<GraphicsPipeline>(m_device, m_pipeline_cache, std::vector{m_descriptor_set_layout},
-                                           m_push_constant_ranges, std::move(pipeline_ci), std::move(name));
+    auto graphics_pipeline = GraphicsPipeline(m_device, m_pipeline_cache, std::vector{m_descriptor_set_layout},
+                                              m_push_constant_ranges, std::move(pipeline_ci), std::move(name));
 
     // NOTE: We reset the data of the builder here so it can be re-used
     reset();
@@ -198,13 +197,20 @@ GraphicsPipelineBuilder &GraphicsPipelineBuilder::add_push_constant_range(const 
     return *this;
 }
 
-GraphicsPipelineBuilder &GraphicsPipelineBuilder::add_shader(const std::weak_ptr<Shader> shader) {
+GraphicsPipelineBuilder &GraphicsPipelineBuilder::add_shader(const Shader &shader) {
     m_shader_stages.push_back(make_info<VkPipelineShaderStageCreateInfo>({
-        .stage = shader.lock()->m_shader_stage,
-        .module = shader.lock()->m_shader_module,
+        .stage = shader.m_shader_stage,
+        .module = shader.m_shader_module,
         .pName = "main",
 
     }));
+    return *this;
+}
+
+GraphicsPipelineBuilder &GraphicsPipelineBuilder::add_shaders(const std::span<const Shader> shaders) {
+    for (const auto &shader : shaders) {
+        add_shader(shader);
+    }
     return *this;
 }
 
@@ -245,7 +251,7 @@ GraphicsPipelineBuilder &GraphicsPipelineBuilder::set_stencil_attachment_format(
 }
 
 GraphicsPipelineBuilder &
-GraphicsPipelineBuilder::set_descriptor_set_layout(const VkDescriptorSetLayout descriptor_set_layout) {
+GraphicsPipelineBuilder::set_descriptor_set_layout(const DescriptorSetLayout &descriptor_set_layout) {
     assert(descriptor_set_layout);
     m_descriptor_set_layout = descriptor_set_layout;
     return *this;

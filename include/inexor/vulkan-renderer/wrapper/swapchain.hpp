@@ -13,12 +13,12 @@ namespace inexor::vulkan_renderer::wrapper::synchronization {
 class Semaphore;
 } // namespace inexor::vulkan_renderer::wrapper::synchronization
 
-namespace inexor::vulkan_renderer::rendering::render_graph {
+namespace inexor::vulkan_renderer::render_graph {
 // Forward declaration
 class RenderGraph;
 class GraphicsPass;
 class GraphicsPassBuilder;
-} // namespace inexor::vulkan_renderer::rendering::render_graph
+} // namespace inexor::vulkan_renderer::render_graph
 
 namespace inexor::vulkan_renderer::wrapper::commands {
 // Forward declaration
@@ -34,9 +34,9 @@ class Window;
 
 // Using declaration
 using commands::CommandBuffer;
-using rendering::render_graph::GraphicsPass;
-using rendering::render_graph::GraphicsPassBuilder;
-using rendering::render_graph::RenderGraph;
+using render_graph::GraphicsPass;
+using render_graph::GraphicsPassBuilder;
+using render_graph::RenderGraph;
 
 /// RAII wrapper class for swapchains
 class Swapchain {

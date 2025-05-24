@@ -4,7 +4,7 @@
 
 #include <utility>
 
-namespace inexor::vulkan_renderer::rendering::render_graph {
+namespace inexor::vulkan_renderer::render_graph {
 
 // Using declaration
 using wrapper::InexorException;
@@ -24,7 +24,7 @@ std::shared_ptr<GraphicsPass> GraphicsPassBuilder::build(std::string name, const
     auto graphics_pass = std::make_shared<GraphicsPass>(
         std::move(name), std::move(m_on_record_cmd_buffer), std::move(m_graphics_pass_reads),
         std::move(m_write_attachments), std::move(m_write_swapchains), pass_debug_color);
-    // NOTE: We could use RAII here to bind the call of reset() to some destructor call like a scope_guard does.
+    // NOTE: We could use RAII here to bind the call of reset() to some destructor call like a scope guard does
     reset();
     return graphics_pass;
 }
@@ -58,12 +58,12 @@ GraphicsPassBuilder &GraphicsPassBuilder::set_on_record(OnRecordCommandBufferFor
 }
 
 GraphicsPassBuilder &
-GraphicsPassBuilder::writes_to(std::variant<std::weak_ptr<Texture>, std::weak_ptr<Swapchain>> write_attachment,
+GraphicsPassBuilder::writes_to(std::variant<std::weak_ptr<TextureResource>, std::weak_ptr<Swapchain>> write_attachment,
                                std::optional<VkClearValue> clear_value) {
     // Check if this is a std::weak_ptr<Texture>
-    if (std::holds_alternative<std::weak_ptr<Texture>>(write_attachment)) {
+    if (std::holds_alternative<std::weak_ptr<TextureResource>>(write_attachment)) {
         // This is a std::weak_ptr<Texture>, but we need to check if it's a valid pointer
-        auto &texture = std::get<std::weak_ptr<Texture>>(write_attachment);
+        auto &texture = std::get<std::weak_ptr<TextureResource>>(write_attachment);
         // Check if the std::weak_ptr<Texture> is still a valid pointer
         if (texture.expired()) {
             throw InexorException("Error: Parameter 'write_attachment' is an invalid pointer!");
@@ -82,4 +82,4 @@ GraphicsPassBuilder::writes_to(std::variant<std::weak_ptr<Texture>, std::weak_pt
     return *this;
 }
 
-} // namespace inexor::vulkan_renderer::rendering::render_graph
+} // namespace inexor::vulkan_renderer::render_graph

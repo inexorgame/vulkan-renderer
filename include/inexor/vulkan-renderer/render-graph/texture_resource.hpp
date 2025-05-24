@@ -25,7 +25,7 @@ namespace inexor::vulkan_renderer::wrapper::descriptors {
 class WriteDescriptorSetBuilder;
 } // namespace inexor::vulkan_renderer::wrapper::descriptors
 
-namespace inexor::vulkan_renderer::rendering::render_graph {
+namespace inexor::vulkan_renderer::render_graph {
 
 /// Specifies the use of the texture
 /// NOTE: All usages which are not TextureUsage::DEFAULT are for internal usage inside of rendergraph only
@@ -48,8 +48,7 @@ using wrapper::commands::CommandBuffer;
 using wrapper::descriptors::WriteDescriptorSetBuilder;
 
 /// RAII wrapper for texture resources
-class Texture {
-    // These friend classes are allowed to access the private data of the Texture class
+class TextureResource {
     friend WriteDescriptorSetBuilder;
     friend GraphicsPass;
     friend RenderGraph;
@@ -59,6 +58,7 @@ private:
     const Device &m_device;
     /// The name of the texture
     std::string m_name;
+
     /// The usage of this texture
     TextureUsage m_usage;
     /// The format of the texture
@@ -72,23 +72,17 @@ private:
     std::uint32_t m_channels{4};
     /// The sample count of the MSAA image (if MSAA is enabled)
     VkSampleCountFlagBits m_samples{VK_SAMPLE_COUNT_1_BIT};
-
+    /// The sampler of the texture
     std::unique_ptr<Sampler> m_default_sampler;
-
     /// The image of the texture
     std::shared_ptr<Image> m_image;
-
     /// This is only used internally inside of rendergraph in case this texture used as a back buffer, depth buffer, or
     /// stencil buffer and MSAA is enabled.
     std::shared_ptr<Image> m_msaa_image;
 
     // This is used for initializing textures and for updating dynamic textures
-    bool m_update_requested{true};
     void *m_src_texture_data{nullptr};
     std::size_t m_src_texture_data_size{0};
-
-    /// By definition, if this is not std::nullopt, this is a dynamic texture
-    std::function<void()> m_on_check_for_updates;
 
     // The staging buffer for updating the texture data
     VkBuffer m_staging_buffer{VK_NULL_HANDLE};
@@ -100,10 +94,10 @@ private:
     VkDescriptorImageInfo m_descriptor_img_info{};
 
     /// Create the texture (and the MSAA texture if specified)
-    void create();
+    void create(const CommandBuffer &cmd_buf);
 
     /// Destroy the texture (and the MSAA texture if specified)
-    void destroy();
+    void destroy_all();
 
     /// Destroy the staging buffer used for texture updates
     void destroy_staging_buffer();
@@ -122,23 +116,16 @@ public:
     /// @param height The height of the texture
     /// @param channels The channel count of the texture
     /// @param samples The sample count of the texture
-    /// @param on_check_for_updates The update function of the texture
-    Texture(const Device &device,
-            std::string name,
-            TextureUsage usage,
-            VkFormat format,
-            std::uint32_t width,
-            std::uint32_t height,
-            std::uint32_t channels,
-            VkSampleCountFlagBits samples,
-            std::function<void()> on_check_for_updates);
+    TextureResource(const Device &device,
+                    std::string name,
+                    TextureUsage usage,
+                    VkFormat format,
+                    std::uint32_t width,
+                    std::uint32_t height,
+                    std::uint32_t channels,
+                    VkSampleCountFlagBits samples);
 
-    Texture(const Texture &) = delete;
-    Texture(Texture &&other) noexcept;
-    ~Texture();
-
-    Texture &operator=(const Texture &) = delete;
-    Texture &operator=(Texture &&) = delete;
+    ~TextureResource();
 
     [[nodiscard]] VkFormat format() const {
         return m_format;
@@ -151,12 +138,9 @@ public:
         };
     }
 
-    /// Request rendergraph to update the texture
-    /// @param src_texture_data A pointer to the source data
-    /// @param src_texture_data_size The size of the source data
-    /// @note It is the responsibility of the programmer to make sure the memory the pointer points to is still valid
-    /// when rendergraph is carrying out the update!
-    void request_update(void *src_texture_data, std::size_t src_texture_data_size);
+    [[nodiscard]] bool is_update_requested() const {
+        m_src_texture_data != nullptr;
+    }
 };
 
-} // namespace inexor::vulkan_renderer::rendering::render_graph
+} // namespace inexor::vulkan_renderer::render_graph

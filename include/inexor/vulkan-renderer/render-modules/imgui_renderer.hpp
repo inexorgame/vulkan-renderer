@@ -1,10 +1,10 @@
 #pragma once
 
-#include "inexor/vulkan-renderer/render-graph/render_graph.hpp"
-
-#include "inexor/vulkan-renderer/render-graph/buffer.hpp"
+#include "inexor/vulkan-renderer/render-graph/buffer_resource.hpp"
 #include "inexor/vulkan-renderer/render-graph/graphics_pass.hpp"
-#include "inexor/vulkan-renderer/render-graph/texture.hpp"
+#include "inexor/vulkan-renderer/render-graph/render_graph.hpp"
+#include "inexor/vulkan-renderer/render-graph/texture_resource.hpp"
+#include "inexor/vulkan-renderer/render-modules/render_module_base.hpp"
 #include "inexor/vulkan-renderer/wrapper/pipelines/graphics_pipeline.hpp"
 #include "inexor/vulkan-renderer/wrapper/pipelines/graphics_pipeline_builder.hpp"
 #include "inexor/vulkan-renderer/wrapper/swapchain.hpp"
@@ -14,13 +14,13 @@
 
 #include <memory>
 
-namespace inexor::vulkan_renderer::rendering::imgui {
+namespace inexor::vulkan_renderer::render_modules {
 
 // Using declarations
-using render_graph::Buffer;
+using render_graph::BufferResource;
 using render_graph::BufferType;
 using render_graph::RenderGraph;
-using render_graph::Texture;
+using render_graph::TextureResource;
 using render_graph::TextureUsage;
 using wrapper::GraphicsPass;
 using wrapper::Shader;
@@ -29,7 +29,7 @@ using wrapper::pipelines::GraphicsPipeline;
 using wrapper::pipelines::GraphicsPipelineBuilder;
 
 /// A rendering class for ImGui
-class ImGuiRenderer {
+class ImGuiRenderer : public RenderModuleBase {
 private:
     /// The ImGui context
     ImGuiContext *m_imgui_context{nullptr};
@@ -41,16 +41,15 @@ private:
     int m_font_texture_width{0};
     /// The height of the ImGui font texture
     int m_font_texture_height{0};
-    // Set to ``true`` once the ImGui font texture is initialized
+    /// Set to ``true`` once the ImGui font texture is initialized
     bool m_font_texture_initialized{false};
+    /// The vertex buffer used by ImGui
+    std::shared_ptr<BufferResource> m_vertex_buffer;
+    /// The index buffer used by ImGui
+    std::shared_ptr<BufferResource> m_index_buffer;
+    /// The ImGui font texture
+    std::shared_ptr<TextureResource> m_imgui_texture;
 
-    std::shared_ptr<Shader> m_vertex_shader;
-    std::shared_ptr<Shader> m_fragment_shader;
-    std::weak_ptr<Buffer> m_index_buffer;
-    std::weak_ptr<Buffer> m_vertex_buffer;
-    std::weak_ptr<Texture> m_imgui_texture;
-    std::shared_ptr<GraphicsPipeline> m_imgui_pipeline;
-    std::weak_ptr<GraphicsPass> m_imgui_pass;
     // This swapchain is the color attachment we will write to
     std::weak_ptr<Swapchain> m_swapchain;
     // This is the previous pass we read from
@@ -63,7 +62,6 @@ private:
     std::vector<ImDrawVert> m_vertex_data;
     std::vector<std::uint32_t> m_index_data;
 
-    VkDescriptorSetLayout m_descriptor_set_layout{VK_NULL_HANDLE};
     VkDescriptorSet m_descriptor_set{VK_NULL_HANDLE};
 
     /// ImGui push constant block
@@ -79,13 +77,25 @@ private:
     /// Customize ImGui style like text color for example
     void set_imgui_style();
 
+    // NOTE: These methods must be implemented by every render module which inherits from RenderModuleBase!
+    void setup_buffers() override;
+    void setup_textures() override;
+    void setup_graphics_passes(GraphicsPassBuilder &builder) override;
+    void setup_graphics_pipelines(GraphicsPipelineBuilder &builder) override;
+    void setup_shaders() override;
+    void setup_descriptor_set_layouts(DescriptorSetLayoutBuilder &builder) override;
+    void allocate_descriptor_sets(DescriptorSetAllocator &allocator) override;
+    void update_descriptor_sets(WriteDescriptorSetBuilder &builder) override;
+    void update_buffers() override;
+    void update_textures() override;
+
 public:
     /// Default constructor
-    /// @param rendergraph The rendergraph
+    /// @param device The device wrapper
     /// @param previous_pass The previous pass
     /// @param swapchain The swapchain to render the ImGui overlay to
     /// @param on_update_user_imgui_data The user-defined ImGui data update callback
-    ImGuiRenderer(std::weak_ptr<RenderGraph> rendergraph,
+    ImGuiRenderer(const Device &device,
                   std::weak_ptr<GraphicsPass> previous_pass,
                   std::weak_ptr<Swapchain> swapchain,
                   std::function<void()> on_update_user_imgui_data);
@@ -93,4 +103,4 @@ public:
     ~ImGuiRenderer();
 };
 
-} // namespace inexor::vulkan_renderer::rendering::imgui
+} // namespace inexor::vulkan_renderer::render_modules

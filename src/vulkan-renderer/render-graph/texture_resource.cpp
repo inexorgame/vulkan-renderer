@@ -1,4 +1,4 @@
-#include "inexor/vulkan-renderer/render-graph/texture.hpp"
+#include "inexor/vulkan-renderer/render-graph/texture_resource.hpp"
 
 #include "inexor/vulkan-renderer/wrapper/commands/command_buffer.hpp"
 #include "inexor/vulkan-renderer/wrapper/device.hpp"
@@ -9,23 +9,22 @@
 #include <stdexcept>
 #include <utility>
 
-namespace inexor::vulkan_renderer::rendering::render_graph {
+namespace inexor::vulkan_renderer::render_graph {
 
 // Using declaration
 using wrapper::InexorException;
 using wrapper::VulkanException;
 
-Texture::Texture(const Device &device,
-                 std::string name,
-                 const TextureUsage usage,
-                 const VkFormat format,
-                 const std::uint32_t width,
-                 const std::uint32_t height,
-                 const std::uint32_t channels,
-                 const VkSampleCountFlagBits samples,
-                 std::function<void()> on_check_for_updates)
+TextureResource::TextureResource(const Device &device,
+                                 std::string name,
+                                 const TextureUsage usage,
+                                 const VkFormat format,
+                                 const std::uint32_t width,
+                                 const std::uint32_t height,
+                                 const std::uint32_t channels,
+                                 const VkSampleCountFlagBits samples)
     : m_device(device), m_name(std::move(name)), m_usage(usage), m_format(format), m_width(width), m_height(height),
-      m_channels(channels), m_samples(samples), m_on_check_for_updates(std::move(on_check_for_updates)) {
+      m_channels(channels), m_samples(samples) {
     if (m_name.empty()) {
         throw InexorException("Error: Parameter 'name' is an empty string!");
     }
@@ -38,15 +37,11 @@ Texture::Texture(const Device &device,
     m_default_sampler = std::make_unique<Sampler>(m_device, "Default Sampler");
 }
 
-Texture::Texture(Texture &&other) noexcept : m_device(other.m_device) {
-    // TODO: Implement me!
+TextureResource::~TextureResource() {
+    destroy_all();
 }
 
-Texture::~Texture() {
-    destroy();
-}
-
-void Texture::create() {
+void TextureResource::create(const CommandBuffer &cmd_buf) {
     auto img_ci = wrapper::make_info<VkImageCreateInfo>({
         .imageType = VK_IMAGE_TYPE_2D,
         .format = m_format,
@@ -113,7 +108,7 @@ void Texture::create() {
     }
 }
 
-void Texture::destroy() {
+void TextureResource::destroy_all() {
     m_image->destroy();
     if (m_msaa_image) {
         m_msaa_image->destroy();
@@ -121,20 +116,20 @@ void Texture::destroy() {
     destroy_staging_buffer();
 }
 
-void Texture::destroy_staging_buffer() {
+void TextureResource::destroy_staging_buffer() {
     vmaDestroyBuffer(m_device.allocator(), m_staging_buffer, m_staging_buffer_alloc);
     m_staging_buffer = VK_NULL_HANDLE;
     m_staging_buffer_alloc = VK_NULL_HANDLE;
 }
 
-void Texture::update(const CommandBuffer &cmd_buf) {
+void TextureResource::update(const CommandBuffer &cmd_buf) {
     if (m_src_texture_data_size == 0) {
         // We can't create buffers of size 0!
         return;
     }
-    if (m_staging_buffer != VK_NULL_HANDLE) {
-        destroy_staging_buffer();
-    }
+
+    destroy_staging_buffer();
+
     const auto staging_buffer_ci = wrapper::make_info<VkBufferCreateInfo>({
         .size = m_width * m_height * m_channels,
         .usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
@@ -186,7 +181,6 @@ void Texture::update(const CommandBuffer &cmd_buf) {
     };
 
     // The update is finished
-    m_update_requested = false;
     m_src_texture_data = nullptr;
     m_src_texture_data_size = 0;
 
@@ -197,16 +191,4 @@ void Texture::update(const CommandBuffer &cmd_buf) {
     // command buffer, which would increase the total number of command buffer submissions though.
 }
 
-void Texture::request_update(void *src_texture_data, const std::size_t src_texture_data_size) {
-    if (src_texture_data == nullptr) {
-        throw InexorException("Error: Parameter 'texture_src_data' is nullptr!");
-    }
-    if (src_texture_data_size == 0) {
-        throw InexorException("Error: Parameter 'src_texture_data_size' is 0!");
-    }
-    m_update_requested = true;
-    m_src_texture_data = src_texture_data;
-    m_src_texture_data_size = src_texture_data_size;
-}
-
-} // namespace inexor::vulkan_renderer::rendering::render_graph
+} // namespace inexor::vulkan_renderer::render_graph

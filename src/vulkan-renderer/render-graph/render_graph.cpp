@@ -9,86 +9,29 @@
 
 #include <unordered_set>
 
-namespace inexor::vulkan_renderer::rendering::render_graph {
+namespace inexor::vulkan_renderer::render_graph {
 
 // Using declaration
 using wrapper::InexorException;
+using wrapper::VulkanException;
 
 RenderGraph::RenderGraph(Device &device, const PipelineCache &pipeline_cache)
-    : m_device(device), m_graphics_pipeline_builder(device, pipeline_cache), m_descriptor_set_layout_builder(device),
-      m_descriptor_set_allocator(m_device), m_write_descriptor_set_builder(m_device) {}
-
-std::weak_ptr<GraphicsPass> RenderGraph::add_graphics_pass(std::shared_ptr<GraphicsPass> pass) {
-    return m_graphics_passes.emplace_back(std::move(pass));
-}
-
-void RenderGraph::add_graphics_pipeline(OnCreateGraphicsPipeline on_pipeline_create) {
-    m_pipeline_create_functions.emplace_back(std::move(on_pipeline_create));
-}
-
-std::weak_ptr<Buffer>
-RenderGraph::add_buffer(std::string name, const BufferType type, std::function<void()> on_update) {
-    return m_buffers.emplace_back(std::make_shared<Buffer>(m_device, std::move(name), type, std::move(on_update)));
-}
+    : m_device(device), m_graphics_pipeline_builder(device), m_pipeline_cache(pipeline_cache),
+      m_descriptor_set_layout_builder(device), m_descriptor_set_allocator(m_device),
+      m_write_descriptor_set_builder(m_device) {}
 
 void RenderGraph::allocate_descriptor_sets() {
-    for (const auto &descriptor : m_resource_descriptors) {
-        // Call descriptor set allocation function of each resource descriptor
-        std::invoke(std::get<1>(descriptor), m_descriptor_set_allocator);
+    for (const auto &render_module : m_render_modules) {
+        render_module->allocate_descriptor_sets(m_descriptor_set_allocator);
     }
-}
-
-void RenderGraph::add_resource_descriptor(OnBuildDescriptorSetLayout on_build_descriptor_set_layout,
-                                          OnAllocateDescriptorSet on_allocate_descriptor_set,
-                                          OnBuildWriteDescriptorSets on_update_descriptor_set) {
-    m_resource_descriptors.emplace_back(std::move(on_build_descriptor_set_layout),
-                                        std::move(on_allocate_descriptor_set), std::move(on_update_descriptor_set));
-}
-
-std::weak_ptr<Texture> RenderGraph::add_texture(std::string name,
-                                                const TextureUsage usage,
-                                                const VkFormat format,
-                                                const std::uint32_t width,
-                                                const std::uint32_t height,
-                                                const std::uint32_t channels,
-                                                const VkSampleCountFlagBits sample_count,
-                                                std::function<void()> m_on_check_for_updates) {
-    return m_textures.emplace_back(std::make_shared<Texture>(m_device, std::move(name), usage, format, width, height,
-                                                             channels, sample_count,
-                                                             std::move(m_on_check_for_updates)));
 }
 
 void RenderGraph::check_for_cycles() {
-    std::unordered_set<std::shared_ptr<GraphicsPass>> visited;
-    std::unordered_set<std::shared_ptr<GraphicsPass>> recursion_stack;
-
-    std::function<bool(const std::shared_ptr<GraphicsPass> &)> dfs_detect_cycle =
-        [&](const std::shared_ptr<GraphicsPass> &pass) {
-            if (recursion_stack.find(pass) != recursion_stack.end()) {
-                return true; // Cycle detected
-            }
-            if (visited.find(pass) != visited.end()) {
-                return false; // Already visited, no cycle
-            }
-            visited.insert(pass);
-            recursion_stack.insert(pass);
-            for (const auto &parent : pass->m_graphics_pass_reads) {
-                if (dfs_detect_cycle(parent.lock())) {
-                    return true; // Cycle detected in one of the parents
-                }
-            }
-            recursion_stack.erase(pass);
-            return false; // No cycle found for this pass
-        };
-
-    for (const auto &pass : m_graphics_passes) {
-        if (dfs_detect_cycle(pass)) {
-            throw InexorException("Error: A cycle was detected in rendergraph for graphics pass " + pass->m_name + "!");
-        }
-    }
+    // TODO: Implement
 }
 
 void RenderGraph::collect_swapchain_image_available_semaphores() {
+#if 0
     m_swapchains_imgs_available.clear();
     // Use an std::unordered_set to make sure every swapchain image available semaphore is in there only once!
     std::unordered_set<VkSemaphore> unique_semaphores;
@@ -99,6 +42,7 @@ void RenderGraph::collect_swapchain_image_available_semaphores() {
     }
     // Convert the unordered_set into the std::vector so we can pass it in command buffer submission
     m_swapchains_imgs_available = std::vector<VkSemaphore>(unique_semaphores.begin(), unique_semaphores.end());
+#endif
 }
 
 void RenderGraph::compile() {
@@ -114,70 +58,50 @@ void RenderGraph::compile() {
 }
 
 void RenderGraph::create_descriptor_set_layouts() {
-    for (const auto &descriptor : m_resource_descriptors) {
-        // Call descriptor set layout create function for each descriptor
-        std::invoke(std::get<0>(descriptor), m_descriptor_set_layout_builder);
+    for (const auto &render_module : m_render_modules) {
+        render_module->setup_descriptor_set_layouts(m_descriptor_set_layout_builder);
     }
 }
 
 void RenderGraph::create_graphics_pipelines() {
-    for (const auto &create_func : m_pipeline_create_functions) {
-        // Call the graphics pipeline create function
-        create_func(m_graphics_pipeline_builder);
+    // TODO: Implement a GraphicsPipelineCreateBuilder
+
+    // For performance, we batch it all into one std::vector and call vkCreateGraphicsPipelines once
+    std::vector<VkGraphicsPipelineCreateInfo> graphics_pipeline_create_infos;
+    // Iterate through all render modules
+    for (const auto &render_module : m_render_modules) {
+        // Iterate through all graphics pipelines of the render module
+        for (const auto &pipeline : render_module->m_graphics_pipelines) {
+            graphics_pipeline_create_infos.push_back(pipeline.m_pipeline_ci);
+        }
+    }
+    // The pipelines to create
+    std::vector<VkPipeline> graphics_pipelines(graphics_pipeline_create_infos.size());
+    // Create the graphics pipelines in one batched call to vkCreateGraphicsPipelines
+    if (const auto result = vkCreateGraphicsPipelines(
+            m_device.device(), m_pipeline_cache.get_handle(), graphics_pipeline_create_infos.size(),
+            graphics_pipeline_create_infos.data(), nullptr, graphics_pipelines.data());
+        result != VK_SUCCESS) {
+        throw VulkanException("Error: vkCreateGraphicsPipelines failed!", result);
+    }
+    // Now we created all graphics pipelines, we need to put them back into the wrappers
+    std::size_t pipeline_index = 0;
+    // Iterate through all render modules
+    for (const auto &render_module : m_render_modules) {
+        // Iterate through all graphics pipelines of the render module
+        for (auto &pipeline : render_module->m_graphics_pipelines) {
+            pipeline.m_pipeline = graphics_pipelines[pipeline_index];
+            pipeline_index++;
+        }
     }
 }
 
 void RenderGraph::determine_pass_order() {
-    if (m_graphics_passes.empty()) {
-        throw InexorException("Error: No graphics passes specified!");
-    }
-
-    // Pop elements from the stack to get the correct order
-    std::vector<std::shared_ptr<GraphicsPass>> ordered_passes;
-    std::unordered_map<std::shared_ptr<GraphicsPass>, bool> visited;
-
-    // Reserve memory for the sorted graphics passes
-    ordered_passes.reserve(m_graphics_passes.size());
-
-    // Lambda function for DFS
-    std::function<void(const std::shared_ptr<GraphicsPass> &)> dfs = [&](const std::shared_ptr<GraphicsPass> &pass) {
-        // If the pass has already been visited, return
-        if (visited[pass]) {
-            return;
-        }
-        // Mark the pass as visited
-        visited[pass] = true;
-
-        // Visit all passes that this pass reads from
-        for (const auto &weak_read_pass : pass->m_graphics_pass_reads) {
-            if (auto read_pass = weak_read_pass.lock()) {
-                dfs(read_pass);
-            }
-        }
-        // All dependencies of this pass have been visited, now push this pass onto the stack
-        ordered_passes.push_back(pass);
-    };
-
-    // Initialize visited map for all passes
-    for (const auto &pass : m_graphics_passes) {
-        visited[pass] = false;
-    }
-    // Perform DFS from each pass
-    for (const auto &pass : m_graphics_passes) {
-        if (!visited[pass]) {
-            dfs(pass);
-        }
-    }
-    // Update the member variable with the sorted passes
-    m_graphics_passes = std::move(ordered_passes);
-
-    // Let each graphics pass know about its next pass, except the last one which has none
-    for (std::size_t pass_index = 0; pass_index < m_graphics_passes.size() - 1; pass_index++) {
-        m_graphics_passes[pass_index]->m_next_pass = m_graphics_passes[pass_index + 1];
-    }
+    // TODO: Implement
 }
 
 void RenderGraph::fill_graphics_pass_rendering_info(GraphicsPass &pass) {
+#if 0
     pass.reset_rendering_info();
 
     /// Fill the VkRenderingattachmentInfo for a color, depth, or stencil attachment
@@ -282,9 +206,12 @@ void RenderGraph::fill_graphics_pass_rendering_info(GraphicsPass &pass) {
         .pDepthAttachment = pass.m_has_depth_attachment ? &pass.m_depth_attachment : nullptr,
         .pStencilAttachment = pass.m_has_stencil_attachment ? &pass.m_stencil_attachment : nullptr,
     });
+#endif
 }
 
-void RenderGraph::record_command_buffer_for_pass(const CommandBuffer &cmd_buf, GraphicsPass &pass) {
+void RenderGraph::record_command_buffer_for_pass(const CommandBuffer &cmd_buf, const GraphicsPass &pass) {
+
+#if 0
     cmd_buf.set_suboperation_debug_name("[Pass:" + pass.m_name + "]");
     // Start a new debug label for this graphics pass (visible in graphics debuggers like RenderDoc)
     cmd_buf.begin_debug_label_region(pass.m_name, pass.m_debug_label_color);
@@ -339,26 +266,29 @@ void RenderGraph::record_command_buffer_for_pass(const CommandBuffer &cmd_buf, G
 
     // End the debug label for this graphics pass
     cmd_buf.end_debug_label_region();
+#endif
+}
+
+void RenderGraph::record_and_submit_command_buffers() {
+    // Iterate through all render modules
+    for (const auto &render_module : m_render_modules) {
+        // Iterate through every graphics pass of the current render module
+        for (const auto &pass : render_module->m_graphics_passes) {
+            m_device.execute(pass.m_name, VK_QUEUE_GRAPHICS_BIT, DebugLabelColor::CYAN,
+                             [&](const CommandBuffer &cmd_buf) {
+                                 // Record one command buffer for every pass in every render module
+                                 record_command_buffer_for_pass(cmd_buf, pass);
+                             });
+        }
+    }
+    // TODO: Wait on m_swapchains_imgs_available...
 }
 
 void RenderGraph::render() {
     update_buffers();
     update_textures();
-    // TODO: Only call if any data changed and try to accumulate write descriptor sets
     update_write_descriptor_sets();
-
-    // TODO: Don't record everything into one command buffer!
-    m_device.execute(
-        "[RenderGraph::render]", VK_QUEUE_GRAPHICS_BIT, DebugLabelColor::CYAN,
-        [&](const CommandBuffer &cmd_buf) {
-            // Call the command buffer recording function of every graphics pass
-            for (auto &pass : m_graphics_passes) {
-                record_command_buffer_for_pass(cmd_buf, *pass);
-            }
-        },
-        m_swapchains_imgs_available);
-
-    // TODO: Do the present call(s) for the swapchain(s) on the queue(s) for presenting
+    record_and_submit_command_buffers();
 }
 
 void RenderGraph::reset() {
@@ -366,82 +296,58 @@ void RenderGraph::reset() {
 }
 
 void RenderGraph::update_buffers() {
-    // Check if there is any update required
-    bool any_update_required = false;
-    for (const auto &buffer : m_buffers) {
-        std::invoke(buffer->m_on_check_for_update);
-        // TODO: A command buffer copy command is only required if the memory is not updated through std::memcpy!
-        if (buffer->m_update_requested) {
-            any_update_required = true;
-        }
-    }
+    // NOTE: Even if a buffer update can be done via vmaCopyMemoryToAllocation, we still need a command buffer for
+    // placing the pipeline barrier after the write operation! We also need the command buffer in case we need to update
+    // a buffer with a staging buffer and copy command of course, and such a case required barriers as well.
 
-    // Only start recording and submitting a command buffer on transfer queue if any update is required
-    // TODO: Use dedicated transfer queue instead of transfer queue for buffer updates!
-    if (any_update_required) {
-        m_device.execute("[RenderGraph::update_buffers]", VK_QUEUE_GRAPHICS_BIT, DebugLabelColor::MAGENTA,
-                         [&](const CommandBuffer &cmd_buf) {
-                             for (const auto &buffer : m_buffers) {
-                                 if (buffer->m_update_requested) {
-                                     cmd_buf.set_suboperation_debug_name("[Buffer|Destroy:" + buffer->m_name + "]");
-                                     buffer->destroy_all();
-                                     cmd_buf.set_suboperation_debug_name("[Buffer|Update:" + buffer->m_name + "]");
-                                     buffer->create(cmd_buf);
+    // NOTE: If there are no buffer updates required, an empty command buffer will be recorded, which is valid too.
+
+    // TODO: Update by using transfer queue (this requires transfer of ownership though)
+    m_device.execute("RenderGraph::update_buffers", VK_QUEUE_GRAPHICS_BIT, DebugLabelColor::GREEN,
+                     [&](const CommandBuffer &cmd_buf) {
+                         // Iterate through all render modules in the rendergraph
+                         for (const auto &render_module : m_render_modules) {
+                             // Update all buffers of this render module
+                             render_module->update_buffers();
+                             // Iterate through all buffers of the render module and perform update if required
+                             for (const auto &buffer : render_module->m_buffers) {
+                                 // Does this buffer require an update?
+                                 if (buffer->is_update_requested()) {
+                                     buffer->update(cmd_buf);
                                  }
                              }
-                         });
-    }
-    // NOTE: For the "else" case: We can't insert a debug label here telling us that there are no buffer updates
-    // required because that command itself would require a command buffer to be in recording state
+                         }
+                         // TODO: Batch buffer memory barriers here!
+                     });
 }
 
 void RenderGraph::update_textures() {
-    // Check if there is any update required
-    bool any_update_required = false;
-    for (const auto &texture : m_textures) {
-        // Check if this texture needs an update
-        if (texture->m_usage == TextureUsage::DEFAULT) {
-            texture->m_on_check_for_updates();
-        }
-        if (texture->m_update_requested) {
-            any_update_required = true;
-        }
-    }
-    // Only start recording and submitting a command buffer if any update is required
-    // TODO: Use dedicated transfer queue instead of graphics queue for texture updates!
-    if (any_update_required) {
-        m_device.execute("[RenderGraph::update_textures]", VK_QUEUE_GRAPHICS_BIT, DebugLabelColor::LIME,
-                         [&](const CommandBuffer &cmd_buf) {
-                             for (const auto &texture : m_textures) {
-                                 if (texture->m_update_requested) {
-                                     // TODO: Remove set_suboperation_debug_name entirely and use debug label?
-                                     cmd_buf.set_suboperation_debug_name("[Texture|Destroy:" + texture->m_name + "]");
-                                     texture->destroy();
-                                     cmd_buf.set_suboperation_debug_name("[Texture|Create:" + texture->m_name + "]");
-                                     texture->create();
+    // TODO: Update by using transfer queue (this requires transfer of ownership though)
+    m_device.execute("RenderGraph::update_textures", VK_QUEUE_GRAPHICS_BIT, DebugLabelColor::GREEN,
+                     [&](const CommandBuffer &cmd_buf) {
+                         // Iterate through all render modules in the rendergraph
+                         for (const auto &render_module : m_render_modules) {
+                             // Update all textures of the render module
+                             render_module->update_textures();
+                             // TODO: Move responsibility from rendergraph to update_textures?
+                             for (const auto &texture : render_module->m_textures) {
+                                 if (texture->is_update_requested()) {
                                      texture->update(cmd_buf);
                                  }
                              }
-                         });
-    }
-    // NOTE: For the "else" case: We can't insert a debug label here telling us that there are no buffer updates
-    // required because that command itself would require a command buffer to be in recording state
+                         }
+                     });
 }
 
 void RenderGraph::update_write_descriptor_sets() {
-    m_write_descriptor_sets.clear();
-    // NOTE: We don't reserve memory for the std::vector because we don't know how many write descriptor sets will exist
-    // in total (each resource descriptor can have an arbitrary number of write descriptor sets). Because we call
-    // update_write_descriptor_sets() only once during rendergraph compilation, this is not a problem.
-    for (const auto &descriptor : m_resource_descriptors) {
-        // Call descriptor set builder function (OnBuildWriteDescriptorSets) for each descriptor
-        auto write_descriptor_sets = std::invoke(std::get<2>(descriptor), m_write_descriptor_set_builder);
-        // Store the results of the function that was called
-        std::move(write_descriptor_sets.begin(), write_descriptor_sets.end(),
-                  std::back_inserter(m_write_descriptor_sets));
+    // Iterate through all render modules in the rendergraph
+    for (const auto &render_module : m_render_modules) {
+        // Update the descriptor sets of this render module
+        render_module->update_descriptor_sets(m_write_descriptor_set_builder);
     }
-    // NOTE: We batch all descriptor set updates into one function call for optimal performance
-    m_device.update_descriptor_sets(m_write_descriptor_sets);
+    // NOTE: We batch all descriptor set updates off all render modules into one std::vector of write descriptor
+    // sets and call vkUpdateDescriptorSets only once per frame with it for improved performance
+    m_device.update_descriptor_sets(m_write_descriptor_set_builder.build());
 }
 
-} // namespace inexor::vulkan_renderer::rendering::render_graph
+} // namespace inexor::vulkan_renderer::render_graph

@@ -7,15 +7,16 @@
 #include <array>
 #include <vector>
 
-// Forward declaration
 namespace inexor::vulkan_renderer::wrapper {
+// Forward declaration
 class Device;
-}
+} // namespace inexor::vulkan_renderer::wrapper
 
 namespace inexor::vulkan_renderer::wrapper::descriptors {
 
 // Forward declaration
 class DescriptorBuilder;
+class DescriptorSetLayout;
 
 /// This classes manages descriptors by allocating VkDescriptorPools and VkDescriptorSetLayouts.
 /// It is also responsible for caching VkDescriptorSetLayouts, meaning we do not create duplicates
@@ -44,14 +45,7 @@ public:
     /// @param name The name of the descriptor set layout
     /// @param descriptor_set_layout The descriptor set layout to allocate the descriptor set with
     /// @return The descriptor set which was allocated
-    [[nodiscard]] VkDescriptorSet allocate(const std::string &name, VkDescriptorSetLayout descriptor_set_layout);
-
-    DescriptorSetAllocator(const DescriptorSetAllocator &) = delete;
-    DescriptorSetAllocator(DescriptorSetAllocator &&) noexcept;
-    ~DescriptorSetAllocator() = default;
-
-    DescriptorSetAllocator &operator=(const DescriptorSetAllocator &) = delete;
-    DescriptorSetAllocator &operator=(DescriptorSetAllocator &&) = delete;
+    [[nodiscard]] VkDescriptorSet allocate(const std::string &name, const DescriptorSetLayout &descriptor_set_layout);
 };
 
 } // namespace inexor::vulkan_renderer::wrapper::descriptors

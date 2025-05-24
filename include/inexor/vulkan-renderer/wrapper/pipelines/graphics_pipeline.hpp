@@ -12,15 +12,6 @@ namespace inexor::vulkan_renderer::wrapper {
 class Device;
 } // namespace inexor::vulkan_renderer::wrapper
 
-namespace inexor::vulkan_renderer::wrapper::commands {
-// Forward declaration
-class CommandBuffer;
-} // namespace inexor::vulkan_renderer::wrapper::commands
-
-namespace inexor::vulkan_renderer::wrapper::pipelines {
-class PipelineCache;
-} // namespace inexor::vulkan_renderer::wrapper::pipelines
-
 namespace inexor::vulkan_renderer::render_graph {
 // Forward declaration
 class RenderGraph;
@@ -28,44 +19,37 @@ class RenderGraph;
 
 namespace inexor::vulkan_renderer::wrapper::pipelines {
 
-// TODO: Implement RAII wrapper for ComputePipeline
+// TODO: Implement RAII wrapper ComputePipeline for compute pipelines!
 
 /// RAII wrapper for graphics pipelines
 class GraphicsPipeline {
-    friend class commands::CommandBuffer;
-    friend class render_graph::RenderGraph;
+    friend render_graph::RenderGraph;
 
 private:
     const Device &m_device;
-    std::unique_ptr<PipelineLayout> m_pipeline_layout;
-    VkPipeline m_pipeline;
     std::string m_name;
-
-    // TODO: Make constructor private and let only GraphicsPipelineBuilder access it?
+    VkPipeline m_pipeline{VK_NULL_HANDLE};
+    std::unique_ptr<PipelineLayout> m_pipeline_layout;
+    VkGraphicsPipelineCreateInfo m_pipeline_ci;
 
 public:
     /// Default constructor
     /// @param device The device wrapper
-    /// @param pipeline_cache The Vulkan pipeline cache
     /// @param descriptor_set_layouts The descriptor set layouts in the pipeline layout
     /// @param push_constant_ranges The push constant ranges in the pipeline layout
     /// @param pipeline_ci The pipeline create info
     /// @param name The internal debug name of the graphics pipeline
     GraphicsPipeline(const Device &device,
-                     const PipelineCache &pipeline_cache,
                      std::span<const VkDescriptorSetLayout> descriptor_set_layouts,
                      std::span<const VkPushConstantRange> push_constant_ranges,
                      VkGraphicsPipelineCreateInfo pipeline_ci,
                      std::string name);
 
-    GraphicsPipeline(const GraphicsPipeline &) = delete;
-    GraphicsPipeline(GraphicsPipeline &&) noexcept;
-
     /// Call vkDestroyPipeline
+    /// @note We batch pipeline creation into one call to vkCreateGraphicsPipelines in rendergraph, but the actual
+    /// VkPipeline handle is still handled by the GraphicsPipeline wrapper, meaning that it will be destroyed in the
+    /// destructor, and not by rendergraph!
     ~GraphicsPipeline();
-
-    GraphicsPipeline &operator=(const GraphicsPipeline &) = delete;
-    GraphicsPipeline &operator=(GraphicsPipeline &&) = delete;
 };
 
 } // namespace inexor::vulkan_renderer::wrapper::pipelines

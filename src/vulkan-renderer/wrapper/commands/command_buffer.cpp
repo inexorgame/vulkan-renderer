@@ -1,6 +1,6 @@
 #include "inexor/vulkan-renderer/wrapper/commands/command_buffer.hpp"
 
-#include "inexor/vulkan-renderer/render-graph/buffer.hpp"
+#include "inexor/vulkan-renderer/render-graph/buffer_resource.hpp"
 #include "inexor/vulkan-renderer/wrapper/device.hpp"
 #include "inexor/vulkan-renderer/wrapper/exception.hpp"
 #include "inexor/vulkan-renderer/wrapper/make_info.hpp"
@@ -71,50 +71,29 @@ const CommandBuffer &CommandBuffer::begin_rendering(const VkRenderingInfo &rende
 };
 
 const CommandBuffer &CommandBuffer::bind_descriptor_set(const VkDescriptorSet descriptor_set,
-                                                        const std::weak_ptr<GraphicsPipeline> pipeline) const {
+                                                        const GraphicsPipeline &pipeline) const {
     if (!descriptor_set) {
         throw InexorException("Error: Parameter 'descriptor_set' is invalid!");
     }
-    if (pipeline.expired()) {
-        throw InexorException("Error: Parameter 'pipeline' is an invalid pointer!");
-    }
-    vkCmdBindDescriptorSets(m_cmd_buf, VK_PIPELINE_BIND_POINT_GRAPHICS,
-                            pipeline.lock()->m_pipeline_layout->m_pipeline_layout, 0, 1, &descriptor_set, 0, nullptr);
+    vkCmdBindDescriptorSets(m_cmd_buf, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.m_pipeline_layout->m_pipeline_layout,
+                            0, 1, &descriptor_set, 0, nullptr);
     return *this;
 }
 
-const CommandBuffer &CommandBuffer::bind_index_buffer(const std::weak_ptr<Buffer> buffer,
-                                                      const VkIndexType index_type,
-                                                      const VkDeviceSize offset) const {
-    if (buffer.expired()) {
-        throw InexorException("Error: Parameter 'buffer' is an invalid pointer!");
-    }
-    if (buffer.lock()->m_buffer_type != BufferType::INDEX_BUFFER) {
-        throw InexorException("Error: Rendergraph buffer resource " + buffer.lock()->m_name +
-                              " is not an index buffer!");
-    }
-    vkCmdBindIndexBuffer(m_cmd_buf, buffer.lock()->m_buffer, offset, index_type);
+const CommandBuffer &
+CommandBuffer::bind_index_buffer(const VkBuffer buffer, const VkIndexType index_type, const VkDeviceSize offset) const {
+    vkCmdBindIndexBuffer(m_cmd_buf, buffer, offset, index_type);
     return *this;
 }
 
-const CommandBuffer &CommandBuffer::bind_pipeline(const std::weak_ptr<GraphicsPipeline> pipeline,
+const CommandBuffer &CommandBuffer::bind_pipeline(const VkPipeline pipeline,
                                                   const VkPipelineBindPoint bind_point) const {
-    if (pipeline.expired()) {
-        throw InexorException("Error: Parameter 'pipeline' is an invalid pointer!");
-    }
-    vkCmdBindPipeline(m_cmd_buf, bind_point, pipeline.lock()->m_pipeline);
+    vkCmdBindPipeline(m_cmd_buf, bind_point, pipeline);
     return *this;
 }
 
-const CommandBuffer &CommandBuffer::bind_vertex_buffer(const std::weak_ptr<Buffer> buffer) const {
-    if (buffer.expired()) {
-        throw InexorException("Error: Parameter 'buffer' is an invalid pointer!");
-    }
-    if (buffer.lock()->m_buffer_type != BufferType::VERTEX_BUFFER) {
-        throw InexorException("Error: Rendergraph buffer resource " + buffer.lock()->m_name +
-                              " is not a vertex buffer!");
-    }
-    vkCmdBindVertexBuffers(m_cmd_buf, 0, 1, &buffer.lock()->m_buffer, std::vector<VkDeviceSize>(1, 0).data());
+const CommandBuffer &CommandBuffer::bind_vertex_buffer(const VkBuffer buffer) const {
+    vkCmdBindVertexBuffers(m_cmd_buf, 0, 1, &buffer, std::vector<VkDeviceSize>(1, 0).data());
     return *this;
 }
 
