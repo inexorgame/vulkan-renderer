@@ -23,7 +23,7 @@ namespace inexor::vulkan_renderer::wrapper::descriptors {
 class WriteDescriptorSetBuilder;
 } // namespace inexor::vulkan_renderer::wrapper::descriptors
 
-namespace inexor::vulkan_renderer::rendering::render_graph {
+namespace inexor::vulkan_renderer::render_graph {
 
 /// The buffer type describes the internal usage of the buffer resource inside of the rendergraph
 enum class BufferType {
@@ -156,4 +156,4 @@ public:
     }
 };
 
-} // namespace inexor::vulkan_renderer::rendering::render_graph
+} // namespace inexor::vulkan_renderer::render_graph

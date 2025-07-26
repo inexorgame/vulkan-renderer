@@ -9,7 +9,7 @@
 
 #include <utility>
 
-namespace inexor::vulkan_renderer::rendering::render_graph {
+namespace inexor::vulkan_renderer::render_graph {
 
 // Using declaration
 using wrapper::InexorException;
@@ -199,4 +199,4 @@ void Buffer::request_update(void *src_data, const std::size_t src_data_size) {
     m_update_requested = true;
 }
 
-} // namespace inexor::vulkan_renderer::rendering::render_graph
+} // namespace inexor::vulkan_renderer::render_graph

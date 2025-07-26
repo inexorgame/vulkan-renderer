@@ -7,8 +7,10 @@ set(INEXOR_SOURCE_FILES
     vulkan-renderer/io/octree_parser.cpp
 
     vulkan-renderer/render-components/imgui/imgui_renderer.cpp
-    vulkan-renderer/render-components/octree/octree_renderer.cpp
-    vulkan-renderer/render-components/octree/octree_vertices.cpp
+    vulkan-renderer/render-components/material_base.cpp
+    vulkan-renderer/render-components/octree/colored_triangles_octree_material.cpp
+    vulkan-renderer/render-components/octree/colored_triangles_octree_renderer.cpp
+    vulkan-renderer/render-components/renderer_base.cpp
     
     vulkan-renderer/render-graph/buffer.cpp
     vulkan-renderer/render-graph/graphics_pass.cpp
@@ -18,7 +20,6 @@ set(INEXOR_SOURCE_FILES
 
     vulkan-renderer/tools/camera.cpp
     vulkan-renderer/tools/cla_parser.cpp
-    vulkan-renderer/tools/device_info.cpp
     vulkan-renderer/tools/enumerate.cpp
     vulkan-renderer/tools/representation.cpp
 

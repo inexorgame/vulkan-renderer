@@ -15,11 +15,11 @@ namespace inexor::vulkan_renderer::wrapper::commands {
 class CommandBuffer;
 } // namespace inexor::vulkan_renderer::wrapper::commands
 
-namespace inexor::vulkan_renderer::rendering::render_graph {
+namespace inexor::vulkan_renderer::render_graph {
 // Forward declarations
 class RenderGraph;
 class Texture;
-} // namespace inexor::vulkan_renderer::rendering::render_graph
+} // namespace inexor::vulkan_renderer::render_graph
 
 namespace inexor::vulkan_renderer::wrapper {
 
@@ -36,8 +36,8 @@ using commands::CommandBuffer;
 /// @note Multisample anti-aliasing (MSAA) can be enabled on a per-texture basis
 class Image {
     friend CommandBuffer;
-    friend rendering::render_graph::RenderGraph;
-    friend rendering::render_graph::Texture;
+    friend render_graph::RenderGraph;
+    friend render_graph::Texture;
 
 private:
     /// The device wrapper

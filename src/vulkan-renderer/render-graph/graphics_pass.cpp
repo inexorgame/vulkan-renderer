@@ -5,7 +5,7 @@
 
 #include <utility>
 
-namespace inexor::vulkan_renderer::rendering::render_graph {
+namespace inexor::vulkan_renderer::render_graph {
 
 // Using declaration
 using wrapper::InexorException;
@@ -106,4 +106,4 @@ void GraphicsPass::reset_rendering_info() {
     m_stencil_attachment = wrapper::make_info<VkRenderingAttachmentInfo>();
 }
 
-} // namespace inexor::vulkan_renderer::rendering::render_graph
+} // namespace inexor::vulkan_renderer::render_graph

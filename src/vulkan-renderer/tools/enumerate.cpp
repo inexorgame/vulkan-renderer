@@ -10,6 +10,12 @@ namespace inexor::vulkan_renderer::tools {
 
 using wrapper::VulkanException;
 
+std::vector<VkBool32> get_device_features_as_vector(const VkPhysicalDeviceFeatures &features) {
+    std::vector<VkBool32> comparable_features(sizeof(VkPhysicalDeviceFeatures) / sizeof(VkBool32));
+    std::memcpy(comparable_features.data(), &features, sizeof(VkPhysicalDeviceFeatures));
+    return comparable_features;
+}
+
 std::vector<VkExtensionProperties> get_extension_properties(const VkPhysicalDevice physical_device) {
     assert(physical_device);
     std::uint32_t count = 0;
@@ -23,6 +29,13 @@ std::vector<VkExtensionProperties> get_extension_properties(const VkPhysicalDevi
         throw VulkanException("Error: vkEnumerateDeviceExtensionProperties failed!", result);
     }
     return extensions;
+}
+
+std::string get_physical_device_name(const VkPhysicalDevice physical_device) {
+    assert(physical_device);
+    VkPhysicalDeviceProperties properties{};
+    vkGetPhysicalDeviceProperties(physical_device, &properties);
+    return properties.deviceName;
 }
 
 std::vector<VkQueueFamilyProperties> get_queue_family_properties(const VkPhysicalDevice physical_device) {

@@ -16,19 +16,19 @@ namespace inexor::vulkan_renderer::wrapper {
 class Device;
 } // namespace inexor::vulkan_renderer::wrapper
 
-namespace inexor::vulkan_renderer::rendering::render_graph {
+namespace inexor::vulkan_renderer::render_graph {
 // Forward declaration
 class Buffer;
 enum class BufferType;
 class Texture;
-} // namespace inexor::vulkan_renderer::rendering::render_graph
+} // namespace inexor::vulkan_renderer::render_graph
 
 namespace inexor::vulkan_renderer::wrapper::descriptors {
 
 // Using declarations
-using rendering::render_graph::Buffer;
-using rendering::render_graph::BufferType;
-using rendering::render_graph::Texture;
+using render_graph::Buffer;
+using render_graph::BufferType;
+using render_graph::Texture;
 
 /// A wrapper class for batching calls to vkUpdateDescriptorSets
 class WriteDescriptorSetBuilder {

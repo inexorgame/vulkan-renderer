@@ -2,6 +2,7 @@
 
 #include "inexor/vulkan-renderer/render-graph/render_graph.hpp"
 
+#include "inexor/vulkan-renderer/render-components/renderer_base.hpp"
 #include "inexor/vulkan-renderer/render-graph/buffer.hpp"
 #include "inexor/vulkan-renderer/render-graph/graphics_pass.hpp"
 #include "inexor/vulkan-renderer/render-graph/texture.hpp"
@@ -14,7 +15,7 @@
 
 #include <memory>
 
-namespace inexor::vulkan_renderer::rendering::imgui {
+namespace inexor::vulkan_renderer::render_components::imgui {
 
 // Using declarations
 using render_graph::Buffer;
@@ -28,8 +29,10 @@ using wrapper::Swapchain;
 using wrapper::pipelines::GraphicsPipeline;
 using wrapper::pipelines::GraphicsPipelineBuilder;
 
+// TODO: ImGuiMaterial makes no sense, but ImGui(Rendering)Data?
+
 /// A rendering class for ImGui
-class ImGuiRenderer {
+class ImGuiRenderer : public RendererBase {
 private:
     /// The ImGui context
     ImGuiContext *m_imgui_context{nullptr};
@@ -43,14 +46,8 @@ private:
     int m_font_texture_height{0};
     // Set to ``true`` once the ImGui font texture is initialized
     bool m_font_texture_initialized{false};
-
-    std::shared_ptr<Shader> m_vertex_shader;
-    std::shared_ptr<Shader> m_fragment_shader;
-    std::weak_ptr<Buffer> m_index_buffer;
-    std::weak_ptr<Buffer> m_vertex_buffer;
+    /// The ImGui texture
     std::weak_ptr<Texture> m_imgui_texture;
-    std::shared_ptr<GraphicsPipeline> m_imgui_pipeline;
-    std::weak_ptr<GraphicsPass> m_imgui_pass;
     // This swapchain is the color attachment we will write to
     std::weak_ptr<Swapchain> m_swapchain;
     // This is the previous pass we read from
@@ -65,6 +62,12 @@ private:
 
     VkDescriptorSetLayout m_descriptor_set_layout{VK_NULL_HANDLE};
     VkDescriptorSet m_descriptor_set{VK_NULL_HANDLE};
+
+    std::shared_ptr<Shader> m_vertex_shader;
+    std::shared_ptr<Shader> m_fragment_shader;
+    std::weak_ptr<Buffer> m_vertex_buffer;
+    std::weak_ptr<Buffer> m_index_buffer;
+    std::shared_ptr<GraphicsPipeline> m_imgui_pipeline;
 
     /// ImGui push constant block
     /// Note that neither scale nor translation change
@@ -90,7 +93,9 @@ public:
                   std::weak_ptr<Swapchain> swapchain,
                   std::function<void()> on_update_user_imgui_data);
 
+    // TODO: Render not only to swapchain, but to texture, use std::variant!
+
     ~ImGuiRenderer();
 };
 
-} // namespace inexor::vulkan_renderer::rendering::imgui
+} // namespace inexor::vulkan_renderer::render_components::imgui

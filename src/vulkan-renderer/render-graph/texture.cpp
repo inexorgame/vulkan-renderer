@@ -9,7 +9,7 @@
 #include <stdexcept>
 #include <utility>
 
-namespace inexor::vulkan_renderer::rendering::render_graph {
+namespace inexor::vulkan_renderer::render_graph {
 
 // Using declaration
 using wrapper::InexorException;
@@ -209,4 +209,4 @@ void Texture::request_update(void *src_texture_data, const std::size_t src_textu
     m_src_texture_data_size = src_texture_data_size;
 }
 
-} // namespace inexor::vulkan_renderer::rendering::render_graph
+} // namespace inexor::vulkan_renderer::render_graph

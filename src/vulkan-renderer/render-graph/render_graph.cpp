@@ -9,7 +9,7 @@
 
 #include <unordered_set>
 
-namespace inexor::vulkan_renderer::rendering::render_graph {
+namespace inexor::vulkan_renderer::render_graph {
 
 // Using declaration
 using wrapper::InexorException;
@@ -444,4 +444,4 @@ void RenderGraph::update_write_descriptor_sets() {
     m_device.update_descriptor_sets(m_write_descriptor_sets);
 }
 
-} // namespace inexor::vulkan_renderer::rendering::render_graph
+} // namespace inexor::vulkan_renderer::render_graph

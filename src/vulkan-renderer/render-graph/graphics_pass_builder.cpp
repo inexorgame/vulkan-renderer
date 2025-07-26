@@ -4,7 +4,7 @@
 
 #include <utility>
 
-namespace inexor::vulkan_renderer::rendering::render_graph {
+namespace inexor::vulkan_renderer::render_graph {
 
 // Using declaration
 using wrapper::InexorException;
@@ -82,4 +82,4 @@ GraphicsPassBuilder::writes_to(std::variant<std::weak_ptr<Texture>, std::weak_pt
     return *this;
 }
 
-} // namespace inexor::vulkan_renderer::rendering::render_graph
+} // namespace inexor::vulkan_renderer::render_graph

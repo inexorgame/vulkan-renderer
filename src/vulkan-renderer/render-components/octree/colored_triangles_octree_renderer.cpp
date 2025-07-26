@@ -1,6 +1,6 @@
-#include "inexor/vulkan-renderer/render-components/octree/octree_renderer.hpp"
+#include "inexor/vulkan-renderer/render-components/octree/colored_triangles_octree_renderer.hpp"
 
-#include "inexor/vulkan-renderer/render-components/octree/octree_vertices.hpp"
+#include "inexor/vulkan-renderer/render-components/octree/colored_triangles_octree_material.hpp"
 #include "inexor/vulkan-renderer/wrapper/commands/command_buffer.hpp"
 #include "inexor/vulkan-renderer/wrapper/descriptors/descriptor_set_allocator.hpp"
 #include "inexor/vulkan-renderer/wrapper/descriptors/descriptor_set_layout_builder.hpp"
@@ -9,17 +9,18 @@
 
 #include <utility>
 
-namespace inexor::vulkan_renderer::rendering::octree {
+namespace inexor::vulkan_renderer::render_components::octree {
 
 // Using declarations
+using render_graph::BufferType;
 using wrapper::InexorException;
 using wrapper::descriptors::DescriptorSetAllocator;
 using wrapper::descriptors::DescriptorSetLayoutBuilder;
 using wrapper::descriptors::WriteDescriptorSetBuilder;
 
-OctreeRenderer::OctreeRenderer(const std::weak_ptr<RenderGraph> rendergraph,
-                               const std::weak_ptr<Texture> back_buffer,
-                               const std::weak_ptr<Texture> depth_buffer) {
+ColoredTrianglesOctreeRenderer::ColoredTrianglesOctreeRenderer(const std::weak_ptr<RenderGraph> rendergraph,
+                                                               const std::weak_ptr<Texture> back_buffer,
+                                                               const std::weak_ptr<Texture> depth_buffer) {
     if (rendergraph.expired()) {
         throw InexorException("Error: Parameter 'rendergraph' is an invalid pointer!");
     }
@@ -68,9 +69,9 @@ OctreeRenderer::OctreeRenderer(const std::weak_ptr<RenderGraph> rendergraph,
     });
 
     // Load the shaders used for octree rendering
-    m_octree_fragment =
+    m_vertex_shader =
         std::make_shared<Shader>(rg->device(), "Octree|vert", VK_SHADER_STAGE_VERTEX_BIT, "shaders/octree.vert.spv");
-    m_octree_vertex =
+    m_fragment_shader =
         std::make_shared<Shader>(rg->device(), "Octree|frag", VK_SHADER_STAGE_FRAGMENT_BIT, "shaders/octree.frag.spv");
 
     // Store the image format and extent of the back buffer
@@ -79,36 +80,36 @@ OctreeRenderer::OctreeRenderer(const std::weak_ptr<RenderGraph> rendergraph,
 
     // Set the callback for creation of the graphics pipeline
     rg->add_graphics_pipeline([&](GraphicsPipelineBuilder &builder) {
-        m_octree_pipeline = builder.add_shader(m_octree_vertex)
-                                .add_shader(m_octree_fragment)
-                                .set_vertex_input_bindings({{
-                                    .binding = 0,
-                                    .stride = sizeof(SimpleColoredVertex),
-                                    .inputRate = VK_VERTEX_INPUT_RATE_VERTEX,
-                                }})
-                                .set_vertex_input_attributes({
-                                    {
-                                        .location = 0,
-                                        .format = VK_FORMAT_R32G32B32_SFLOAT,
-                                        .offset = offsetof(SimpleColoredVertex, position),
-                                    },
-                                    {
-                                        .location = 1,
-                                        .format = VK_FORMAT_R32G32B32_SFLOAT,
-                                        .offset = offsetof(SimpleColoredVertex, color),
-                                    },
-                                })
-                                .set_scissor(m_back_buffer_extent)
-                                .set_viewport(m_back_buffer_extent)
-                                .add_default_color_blend_attachment()
-                                .set_multisampling(VK_SAMPLE_COUNT_1_BIT)
-                                .add_color_attachment_format(m_back_buffer_img_format)
-                                .set_descriptor_set_layout(m_descriptor_set_layout)
-                                .build("Octree");
+        m_graphics_pipeline = builder.add_shader(m_vertex_shader)
+                                  .add_shader(m_fragment_shader)
+                                  .set_vertex_input_bindings({{
+                                      .binding = 0,
+                                      .stride = sizeof(ColoredTrianglesOctreeVertex),
+                                      .inputRate = VK_VERTEX_INPUT_RATE_VERTEX,
+                                  }})
+                                  .set_vertex_input_attributes({
+                                      {
+                                          .location = 0,
+                                          .format = VK_FORMAT_R32G32B32_SFLOAT,
+                                          .offset = offsetof(ColoredTrianglesOctreeVertex, position),
+                                      },
+                                      {
+                                          .location = 1,
+                                          .format = VK_FORMAT_R32G32B32_SFLOAT,
+                                          .offset = offsetof(ColoredTrianglesOctreeVertex, color),
+                                      },
+                                  })
+                                  .set_scissor(m_back_buffer_extent)
+                                  .set_viewport(m_back_buffer_extent)
+                                  .add_default_color_blend_attachment()
+                                  .set_multisampling(VK_SAMPLE_COUNT_1_BIT)
+                                  .add_color_attachment_format(m_back_buffer_img_format)
+                                  .set_descriptor_set_layout(m_descriptor_set_layout)
+                                  .build("Octree");
     });
 
     // Add the graphics pass for octree rendering
-    m_octree_pass = rg->add_graphics_pass(
+    m_graphics_pass = rg->add_graphics_pass(
         rg->get_graphics_pass_builder()
             // TODO: We need to specify from which buffer(s) the graphics pass reads so rendergraph knows about it!
             .set_on_record([&](const CommandBuffer &cmd_buf) {
@@ -117,16 +118,16 @@ OctreeRenderer::OctreeRenderer(const std::weak_ptr<RenderGraph> rendergraph,
                 // buffer recording function. However, to stay consistent, we should not bind pipelines in rendergraph
                 // automatically, since we explicitely mention that it's the job of the programmer to do this manually!
                 // The pipeline must be bound only once for rendering all octrees
-                cmd_buf.bind_pipeline(m_octree_pipeline);
+                cmd_buf.bind_pipeline(m_graphics_pipeline);
                 // Render all the cubes which are registered to the octree renderer
                 for (const auto &cube : m_cubes) {
                     auto cb = cube.lock();
                     // TODO: Merge all vertex buffers of same type into one big buffer and use offsets when drawing?
-                    cmd_buf.bind_vertex_buffer(cb->m_vertex_buffer)
-                        .bind_index_buffer(cb->m_index_buffer)
+                    cmd_buf.bind_vertex_buffer(cb->vertex_buffer)
+                        .bind_index_buffer(cb->index_buffer)
                         // TODO: Do we need to bind descriptor set in the loop or only once before?
-                        .bind_descriptor_set(m_descriptor_set, m_octree_pipeline)
-                        .draw_indexed(cb->m_index_count);
+                        .bind_descriptor_set(m_descriptor_set, m_graphics_pipeline)
+                        .draw_indexed(cb->index_count);
                 }
             })
             .writes_to(back_buffer)
@@ -134,20 +135,20 @@ OctreeRenderer::OctreeRenderer(const std::weak_ptr<RenderGraph> rendergraph,
             .build("Octree", DebugLabelColor::RED));
 }
 
-void OctreeRenderer::add_octree(std::weak_ptr<Cube> cube) {
+void ColoredTrianglesOctreeRenderer::add_octree(std::weak_ptr<ColoredTrianglesOctreeMaterialInstance> cube) {
     m_cubes.emplace_back(std::move(cube));
 }
 
-void OctreeRenderer::remove_octree(const std::weak_ptr<Cube> cube) {
+void ColoredTrianglesOctreeRenderer::remove_octree(const std::weak_ptr<ColoredTrianglesOctreeMaterialInstance> cube) {
     m_cubes.erase(std::remove_if(m_cubes.begin(), m_cubes.end(),
-                                 [&cube](const std::weak_ptr<Cube> &cube_to_remove) {
+                                 [&cube](const std::weak_ptr<ColoredTrianglesOctreeMaterialInstance> &cube_to_remove) {
                                      return !cube_to_remove.owner_before(cube) && !cube.owner_before(cube_to_remove);
                                  }),
                   m_cubes.end());
 }
 
-void OctreeRenderer::set_camera(std::weak_ptr<Camera> camera) {
+void ColoredTrianglesOctreeRenderer::set_camera(std::weak_ptr<Camera> camera) {
     m_camera = camera;
 }
 
-} // namespace inexor::vulkan_renderer::rendering::octree
+} // namespace inexor::vulkan_renderer::render_components::octree

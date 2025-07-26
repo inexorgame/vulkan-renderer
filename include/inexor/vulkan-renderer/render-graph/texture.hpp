@@ -25,7 +25,7 @@ namespace inexor::vulkan_renderer::wrapper::descriptors {
 class WriteDescriptorSetBuilder;
 } // namespace inexor::vulkan_renderer::wrapper::descriptors
 
-namespace inexor::vulkan_renderer::rendering::render_graph {
+namespace inexor::vulkan_renderer::render_graph {
 
 /// Specifies the use of the texture
 /// NOTE: All usages which are not TextureUsage::DEFAULT are for internal usage inside of rendergraph only
@@ -159,4 +159,4 @@ public:
     void request_update(void *src_texture_data, std::size_t src_texture_data_size);
 };
 
-} // namespace inexor::vulkan_renderer::rendering::render_graph
+} // namespace inexor::vulkan_renderer::render_graph

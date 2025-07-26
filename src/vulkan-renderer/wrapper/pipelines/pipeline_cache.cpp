@@ -85,6 +85,10 @@ std::vector<uint8_t> PipelineCache::read_cache_data_from_disk() {
 
 void PipelineCache::save_cache_data_to_disk() {
     std::size_t cache_size = 0;
+    if (m_pipeline_cache == VK_NULL_HANDLE) {
+        spdlog::error("Vulkan pipeline cache cannot be saved to disk!");
+        return;
+    }
     auto result = vkGetPipelineCacheData(m_device.device(), m_pipeline_cache, &cache_size, nullptr);
     if (result == VK_SUCCESS) {
         if (cache_size > 0) {

@@ -1,6 +1,5 @@
 #include "inexor/vulkan-renderer/wrapper/device.hpp"
 
-#include "inexor/vulkan-renderer/tools/device_info.hpp"
 #include "inexor/vulkan-renderer/tools/enumerate.hpp"
 #include "inexor/vulkan-renderer/wrapper/exception.hpp"
 #include "inexor/vulkan-renderer/wrapper/instance.hpp"

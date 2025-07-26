@@ -33,9 +33,9 @@ class Fence;
 namespace inexor::vulkan_renderer::wrapper::commands {
 
 // Using declaration
+using render_graph::Buffer;
+using render_graph::BufferType;
 using render_graph::RenderGraph;
-using rendering::render_graph::Buffer;
-using rendering::render_graph::BufferType;
 using wrapper::pipelines::GraphicsPipeline;
 using wrapper::synchronization::Fence;
 

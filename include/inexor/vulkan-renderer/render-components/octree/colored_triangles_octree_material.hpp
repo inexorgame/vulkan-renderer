@@ -25,7 +25,7 @@ namespace inexor::vulkan_renderer::wrapper {
 class Shader;
 } // namespace inexor::vulkan_renderer::wrapper
 
-namespace inexor::vulkan_renderer::rendering::octree {
+namespace inexor::vulkan_renderer::render_components::octree {
 
 // Using-declarations
 using wrapper::Shader;
@@ -56,6 +56,7 @@ struct MaterialBase {
 struct MaterialInstanceBase {
     std::weak_ptr<Buffer> vertex_buffer;
     std::weak_ptr<Buffer> index_buffer;
+    std::uint32_t index_count;
     // TODO: Descriptor sets here?
 };
 
@@ -68,16 +69,16 @@ struct OctreeMaterialInstanceBase : public MaterialInstanceBase {
 };
 
 /// The struct used in the shader
-struct SimpleColoredVertex {
+struct ColoredTrianglesOctreeVertex {
     glm::vec3 position;
     glm::vec3 color;
 };
 
 // This is a very simple octree material
-struct SimpleColoredTrianglesOctreeMaterial : public OctreeMaterialInstanceBase {
+struct ColoredTrianglesOctreeMaterialInstance : public OctreeMaterialInstanceBase {
     // This is the data required to generate the buffers
-    std::vector<SimpleColoredVertex> vertices;
+    std::vector<ColoredTrianglesOctreeVertex> vertices;
     std::vector<std::uint32_t> indices;
 };
 
-} // namespace inexor::vulkan_renderer::rendering::octree
+} // namespace inexor::vulkan_renderer::render_components::octree

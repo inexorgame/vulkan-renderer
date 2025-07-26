@@ -16,7 +16,7 @@ namespace inexor::vulkan_renderer::wrapper::commands {
 class CommandBuffer;
 } // namespace inexor::vulkan_renderer::wrapper::commands
 
-namespace inexor::vulkan_renderer::rendering::render_graph {
+namespace inexor::vulkan_renderer::render_graph {
 
 // Using declaration
 using wrapper::DebugLabelColor;
@@ -83,4 +83,4 @@ public:
               std::optional<VkClearValue> clear_value = std::nullopt);
 };
 
-} // namespace inexor::vulkan_renderer::rendering::render_graph
+} // namespace inexor::vulkan_renderer::render_graph

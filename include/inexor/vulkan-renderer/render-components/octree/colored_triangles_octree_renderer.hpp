@@ -1,5 +1,7 @@
 #pragma once
 
+#include "inexor/vulkan-renderer/render-components/octree/colored_triangles_octree_material.hpp"
+#include "inexor/vulkan-renderer/render-components/renderer_base.hpp"
 #include "inexor/vulkan-renderer/render-graph/buffer.hpp"
 #include "inexor/vulkan-renderer/render-graph/graphics_pass.hpp"
 #include "inexor/vulkan-renderer/render-graph/render_graph.hpp"
@@ -16,7 +18,7 @@
 
 #include <memory>
 
-namespace inexor::vulkan_renderer::rendering::octree {
+namespace inexor::vulkan_renderer::render_components::octree {
 
 // Using declarations
 using render_graph::Buffer;
@@ -41,59 +43,43 @@ struct ModelViewProjMatrix {
     glm::mat4 proj;
 };
 
-/// A rendering class for octrees
-class OctreeRenderer {
+/// Renderer for colored octrees (3 colors per triangle)
+class ColoredTrianglesOctreeRenderer : public RendererBase {
 private:
-    std::shared_ptr<Shader> m_octree_vertex;
-    std::shared_ptr<Shader> m_octree_fragment;
-    std::weak_ptr<GraphicsPass> m_octree_pass;
-    std::shared_ptr<GraphicsPipeline> m_octree_pipeline;
-
-    VkDescriptorSetLayout m_descriptor_set_layout{VK_NULL_HANDLE};
-    VkDescriptorSet m_descriptor_set{VK_NULL_HANDLE};
-    std::vector<std::weak_ptr<Cube>> m_cubes;
-
     VkFormat m_back_buffer_img_format;
     VkExtent2D m_back_buffer_extent;
-
     ModelViewProjMatrix m_mvp_data{};
     std::weak_ptr<Buffer> m_mvp_matrix;
-
     std::weak_ptr<Camera> m_camera;
+    std::shared_ptr<Shader> m_vertex_shader;
+    std::shared_ptr<Shader> m_fragment_shader;
+    std::shared_ptr<GraphicsPipeline> m_graphics_pipeline;
+    VkDescriptorSetLayout m_descriptor_set_layout;
+    VkDescriptorSet m_descriptor_set;
+
+    /// The instances of colored triangles octree material to render
+    std::vector<std::weak_ptr<ColoredTrianglesOctreeMaterialInstance>> m_cubes;
 
 public:
     /// Default constructor
     /// @param rendergraph The rendergraph used to build octree renderer on
     /// @param back_buffer The back buffer to render to
     /// @param depth_buffer The depth buffer to render to
-    OctreeRenderer(std::weak_ptr<RenderGraph> rendergraph,
-                   std::weak_ptr<Texture> back_buffer,
-                   std::weak_ptr<Texture> depth_buffer);
-
-    OctreeRenderer(const OctreeRenderer &) = delete;
-    OctreeRenderer(OctreeRenderer &&) = delete;
-    ~OctreeRenderer() = default;
-
-    OctreeRenderer &operator=(const OctreeRenderer &) = delete;
-    OctreeRenderer &operator=(OctreeRenderer &&) = delete;
+    ColoredTrianglesOctreeRenderer(std::weak_ptr<RenderGraph> rendergraph,
+                                   std::weak_ptr<Texture> back_buffer,
+                                   std::weak_ptr<Texture> depth_buffer);
 
     /// Add a new cube to the octree renderer
     /// @param cube The root cube to add to the renderer
-    void add_octree(std::weak_ptr<Cube> cube);
-
-    // Return the octree graphics pass
-    // TODO: Why do we need this again?
-    [[nodiscard]] std::weak_ptr<GraphicsPass> get_pass() const {
-        return m_octree_pass;
-    }
+    void add_octree(std::weak_ptr<ColoredTrianglesOctreeMaterialInstance> cube);
 
     /// Remove a cube from the octree renderer
     /// @param cube The cube to remove
-    void remove_octree(std::weak_ptr<Cube> cube);
+    void remove_octree(std::weak_ptr<ColoredTrianglesOctreeMaterialInstance> cube);
 
     /// Set the camera used as view matrix for octree rendering
     /// @param camera The new camera to use for rendering
     void set_camera(std::weak_ptr<Camera> camera);
 };
 
-} // namespace inexor::vulkan_renderer::rendering::octree
+} // namespace inexor::vulkan_renderer::render_components::octree

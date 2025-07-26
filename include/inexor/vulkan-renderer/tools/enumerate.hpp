@@ -2,12 +2,21 @@
 
 #include <volk.h>
 
+#include <string>
 #include <vector>
 
 namespace inexor::vulkan_renderer::tools {
 
 /// All functions which contain the word "all" in it, call some vkEnumerate.. function,
 /// while all functions without it call vkGet..
+///
+
+/// Transform a ``VkPhysicalDeviceFeatures`` into a ``std::vector<VkBool32>``
+/// @note The size of the vector will be determined by the number of ``VkBool32`` variables in the
+/// ``VkPhysicalDeviceFeatures`` struct
+/// @param features The physical device features
+/// @return A ``std::vector<VkBool32>`` The transformed data
+[[nodiscard]] std::vector<VkBool32> get_device_features_as_vector(const VkPhysicalDeviceFeatures &features);
 
 /// Call vkEnumerateDeviceExtensionProperties
 /// @note Because device layers are deprecated in Vulkan, we are not exposing the ``pLayerName`` parameter of
@@ -16,6 +25,11 @@ namespace inexor::vulkan_renderer::tools {
 /// @exception VulkanException vkEnumerateDeviceExtensionProperties call failed
 /// @return A std::vector of all device extension properties of a physical device (this can be empty!)
 [[nodiscard]] std::vector<VkExtensionProperties> get_extension_properties(VkPhysicalDevice physical_device);
+
+/// Get the name of a physical device
+/// @param physical_device The physical device
+/// @return The name of the physical device
+[[nodiscard]] std::string get_physical_device_name(VkPhysicalDevice physical_device);
 
 /// Call vkEnumeratePhysicalDevices
 /// @param inst The Vulkan instance

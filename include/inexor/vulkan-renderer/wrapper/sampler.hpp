@@ -6,19 +6,19 @@
 
 #include <string>
 
-namespace inexor::vulkan_renderer::rendering::render_graph {
+namespace inexor::vulkan_renderer::render_graph {
 // Forward declaration
 class RenderGraph;
 class Texture;
-} // namespace inexor::vulkan_renderer::rendering::render_graph
+} // namespace inexor::vulkan_renderer::render_graph
 
 namespace inexor::vulkan_renderer::wrapper {
 
 // Forward declaration
 class Device;
 
-using rendering::render_graph::RenderGraph;
-using rendering::render_graph::Texture;
+using render_graph::RenderGraph;
+using render_graph::Texture;
 
 /// RAII wrapper class for VkSampler
 class Sampler {

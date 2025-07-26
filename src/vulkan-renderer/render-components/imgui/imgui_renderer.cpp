@@ -8,7 +8,7 @@
 #include <stdexcept>
 #include <utility>
 
-namespace inexor::vulkan_renderer::rendering::imgui {
+namespace inexor::vulkan_renderer::render_components::imgui {
 
 // Using declarations
 using wrapper::InexorException;
@@ -145,7 +145,7 @@ ImGuiRenderer::ImGuiRenderer(std::weak_ptr<RenderGraph> rendergraph,
     });
 
     // Setup the ImGui graphics pass
-    m_imgui_pass = rg->add_graphics_pass(
+    m_graphics_pass = rg->add_graphics_pass(
         rg->get_graphics_pass_builder()
             .writes_to(m_swapchain)
             .conditionally_reads_from(m_previous_pass, !m_previous_pass.expired())
@@ -236,4 +236,4 @@ void ImGuiRenderer::set_imgui_style() {
     style.Colors[ImGuiCol_ButtonActive] = {1.0f, 0.0f, 0.0f, 0.8f};
 }
 
-} // namespace inexor::vulkan_renderer::rendering::imgui
+} // namespace inexor::vulkan_renderer::render_components::imgui

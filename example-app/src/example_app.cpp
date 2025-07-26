@@ -185,7 +185,7 @@ void ExampleApp::setup_render_graph() {
                                         static_cast<float>(swapchain_img_extent.width),
                                         static_cast<float>(swapchain_img_extent.height));
 
-    m_octree_renderer = std::make_unique<OctreeRenderer>(m_rendergraph, m_back_buffer, m_depth_buffer);
+    m_octree_renderer = std::make_unique<ColoredTrianglesOctreeRenderer>(m_rendergraph, m_back_buffer, m_depth_buffer);
 
     m_octree_renderer->set_camera(m_camera);
 
@@ -202,7 +202,7 @@ void ExampleApp::setup_octree_rendering() {
 
     // Register all octrees that were created to the octree renderer
     for (const auto &octree : m_octrees) {
-        m_octree_renderer->add_octree(octree);
+        // m_octree_renderer->add_octree(octree);
     }
 }
 

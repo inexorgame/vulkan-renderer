@@ -19,12 +19,13 @@ namespace inexor::vulkan_renderer::wrapper::commands {
 class CommandBuffer;
 } // namespace inexor::vulkan_renderer::wrapper::commands
 
-namespace inexor::vulkan_renderer::rendering::render_graph {
+namespace inexor::vulkan_renderer::render_graph {
 
 // Forward declaration
 class RenderGraph;
 
 // Using declarations
+using wrapper::CommandBuffer;
 using wrapper::Swapchain;
 using wrapper::descriptors::DescriptorSetLayout;
 
@@ -110,4 +111,4 @@ public:
     GraphicsPass &operator=(GraphicsPass &&) = delete;
 };
 
-} // namespace inexor::vulkan_renderer::rendering::render_graph
+} // namespace inexor::vulkan_renderer::render_graph

@@ -13,12 +13,12 @@ namespace inexor::vulkan_renderer::wrapper::synchronization {
 class Semaphore;
 } // namespace inexor::vulkan_renderer::wrapper::synchronization
 
-namespace inexor::vulkan_renderer::rendering::render_graph {
+namespace inexor::vulkan_renderer::render_graph {
 // Forward declaration
 class RenderGraph;
 class GraphicsPass;
 class GraphicsPassBuilder;
-} // namespace inexor::vulkan_renderer::rendering::render_graph
+} // namespace inexor::vulkan_renderer::render_graph
 
 namespace inexor::vulkan_renderer::wrapper::commands {
 // Forward declaration
@@ -34,15 +34,16 @@ class Window;
 
 // Using declaration
 using commands::CommandBuffer;
-using rendering::render_graph::GraphicsPass;
-using rendering::render_graph::GraphicsPassBuilder;
-using rendering::render_graph::RenderGraph;
+using render_graph::GraphicsPass;
+using render_graph::GraphicsPassBuilder;
+using synchronization::Semaphore;
 
 /// RAII wrapper class for swapchains
 class Swapchain {
-    friend RenderGraph;
+    // friend RenderGraph;
     friend GraphicsPassBuilder;
     friend GraphicsPass;
+    friend render_graph::RenderGraph;
 
 private:
     Device &m_device;
@@ -53,7 +54,7 @@ private:
     std::vector<VkImage> m_imgs;
     std::vector<VkImageView> m_img_views;
     VkExtent2D m_extent{};
-    std::unique_ptr<synchronization::Semaphore> m_img_available;
+    std::unique_ptr<Semaphore> m_img_available;
     bool m_vsync_enabled{false};
     std::uint32_t m_img_index;
     VkImage m_current_swapchain_img{VK_NULL_HANDLE};

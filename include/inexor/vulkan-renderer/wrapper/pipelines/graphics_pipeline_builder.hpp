@@ -37,7 +37,7 @@ class PipelineCache;
 /// This means if you forget to specify viewport for example, creation of the graphics pipeline will fail.
 /// It is the reponsibility of the programmer to use validation layers to check for problems.
 class GraphicsPipelineBuilder {
-    friend rendering::render_graph::RenderGraph;
+    friend render_graph::RenderGraph;
 
 private:
     /// The device wrapper reference

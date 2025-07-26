@@ -30,7 +30,7 @@ class Device;
 class Swapchain;
 } // namespace inexor::vulkan_renderer::wrapper
 
-namespace inexor::vulkan_renderer::rendering::render_graph {
+namespace inexor::vulkan_renderer::render_graph {
 
 // Using declarations
 using wrapper::Device;
@@ -384,4 +384,4 @@ public:
     void reset();
 };
 
-} // namespace inexor::vulkan_renderer::rendering::render_graph
+} // namespace inexor::vulkan_renderer::render_graph
