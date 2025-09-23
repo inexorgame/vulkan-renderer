@@ -30,7 +30,7 @@ FetchContent_Declare(glfw
 
 FetchContent_Declare(glm
     GIT_REPOSITORY https://github.com/g-truc/glm.git
-    GIT_TAG 0.9.9.8
+    GIT_TAG 1.0.1
     GIT_SHALLOW ON
     GIT_PROGRESS ON)
 
@@ -62,16 +62,9 @@ FetchContent_Declare(stb
 
 FetchContent_Declare(tinygltf
     GIT_REPOSITORY https://github.com/syoyo/tinygltf.git
-    GIT_TAG v2.8.6
+    GIT_TAG v2.9.6
     GIT_PROGRESS ON
-    FIND_PACKAGE_ARGS 2.8.6)
-
-FetchContent_Declare(toml
-    GIT_REPOSITORY https://github.com/ToruNiina/toml11.git
-    GIT_TAG v3.7.1
-    GIT_SHALLOW ON
-    GIT_PROGRESS ON
-    FIND_PACKAGE_ARGS 3.7.1)
+    FIND_PACKAGE_ARGS 2.9.6)
 
 FetchContent_Declare(vma
     GIT_REPOSITORY https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator.git
@@ -81,9 +74,9 @@ FetchContent_Declare(vma
 
 FetchContent_Declare(volk
     GIT_REPOSITORY https://github.com/zeux/volk
-    GIT_TAG 1.3.215
+    GIT_TAG 1.4.304
     GIT_PROGRESS ON
-    FIND_PACKAGE_ARGS 1.3.215)
+    FIND_PACKAGE_ARGS 1.4.304)
 
 FetchContent_Declare(Vulkan
     GIT_REPOSITORY https://github.com/KhronosGroup/Vulkan-Headers

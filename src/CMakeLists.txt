@@ -129,7 +129,6 @@ target_include_directories(imgui PUBLIC ${imgui_SOURCE_DIR})
 FetchContent_MakeAvailable(spdlog)
 FetchContent_MakeAvailable(stb)
 FetchContent_MakeAvailable(tinygltf)
-FetchContent_MakeAvailable(toml)
 FetchContent_MakeAvailable(vma)
 FetchContent_MakeAvailable(volk)
 FetchContent_MakeAvailable(Vulkan)
@@ -154,7 +153,6 @@ target_link_libraries(inexor-vulkan-renderer
     imgui
     spdlog::spdlog
     tinygltf
-    toml11::toml11
     volk::volk
     Vulkan::Headers
     VulkanMemoryAllocator)
