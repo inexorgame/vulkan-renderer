@@ -48,13 +48,14 @@ FetchContent_Declare(imgui
     GIT_PROGRESS ON
     FIND_PACKAGE_ARGS 1.90.9)
 
-set(SPDLOG_FMT_EXTERNAL ON CACHE BOOL "" FORCE)
+set(SPDLOG_USE_STD_FORMAT ON CACHE BOOL "" FORCE)
+set(SPDLOG_FMT_EXTERNAL OFF CACHE BOOL "" FORCE)
 FetchContent_Declare(spdlog
     GIT_REPOSITORY https://github.com/gabime/spdlog.git
-    GIT_TAG v1.14.1
+    GIT_TAG v1.15.3
     GIT_SHALLOW ON
     GIT_PROGRESS ON
-    FIND_PACKAGE_ARGS 1.14.1)
+    FIND_PACKAGE_ARGS 1.15.3)
 
 FetchContent_Declare(stb
     GIT_REPOSITORY https://github.com/nothings/stb.git

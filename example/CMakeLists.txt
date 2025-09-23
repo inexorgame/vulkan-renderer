@@ -18,3 +18,15 @@ endif()
 if(MSVC)
     target_compile_options(inexor-vulkan-renderer-example PRIVATE "-EHs")
 endif()
+
+# Single-config generators
+set_target_properties(inexor-vulkan-renderer-example PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/example
+)
+
+# Multi-config generators (Visual Studio, etc.)
+foreach(cfg Debug Release RelWithDebInfo MinSizeRel)
+    set_target_properties(inexor-vulkan-renderer-example PROPERTIES
+        RUNTIME_OUTPUT_DIRECTORY_${cfg} ${CMAKE_BINARY_DIR}/example
+    )
+endforeach()
