@@ -24,37 +24,39 @@ jobs:
       matrix:
         config:
           - {
-            name: "Ubuntu Clang (Debug)",
-            compiler: "clang",
-            cc: "clang-18", cxx: "clang++-18",
-            build_type: "Debug"
-          }
+              name: "Ubuntu Clang (Debug)",
+              compiler: "clang",
+              cc: "clang-18",
+              cxx: "clang++-18",
+              build_type: "Debug"
+            }
           - {
-            name: "Ubuntu Clang (Release)",
-            compiler: "clang",
-            cc: "clang-18", cxx: "clang++-18",
-            build_type: "Release"
-          }
+              name: "Ubuntu Clang (Release)",
+              compiler: "clang",
+              cc: "clang-18",
+              cxx: "clang++-18",
+              build_type: "Release"
+            }
           - {
-            name: "Ubuntu GCC (Debug)",
-            compiler: "gcc",
-            cc: "gcc-14", cxx: "g++-14",
-            build_type: "Debug"
-          }
+              name: "Ubuntu GCC (Debug)",
+              compiler: "gcc",
+              cc: "gcc-14",
+              cxx: "g++-14",
+              build_type: "Debug"
+            }
           - {
-            name: "Ubuntu GCC (Release)",
-            compiler: "gcc",
-            cc: "gcc-14", cxx: "g++-14",
-            build_type: "Release"
-          }
+              name: "Ubuntu GCC (Release)",
+              compiler: "gcc",
+              cc: "gcc-14",
+              cxx: "g++-14",
+              build_type: "Release"
+            }
 
     steps:
       - name: Update environment
         shell: bash
         run: |
-          # Update package lists
           apt update -qq
-          # Install build tools
           apt-get install -y \
             gcc-14 \
             g++-14 \
@@ -87,7 +89,6 @@ jobs:
             python3-pip \
             xkb-data \
             xorg-dev
-
           pip3 install --break-system-packages wheel setuptools
 
       - name: Install Vulkan SDK
@@ -98,9 +99,7 @@ jobs:
           mkdir -p ${{ env.INEXOR_VULKAN_SDK_PATH }}
           tar xf vulkansdk.tar.xz -C "${{ env.INEXOR_VULKAN_SDK_PATH }}"
           rm -rf vulkansdk.tar.xz
-          # runtime depenedencies
           apt-get -y install qtbase5-dev libxcb-xinput0 libxcb-xinerama0
-          # remove bundled volk
           rm -rf ${{ env.INEXOR_VULKAN_SDK_PATH }}/${{ env.INEXOR_VULKAN_VERSION }}/x86_64/lib/cmake/volk/
 
       - name: Checkout
@@ -115,7 +114,6 @@ jobs:
           export PATH=$VULKAN_SDK/bin:$PATH
           export LD_LIBRARY_PATH=$VULKAN_SDK/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}
           export VK_LAYER_PATH=$VULKAN_SDK/share/vulkan/explicit_layer.d
-          # TODO: Bring back Google tests and benchmarks in Linux CI
           cmake . \
             -Bbuild \
             -DCMAKE_BUILD_TYPE=${{ matrix.config.build_type }} \
@@ -127,8 +125,7 @@ jobs:
 
       - name: Build
         shell: bash
-        run: |
-          cmake --build build
+        run: cmake --build build
 
       - name: Prepare Build Artifacts
         shell: bash
@@ -169,55 +166,56 @@ jobs:
       matrix:
         config:
           - {
-            name: "Windows MSVC (Debug)",
-            compiler: "msvc",
-            cc: "cl", cxx: "cl",
-            cmake_configure_options: '-G "Visual Studio 17 2022" -A x64',
-            build_type: "Debug",
-            cmake_build_options: "--config Debug",
-          }
+              name: "Windows MSVC (Debug)",
+              compiler: "msvc",
+              cc: "cl",
+              cxx: "cl",
+              cmake_configure_options: '-G "Visual Studio 17 2022" -A x64',
+              build_type: "Debug",
+              cmake_build_options: "--config Debug"
+            }
           - {
-            name: "Windows MSVC (Release)",
-            compiler: "msvc",
-            cc: "cl", cxx: "cl",
-            cmake_configure_options: '-G "Visual Studio 17 2022" -A x64',
-            build_type: "Release",
-            cmake_build_options: "--config Release",
-          }
+              name: "Windows MSVC (Release)",
+              compiler: "msvc",
+              cc: "cl",
+              cxx: "cl",
+              cmake_configure_options: '-G "Visual Studio 17 2022" -A x64',
+              build_type: "Release",
+              cmake_build_options: "--config Release"
+            }
           - {
-            name: "Windows Clang (Debug)",
-            compiler: "clang",
-            cc: "clang-cl", cxx: "clang-cl",
-            cmake_configure_options: '-G "Visual Studio 17 2022" -A x64 -T "LLVM_v143" -DCMAKE_CXX_COMPILER="clang-cl.exe" -DCMAKE_C_COMPILER="clang-cl.exe" -DCMAKE_LINKER="lld.exe"',
-            build_type: "Debug",
-            cmake_build_options: "--config Debug",
-          }
+              name: "Windows Clang (Debug)",
+              compiler: "clang",
+              cc: "clang-cl",
+              cxx: "clang-cl",
+              cmake_configure_options: '-G "Ninja" -DCMAKE_CXX_COMPILER=clang-cl.exe -DCMAKE_C_COMPILER=clang-cl.exe -DCMAKE_LINKER=lld-link.exe',
+              build_type: "Debug",
+              cmake_build_options: ""
+            }
           - {
-            name: "Windows Clang (Release)",
-            compiler: "clang",
-            cc: "clang-cl", cxx: "clang-cl",
-            cmake_configure_options: '-G "Visual Studio 17 2022" -A x64 -T "LLVM_v143" -DCMAKE_CXX_COMPILER="clang-cl.exe" -DCMAKE_C_COMPILER="clang-cl.exe" -DCMAKE_LINKER="lld.exe"',
-            build_type: "Release",
-            cmake_build_options: "--config Release",
-          }
+              name: "Windows Clang (Release)",
+              compiler: "clang",
+              cc: "clang-cl",
+              cxx: "clang-cl",
+              cmake_configure_options: '-G "Ninja" -DCMAKE_CXX_COMPILER=clang-cl.exe -DCMAKE_C_COMPILER=clang-cl.exe -DCMAKE_LINKER=lld-link.exe',
+              build_type: "Release",
+              cmake_build_options: ""
+            }
 
     steps:
       - name: Update environment
         shell: pwsh
-        run: |
-          pip3 install wheel setuptools
+        run: pip3 install wheel setuptools
 
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Configure LLVM
+      - name: Ensure LLVM (for Clang builds)
         if: matrix.config.compiler == 'clang'
         shell: pwsh
         run: |
-          choco upgrade --no-progress llvm
-          curl -fsSL -o "LLVM_VS2017.zip" "https://github.com/zufuliu/llvm-utils/releases/download/v23.05/LLVM_VS2017.zip"
-          7z x -y "LLVM_VS2017.zip" >NUL
-          LLVM_VS2017\install.bat
+          choco install llvm --no-progress --yes
+          $env:Path += ";C:\Program Files\LLVM\bin"
 
       - name: Install Vulkan SDK
         shell: pwsh
@@ -232,7 +230,6 @@ jobs:
           $env:CXX="${{ matrix.config.cxx }}"
           $env:Path += ";${{ env.INEXOR_VULKAN_SDK_PATH }}\;${{ env.INEXOR_VULKAN_SDK_PATH }}\Bin\"
           $env:VULKAN_SDK="${{ env.INEXOR_VULKAN_SDK_PATH }}"
-          # TODO: Bring back Google tests and benchmarks in Windows CI
           cmake . `
             -Bbuild `
             -DCMAKE_BUILD_TYPE=${{ matrix.config.build_type }} `
@@ -242,13 +239,11 @@ jobs:
 
       - name: Build
         shell: pwsh
-        run: |
-          cmake --build build ${{ matrix.config.cmake_build_options }}
+        run: cmake --build build ${{ matrix.config.cmake_build_options }}
 
       - name: Prepare Build Artifacts
         shell: pwsh
-        run: |
-          7z a -tzip "build_windows_${{ matrix.config.build_type }}_${{ matrix.config.compiler }}" ./build/*
+        run: 7z a -tzip "build_windows_${{ matrix.config.build_type }}_${{ matrix.config.compiler }}" ./build/*
 
       - name: Upload Build Artifacts
         uses: actions/upload-artifact@v4
@@ -260,12 +255,18 @@ jobs:
         shell: pwsh
         run: |
           mkdir artifacts
-          cp -r ./build/example/${{ matrix.config.build_type }}/inexor-vulkan-renderer-example.exe artifacts
+          # Copy executable: check flat path first (Clang/Ninja), otherwise use config subfolder (MSVC)
+          if (Test-Path ./build/example/inexor-vulkan-renderer-example.exe) {
+              cp ./build/example/inexor-vulkan-renderer-example.exe artifacts
+          } else {
+              cp ./build/example/${{ matrix.config.build_type }}/inexor-vulkan-renderer-example.exe artifacts
+          }
           cp -r ./configuration/. artifacts
           cp -r ./assets/. artifacts
-          mkdir -P ./artifacts/shaders
+          mkdir -p ./artifacts/shaders
           cp ./shaders/*.spv ./artifacts/shaders/
           7z a -tzip "nightly_windows_${{ matrix.config.build_type }}_${{ matrix.config.compiler }}" ./artifacts/*
+
 
       - name: Upload Nightly Artifacts
         uses: actions/upload-artifact@v4
