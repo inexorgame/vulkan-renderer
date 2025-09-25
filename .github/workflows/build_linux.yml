@@ -1,4 +1,4 @@
-name: Static Analysis
+name: Build Code
 
 on:
   push:
@@ -14,9 +14,42 @@ env:
   INEXOR_VULKAN_SDK_CHECKSUM_WINDOWS: "811fcb9b43d09248520b2f38ae9a3763fc81df950fdab874f23bd762b07a9b12"
 
 jobs:
-  cppcheck:
-    name: Cppcheck
+  linux:
+    name: ${{ matrix.config.name }}
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        config:
+          - {
+              name: "Ubuntu Clang (Debug)",
+              compiler: "clang",
+              cc: "clang-18",
+              cxx: "clang++-18",
+              build_type: "Debug"
+            }
+          - {
+              name: "Ubuntu Clang (Release)",
+              compiler: "clang",
+              cc: "clang-18",
+              cxx: "clang++-18",
+              build_type: "Release"
+            }
+          - {
+              name: "Ubuntu GCC (Debug)",
+              compiler: "gcc",
+              cc: "gcc-14",
+              cxx: "g++-14",
+              build_type: "Debug"
+            }
+          - {
+              name: "Ubuntu GCC (Release)",
+              compiler: "gcc",
+              cc: "gcc-14",
+              cxx: "g++-14",
+              build_type: "Release"
+            }
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -28,9 +61,7 @@ jobs:
             gcc-14 \
             g++-14 \
             clang-18 \
-            clang-tidy \
             cmake \
-            cppcheck \
             curl \
             git \
             libgl1-mesa-dev \
@@ -95,26 +126,34 @@ jobs:
             -GNinja \
             ${{ matrix.config.cmake_configure_options }}
 
-      - name: Find source files for cppcheck
-        id: find_sources
-        run: |
-          find example src include \
-            -path '*/_deps/*' -prune -o \
-            -path '*/build/*' -prune -o \
-            \( -name '*.cpp' -o -name '*.hpp' \) -print > source_files.txt
-          cat source_files.txt
+      - name: Build
+        run: cmake --build build
 
-      - name: Run cppcheck on source_files.txt
+      - name: Prepare Build Artifacts
         run: |
-          # Use xargs to run cppcheck on all files listed in source_files.txt
-          xargs -a source_files.txt cppcheck \
-            --enable=all \
-            --inconclusive \
-            --force \
-            --suppress=missingIncludeSystem \
-            --inline-suppr \
-            2> cppcheck_output.txt || true
+          cd build
+          tar -zcvf "../build_linux_${{ matrix.config.build_type }}_${{ matrix.config.compiler }}.tar.xz" *
 
-      - name: Summarize cppcheck warnings
+      - name: Upload Build Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: build_linux_${{ matrix.config.build_type }}_${{ matrix.config.compiler }}.tar.xz
+          path: build_linux_${{ matrix.config.build_type }}_${{ matrix.config.compiler }}.tar.xz
+
+      - name: Prepare Nightly Artifacts
         run: |
-          cat cppcheck_output.txt | sort | uniq -c | sort -nr || true
+          mkdir artifacts
+          cp ./build/example/inexor-vulkan-renderer-example artifacts/
+          cp -r ./configuration/ artifacts/
+          cp -r ./assets/ artifacts
+          mkdir -p ./artifacts/shaders
+          cp ./shaders/*.spv ./artifacts/shaders/
+          cd artifacts
+          tar -zcvf "../nightly_linux_${{ matrix.config.build_type }}_${{ matrix.config.compiler }}.tar.xz" *
+
+      - name: Upload Nightly Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: nightly_linux_${{ matrix.config.build_type }}_${{ matrix.config.compiler }}.tar.xz
+          path: nightly_linux_${{ matrix.config.build_type }}_${{ matrix.config.compiler }}.tar.xz
+          retention-days: 7
