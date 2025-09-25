@@ -12,4 +12,4 @@ jobs:
     steps:
       - uses: IceflowRE/gitcc@v2
         with:
-          validator_file: helper/commit_validator.mjs
+          validator_file: .github/helper/commit_validator.mjs
