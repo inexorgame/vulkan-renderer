@@ -87,7 +87,6 @@ FetchContent_Declare(volk
     GIT_PROGRESS ON
     FIND_PACKAGE_ARGS 1.3.270)
 
-# is not be used because we install the whole Vulkan SDK, but stays here for fallback
 FetchContent_Declare(Vulkan
     GIT_REPOSITORY https://github.com/KhronosGroup/Vulkan-Headers
     GIT_TAG v1.3.283

@@ -36,7 +36,7 @@ set(INEXOR_APP_VERSION_MINOR 1)
 set(INEXOR_APP_VERSION_PATCH 0)
 
 # Download dependencies through CMake
-include(cmake/dependencies.cmake)
+include(dependencies.cmake)
 
 # Enable GCC/clang ANSI-colored terminal output using Ninja build tool
 # TODO: Switch to `CMAKE_COLOR_DIAGNOSTICS` with cmake 3.24 in the future
