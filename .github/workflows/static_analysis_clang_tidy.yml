@@ -65,8 +65,6 @@ jobs:
         with:
           path: ${{ env.INEXOR_VULKAN_SDK_PATH }}
           key: vulkan-sdk-${{ env.INEXOR_VULKAN_SDK_VERSION }}-${{ runner.os }}
-          restore-keys: |
-            vulkan-sdk-${{ env.INEXOR_VULKAN_SDK_VERSION }}-
 
       - name: Download Vulkan SDK
         if: steps.cache-vulkan-sdk.outputs.cache-hit != 'true'
