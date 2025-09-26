@@ -5,10 +5,10 @@ project(inexor-vulkan-renderer CXX)
 set(CMAKE_DISABLE_IN_SOURCE_BUILD ON)
 
 # Options
-option(INEXOR_BUILD_BENCHMARKS "Build benchmarks" OFF)
+option(INEXOR_BUILD_BENCHMARKS "Build benchmarks" ON)
 option(INEXOR_BUILD_DOC "Build documentation" OFF)
 option(INEXOR_BUILD_EXAMPLE "Build example" ON)
-option(INEXOR_BUILD_TESTS "Build tests" OFF)
+option(INEXOR_BUILD_TESTS "Build tests" ON)
 option(INEXOR_FORCE_COLORED_OUTPUT "Always produce ANSI-colored output (GNU/Clang only)." TRUE)
 
 message(STATUS "INEXOR_BUILD_BENCHMARKS = ${INEXOR_BUILD_BENCHMARKS}")

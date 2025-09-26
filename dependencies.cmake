@@ -6,10 +6,10 @@ set(FETCHCONTENT_QUIET OFF)
 
 FetchContent_Declare(benchmark
     GIT_REPOSITORY https://github.com/google/benchmark
-    GIT_TAG v1.8.5
+    GIT_TAG v1.9.4
     GIT_SHALLOW ON
     GIT_PROGRESS ON
-    FIND_PACKAGE_ARGS 1.8.5)
+    FIND_PACKAGE_ARGS 1.9.4)
 
 FetchContent_Declare(fmt
     GIT_REPOSITORY https://github.com/fmtlib/fmt.git
@@ -36,10 +36,10 @@ FetchContent_Declare(glm
 
 FetchContent_Declare(gtest
     GIT_REPOSITORY https://github.com/google/googletest
-    GIT_TAG v1.15.0
+    GIT_TAG v1.17.0
     GIT_SHALLOW ON
     GIT_PROGRESS ON
-    FIND_PACKAGE_ARGS 1.15.0)
+    FIND_PACKAGE_ARGS 1.17.0)
 
 FetchContent_Declare(imgui
     GIT_REPOSITORY https://github.com/ocornut/imgui.git
