@@ -1,4 +1,3 @@
-FetchContent_MakeAvailable(gtest)
 FetchContent_MakeAvailable(benchmark)
 
 set(INEXOR_BENCHMARKING_SOURCE_FILES

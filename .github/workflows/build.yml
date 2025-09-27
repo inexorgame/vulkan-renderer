@@ -124,8 +124,8 @@ jobs:
             -Bbuild \
             -DCMAKE_BUILD_TYPE=${{ matrix.config.build_type }} \
             -DVULKAN_SDK=$VULKAN_SDK \
-            -DINEXOR_BUILD_BENCHMARKS=OFF \
-            -DINEXOR_BUILD_TESTS=OFF \
+            -DINEXOR_BUILD_BENCHMARKS=ON \
+            -DINEXOR_BUILD_TESTS=ON \
             -DCMAKE_CXX_FLAGS="-Wall -Wextra" \
             -GNinja \
             ${{ matrix.config.cmake_configure_options }}
@@ -241,8 +241,8 @@ jobs:
           cmake . `
             -Bbuild `
             -DCMAKE_BUILD_TYPE=${{ matrix.config.build_type }} `
-            -DINEXOR_BUILD_BENCHMARKS=OFF `
-            -DINEXOR_BUILD_TESTS=OFF `
+            -DINEXOR_BUILD_BENCHMARKS=ON `
+            -DINEXOR_BUILD_TESTS=ON `
             ${{ matrix.config.cmake_configure_options }}
 
       - name: Build
