@@ -17,6 +17,7 @@ Quickstart: :ref:`Building Instructions<BUILDING>` (:ref:`BUILDING Windows`/:ref
     :maxdepth: 2
 
     development/main
+    reference/main
     code/main
     contributing/main
     faq/main
