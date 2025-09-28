@@ -73,7 +73,15 @@ jobs:
           wget -O vulkansdk.tar.xz https://sdk.lunarg.com/sdk/download/${{ env.INEXOR_VULKAN_SDK_VERSION }}/linux/vulkan-sdk.tar.xz
           tar -xJf vulkansdk.tar.xz -C ${{ env.INEXOR_VULKAN_SDK_PATH }}
 
+      - name: Load CMake Setup from Cache
+        id: cache-cmake
+        uses: actions/cache@v4
+        with:
+          path: build
+          key: cmake-${{ runner.os }}-${{ matrix.config.compiler }}-${{ matrix.config.build_type }}-${{ hashFiles('CMakeLists.txt', '**/CMakeLists.txt', '**/*.cmake') }}
+
       - name: Configure CMake
+        if: steps.cache-cmake.outputs.cache-hit != 'true'
         run: |
           rm -rf ${{ env.INEXOR_VULKAN_SDK_PATH }}/${{ env.INEXOR_VULKAN_SDK_VERSION }}/x86_64/lib/cmake/volk/
           export CC=${{ matrix.config.cc }}

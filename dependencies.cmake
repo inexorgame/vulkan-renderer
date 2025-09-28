@@ -4,6 +4,7 @@
 include(FetchContent)
 set(FETCHCONTENT_QUIET OFF)
 
+set(BENCHMARK_ENABLE_TESTING OFF CACHE BOOL "Disable Google Benchmark tests" FORCE)
 FetchContent_Declare(benchmark
     GIT_REPOSITORY https://github.com/google/benchmark
     GIT_TAG v1.8.5
