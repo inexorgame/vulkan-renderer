@@ -9,7 +9,7 @@ Required Software
 -----------------
 
 `Git <https://www.git-scm.com/>`__
-    Git for cloning (downloading) the source code.
+    Git is a general purpose version control system required to download the source code.
 
 `Python <https://www.python.org/>`__ with `pip <https://pypi.org/project/pip/>`__
     Required for generating the documentation and the C++ package manager.
@@ -45,12 +45,8 @@ Optional Software
 `Notepad++ <https://notepad-plus-plus.org/downloads/>`__
     Free and open source text editor.
 
-`Atom.io <https://atom.io/>`__
-    Free and open source text editor.
-
 `Visual Studio Code <https://code.visualstudio.com/>`__
     Free and open source text editor.
-
 
 Does my graphics card support Vulkan?
 -------------------------------------

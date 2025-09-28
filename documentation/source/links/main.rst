@@ -52,15 +52,15 @@ Beginner Vulkan API tutorials
 - `Sascha Willems' tutorial about Vulkan debug markers <https://www.saschawillems.de/blog/2016/05/28/tutorial-on-using-vulkans-vk_ext_debug_marker-with-renderdoc/>`__
 - `Awesome Vulkan list <https://github.com/vinjn/awesome-vulkan>`__
 
-Migrating from OpenGL to Vulkan API
------------------------------------
+Migrating to Vulkan API
+-----------------------
 
 - `Dustin Land's blog series 'I Am Graphics And So Can You' <https://www.fasterthan.life/blog/2017/7/11/i-am-graphics-and-so-can-you-part-1>`__
 - `Transitioning from OpenGL to Vulkan <https://developer.nvidia.com/transitioning-opengl-vulkan>`__
 - `Porting a Graphics Engine to the Vulkan API <https://community.arm.com/developer/tools-software/graphics/b/blog/posts/porting-a-graphics-engine-to-the-vulkan-api>`__
 
-Advanced Vulkan API tutorials and articles
-------------------------------------------
+Advanced Vulkan API tutorials
+-----------------------------
 
 - `Sascha Willems' glTF2 + PBR (physically based rendering) demo <https://github.com/SaschaWillems/Vulkan-glTF-PBR>`__
 - `NVidia Developer Blog: Tips and Tricks: Vulkan Dos and Don’ts <https://developer.nvidia.com/blog/vulkan-dos-donts/>`__
@@ -78,7 +78,7 @@ Advanced Vulkan API tutorials and articles
 - `Vulkan Barriers Explained <https://gpuopen.com/learn/vulkan-barriers-explained/>`__
 - `GPUOpen performance guide <https://gpuopen.com/performance/#barriers>`__
 
-Vulkan API presentations
+Vulkan API Presentations
 ------------------------
 
 - `NVidia: GPU-driven rendering <http://on-demand.gputechconf.com/gtc/2016/presentation/s6138-christoph-kubisch-pierre-boudier-gpu-driven-rendering.pdf>`__
@@ -89,7 +89,7 @@ Vulkan API presentations
 - `Get Your Engine Ready for Vulkan on Mobile <https://developer.arm.com/-/media/Files/pdf/graphics-and-multimedia/Get%20Your%20Engine%20Ready%20for%20Vulkan%20on%20Mobile.pdf>`__
 - `Vulkan’s Key Features on ARM Architecture <https://developer.arm.com/-/media/Files/pdf/graphics-and-multimedia/Vulkan%20API%20key%20features%20on%20ARM%20architecture.pdf>`__
 
-Vulkan API example projects
+Vulkan API Example Projects
 ----------------------------
 
 - `The official Khronos Vulkan samples <https://github.com/KhronosGroup/Vulkan-Samples>`__

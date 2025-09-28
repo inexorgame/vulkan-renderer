@@ -2,6 +2,4 @@
 MIT License
 ***********
 
-
-
 .. include:: ../../../LICENSE

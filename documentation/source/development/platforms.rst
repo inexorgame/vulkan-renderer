@@ -1,5 +1,5 @@
-Supported platforms
-===================
+Platform Support
+=================
 
 - Vulkan API is completely platform-agnostic, which allows it to run on various operating systems.
 - The required drivers for Vulkan are usually part of your graphic card's drivers.
@@ -10,7 +10,7 @@ Supported platforms
 Microsoft Windows
 -----------------
 
-- We support x64 Microsoft Windows 8, 8.1 and 10.
+- We support x64 Microsoft Windows 8, 8.1, 10, and 11
 - We have :ref:`build instructions for Windows<BUILDING windows>`.
 
 Linux
@@ -24,9 +24,10 @@ macOS and iOS
 -------------
 
 - We do not support macOS or iOS because it would require us to use `MoltenVK <https://github.com/KhronosGroup/MoltenVK>`__ to get Vulkan running on Mac OS.
-- Additionally, this would require some changes in the engines as not all of Inexor's dependencies are available on macOS or iOS.
+- Also, this would require fundamental changes to the engine code.
 
 Android
 -------
 
-- We also do not support Android because this would require some changes in the engines as not all of Inexor's dependencies are available on Android.
+- We do not support Android yet because this would require fundamental changes in the engine.
+- Also, this would require fundamental changes to the engine code.

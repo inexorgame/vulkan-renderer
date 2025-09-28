@@ -29,8 +29,6 @@ Quickstart: :ref:`Building Instructions<BUILDING>` (:ref:`BUILDING Windows`/:ref
 
 .. include:: /faq/main.rst
 
-.. Badges.
-
 .. |language| image:: https://img.shields.io/badge/language-C%2B%2B20-brightgreen
 
 .. |platforms| image:: https://img.shields.io/badge/platforms-Linux%20%26%20Windows-brightgreen
