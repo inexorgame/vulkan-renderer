@@ -2,9 +2,10 @@
 Vulkan-Renderer
 ===============
 
-|language| |platforms| |github actions| |readthedocs| |discord| |license|
+|language| |platforms| |github actions| |discord| |license|
 
 .. image:: /images/inexor-banner.svg
+   :width: 700px
 
 **A new 3D game engine for Linux and Windows using C++20 and Vulkan API in early development.**
 
@@ -18,7 +19,7 @@ Quickstart: :ref:`Building Instructions<BUILDING>` (:ref:`BUILDING Windows`/:ref
 
     development/main
     reference/main
-    code/main
+    exhale-generated/main
     contributing/main
     faq/main
     changelog/main
@@ -34,26 +35,11 @@ Quickstart: :ref:`Building Instructions<BUILDING>` (:ref:`BUILDING Windows`/:ref
 
 .. |platforms| image:: https://img.shields.io/badge/platforms-Linux%20%26%20Windows-brightgreen
 
-.. |github actions| image:: https://img.shields.io/github/workflow/status/inexorgame/vulkan-renderer/Build
-   :target: https://github.com/inexorgame/vulkan-renderer/actions?query=workflow%3A%22Build%22
+.. |github actions| image:: https://img.shields.io/github/actions/workflow/status/inexorgame/vulkan-renderer/build.yml?branch=main
+   :target: https://github.com/inexorgame/vulkan-renderer/actions?query=build.yml
 
 .. |discord| image:: https://img.shields.io/discord/698219248954376256?logo=discord
    :target: https://discord.com/invite/acUW8k7
 
 .. |license| image:: https://img.shields.io/github/license/inexorgame/vulkan-renderer?color=brightgreen
    :target: https://inexor-vulkan-renderer.readthedocs.io/en/latest/license/main.html
-
-.. |contributors| image:: https://img.shields.io/github/contributors/inexorgame/vulkan-renderer
-   :target: https://inexor-vulkan-renderer.readthedocs.io/en/latest/contributing/contributors.html
-
-.. |downloads| image:: https://img.shields.io/github/downloads/inexorgame/vulkan-renderer/total?color=brightgreen
-
-.. |readthedocs| image:: https://readthedocs.org/projects/inexor-vulkan-renderer/badge/?version=latest
-   :target: https://inexor-vulkan-renderer.readthedocs.io
-
-.. |last commit| image:: https://img.shields.io/github/last-commit/inexorgame/vulkan-renderer
-
-.. |issues| image:: https://img.shields.io/github/issues/inexorgame/vulkan-renderer
-   :target: https://github.com/inexorgame/vulkan-renderer/issues
-
-.. |code size| image:: https://img.shields.io/github/languages/code-size/inexorgame/vulkan-renderer

@@ -53,9 +53,9 @@ mermaid_version = "11.4.1"
 
 # Setup the breathe extension
 breathe_projects = {
-    "vulkan-renderer": "../doxygen-output/xml"
+    "inexor-vulkan-renderer": "../doxygen-output/xml"
 }
-breathe_default_project = "vulkan-renderer"
+breathe_default_project = "inexor-vulkan-renderer"
 breathe_default_members = ('private-members', 'members', 'undoc-members')
 
 # Setup the exhale extension
