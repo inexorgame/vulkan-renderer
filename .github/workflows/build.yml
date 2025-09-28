@@ -21,40 +21,35 @@ jobs:
       fail-fast: false
       matrix:
         config:
-          - {
-              name: "Ubuntu Clang (Debug)",
-              compiler: "clang",
-              cc: "clang-18",
-              cxx: "clang++-18",
-              build_type: "Debug"
-            }
-          - {
-              name: "Ubuntu Clang (Release)",
-              compiler: "clang",
-              cc: "clang-18",
-              cxx: "clang++-18",
-              build_type: "Release"
-            }
-          - {
-              name: "Ubuntu GCC (Debug)",
-              compiler: "gcc",
-              cc: "gcc-14",
-              cxx: "g++-14",
-              build_type: "Debug"
-            }
-          - {
-              name: "Ubuntu GCC (Release)",
-              compiler: "gcc",
-              cc: "gcc-14",
-              cxx: "g++-14",
-              build_type: "Release"
-            }
+          - name: "Ubuntu Clang (Debug)"
+            compiler: "clang"
+            cc: "clang-18"
+            cxx: "clang++-18"
+            build_type: "Debug"
+          - name: "Ubuntu Clang (Release)"
+            compiler: "clang"
+            cc: "clang-18"
+            cxx: "clang++-18"
+            build_type: "Release"
+          - name: "Ubuntu GCC (Debug)"
+            compiler: "gcc"
+            cc: "gcc-14"
+            cxx: "g++-14"
+            build_type: "Debug"
+          - name: "Ubuntu GCC (Release)"
+            compiler: "gcc"
+            cc: "gcc-14"
+            cxx: "g++-14"
+            build_type: "Release"
 
     steps:
-      - name: Checkout code
+      - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Install dependencies
+      - name: Set build date
+        run: echo "BUILD_DATE=$(date +'%d_%b_%Y_%H%M%S')" >> $GITHUB_ENV
+
+      - name: Install Dependencies
         run: |
           sudo apt update -qq
           sudo apt-get install -y \
@@ -91,7 +86,7 @@ jobs:
             xorg-dev
           pip3 install --break-system-packages wheel setuptools
 
-      - name: Load Vulkan SDK from Cache
+      - name: Check Cache for Vulkan SDK
         id: cache-vulkan-sdk
         uses: actions/cache@v4
         with:
@@ -105,13 +100,15 @@ jobs:
           wget -O vulkansdk.tar.xz https://sdk.lunarg.com/sdk/download/${{ env.INEXOR_VULKAN_SDK_VERSION }}/linux/vulkan-sdk.tar.xz
           tar -xJf vulkansdk.tar.xz -C ${{ env.INEXOR_VULKAN_SDK_PATH }}
 
-      - name: Load CMake Setup from Cache
+      - name: Check Cache for CMake files
+        id: cache-cmake
         uses: actions/cache@v4
         with:
           path: build
           key: cmake-${{ runner.os }}-${{ matrix.config.compiler }}-${{ matrix.config.build_type }}-${{ hashFiles('CMakeLists.txt', '**/CMakeLists.txt', '**/*.cmake') }}
 
       - name: Configure CMake
+        if: steps.cache-cmake.outputs.cache-hit != 'true'
         run: |
           rm -rf ${{ env.INEXOR_VULKAN_SDK_PATH }}/${{ env.INEXOR_VULKAN_SDK_VERSION }}/x86_64/lib/cmake/volk/
           export CC=${{ matrix.config.cc }}
@@ -124,43 +121,63 @@ jobs:
             -Bbuild \
             -DCMAKE_BUILD_TYPE=${{ matrix.config.build_type }} \
             -DVULKAN_SDK=$VULKAN_SDK \
-            -DINEXOR_BUILD_BENCHMARKS=OFF \
-            -DINEXOR_BUILD_TESTS=OFF \
+            -DINEXOR_BUILD_BENCHMARKS=ON \
+            -DINEXOR_BUILD_TESTS=ON \
             -DCMAKE_CXX_FLAGS="-Wall -Wextra" \
             -GNinja \
             ${{ matrix.config.cmake_configure_options }}
 
-      - name: Build
-        run: cmake --build build
+      - name: Build Main Code
+        run: cmake --build build --target inexor-vulkan-renderer-example
 
-      - name: Prepare Build Artifacts
+      - name: Build Tests
+        run: cmake --build build --target inexor-vulkan-renderer-tests
+
+      - name: Build Benchmarks
+        run: cmake --build build --target inexor-vulkan-renderer-benchmarks
+
+      - name: Run Tests
         run: |
           cd build
-          tar -zcvf "../build_linux_${{ matrix.config.build_type }}_${{ matrix.config.compiler }}.tar.xz" *
+          # Run all Google Test executables
+          for test_exec in $(find . -type f -executable -name '*-tests'); do
+            echo "Running $test_exec"
+            $test_exec --gtest_output=xml:"$test_exec.xml"
+          done
 
-      - name: Upload Build Artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: build_linux_${{ matrix.config.build_type }}_${{ matrix.config.compiler }}.tar.xz
-          path: build_linux_${{ matrix.config.build_type }}_${{ matrix.config.compiler }}.tar.xz
+      - name: Run Benchmarks
+        run: |
+          cd build
+          mkdir -p benchmark
+          for bench_exec in $(find . -type f -executable -name '*-benchmarks'); do
+            echo "Running $bench_exec"
+            $bench_exec > "benchmark/$(basename $bench_exec).txt"
+          done
 
       - name: Prepare Nightly Artifacts
         run: |
-          mkdir artifacts
+          mkdir -p artifacts
           cp ./build/example/inexor-vulkan-renderer-example artifacts/
+          mkdir -p artifacts/tests
+          find ./build -maxdepth 1 -type f -name '*-tests' -exec cp {} artifacts/tests/ \;
+          find ./build -maxdepth 1 -type f -name '*.xml' -exec cp {} artifacts/tests/ \;
+          mkdir -p artifacts/benchmarks
+          find ./build -maxdepth 1 -type f -name '*-benchmarks' -exec cp {} artifacts/benchmarks/ \;
+          mkdir -p artifacts/benchmarks/benchmark
+          find ./build/benchmark -maxdepth 1 -type f -name '*.txt' -exec cp {} artifacts/benchmarks/benchmark/ \;
           cp -r ./configuration/ artifacts/
-          cp -r ./assets/ artifacts
-          mkdir -p ./artifacts/shaders
-          cp ./shaders/*.spv ./artifacts/shaders/
+          cp -r ./assets/ artifacts/
+          mkdir -p artifacts/shaders
+          cp ./shaders/*.spv artifacts/shaders/
           cd artifacts
-          tar -zcvf "../nightly_linux_${{ matrix.config.build_type }}_${{ matrix.config.compiler }}.tar.xz" *
+          tar -zcvf "../${{ env.BUILD_DATE}}_Linux_${{ matrix.config.build_type }}_${{ matrix.config.compiler }}_nightly.tar.xz" *
 
       - name: Upload Nightly Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: nightly_linux_${{ matrix.config.build_type }}_${{ matrix.config.compiler }}.tar.xz
-          path: nightly_linux_${{ matrix.config.build_type }}_${{ matrix.config.compiler }}.tar.xz
-          retention-days: 7
+          name: ${{ env.BUILD_DATE}}_Linux_${{ matrix.config.build_type }}_${{ matrix.config.compiler }}_nightly
+          path: ${{ env.BUILD_DATE}}_Linux_${{ matrix.config.build_type }}_${{ matrix.config.compiler }}_nightly.tar.xz
+          retention-days: 60
 
   windows:
     name: ${{ matrix.config.name }}
@@ -207,13 +224,17 @@ jobs:
             }
 
     steps:
-      - name: Update environment
-        run: pip3 install wheel setuptools
-
-      - name: Checkout
+      - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Load Vulkan SDK from Cache
+      - name: Update Environment
+        run: pip3 install wheel setuptools
+        
+      - name: Set build date
+        shell: pwsh
+        run: echo "BUILD_DATE=$(Get-Date -Format 'dd_MMM_yyyy_HHmmss')" >> $env:GITHUB_ENV
+
+      - name: Check Cache for Vulkan SDK
         id: cache-vulkan
         uses: actions/cache@v4
         with:
@@ -226,13 +247,15 @@ jobs:
           curl -LS -o vulkansdk.exe https://sdk.lunarg.com/sdk/download/${{ env.INEXOR_VULKAN_SDK_VERSION }}/windows/VulkanSDK-${{ env.INEXOR_VULKAN_SDK_VERSION }}-Installer.exe
           7z x -y vulkansdk.exe -o"${{ env.INEXOR_VULKAN_SDK_PATH }}"
 
-      - name: Load CMake Setup from Cache
+      - name: Check Cache for CMake Files
+        id: cache-cmake
         uses: actions/cache@v4
         with:
           path: build
           key: cmake-${{ runner.os }}-${{ matrix.config.compiler }}-${{ matrix.config.build_type }}-${{ hashFiles('CMakeLists.txt', '**/CMakeLists.txt', '**/*.cmake') }}
 
       - name: Configure CMake
+        if: steps.cache-cmake.outputs.cache-hit != 'true'
         run: |
           $env:CC="${{ matrix.config.cc }}"
           $env:CXX="${{ matrix.config.cxx }}"
@@ -241,41 +264,72 @@ jobs:
           cmake . `
             -Bbuild `
             -DCMAKE_BUILD_TYPE=${{ matrix.config.build_type }} `
-            -DINEXOR_BUILD_BENCHMARKS=OFF `
-            -DINEXOR_BUILD_TESTS=OFF `
+            -DINEXOR_BUILD_BENCHMARKS=ON `
+            -DINEXOR_BUILD_TESTS=ON `
             ${{ matrix.config.cmake_configure_options }}
 
-      - name: Build
-        run: cmake --build build ${{ matrix.config.cmake_build_options }}
+      - name: Build Main Code
+        run: cmake --build build --target inexor-vulkan-renderer-example
 
-      - name: Prepare Build Artifacts
-        run: 7z a -tzip "build_windows_${{ matrix.config.build_type }}_${{ matrix.config.compiler }}" ./build/*
+      - name: Build Tests
+        run: cmake --build build --target inexor-vulkan-renderer-tests
 
-      - name: Upload Build Artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: build_windows_${{ matrix.config.build_type }}_${{ matrix.config.compiler }}
-          path: build_windows_${{ matrix.config.build_type }}_${{ matrix.config.compiler }}.zip
+      - name: Build Benchmarks
+        run: cmake --build build --target inexor-vulkan-renderer-benchmarks
+
+      - name: Run Tests
+        run: |
+          cd build
+          # Run all Google Test executables
+          Get-ChildItem -Recurse -Filter '*-tests.exe' | ForEach-Object {
+            Write-Host "Running $($_.FullName)"
+            & $_.FullName --gtest_output=xml:"$($_.FullName).xml"
+          }
+
+      - name: Run Benchmarks
+        run: |
+          cd build
+          if (Test-Path benchmark) { Remove-Item benchmark -Recurse -Force }
+          mkdir benchmark
+          Get-ChildItem -Recurse -Filter '*-benchmarks.exe' | ForEach-Object {
+            Write-Host "Running $($_.FullName)"
+            & $_.FullName > "benchmark/$($_.BaseName).txt"
+          }
 
       - name: Prepare Nightly Artifacts
+        shell: pwsh
         run: |
           mkdir artifacts
-          # Copy executable: check flat path first (Clang/Ninja), otherwise use config subfolder (MSVC)
-          if (Test-Path ./build/example/inexor-vulkan-renderer-example.exe) {
-              cp ./build/example/inexor-vulkan-renderer-example.exe artifacts
-          } else {
-              cp ./build/example/${{ matrix.config.build_type }}/inexor-vulkan-renderer-example.exe artifacts
+          # Copy main executable
+          Get-ChildItem -Path ./build -Recurse -Filter "inexor-vulkan-renderer-example.exe" | ForEach-Object {
+              Copy-Item -Path $_.FullName -Destination artifacts
           }
-          cp -r ./configuration/. artifacts
-          cp -r ./assets/. artifacts
-          mkdir -p ./artifacts/shaders
-          cp ./shaders/*.spv ./artifacts/shaders/
-          7z a -tzip "nightly_windows_${{ matrix.config.build_type }}_${{ matrix.config.compiler }}" ./artifacts/*
-
+          # Copy test executables and results
+          Get-ChildItem -Path ./build -Recurse -Filter "*-tests.exe" | ForEach-Object {
+              Copy-Item -Path $_.FullName -Destination artifacts
+          }
+          Get-ChildItem -Path ./build -Filter "*.xml" | ForEach-Object {
+              Copy-Item -Path $_.FullName -Destination artifacts
+          }
+          # Copy benchmark executables and results
+          Get-ChildItem -Path ./build -Recurse -Filter "*-benchmarks.exe" | ForEach-Object {
+              Copy-Item -Path $_.FullName -Destination artifacts
+          }
+          mkdir artifacts/benchmark
+          Get-ChildItem -Path ./build/benchmark -Filter "*.txt" | ForEach-Object {
+              Copy-Item -Path $_.FullName -Destination artifacts/benchmark
+          }
+          # Copy configuration, assets, and shaders
+          Copy-Item -Path ./configuration/. -Destination artifacts -Recurse
+          Copy-Item -Path ./assets/. -Destination artifacts -Recurse
+          mkdir artifacts/shaders
+          Copy-Item -Path ./shaders/*.spv -Destination artifacts/shaders
+          # Create nightly archive
+          7z a -tzip "${{ env.BUILD_DATE}}_Windows_${{ matrix.config.build_type }}_${{ matrix.config.compiler }}_nightly.zip" ./artifacts/*
 
       - name: Upload Nightly Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: nightly_windows_${{ matrix.config.build_type }}_${{ matrix.config.compiler }}
-          path: nightly_windows_${{ matrix.config.build_type }}_${{ matrix.config.compiler }}.zip
-          retention-days: 7
+          name: ${{ env.BUILD_DATE}}_Windows_${{ matrix.config.build_type }}_${{ matrix.config.compiler }}_nightly
+          path: ${{ env.BUILD_DATE}}_Windows_${{ matrix.config.build_type }}_${{ matrix.config.compiler }}_nightly.zip
+          retention-days: 60
