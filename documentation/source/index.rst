@@ -6,8 +6,7 @@ Vulkan-Renderer
 
 .. image:: /images/inexor-banner.svg
 
-**Inexor is a MIT-licensed open-source project which develops a new 3D octree game engine by combining modern C++ with Vulkan API.**
-
+**A new 3D game engine for Linux and Windows using C++20 and Vulkan API in early development.**
 
 Documentation
 #############
@@ -30,7 +29,7 @@ Quickstart: :ref:`Building Instructions<BUILDING>` (:ref:`BUILDING Windows`/:ref
 
 .. Badges.
 
-.. |language| image:: https://img.shields.io/badge/language-C%2B%2B17-brightgreen
+.. |language| image:: https://img.shields.io/badge/language-C%2B%2B20-brightgreen
 
 .. |platforms| image:: https://img.shields.io/badge/platforms-Linux%20%26%20Windows-brightgreen
 
