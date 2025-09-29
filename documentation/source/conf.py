@@ -13,7 +13,6 @@ generate_radar.generate(Path("./auto-generated/"))
 extensions = [
     'breathe',
     'exhale',
-    'recommonmark',
     'sphinxcontrib.mermaid'
 ]
 source_suffix = ['.rst']
