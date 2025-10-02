@@ -45,7 +45,10 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Set build date
-        run: echo "BUILD_DATE=$(date +'%d_%b_%Y_%H%M%S')" >> $GITHUB_ENV
+        run: |
+            SHORT_SHA=$(git rev-parse --short HEAD)
+            BUILD_VERSION=$(date +'%Y-%b-%d_%H-%M-%S')_$SHORT_SHA
+            echo "BUILD_VERSION=$BUILD_VERSION" >> $GITHUB_ENV
 
       - name: Install Dependencies
         run: |
@@ -168,13 +171,13 @@ jobs:
           mkdir -p artifacts/shaders
           cp ./shaders/*.spv artifacts/shaders/
           cd artifacts
-          tar -zcvf "../Nightly_${{ env.BUILD_DATE}}_Linux_${{ matrix.config.build_type }}_${{ matrix.config.compiler }}.tar.xz" *
+          tar -zcvf "../Nightly_${{ env.BUILD_VERSION}}_Linux_${{ matrix.config.build_type }}_${{ matrix.config.compiler }}.tar.xz" *
 
       - name: Upload Nightly Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: Nightly_${{ env.BUILD_DATE}}_Linux_${{ matrix.config.build_type }}_${{ matrix.config.compiler }}
-          path: Nightly_${{ env.BUILD_DATE}}_Linux_${{ matrix.config.build_type }}_${{ matrix.config.compiler }}.tar.xz
+          name: Nightly_${{ env.BUILD_VERSION}}_Linux_${{ matrix.config.build_type }}_${{ matrix.config.compiler }}
+          path: Nightly_${{ env.BUILD_VERSION}}_Linux_${{ matrix.config.build_type }}_${{ matrix.config.compiler }}.tar.xz
           retention-days: 60
 
   windows:
@@ -229,7 +232,10 @@ jobs:
         run: pip3 install wheel setuptools
         
       - name: Set Build Date
-        run: echo "BUILD_DATE=$(Get-Date -Format 'dd_MMM_yyyy_HHmmss')" >> $env:GITHUB_ENV
+        run: |
+            $shortSha = git rev-parse --short HEAD
+            $buildDate = (Get-Date -Format 'yyyy-MMM-dd_HH-mm-ss') + "_$shortSha"
+            echo "BUILD_VERSION=$buildDate" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
 
       - name: Check Cache for Vulkan SDK
         id: cache-vulkan
@@ -322,11 +328,11 @@ jobs:
           mkdir artifacts/shaders
           Copy-Item -Path ./shaders/*.spv -Destination artifacts/shaders
           # Create nightly archive
-          7z a -tzip "Nightly_${{ env.BUILD_DATE}}_Windows_${{ matrix.config.build_type }}_${{ matrix.config.compiler }}.zip" ./artifacts/*
+          7z a -tzip "Nightly_${{ env.BUILD_VERSION}}_Windows_${{ matrix.config.build_type }}_${{ matrix.config.compiler }}.zip" ./artifacts/*
 
       - name: Upload Nightly Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: Nightly_${{ env.BUILD_DATE}}_Windows_${{ matrix.config.build_type }}_${{ matrix.config.compiler }}
-          path: Nightly_${{ env.BUILD_DATE}}_Windows_${{ matrix.config.build_type }}_${{ matrix.config.compiler }}.zip
+          name: Nightly_${{ env.BUILD_VERSION}}_Windows_${{ matrix.config.build_type }}_${{ matrix.config.compiler }}
+          path: Nightly_${{ env.BUILD_VERSION}}_Windows_${{ matrix.config.build_type }}_${{ matrix.config.compiler }}.zip
           retention-days: 60
