@@ -44,10 +44,9 @@ jobs:
             }
 
       - name: Unzip files
-        shell: bash
         run: |
           mkdir archives
-          unzip '*.zip' -d archives
+          unzip *.zip -d archives || true
 
       - name: Prepare Release
         run: |
@@ -57,7 +56,6 @@ jobs:
           git push -f origin tag nightly
 
       - name: Release
-        shell: bash
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NOTES: |
