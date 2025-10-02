@@ -19,6 +19,9 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Cancel Previous Runs
+        uses: styfle/cancel-workflow-action@0.11.0
+        
       - name: Set build date
         run: |
             SHORT_SHA=$(git rev-parse --short HEAD)
@@ -138,6 +141,9 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
+      - name: Cancel Previous Runs
+        uses: styfle/cancel-workflow-action@0.11.0
 
       - name: Set build date
         run: |
@@ -285,6 +291,9 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
+      - name: Cancel Previous Runs
+        uses: styfle/cancel-workflow-action@0.11.0
+        
       - name: Update Environment
         run: pip3 install wheel setuptools
         
