@@ -85,7 +85,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: build
-          key: cmake-${{ runner.os }}-${{ matrix.config.compiler }}-${{ matrix.config.build_type }}-${{ hashFiles('CMakeLists.txt', '**/CMakeLists.txt', '**/*.cmake') }}
+          key: cmake-${{ runner.os }}-clang-tidy-${{ hashFiles('CMakeLists.txt', '**/CMakeLists.txt', '**/*.cmake') }}
 
       - name: Configure CMake
         if: steps.cache-cmake.outputs.cache-hit != 'true'
@@ -209,7 +209,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: build
-          key: cmake-${{ runner.os }}-${{ matrix.config.compiler }}-${{ matrix.config.build_type }}-${{ hashFiles('CMakeLists.txt', '**/CMakeLists.txt', '**/*.cmake') }}
+          key: cmake-${{ runner.os }}-cppcheck-${{ hashFiles('CMakeLists.txt', '**/CMakeLists.txt', '**/*.cmake') }}
 
       - name: Configure CMake
         if: steps.cache-cmake.outputs.cache-hit != 'true'
@@ -321,7 +321,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: build-analysis
-          key: cmake-analysis-${{ runner.os }}-${{ matrix.config.compiler }}-${{ matrix.config.build_type }}-${{ hashFiles('CMakeLists.txt', '**/CMakeLists.txt', '**/*.cmake') }}
+          key: cmake-analysis-${{ matrix.config.compiler }}-${{ matrix.config.build_type }}-${{ hashFiles('CMakeLists.txt', '**/CMakeLists.txt', '**/*.cmake') }}
 
       - name: Configure CMake (Static Code Analysis)
         if: steps.cache-cmake-analysis.outputs.cache-hit != 'true'
