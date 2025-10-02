@@ -10,8 +10,6 @@ on:
 env:
   INEXOR_VULKAN_SDK_VERSION: "1.3.283.0"
   INEXOR_VULKAN_SDK_PATH: "${{ github.workspace }}/vulkan_sdk"
-  INEXOR_VULKAN_SDK_CHECKSUM_LINUX: "8005e2cf3e89c80cbe1c0d0a259c88248de3257b4fc6fdefb47409edb3e43ecb"
-  INEXOR_VULKAN_SDK_CHECKSUM_WINDOWS: "811fcb9b43d09248520b2f38ae9a3763fc81df950fdab874f23bd762b07a9b12"
 
 jobs:
   linux:
@@ -170,13 +168,13 @@ jobs:
           mkdir -p artifacts/shaders
           cp ./shaders/*.spv artifacts/shaders/
           cd artifacts
-          tar -zcvf "../${{ env.BUILD_DATE}}_Linux_${{ matrix.config.build_type }}_${{ matrix.config.compiler }}_nightly.tar.xz" *
+          tar -zcvf "../${{ env.BUILD_DATE}}_Linux_${{ matrix.config.build_type }}_${{ matrix.config.compiler }}_Nightly.tar.xz" *
 
       - name: Upload Nightly Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ env.BUILD_DATE}}_Linux_${{ matrix.config.build_type }}_${{ matrix.config.compiler }}_nightly
-          path: ${{ env.BUILD_DATE}}_Linux_${{ matrix.config.build_type }}_${{ matrix.config.compiler }}_nightly.tar.xz
+          name: ${{ env.BUILD_DATE}}_Linux_${{ matrix.config.build_type }}_${{ matrix.config.compiler }}_Nightly
+          path: ${{ env.BUILD_DATE}}_Linux_${{ matrix.config.build_type }}_${{ matrix.config.compiler }}_Nightly.tar.xz
           retention-days: 60
 
   windows:
@@ -230,8 +228,7 @@ jobs:
       - name: Update Environment
         run: pip3 install wheel setuptools
         
-      - name: Set build date
-        shell: pwsh
+      - name: Set Build Date
         run: echo "BUILD_DATE=$(Get-Date -Format 'dd_MMM_yyyy_HHmmss')" >> $env:GITHUB_ENV
 
       - name: Check Cache for Vulkan SDK
@@ -247,14 +244,14 @@ jobs:
           curl -LS -o vulkansdk.exe https://sdk.lunarg.com/sdk/download/${{ env.INEXOR_VULKAN_SDK_VERSION }}/windows/VulkanSDK-${{ env.INEXOR_VULKAN_SDK_VERSION }}-Installer.exe
           7z x -y vulkansdk.exe -o"${{ env.INEXOR_VULKAN_SDK_PATH }}"
 
-      - name: Check Cache for CMake Files
+      - name: Check Cache for CMake Files (Build)
         id: cache-cmake
         uses: actions/cache@v4
         with:
           path: build
           key: cmake-${{ runner.os }}-${{ matrix.config.compiler }}-${{ matrix.config.build_type }}-${{ hashFiles('CMakeLists.txt', '**/CMakeLists.txt', '**/*.cmake') }}
 
-      - name: Configure CMake
+      - name: Configure CMake (Build)
         if: steps.cache-cmake.outputs.cache-hit != 'true'
         run: |
           $env:CC="${{ matrix.config.cc }}"
@@ -325,11 +322,11 @@ jobs:
           mkdir artifacts/shaders
           Copy-Item -Path ./shaders/*.spv -Destination artifacts/shaders
           # Create nightly archive
-          7z a -tzip "${{ env.BUILD_DATE}}_Windows_${{ matrix.config.build_type }}_${{ matrix.config.compiler }}_nightly.zip" ./artifacts/*
+          7z a -tzip "${{ env.BUILD_DATE}}_Windows_${{ matrix.config.build_type }}_${{ matrix.config.compiler }}_Nightly.zip" ./artifacts/*
 
       - name: Upload Nightly Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ env.BUILD_DATE}}_Windows_${{ matrix.config.build_type }}_${{ matrix.config.compiler }}_nightly
-          path: ${{ env.BUILD_DATE}}_Windows_${{ matrix.config.build_type }}_${{ matrix.config.compiler }}_nightly.zip
+          name: ${{ env.BUILD_DATE}}_Windows_${{ matrix.config.build_type }}_${{ matrix.config.compiler }}_Nightly
+          path: ${{ env.BUILD_DATE}}_Windows_${{ matrix.config.build_type }}_${{ matrix.config.compiler }}_Nightly.zip
           retention-days: 60
