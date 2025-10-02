@@ -129,5 +129,5 @@ jobs:
       - name: Upload cppcheck results
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ env.BUILD_DATE }}_cppcheck_Static_Code_Analysis
+          name: Nightly_${{ env.BUILD_DATE }}_cppcheck_analysis
           path: cppcheck_output.txt

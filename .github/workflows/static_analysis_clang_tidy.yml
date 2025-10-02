@@ -126,5 +126,5 @@ jobs:
       - name: Upload clang-tidy results
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ env.BUILD_DATE }}_clang-tidy_Static_Code_Analysis
+          name: Nightly_${{ env.BUILD_DATE }}_clang-tidy_analysis
           path: clang-tidy-output.txt

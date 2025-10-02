@@ -168,13 +168,13 @@ jobs:
           mkdir -p artifacts/shaders
           cp ./shaders/*.spv artifacts/shaders/
           cd artifacts
-          tar -zcvf "../${{ env.BUILD_DATE}}_Linux_${{ matrix.config.build_type }}_${{ matrix.config.compiler }}_Nightly.tar.xz" *
+          tar -zcvf "../Nightly_${{ env.BUILD_DATE}}_Linux_${{ matrix.config.build_type }}_${{ matrix.config.compiler }}.tar.xz" *
 
       - name: Upload Nightly Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ env.BUILD_DATE}}_Linux_${{ matrix.config.build_type }}_${{ matrix.config.compiler }}_Nightly
-          path: ${{ env.BUILD_DATE}}_Linux_${{ matrix.config.build_type }}_${{ matrix.config.compiler }}_Nightly.tar.xz
+          name: Nightly_${{ env.BUILD_DATE}}_Linux_${{ matrix.config.build_type }}_${{ matrix.config.compiler }}
+          path: Nightly_${{ env.BUILD_DATE}}_Linux_${{ matrix.config.build_type }}_${{ matrix.config.compiler }}.tar.xz
           retention-days: 60
 
   windows:
@@ -322,11 +322,11 @@ jobs:
           mkdir artifacts/shaders
           Copy-Item -Path ./shaders/*.spv -Destination artifacts/shaders
           # Create nightly archive
-          7z a -tzip "${{ env.BUILD_DATE}}_Windows_${{ matrix.config.build_type }}_${{ matrix.config.compiler }}_Nightly.zip" ./artifacts/*
+          7z a -tzip "Nightly_${{ env.BUILD_DATE}}_Windows_${{ matrix.config.build_type }}_${{ matrix.config.compiler }}.zip" ./artifacts/*
 
       - name: Upload Nightly Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ env.BUILD_DATE}}_Windows_${{ matrix.config.build_type }}_${{ matrix.config.compiler }}_Nightly
-          path: ${{ env.BUILD_DATE}}_Windows_${{ matrix.config.build_type }}_${{ matrix.config.compiler }}_Nightly.zip
+          name: Nightly_${{ env.BUILD_DATE}}_Windows_${{ matrix.config.build_type }}_${{ matrix.config.compiler }}
+          path: Nightly_${{ env.BUILD_DATE}}_Windows_${{ matrix.config.build_type }}_${{ matrix.config.compiler }}.zip
           retention-days: 60

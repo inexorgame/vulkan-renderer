@@ -30,7 +30,7 @@ jobs:
                run_id: context.payload.workflow_run.id,
             });
             let matchArtifacts = allArtifacts.data.artifacts.filter((artifact) => {
-              return artifact.name.startsWith("nightly_");
+              return artifact.name.startsWith("Nightly_");
             });
             let fs = require('fs');
             for (const artifact of matchArtifacts) {
