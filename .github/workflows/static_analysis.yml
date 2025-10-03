@@ -11,6 +11,11 @@ env:
   INEXOR_VULKAN_SDK_VERSION: "1.3.283.0"
   INEXOR_VULKAN_SDK_PATH: "${{ github.workspace }}/vulkan_sdk"
 
+# Cancel CI workflows which are still running from previous pushes
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref_name }}
+  cancel-in-progress: true
+  
 jobs:
   clang-tidy:
     name: Clang-Tidy
@@ -18,9 +23,6 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-
-      - name: Cancel Previous Runs
-        uses: styfle/cancel-workflow-action@0.11.0
         
       - name: Set build date
         run: |
@@ -121,11 +123,11 @@ jobs:
             -path '*/build/*' -prune -o \
             \( -name '*.cpp' -o -name '*.hpp' \) -print0 |
             parallel -0 clang-tidy -p build {} |
-            tee clang-tidy-output.txt || true
+            tee clang-tidy_analysis.txt || true
 
       - name: Summarize clang-tidy warnings
         run: |
-          grep -hEo '\[[a-z0-9]+-[a-z0-9-]+\]' clang-tidy-output.txt \
+          grep -hEo '\[[a-z0-9]+-[a-z0-9-]+\]' clang-tidy_analysis.txt \
             | sort | uniq -c | sort -nr \
             | sed 's/[][]//g' || true
 
@@ -133,7 +135,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: Nightly_${{ env.BUILD_VERSION }}_clang-tidy_SCA
-          path: clang-tidy-output.txt
+          path: clang-tidy_analysis.txt
 
   cppcheck:
     name: Cppcheck
@@ -141,9 +143,6 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-
-      - name: Cancel Previous Runs
-        uses: styfle/cancel-workflow-action@0.11.0
 
       - name: Set build date
         run: |
@@ -290,9 +289,6 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
-
-      - name: Cancel Previous Runs
-        uses: styfle/cancel-workflow-action@0.11.0
         
       - name: Update Environment
         run: pip3 install wheel setuptools
@@ -340,14 +336,14 @@ jobs:
 
       - name: Run MSVC Static Code Analysis
         run: |
-          cmake --build build-analysis --target inexor-vulkan-renderer --config ${{ matrix.config.build_type }} > analysis.txt 2>&1 || true
-          cmake --build build-analysis --target inexor-vulkan-renderer-example --config ${{ matrix.config.build_type }} >> analysis.txt 2>&1 || true
-          cmake --build build-analysis --target inexor-vulkan-renderer-tests --config ${{ matrix.config.build_type }} >> analysis.txt 2>&1 || true
-          cmake --build build-analysis --target inexor-vulkan-renderer-benchmarks --config ${{ matrix.config.build_type }} >> analysis.txt 2>&1 || true
+          cmake --build build-analysis --target inexor-vulkan-renderer --config ${{ matrix.config.build_type }} > msvc_code_analysis.txt 2>&1 || true
+          cmake --build build-analysis --target inexor-vulkan-renderer-example --config ${{ matrix.config.build_type }} >> msvc_code_analysis.txt 2>&1 || true
+          cmake --build build-analysis --target inexor-vulkan-renderer-tests --config ${{ matrix.config.build_type }} >> msvc_code_analysis.txt 2>&1 || true
+          cmake --build build-analysis --target inexor-vulkan-renderer-benchmarks --config ${{ matrix.config.build_type }} >> msvc_code_analysis.txt 2>&1 || true
 
       - name: Upload Static Analysis Report
         uses: actions/upload-artifact@v4
         with:
           name: Nightly_${{ env.BUILD_VERSION}}_Windows_${{ matrix.config.build_type }}_${{ matrix.config.compiler }}_SCA
-          path: analysis.txt
+          path: msvc_code_analysis.txt
           retention-days: 60
