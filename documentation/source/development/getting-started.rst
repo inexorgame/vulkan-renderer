@@ -9,7 +9,7 @@ Required Software
 -----------------
 
 `Git <https://www.git-scm.com/>`__
-    Git for cloning (downloading) the source code.
+    Git is a general purpose version control system required to download the source code.
 
 `Python <https://www.python.org/>`__ with `pip <https://pypi.org/project/pip/>`__
     Required for generating the documentation and the C++ package manager.
@@ -19,16 +19,10 @@ Required Software
 
 `Vulkan SDK <https://vulkan.lunarg.com/sdk/home>`__
     Vulkan SDK contains the libraries and tools which are necessary to work with Vulkan API.
-
     Update your Vulkan SDK as often as possible, because new versions will be released frequently which contains new features and bug fixes.
-
-    Make sure you add the ``glslangValidator`` in the Vulkan SDK's bin folder to your path variable.
 
 Optional Software
 -----------------
-
-`GitKraken Git GUI <https://www.gitkraken.com/git-client>`__.
-    A Git user interface with many features which is easy to use.
 
 `GitHub Desktop <https://desktop.github.com/>`__
     An open source Git user interface which is easy to use.
@@ -37,20 +31,13 @@ Optional Software
     Improve your build times with ninja.
 
 `RenderDoc <https://renderdoc.org/>`__
-    Powerful open source graphics debugger. Inexor has full RenderDoc integration.
+    A powerful open source graphics debugger.
 
 `Doxygen <http://www.doxygen.nl/download.html>`__
     Required for generating the documentation.
 
-`Notepad++ <https://notepad-plus-plus.org/downloads/>`__
-    Free and open source text editor.
-
-`Atom.io <https://atom.io/>`__
-    Free and open source text editor.
-
 `Visual Studio Code <https://code.visualstudio.com/>`__
     Free and open source text editor.
-
 
 Does my graphics card support Vulkan?
 -------------------------------------

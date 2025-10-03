@@ -1,7 +1,5 @@
-*******************
-Source Code License
-*******************
-
-
+***********
+MIT License
+***********
 
 .. include:: ../../../LICENSE
