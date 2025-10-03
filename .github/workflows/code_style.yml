@@ -23,6 +23,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Cancel Previous Runs
+        uses: styfle/cancel-workflow-action@0.11.0
+        
       - name: Fetch ${{ github.base_ref }}
         shell: bash
         run: |
