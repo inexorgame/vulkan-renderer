@@ -20,48 +20,38 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Download artifacts
-        uses: actions/github-script@v6
+      - name: Download Artifacts
+        uses: actions/download-artifact@v4
         with:
-          script: |
-            let allArtifacts = await github.rest.actions.listWorkflowRunArtifacts({
-               owner: context.repo.owner,
-               repo: context.repo.repo,
-               run_id: context.payload.workflow_run.id,
-            });
-            let matchArtifacts = allArtifacts.data.artifacts.filter((artifact) => {
-              return artifact.name.startsWith("Nightly_");
-            });
-            let fs = require('fs');
-            for (const artifact of matchArtifacts) {
-              let download = await github.rest.actions.downloadArtifact({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                artifact_id: artifact.id,
-                archive_format: 'zip',
-              });
-              fs.writeFileSync(`${process.env.GITHUB_WORKSPACE}/`+artifact.name+`.zip`, Buffer.from(download.data));
-            }
-
-      - name: Unzip files
-        run: |
-          mkdir archives
-          unzip *.zip -d archives || true
+          name: Nightly_
+          path: archives
 
       - name: Prepare Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           git config user.name github-actions
           git config user.email github-actions@github.com
-          git tag nightly
-          git push -f origin tag nightly
+          git tag -f nightly
+          git push -f https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git nightly
 
-      - name: Release
+      - name: Create Nightly Release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NOTES: |
-            Latest development release, ready to install.
-
-            This release tag is continuously updated.
+            Latest development release, continuously updated.
         run: |
-          output=$(gh release delete nightly -y 2>&1) || [[ "${output}" == "release not found" ]]
-          gh release create nightly ./archives/* --title "Nightly Release" --notes "${{ env.NOTES }}" --prerelease --target ${{ github.sha }}
+          # Handle Windows zip and Linux tar.xz
+          mkdir -p archives_all
+          cp archives/*.zip archives_all/ 2>/dev/null || true
+          for f in archives/*.tar.xz 2>/dev/null; do
+            tar -xf "$f" -C archives_all
+          done
+
+          # Create release
+          gh release delete nightly -y || true
+          gh release create nightly archives_all/* \
+            --title "Nightly Release" \
+            --notes "${{ env.NOTES }}" \
+            --prerelease \
+            --target ${{ github.sha }}
