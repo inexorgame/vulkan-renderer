@@ -15,14 +15,11 @@ jobs:
     name: Build Documentation
     runs-on: ubuntu-latest
     if: ${{ github.event_name == 'pull_request' && github.event.action == 'opened' && !github.event.pull_request.merged || github.event_name == 'push' }}
-    container: ubuntu:rolling
-    env:
-      DEBIAN_FRONTEND: "noninteractive"
     steps:
       - name: Update environment
         run: |
-          apt update -qq
-          apt install -y cmake doxygen git python3 python3-pip python3-venv wget zip
+          sudo apt update -qq
+          sudo apt install -y cmake doxygen git python3 python3-pip python3-venv wget zip
 
       - name: Checkout
         uses: actions/checkout@v3
@@ -56,6 +53,6 @@ jobs:
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
+          name: Nightly_${{ env.BUILD_VERSION}}_Documentation
           path: ${{ github.workspace }}/documentation/documentation.zip
-          name: Nightly_${{ env.BUILD_VERSION}}_Documentation.zip
           retention-days: 60
