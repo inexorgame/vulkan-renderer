@@ -21,40 +21,41 @@ jobs:
     steps:
       - name: Update environment
         run: |
-          # Update package lists
           apt update -qq
-          # Install build tools
-          apt install -y cmake doxygen git python3 python3-pip python3-venv wget
+          apt install -y cmake doxygen git python3 python3-pip python3-venv wget zip
 
       - name: Checkout
         uses: actions/checkout@v3
+
+      - name: Set build date
+        run: |
+            SHORT_SHA=$(git rev-parse --short HEAD)
+            BUILD_VERSION=$(date +'%Y-%b-%d_%H-%M-%S')_$SHORT_SHA
+            echo "BUILD_VERSION=$BUILD_VERSION" >> $GITHUB_ENV
         
       - name: Configure CMake
         working-directory: ${{ github.workspace }}/documentation
-        shell: bash
         run: |
           cmake . -Bbuild
 
       - name: Build
         working-directory: ${{ github.workspace }}/documentation
-        shell: bash
         run: |
           cmake --build build
 
       - name: Linkcheck
         working-directory: ${{ github.workspace }}/documentation
-        shell: bash
         # TODO: return true as long GitHub does not allow specific steps to fail
         run: |
           cmake --build build --target inexor-vulkan-renderer-documentation-linkcheck || true
 
       - name: Prepare artifacts
         working-directory: ${{ github.workspace }}/documentation
-        run: |
-          tar cfz documentation.tar.xz build/html/*
+        run: zip -r documentation.zip build/html
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          path: ${{ github.workspace }}/documentation/documentation.tar.xz
-          name: documentation.tar.xz
+          path: ${{ github.workspace }}/documentation/documentation.zip
+          name: Nightly_${{ env.BUILD_VERSION}}_Documentation.zip
+          retention-days: 60
