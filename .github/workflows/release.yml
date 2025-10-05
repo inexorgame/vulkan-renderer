@@ -30,7 +30,7 @@ jobs:
             const fs = require('fs');
             const path = require('path');
 
-            const workflows = ['build.yml', 'static_analysis.yml'];
+            const workflows = ['build.yml', 'build_documentation.yml', 'static_analysis.yml'];
             let allArtifacts = [];
 
             for (const workflow of workflows) {
