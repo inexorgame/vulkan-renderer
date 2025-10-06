@@ -26,9 +26,10 @@ jobs:
         
       - name: Set build date
         run: |
-            SHORT_SHA=$(git rev-parse --short HEAD)
-            BUILD_VERSION=$(date +'%Y-%b-%d_%H-%M-%S')_$SHORT_SHA
-            echo "BUILD_VERSION=$BUILD_VERSION" >> $GITHUB_ENV
+          SHORT_SHA=$(git rev-parse --short HEAD)
+          BUILD_DATE=$(date +'%Y-%b-%d_%H-%M-%S')
+          BUILD_VERSION="${SHORT_SHA}_${BUILD_DATE}"
+          echo "BUILD_VERSION=$BUILD_VERSION" >> $GITHUB_ENV
 
       - name: Install dependencies
         run: |
@@ -134,7 +135,7 @@ jobs:
       - name: Upload clang-tidy results
         uses: actions/upload-artifact@v4
         with:
-          name: Nightly_${{ env.BUILD_VERSION }}_clang-tidy_SCA
+          name: Nightly_Linux_StaticCodeAnalysis_clang-tidy_${{ env.BUILD_VERSION }}
           path: clang-tidy_analysis.txt
 
   cppcheck:
@@ -146,9 +147,10 @@ jobs:
 
       - name: Set build date
         run: |
-            SHORT_SHA=$(git rev-parse --short HEAD)
-            BUILD_VERSION=$(date +'%Y-%b-%d_%H-%M-%S')_$SHORT_SHA
-            echo "BUILD_VERSION=$BUILD_VERSION" >> $GITHUB_ENV
+          SHORT_SHA=$(git rev-parse --short HEAD)
+          BUILD_DATE=$(date +'%Y-%b-%d_%H-%M-%S')
+          BUILD_VERSION="${SHORT_SHA}_${BUILD_DATE}"
+          echo "BUILD_VERSION=$BUILD_VERSION" >> $GITHUB_ENV
 
       - name: Install dependencies
         run: |
@@ -257,7 +259,7 @@ jobs:
       - name: Upload cppcheck results
         uses: actions/upload-artifact@v4
         with:
-          name: Nightly_${{ env.BUILD_VERSION }}_cppcheck_SCA
+          name: Nightly_Linux_StaticCodeAnalysis_cppcheck_${{ env.BUILD_VERSION }}
           path: cppcheck_output.txt
 
   windows:
@@ -295,9 +297,10 @@ jobs:
         
       - name: Set Build Date
         run: |
-            $shortSha = git rev-parse --short HEAD
-            $buildDate = (Get-Date -Format 'yyyy-MMM-dd_HH-mm-ss') + "_$shortSha"
-            echo "BUILD_VERSION=$buildDate" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          $shortSha = git rev-parse --short HEAD
+          $buildDate = Get-Date -Format 'yyyy-MMM-dd_HH-mm-ss'
+          $buildVersion = "${shortSha}_$buildDate"
+          echo "BUILD_VERSION=$buildVersion" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
 
       - name: Check Cache for Vulkan SDK
         id: cache-vulkan
@@ -344,6 +347,6 @@ jobs:
       - name: Upload Static Analysis Report
         uses: actions/upload-artifact@v4
         with:
-          name: Nightly_${{ env.BUILD_VERSION}}_Windows_${{ matrix.config.build_type }}_${{ matrix.config.compiler }}_SCA
+          name: Nightly_Windows_StaticCodeAnalysis_${{ matrix.config.compiler }}_${{ matrix.config.build_type }}_${{ env.BUILD_VERSION}}
           path: msvc_code_analysis.txt
           retention-days: 60

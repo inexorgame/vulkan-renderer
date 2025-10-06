@@ -2,8 +2,10 @@ name: Build Documentation
 
 on:
   push:
+    branches:
+      - main
   pull_request:
-    types: [opened]
+    types: [opened, synchronize, reopened]
 
 # Cancel CI workflows which are still running from previous pushes
 concurrency:
@@ -14,7 +16,6 @@ jobs:
   build_documentation:
     name: Build Documentation
     runs-on: ubuntu-latest
-    if: ${{ github.event_name == 'pull_request' && github.event.action == 'opened' && !github.event.pull_request.merged || github.event_name == 'push' }}
     steps:
       - name: Update environment
         run: |
@@ -26,9 +27,10 @@ jobs:
 
       - name: Set build date
         run: |
-            SHORT_SHA=$(git rev-parse --short HEAD)
-            BUILD_VERSION=$(date +'%Y-%b-%d_%H-%M-%S')_$SHORT_SHA
-            echo "BUILD_VERSION=$BUILD_VERSION" >> $GITHUB_ENV
+          SHORT_SHA=$(git rev-parse --short HEAD)
+          BUILD_DATE=$(date +'%Y-%b-%d_%H-%M-%S')
+          BUILD_VERSION="${SHORT_SHA}_${BUILD_DATE}"
+          echo "BUILD_VERSION=$BUILD_VERSION" >> $GITHUB_ENV
         
       - name: Configure CMake
         working-directory: ${{ github.workspace }}/documentation
@@ -49,12 +51,12 @@ jobs:
       - name: Prepare artifacts
         working-directory: ${{ github.workspace }}/documentation
         run: |
-          ZIP_NAME=Nightly_${BUILD_VERSION}_Documentation.zip
+          ZIP_NAME=Nightly_Documentation_${BUILD_VERSION}.zip
           zip -r "$ZIP_NAME" build/html
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: Nightly_${{ env.BUILD_VERSION}}_Documentation
-          path: ${{ github.workspace }}/documentation/Nightly_${{ env.BUILD_VERSION}}_Documentation.zip
+          name: Nightly_Documentation_${{ env.BUILD_VERSION}}
+          path: ${{ github.workspace }}/documentation/Nightly_Documentation_${{ env.BUILD_VERSION}}.zip
           retention-days: 60
