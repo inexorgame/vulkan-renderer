@@ -339,14 +339,14 @@ jobs:
 
       - name: Run MSVC Static Code Analysis
         run: |
-          cmake --build build-analysis --target inexor-vulkan-renderer --config ${{ matrix.config.build_type }} > msvc_code_analysis.txt 2>&1 || true
-          cmake --build build-analysis --target inexor-vulkan-renderer-example --config ${{ matrix.config.build_type }} >> msvc_code_analysis.txt 2>&1 || true
-          cmake --build build-analysis --target inexor-vulkan-renderer-tests --config ${{ matrix.config.build_type }} >> msvc_code_analysis.txt 2>&1 || true
-          cmake --build build-analysis --target inexor-vulkan-renderer-benchmarks --config ${{ matrix.config.build_type }} >> msvc_code_analysis.txt 2>&1 || true
+          cmake --build build-analysis --target inexor-vulkan-renderer --config ${{ matrix.config.build_type }} > msvc_code_analysis_${{ matrix.config.build_type }}.txt 2>&1 || true
+          cmake --build build-analysis --target inexor-vulkan-renderer-example --config ${{ matrix.config.build_type }} >> msvc_code_analysis_${{ matrix.config.build_type }} 2>&1 || true
+          cmake --build build-analysis --target inexor-vulkan-renderer-tests --config ${{ matrix.config.build_type }} >> msvc_code_analysis_${{ matrix.config.build_type }} 2>&1 || true
+          cmake --build build-analysis --target inexor-vulkan-renderer-benchmarks --config ${{ matrix.config.build_type }} >> msvc_code_analysis_${{ matrix.config.build_type }} 2>&1 || true
 
       - name: Upload Static Analysis Report
         uses: actions/upload-artifact@v4
         with:
           name: Nightly_Windows_StaticCodeAnalysis_${{ matrix.config.compiler }}_${{ matrix.config.build_type }}_${{ env.BUILD_VERSION}}
-          path: msvc_code_analysis.txt
+          path: msvc_code_analysis_${{ matrix.config.build_type }}
           retention-days: 60
