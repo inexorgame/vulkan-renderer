@@ -112,8 +112,9 @@ jobs:
         run: |
           gh release delete nightly -y || true
 
-          FILES=$(find ./archives -type f -print0 | xargs -0)
-          echo "Uploading files:"
+          # Find all files, sort them alphabetically, and flatten into a single line
+          FILES=$(find ./archives -type f | sort | tr '\n' ' ')
+          echo "Uploading files in sorted order:"
           echo "$FILES"
 
           gh release create nightly $FILES \
