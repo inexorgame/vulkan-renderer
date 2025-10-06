@@ -156,9 +156,10 @@ jobs:
         run: |
           cd build
           mkdir -p benchmark
-          for bench_exec in $(find . -type f -executable -name '*-benchmarks'); do
-            echo "Running $bench_exec"
-            $bench_exec > "benchmark/$(basename $bench_exec).txt"
+          find . -type f -executable -name '*-benchmarks' | while read -r bench_exec; do
+              echo "Running $bench_exec"
+              # Log stdout and stderr to console AND file
+              "$bench_exec" 2>&1 | tee "benchmark/$(basename "$bench_exec").txt"
           done
 
       - name: Prepare Nightly Artifacts
@@ -302,8 +303,11 @@ jobs:
           if (Test-Path benchmark) { Remove-Item benchmark -Recurse -Force }
           mkdir benchmark
           Get-ChildItem -Recurse -Filter '*-benchmarks.exe' | ForEach-Object {
-            Write-Host "Running $($_.FullName)"
-            & $_.FullName > "benchmark/$($_.BaseName).txt"
+              $benchPath = $_.FullName
+              $outputFile = Join-Path -Path "benchmark" -ChildPath "$($_.BaseName).txt"
+              Write-Host "Running $benchPath"
+              # Run the benchmark, log both stdout and stderr to console AND file
+              & $benchPath 2>&1 | Tee-Object -FilePath $outputFile
           }
 
       - name: Prepare Nightly Artifacts
