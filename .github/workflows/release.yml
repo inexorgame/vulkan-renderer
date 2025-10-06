@@ -38,6 +38,7 @@ jobs:
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 workflow_id: workflow,
+                head_sha: process.env.GITHUB_SHA, // ensures exact commit
                 branch: 'main',
                 per_page: 1
               });
@@ -108,22 +109,15 @@ jobs:
           NOTES: |
             Latest development release, continuously updated.
         run: |
-          # Create nightly release if it doesn't exist
-          gh release view nightly || gh release create nightly \
+          gh release delete nightly -y
+          gh release create nightly \
             --title "Nightly Release" \
             --notes "${{ env.NOTES }}" \
             --prerelease \
             --target ${{ github.sha }}
 
-          # Delete all existing assets from the release
-          echo "Deleting existing assets from nightly release..."
-          for asset in $(gh release view nightly --json assets --jq '.assets[].name'); do
-            echo "→ Deleting $asset"
-            gh release delete-asset nightly "$asset" -y
-          done
-
           # Upload all .zip files in the root directory
-          echo "Uploading all .zip files in repository root:"
+          echo "Uploading all build artifacts as .zip:"
           find . -maxdepth 1 -name "*.zip" -print0 | while IFS= read -r -d '' file; do
             echo "→ $file"
             gh release upload --clobber nightly "$file"
