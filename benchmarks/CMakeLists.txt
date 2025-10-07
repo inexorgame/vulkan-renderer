@@ -6,7 +6,16 @@ set(INEXOR_BENCHMARKING_SOURCE_FILES
     world/cube_collision.cpp
 )
 
-add_executable(inexor-vulkan-renderer-benchmarks ${INEXOR_BENCHMARKING_SOURCE_FILES})
+if(MSVC)
+    add_executable(inexor-vulkan-renderer-benchmarks
+        ${INEXOR_BENCHMARKING_SOURCE_FILES}
+        ${CMAKE_BINARY_DIR}/win_resource_file.rc
+    )
+else()
+    add_executable(inexor-vulkan-renderer-benchmarks
+        ${INEXOR_BENCHMARKING_SOURCE_FILES}
+    )
+endif()
 
 set_target_properties(
     inexor-vulkan-renderer-benchmarks PROPERTIES

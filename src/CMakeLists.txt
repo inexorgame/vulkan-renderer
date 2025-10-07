@@ -94,18 +94,10 @@ if(MSVC)
     target_compile_options(inexor-vulkan-renderer PRIVATE "/Zc:__cplusplus")
 endif()
 
-# Extract the current git sha
-find_package(Git REQUIRED)
-execute_process(
-    COMMAND ${GIT_EXECUTABLE} describe --always --abbrev=7
-    WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
-    OUTPUT_VARIABLE INEXOR_GIT_SHA
-    OUTPUT_STRIP_TRAILING_WHITESPACE
-)
-
 # Replace variables in header file with CMake values
 configure_file(
-    ${PROJECT_SOURCE_DIR}/include/inexor/vulkan-renderer/meta.hpp.in ${CMAKE_CURRENT_BINARY_DIR}/include/inexor/vulkan-renderer/meta.hpp
+    ${PROJECT_SOURCE_DIR}/include/inexor/vulkan-renderer/meta.hpp.in
+    ${CMAKE_CURRENT_BINARY_DIR}/include/inexor/vulkan-renderer/meta.hpp
 )
 
 target_include_directories(
