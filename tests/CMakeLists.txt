@@ -8,7 +8,16 @@ set(INEXOR_UNIT_TEST_SOURCE_FILES
     world/cube.cpp
 )
 
-add_executable(inexor-vulkan-renderer-tests ${INEXOR_UNIT_TEST_SOURCE_FILES})
+if(MSVC)
+    add_executable(inexor-vulkan-renderer-tests
+        ${INEXOR_UNIT_TEST_SOURCE_FILES}
+        ${CMAKE_BINARY_DIR}/win_resource_file.rc
+    )
+else()
+    add_executable(inexor-vulkan-renderer-tests
+        ${INEXOR_UNIT_TEST_SOURCE_FILES}
+    )
+endif()
 
 set_target_properties(
     inexor-vulkan-renderer-tests PROPERTIES
