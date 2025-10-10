@@ -1,4 +1,4 @@
-Frequently asked questions
+Frequently Asked Questions
 ==========================
 
 Please visit `inexor.org <https://inexor.org>`__ and join our `Discord server <https://discord.com/invite/acUW8k7>`__.
