@@ -1,21 +1,23 @@
-Contribute code
+Contribute Code
 ===============
 
-- If you want to contribute code, join our `Discord <https://discord.com/invite/acUW8k7>`__ and have a look at our `vulkan-renderer repository <https://github.com/inexorgame>`__.
-- Try to find a `first good issue <https://github.com/inexorgame/vulkan-renderer/issues>`__ in our issue tracker.
-- Open a `pull request <https://github.com/inexorgame/vulkan-renderer/pulls>`__.
-- We want to keep commit as small in size as possible.
+- If you want to contribute code, join our `Discord <https://discord.com/invite/acUW8k7>`__ and have a look at our `GitHub repository <https://github.com/inexorgame/vulkan-renderer>`__
+- Try to find a `first good issue <https://github.com/inexorgame/vulkan-renderer/issues>`__ in our issue tracker
+- Open a `pull request <https://github.com/inexorgame/vulkan-renderer/pulls>`__
+- We want to keep commit as small in size as possible
 
-Signing commits
+Signing Commits
 ---------------
 
-- We encourage you to sign your commits, although this is not a strict requirement from our side.
-- You can find help on how to sign commits in `GitHub's docs <https://docs.github.com/en/github/authenticating-to-github/signing-commits>`__.
+- We encourage you to sign your commits, although this is not a strict requirement from our side
+- You can find help on how to sign commits in `GitHub's docs <https://docs.github.com/en/github/authenticating-to-github/signing-commits>`__
 
-Commit naming convention
+.. _COMMIT_NAMING:
+
+Commit Naming Convention
 ------------------------
 
-The commit naming convention will be checked by our continuous integration. In order to be valid, the followin rules must all be fulfilled:
+The commit naming convention will be checked by our continuous integration. In order to be valid, the following rules must all be fulfilled:
 
 - The commit message must begin with a category in square brackets which describes the code part that was changed
 - The commit category must not be empty 
@@ -36,7 +38,6 @@ The commit naming convention will be checked by our continuous integration. In o
 - ``[ci] Add commit naming check``
 - ``[*] Move GPU info to vk tools``
 
-Additional information
-----------------------
+**Additional Information**
 
 The regex pattern for the commit category is ``\*|(?:[a-z0-9]{2,}[\s|-]?)+``, the pattern for the message is ``[A-Z0-9].+[^.!?,\s]``

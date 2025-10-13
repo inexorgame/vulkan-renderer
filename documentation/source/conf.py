@@ -13,13 +13,12 @@ generate_radar.generate(Path("./auto-generated/"))
 extensions = [
     'breathe',
     'exhale',
-    'recommonmark',
     'sphinxcontrib.mermaid'
 ]
 source_suffix = ['.rst']
 master_doc = 'index'
 
-project = 'Inexor Vulkan Renderer'
+project = 'Inexor vulkan-renderer'
 author = 'Inexor Collective'
 copyright = '2020-present ' + author + '. The page content is licensed under CC ' \
  + 'BY 4.0 unless otherwise noted'
@@ -43,7 +42,7 @@ html_css_files = [
 html_js_files = [
     'js/svg-highlight.js',
 ]
-html_favicon = "../../assets/textures/logo_rendered.png"
+html_favicon = "images/inexor_48x48px.ico"
 
 linkcheck_ignore = [
     r"https://github.com/.*#"  # do not check anchors from GitHub, JS magic
@@ -53,9 +52,9 @@ mermaid_version = "11.4.1"
 
 # Setup the breathe extension
 breathe_projects = {
-    "vulkan-renderer": "../doxygen-output/xml"
+    "inexor-vulkan-renderer": "../doxygen-output/xml"
 }
-breathe_default_project = "vulkan-renderer"
+breathe_default_project = "inexor-vulkan-renderer"
 breathe_default_members = ('private-members', 'members', 'undoc-members')
 
 # Setup the exhale extension
@@ -64,7 +63,7 @@ exhale_args = {
     # These arguments are required
     "containmentFolder": "./exhale-generated",
     "rootFileName": "main.rst",
-    "rootFileTitle": "Source Code",
+    "rootFileTitle": "C++ Code Documentation",
     "doxygenStripFromPath": header_path,
     # Suggested optional arguments
     "createTreeView": True,
