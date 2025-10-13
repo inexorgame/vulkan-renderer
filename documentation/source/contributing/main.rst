@@ -1,12 +1,12 @@
 *****************
-How to contribute
+How to Contribute
 *****************
 
 .. toctree::
     :maxdepth: 2
 
-    code-of-conduct
-    licenses
     contribute-code
     contribute-art
     contributors
+    code-of-conduct
+    licenses
