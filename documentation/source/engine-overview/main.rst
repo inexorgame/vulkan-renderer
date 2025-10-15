@@ -119,7 +119,7 @@ Miscellaneous
 
     misc/gpu-selection
     misc/cameras
-    misc/keyboard-mouse-input
+    misc/input
     misc/make_info
     misc/representation
     misc/labelling
