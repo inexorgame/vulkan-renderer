@@ -14,10 +14,14 @@
 
 #include <GLFW/glfw3.h>
 #include <glm/gtc/matrix_transform.hpp>
-#include <toml.hpp>
+#include <spdlog/async.h>
+#include <spdlog/sinks/basic_file_sink.h>
+#include <spdlog/sinks/stdout_color_sinks.h>
+#include <spdlog/spdlog.h>
 
 #include <random>
 #include <thread>
+#include <toml.hpp>
 
 namespace inexor::vulkan_renderer {
 
@@ -291,8 +295,30 @@ void Application::setup_vulkan_debug_callback() {
     }
 }
 
+void Application::initialize_spdlog() {
+    // Initialization of spdlog with only one thread should be fine because at no point do we expect many spdlog
+    // messages to be written to the console and the logfile.
+    spdlog::init_thread_pool(8192, 1);
+
+    auto console_sink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
+
+    // A copy of the console output will automatically be saved to a logfile
+    auto file_sink = std::make_shared<spdlog::sinks::basic_file_sink_mt>(std::string(APP_NAME) + ".log", true);
+    auto logger = std::make_shared<spdlog::async_logger>("main", spdlog::sinks_init_list{console_sink, file_sink},
+                                                         spdlog::thread_pool(), spdlog::async_overflow_policy::block);
+
+    logger->flush_on(spdlog::level::trace);
+    logger->set_level(spdlog::level::trace);
+    logger->set_pattern("%Y-%m-%d %T.%f %^%l%$ %5t [%n] %v");
+
+    // We only use one global logger by default, not one logger for each component of the code.
+    spdlog::set_default_logger(logger);
+
+    spdlog::trace("Inexor vulkan-renderer, BUILD " + std::string(__DATE__) + ", " + __TIME__);
+}
+
 Application::Application(int argc, char **argv) {
-    spdlog::trace("Initialising vulkan-renderer");
+    initialize_spdlog();
 
     tools::CommandLineArgumentParser cla_parser;
     cla_parser.parse_args(argc, argv);

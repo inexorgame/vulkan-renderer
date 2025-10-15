@@ -44,6 +44,8 @@ class Application : public VulkanRenderer {
     void check_octree_collisions();
     void process_input();
 
+    void initialize_spdlog();
+
 public:
     Application(int argc, char **argv);
 
