@@ -8,6 +8,8 @@ set(INEXOR_SOURCE_FILES
     vulkan-renderer/renderer.cpp
     vulkan-renderer/time_step.cpp
 
+    vulkan-renderer/input/gamepad_data.cpp
+    vulkan-renderer/input/input.cpp
     vulkan-renderer/input/keyboard_mouse_data.cpp
 
     vulkan-renderer/io/byte_stream.cpp

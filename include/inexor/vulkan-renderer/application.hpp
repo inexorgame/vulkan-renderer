@@ -1,6 +1,6 @@
 ﻿#pragma once
 
-#include "inexor/vulkan-renderer/input/keyboard_mouse_data.hpp"
+#include "inexor/vulkan-renderer/input/input.hpp"
 #include "inexor/vulkan-renderer/renderer.hpp"
 #include "inexor/vulkan-renderer/world/collision_query.hpp"
 #include "inexor/vulkan-renderer/world/cube.hpp"
@@ -18,7 +18,7 @@ class Application : public VulkanRenderer {
     std::vector<std::string> m_texture_files;
     std::vector<std::string> m_gltf_model_files;
 
-    std::unique_ptr<input::KeyboardMouseInputData> m_input_data;
+    std::unique_ptr<input::Input> m_input;
 
     bool m_enable_validation_layers{true};
     /// Inexor engine supports a variable number of octrees.
@@ -42,37 +42,10 @@ class Application : public VulkanRenderer {
     void update_uniform_buffers();
     /// Use the camera's position and view direction vector to check for ray-octree collisions with all octrees.
     void check_octree_collisions();
-    void process_mouse_input();
+    void process_input();
 
 public:
     Application(int argc, char **argv);
-
-    /// @brief Call glfwSetKeyCallback.
-    /// @param window The window that received the event.
-    /// @param key The keyboard key that was pressed or released.
-    /// @param scancode The system-specific scancode of the key.
-    /// @param action GLFW_PRESS, GLFW_RELEASE or GLFW_REPEAT.
-    /// @param mods Bit field describing which modifier keys were held down.
-    void key_callback(GLFWwindow *window, int key, int scancode, int action, int mods);
-
-    /// @brief Call glfwSetCursorPosCallback.
-    /// @param window The window that received the event.
-    /// @param x_pos The new x-coordinate, in screen coordinates, of the cursor.
-    /// @param y_pos The new y-coordinate, in screen coordinates, of the cursor.
-    void cursor_position_callback(GLFWwindow *window, double x_pos, double y_pos);
-
-    /// @brief Call glfwSetMouseButtonCallback.
-    /// @param window The window that received the event.
-    /// @param button The mouse button that was pressed or released.
-    /// @param action One of GLFW_PRESS or GLFW_RELEASE.
-    /// @param mods Bit field describing which modifier keys were held down.
-    void mouse_button_callback(GLFWwindow *window, int button, int action, int mods);
-
-    /// @brief Call camera's process_mouse_scroll method.
-    /// @param window The window that received the event.
-    /// @param x_offset The change of x-offset of the mouse wheel.
-    /// @param y_offset The change of y-offset of the mouse wheel.
-    void mouse_scroll_callback(GLFWwindow *window, double x_offset, double y_offset);
 
     void run();
 };
