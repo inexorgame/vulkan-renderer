@@ -24,18 +24,11 @@ int main(int argc, char *argv[]) {
     spdlog::trace("Inexor vulkan-renderer, BUILD " + std::string(__DATE__) + ", " + __TIME__);
     spdlog::trace("Parsing command line arguments");
 
-    std::unique_ptr<inexor::vulkan_renderer::Application> renderer;
-
     try {
-        renderer = std::make_unique<inexor::vulkan_renderer::Application>(argc, argv);
-    } catch (const std::runtime_error &exception) {
-        spdlog::critical(exception.what());
-        return 1;
+        auto renderer = std::make_unique<inexor::vulkan_renderer::Application>(argc, argv);
+        renderer->run();
     } catch (const std::exception &exception) {
         spdlog::critical(exception.what());
         return 1;
     }
-
-    renderer->run();
-    spdlog::trace("Window closed");
 }
