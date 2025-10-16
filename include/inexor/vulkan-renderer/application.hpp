@@ -42,7 +42,6 @@ class Application : public VulkanRenderer {
     /// Use the camera's position and view direction vector to check for ray-octree collisions with all octrees.
     void check_octree_collisions();
     void process_input();
-
     void initialize_spdlog();
 
 public:

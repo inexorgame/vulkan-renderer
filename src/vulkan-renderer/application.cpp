@@ -302,13 +302,13 @@ void Application::initialize_spdlog() {
 Application::Application(int argc, char **argv) {
     initialize_spdlog();
 
-    tools::CommandLineArgumentParser cla_parser;
-    cla_parser.parse_args(argc, argv);
-
     spdlog::trace("Application version: {}.{}.{}", APP_VERSION[0], APP_VERSION[1], APP_VERSION[2]);
     spdlog::trace("Engine version: {}.{}.{}", ENGINE_VERSION[0], ENGINE_VERSION[1], ENGINE_VERSION[2]);
 
-    // Load the configuration from the TOML file.
+    // TODO (GH-558): Consider to use a command line argument parsing library.
+    tools::CommandLineArgumentParser cla_parser;
+    cla_parser.parse_args(argc, argv);
+
     load_toml_configuration_file("configuration/renderer.toml");
 
     bool enable_renderdoc_instance_layer = false;
