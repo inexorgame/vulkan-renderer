@@ -3,14 +3,16 @@
 #include <spdlog/spdlog.h>
 #include <volk.h>
 
-#include "inexor/vulkan-renderer/wrapper/command_buffer.hpp"
+#include "inexor/vulkan-renderer/wrapper/commands/command_buffer.hpp"
 
 #include <cassert>
 
 namespace inexor::vulkan_renderer::wrapper {
-
 // Forward declaration
 class Device;
+} // namespace inexor::vulkan_renderer::wrapper
+
+namespace inexor::vulkan_renderer::wrapper::commands {
 
 /// @brief RAII wrapper class for VkCommandPool.
 class CommandPool {
@@ -49,4 +51,4 @@ public:
     [[nodiscard]] const CommandBuffer &request_command_buffer(const std::string &name);
 };
 
-} // namespace inexor::vulkan_renderer::wrapper
+} // namespace inexor::vulkan_renderer::wrapper::commands

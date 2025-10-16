@@ -1,4 +1,4 @@
-#include "inexor/vulkan-renderer/vk_tools/enumerate.hpp"
+#include "inexor/vulkan-renderer/tools/enumerate.hpp"
 
 #include "inexor/vulkan-renderer/exception.hpp"
 
@@ -6,7 +6,7 @@
 #include <cstdint>
 #include <utility>
 
-namespace inexor::vulkan_renderer::vk_tools {
+namespace inexor::vulkan_renderer::tools {
 
 std::vector<VkExtensionProperties> get_extension_properties(const VkPhysicalDevice physical_device) {
     assert(physical_device);
@@ -80,4 +80,4 @@ std::vector<VkPresentModeKHR> get_surface_present_modes(const VkPhysicalDevice p
     return present_modes;
 }
 
-} // namespace inexor::vulkan_renderer::vk_tools
+} // namespace inexor::vulkan_renderer::tools

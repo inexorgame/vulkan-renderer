@@ -1,7 +1,7 @@
 #include "inexor/vulkan-renderer/render_graph.hpp"
 
 #include "inexor/vulkan-renderer/exception.hpp"
-#include "inexor/vulkan-renderer/wrapper/command_buffer.hpp"
+#include "inexor/vulkan-renderer/wrapper/commands/command_buffer.hpp"
 #include "inexor/vulkan-renderer/wrapper/make_info.hpp"
 #include "inexor/vulkan-renderer/wrapper/shader.hpp"
 
@@ -167,7 +167,7 @@ void RenderGraph::build_pipeline_layout(const RenderStage *stage, PhysicalStage 
     }
 }
 
-void RenderGraph::record_command_buffer(const RenderStage *stage, const wrapper::CommandBuffer &cmd_buf,
+void RenderGraph::record_command_buffer(const RenderStage *stage, const wrapper::commands::CommandBuffer &cmd_buf,
                                         const std::uint32_t image_index) const {
     const PhysicalStage &physical = *stage->m_physical;
 
@@ -528,7 +528,7 @@ void RenderGraph::compile(const RenderResource *target) {
     }
 }
 
-void RenderGraph::render(const std::uint32_t image_index, const wrapper::CommandBuffer &cmd_buf) {
+void RenderGraph::render(const std::uint32_t image_index, const wrapper::commands::CommandBuffer &cmd_buf) {
     // Update dynamic buffers.
     for (auto &buffer_resource : m_buffer_resources) {
         if (buffer_resource->m_data_upload_needed) {

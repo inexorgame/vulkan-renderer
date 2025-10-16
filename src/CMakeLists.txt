@@ -16,31 +16,33 @@ set(INEXOR_SOURCE_FILES
     vulkan-renderer/io/nxoc_parser.cpp
 
     vulkan-renderer/tools/cla_parser.cpp
+    vulkan-renderer/tools/device_info.cpp
+    vulkan-renderer/tools/enumerate.cpp
     vulkan-renderer/tools/file.cpp
+    vulkan-renderer/tools/representation.cpp
 
-    vulkan-renderer/vk_tools/device_info.cpp
-    vulkan-renderer/vk_tools/enumerate.cpp
-    vulkan-renderer/vk_tools/representation.cpp
-
-    vulkan-renderer/wrapper/command_buffer.cpp
-    vulkan-renderer/wrapper/command_pool.cpp
     vulkan-renderer/wrapper/cpu_texture.cpp
     vulkan-renderer/wrapper/descriptor.cpp
     vulkan-renderer/wrapper/descriptor_builder.cpp
     vulkan-renderer/wrapper/device.cpp
-    vulkan-renderer/wrapper/fence.cpp
     vulkan-renderer/wrapper/framebuffer.cpp
     vulkan-renderer/wrapper/gpu_memory_buffer.cpp
     vulkan-renderer/wrapper/gpu_texture.cpp
     vulkan-renderer/wrapper/image.cpp
     vulkan-renderer/wrapper/instance.cpp
     vulkan-renderer/wrapper/make_info.cpp
-    vulkan-renderer/wrapper/semaphore.cpp
     vulkan-renderer/wrapper/shader.cpp
     vulkan-renderer/wrapper/swapchain.cpp
     vulkan-renderer/wrapper/uniform_buffer.cpp
-    vulkan-renderer/wrapper/window.cpp
-    vulkan-renderer/wrapper/window_surface.cpp
+
+    vulkan-renderer/wrapper/commands/command_buffer.cpp
+    vulkan-renderer/wrapper/commands/command_pool.cpp
+
+    vulkan-renderer/wrapper/window/window.cpp
+    vulkan-renderer/wrapper/window/surface.cpp
+
+    vulkan-renderer/wrapper/synchronization/fence.cpp
+    vulkan-renderer/wrapper/synchronization/semaphore.cpp
 
     vulkan-renderer/world/collision.cpp
     vulkan-renderer/world/collision_query.cpp

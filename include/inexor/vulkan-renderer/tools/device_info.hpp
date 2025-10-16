@@ -5,7 +5,7 @@
 #include <string>
 #include <vector>
 
-namespace inexor::vulkan_renderer::vk_tools {
+namespace inexor::vulkan_renderer::tools {
 
 /// Transform a ``VkPhysicalDeviceFeatures`` into a ``std::vector<VkBool32>``
 /// @note The size of the vector will be determined by the number of ``VkBool32`` variables in the
@@ -19,4 +19,4 @@ namespace inexor::vulkan_renderer::vk_tools {
 /// @return The name of the physical device
 [[nodiscard]] std::string get_physical_device_name(VkPhysicalDevice physical_device);
 
-} // namespace inexor::vulkan_renderer::vk_tools
+} // namespace inexor::vulkan_renderer::tools

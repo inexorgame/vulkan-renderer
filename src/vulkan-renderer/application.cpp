@@ -6,7 +6,7 @@
 #include "inexor/vulkan-renderer/octree_gpu_vertex.hpp"
 #include "inexor/vulkan-renderer/standard_ubo.hpp"
 #include "inexor/vulkan-renderer/tools/cla_parser.hpp"
-#include "inexor/vulkan-renderer/vk_tools/enumerate.hpp"
+#include "inexor/vulkan-renderer/tools/enumerate.hpp"
 #include "inexor/vulkan-renderer/world/collision.hpp"
 #include "inexor/vulkan-renderer/wrapper/cpu_texture.hpp"
 #include "inexor/vulkan-renderer/wrapper/descriptor_builder.hpp"
@@ -14,10 +14,14 @@
 
 #include <GLFW/glfw3.h>
 #include <glm/gtc/matrix_transform.hpp>
-#include <toml.hpp>
+#include <spdlog/async.h>
+#include <spdlog/sinks/basic_file_sink.h>
+#include <spdlog/sinks/stdout_color_sinks.h>
+#include <spdlog/spdlog.h>
 
 #include <random>
 #include <thread>
+#include <toml.hpp>
 
 namespace inexor::vulkan_renderer {
 
@@ -40,7 +44,8 @@ void Application::load_toml_configuration_file(const std::string &file_name) {
     const auto &configuration_title = toml::find<std::string>(renderer_configuration, "title");
     spdlog::trace("Title: {}", configuration_title);
 
-    using WindowMode = ::inexor::vulkan_renderer::wrapper::Window::Mode;
+    using WindowMode = wrapper::window::Window::Mode;
+
     const auto &wmodestr = toml::find<std::string>(renderer_configuration, "application", "window", "mode");
     if (wmodestr == "windowed") {
         m_window_mode = WindowMode::WINDOWED;
@@ -92,24 +97,6 @@ void Application::load_toml_configuration_file(const std::string &file_name) {
     }
 
     // TODO: Load more info from TOML file.
-}
-
-void Application::load_textures() {
-    assert(m_device->device());
-    assert(m_device->physical_device());
-    assert(m_device->allocator());
-
-    // Insert the new texture into the list of textures.
-    std::string texture_name = "unnamed texture";
-
-    spdlog::trace("Loading texture files:");
-
-    for (const auto &texture_file : m_texture_files) {
-        spdlog::trace("   - {}", texture_file);
-
-        wrapper::CpuTexture cpu_texture(texture_file, texture_name);
-        m_textures.emplace_back(*m_device, cpu_texture);
-    }
 }
 
 void Application::load_shaders() {
@@ -291,16 +278,38 @@ void Application::setup_vulkan_debug_callback() {
     }
 }
 
-Application::Application(int argc, char **argv) {
-    spdlog::trace("Initialising vulkan-renderer");
+void Application::initialize_spdlog() {
+    // Initialization of spdlog with only one thread should be fine because at no point do we expect many spdlog
+    // messages to be written to the console and the logfile.
+    spdlog::init_thread_pool(8192, 1);
 
-    tools::CommandLineArgumentParser cla_parser;
-    cla_parser.parse_args(argc, argv);
+    auto console_sink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
+
+    // A copy of the console output will automatically be saved to a logfile
+    auto file_sink = std::make_shared<spdlog::sinks::basic_file_sink_mt>(std::string(APP_NAME) + ".log", true);
+    auto logger = std::make_shared<spdlog::async_logger>("main", spdlog::sinks_init_list{console_sink, file_sink},
+                                                         spdlog::thread_pool(), spdlog::async_overflow_policy::block);
+
+    logger->flush_on(spdlog::level::trace);
+    logger->set_level(spdlog::level::trace);
+    logger->set_pattern("%Y-%m-%d %T.%f %^%l%$ %5t [%n] %v");
+
+    // We only use one global logger by default, not one logger for each component of the code.
+    spdlog::set_default_logger(logger);
+
+    spdlog::trace("Inexor vulkan-renderer, BUILD " + std::string(__DATE__) + ", " + __TIME__);
+}
+
+Application::Application(int argc, char **argv) {
+    initialize_spdlog();
 
     spdlog::trace("Application version: {}.{}.{}", APP_VERSION[0], APP_VERSION[1], APP_VERSION[2]);
     spdlog::trace("Engine version: {}.{}.{}", ENGINE_VERSION[0], ENGINE_VERSION[1], ENGINE_VERSION[2]);
 
-    // Load the configuration from the TOML file.
+    // TODO (GH-558): Consider to use a command line argument parsing library.
+    tools::CommandLineArgumentParser cla_parser;
+    cla_parser.parse_args(argc, argv);
+
     load_toml_configuration_file("configuration/renderer.toml");
 
     bool enable_renderdoc_instance_layer = false;
@@ -328,8 +337,10 @@ Application::Application(int argc, char **argv) {
 
     spdlog::trace("Creating Vulkan instance");
 
-    m_window =
-        std::make_unique<wrapper::Window>(m_window_title, m_window_width, m_window_height, true, true, m_window_mode);
+    using wrapper::window::Window;
+    using wrapper::window::WindowSurface;
+
+    m_window = std::make_unique<Window>(m_window_title, m_window_width, m_window_height, true, true, m_window_mode);
 
     m_instance = std::make_unique<wrapper::Instance>(
         APP_NAME, ENGINE_NAME, VK_MAKE_API_VERSION(0, APP_VERSION[0], APP_VERSION[1], APP_VERSION[2]),
@@ -338,7 +349,7 @@ Application::Application(int argc, char **argv) {
 
     m_input = std::make_unique<input::Input>();
 
-    m_surface = std::make_unique<wrapper::WindowSurface>(m_instance->instance(), m_window->get());
+    m_surface = std::make_unique<WindowSurface>(m_instance->instance(), m_window->get());
 
     setup_window_and_input_callbacks();
 
@@ -397,7 +408,7 @@ Application::Application(int argc, char **argv) {
         enable_debug_marker_device_extension = false;
     }
 
-    const auto physical_devices = vk_tools::get_physical_devices(m_instance->instance());
+    const auto physical_devices = tools::get_physical_devices(m_instance->instance());
     if (preferred_graphics_card && *preferred_graphics_card >= physical_devices.size()) {
         spdlog::critical("GPU index {} out of range!", *preferred_graphics_card);
         throw std::runtime_error("Invalid GPU index");
@@ -434,7 +445,6 @@ Application::Application(int argc, char **argv) {
     m_swapchain = std::make_unique<wrapper::Swapchain>(*m_device, m_surface->get(), m_window->width(),
                                                        m_window->height(), m_vsync_enabled);
 
-    load_textures();
     load_shaders();
 
     m_uniform_buffers.emplace_back(*m_device, "matrices uniform buffer", sizeof(UniformBufferObject));

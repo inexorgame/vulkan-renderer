@@ -5,9 +5,11 @@
 #include <string>
 
 namespace inexor::vulkan_renderer::wrapper {
-
 // Forward declaration
 class Device;
+} // namespace inexor::vulkan_renderer::wrapper
+
+namespace inexor::vulkan_renderer::wrapper::synchronization {
 
 /// RAII wrapper class for VkSemaphore
 class Semaphore {
@@ -32,4 +34,4 @@ public:
     }
 };
 
-} // namespace inexor::vulkan_renderer::wrapper
+} // namespace inexor::vulkan_renderer::wrapper::synchronization

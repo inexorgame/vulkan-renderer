@@ -16,11 +16,15 @@
 // TODO: Compute stages.
 // TODO: Uniform buffers.
 
-// Forward declarations
 namespace inexor::vulkan_renderer::wrapper {
-class CommandBuffer;
+// Forward declaration
 class Shader;
 }; // namespace inexor::vulkan_renderer::wrapper
+
+namespace inexor::vulkan_renderer::wrapper::commands {
+// Forward declaration
+class CommandBuffer;
+} // namespace inexor::vulkan_renderer::wrapper::commands
 
 namespace inexor::vulkan_renderer {
 
@@ -28,6 +32,9 @@ namespace inexor::vulkan_renderer {
 class PhysicalResource;
 class PhysicalStage;
 class RenderGraph;
+
+// Using declaration
+using wrapper::commands::CommandBuffer;
 
 /// @brief Base class of all render graph objects (resources and stages).
 /// @note This is just for internal use.
@@ -167,7 +174,7 @@ private:
 
     std::vector<VkDescriptorSetLayout> m_descriptor_layouts;
     std::vector<VkPushConstantRange> m_push_constant_ranges;
-    std::function<void(const PhysicalStage &, const wrapper::CommandBuffer &)> m_on_record{[](auto &, auto &) {}};
+    std::function<void(const PhysicalStage &, const CommandBuffer &)> m_on_record{[](auto &, auto &) {}};
 
 protected:
     explicit RenderStage(std::string name) : m_name(std::move(name)) {}
@@ -393,7 +400,7 @@ private:
 
     // Functions for building stage related vulkan objects.
     void build_pipeline_layout(const RenderStage *, PhysicalStage &) const;
-    void record_command_buffer(const RenderStage *, const wrapper::CommandBuffer &cmd_buf,
+    void record_command_buffer(const RenderStage *, const wrapper::commands::CommandBuffer &cmd_buf,
                                std::uint32_t image_index) const;
 
     // Functions for building graphics stage related vulkan objects.
@@ -427,7 +434,7 @@ public:
     /// @brief Submits the command frame's command buffers for drawing.
     /// @param image_index The current image index, retrieved from Swapchain::acquire_next_image
     /// @param cmd_buf The command buffer
-    void render(std::uint32_t image_index, const wrapper::CommandBuffer &cmd_buf);
+    void render(std::uint32_t image_index, const wrapper::commands::CommandBuffer &cmd_buf);
 };
 
 template <typename T>

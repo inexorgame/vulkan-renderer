@@ -1,6 +1,6 @@
 #pragma once
 
-#include "inexor/vulkan-renderer/wrapper/semaphore.hpp"
+#include "inexor/vulkan-renderer/wrapper/synchronization/semaphore.hpp"
 
 #include <cstdint>
 #include <limits>
@@ -8,11 +8,18 @@
 #include <optional>
 #include <vector>
 
+namespace inexor::vulkan_renderer::wrapper::synchronization {
+// Forward declaration
+class Semaphore;
+} // namespace inexor::vulkan_renderer::wrapper::synchronization
+
 namespace inexor::vulkan_renderer::wrapper {
 
-// Forward declarations
+// Forward declaration
 class Device;
-class Semaphore;
+
+// Using declaration
+using synchronization::Semaphore;
 
 /// RAII wrapper class for swapchains
 class Swapchain {

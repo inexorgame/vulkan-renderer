@@ -1,4 +1,4 @@
-#include "inexor/vulkan-renderer/wrapper/command_pool.hpp"
+#include "inexor/vulkan-renderer/wrapper/commands/command_pool.hpp"
 
 #include "inexor/vulkan-renderer/exception.hpp"
 #include "inexor/vulkan-renderer/wrapper/device.hpp"
@@ -8,7 +8,7 @@
 
 #include <thread>
 
-namespace inexor::vulkan_renderer::wrapper {
+namespace inexor::vulkan_renderer::wrapper::commands {
 
 CommandPool::CommandPool(const Device &device, std::string name) : m_device(device), m_name(std::move(name)) {
     const auto cmd_pool_ci = make_info<VkCommandPoolCreateInfo>({
@@ -56,4 +56,4 @@ const CommandBuffer &CommandPool::request_command_buffer(const std::string &name
     return *m_cmd_bufs.back();
 }
 
-} // namespace inexor::vulkan_renderer::wrapper
+} // namespace inexor::vulkan_renderer::wrapper::commands

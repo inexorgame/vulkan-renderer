@@ -4,7 +4,7 @@
 
 #include <string>
 
-namespace inexor::vulkan_renderer::vk_tools {
+namespace inexor::vulkan_renderer::tools {
 
 /// @brief This function returns a textual representation of the vulkan object T.
 template <typename T>
@@ -23,4 +23,4 @@ template <typename T>
 /// If you want to convert it into an std::string_view, see the matching ```as_string``` template
 [[nodiscard]] std::string_view result_to_description(VkResult result);
 
-} // namespace inexor::vulkan_renderer::vk_tools
+} // namespace inexor::vulkan_renderer::tools

@@ -5,7 +5,7 @@
 #include <cstdint>
 #include <string>
 
-namespace inexor::vulkan_renderer::wrapper {
+namespace inexor::vulkan_renderer::wrapper::window {
 
 /// @brief RAII wrapper class for GLFW windows.
 class Window {
@@ -93,4 +93,4 @@ public:
     }
 };
 
-} // namespace inexor::vulkan_renderer::wrapper
+} // namespace inexor::vulkan_renderer::wrapper::window

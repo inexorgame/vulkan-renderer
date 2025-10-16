@@ -1,4 +1,4 @@
-#include "inexor/vulkan-renderer/wrapper/semaphore.hpp"
+#include "inexor/vulkan-renderer/wrapper/synchronization/semaphore.hpp"
 
 #include "inexor/vulkan-renderer/wrapper/device.hpp"
 #include "inexor/vulkan-renderer/wrapper/make_info.hpp"
@@ -6,7 +6,7 @@
 #include <cassert>
 #include <utility>
 
-namespace inexor::vulkan_renderer::wrapper {
+namespace inexor::vulkan_renderer::wrapper::synchronization {
 
 Semaphore::Semaphore(const Device &device, const std::string &name) : m_device(device), m_name(name) {
     assert(!name.empty());
@@ -22,4 +22,4 @@ Semaphore::~Semaphore() {
     vkDestroySemaphore(m_device.device(), m_semaphore, nullptr);
 }
 
-} // namespace inexor::vulkan_renderer::wrapper
+} // namespace inexor::vulkan_renderer::wrapper::synchronization

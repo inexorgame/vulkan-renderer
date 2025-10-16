@@ -1,6 +1,6 @@
 #pragma once
 
-#include "inexor/vulkan-renderer/wrapper/command_pool.hpp"
+#include "inexor/vulkan-renderer/wrapper/commands/command_pool.hpp"
 
 #include <array>
 #include <functional>
@@ -12,6 +12,9 @@ namespace inexor::vulkan_renderer::wrapper {
 
 // Forward declaration
 class Instance;
+
+using wrapper::commands::CommandBuffer;
+using wrapper::commands::CommandPool;
 
 /// A wrapper struct for physical device data
 struct DeviceInfo {
