@@ -7,9 +7,11 @@
 #include <string>
 
 namespace inexor::vulkan_renderer::wrapper {
-
 // Forward declaration
 class Device;
+} // namespace inexor::vulkan_renderer::wrapper
+
+namespace inexor::vulkan_renderer::wrapper::synchronization {
 
 /// @brief A RAII wrapper for VkFences.
 class Fence {
@@ -49,4 +51,4 @@ public:
     [[nodiscard]] VkResult status() const;
 };
 
-} // namespace inexor::vulkan_renderer::wrapper
+} // namespace inexor::vulkan_renderer::wrapper::synchronization

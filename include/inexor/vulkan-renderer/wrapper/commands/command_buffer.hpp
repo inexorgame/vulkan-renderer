@@ -1,7 +1,7 @@
 #pragma once
 
-#include "inexor/vulkan-renderer/wrapper/fence.hpp"
 #include "inexor/vulkan-renderer/wrapper/gpu_memory_buffer.hpp"
+#include "inexor/vulkan-renderer/wrapper/synchronization/fence.hpp"
 
 #include <cassert>
 #include <memory>
@@ -10,14 +10,19 @@
 
 namespace inexor::vulkan_renderer::wrapper {
 // Forward declaration
-class wrapper::Device;
+class Device;
 } // namespace inexor::vulkan_renderer::wrapper
+
+namespace inexor::vulkan_renderer::wrapper::synchronization {
+// Forward declaration
+class Fence;
+} // namespace inexor::vulkan_renderer::wrapper::synchronization
 
 namespace inexor::vulkan_renderer::wrapper::commands {
 
 // Using declarations
 using wrapper::Device;
-using wrapper::Fence;
+using wrapper::synchronization::Fence;
 
 /// @brief RAII wrapper class for VkCommandBuffer.
 /// @todo Make trivially copyable (this class doesn't really "own" the command buffer, more just an OOP wrapper).

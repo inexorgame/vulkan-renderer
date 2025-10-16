@@ -25,14 +25,12 @@ set(INEXOR_SOURCE_FILES
     vulkan-renderer/wrapper/descriptor.cpp
     vulkan-renderer/wrapper/descriptor_builder.cpp
     vulkan-renderer/wrapper/device.cpp
-    vulkan-renderer/wrapper/fence.cpp
     vulkan-renderer/wrapper/framebuffer.cpp
     vulkan-renderer/wrapper/gpu_memory_buffer.cpp
     vulkan-renderer/wrapper/gpu_texture.cpp
     vulkan-renderer/wrapper/image.cpp
     vulkan-renderer/wrapper/instance.cpp
     vulkan-renderer/wrapper/make_info.cpp
-    vulkan-renderer/wrapper/semaphore.cpp
     vulkan-renderer/wrapper/shader.cpp
     vulkan-renderer/wrapper/swapchain.cpp
     vulkan-renderer/wrapper/uniform_buffer.cpp
@@ -42,6 +40,9 @@ set(INEXOR_SOURCE_FILES
 
     vulkan-renderer/wrapper/window/window.cpp
     vulkan-renderer/wrapper/window/surface.cpp
+
+    vulkan-renderer/wrapper/synchronization/fence.cpp
+    vulkan-renderer/wrapper/synchronization/semaphore.cpp
 
     vulkan-renderer/world/collision.cpp
     vulkan-renderer/world/collision_query.cpp
