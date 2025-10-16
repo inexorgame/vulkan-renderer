@@ -98,24 +98,6 @@ void Application::load_toml_configuration_file(const std::string &file_name) {
     // TODO: Load more info from TOML file.
 }
 
-void Application::load_textures() {
-    assert(m_device->device());
-    assert(m_device->physical_device());
-    assert(m_device->allocator());
-
-    // Insert the new texture into the list of textures.
-    std::string texture_name = "unnamed texture";
-
-    spdlog::trace("Loading texture files:");
-
-    for (const auto &texture_file : m_texture_files) {
-        spdlog::trace("   - {}", texture_file);
-
-        wrapper::CpuTexture cpu_texture(texture_file, texture_name);
-        m_textures.emplace_back(*m_device, cpu_texture);
-    }
-}
-
 void Application::load_shaders() {
     assert(m_device->device());
 
@@ -460,7 +442,6 @@ Application::Application(int argc, char **argv) {
     m_swapchain = std::make_unique<wrapper::Swapchain>(*m_device, m_surface->get(), m_window->width(),
                                                        m_window->height(), m_vsync_enabled);
 
-    load_textures();
     load_shaders();
 
     m_uniform_buffers.emplace_back(*m_device, "matrices uniform buffer", sizeof(UniformBufferObject));
