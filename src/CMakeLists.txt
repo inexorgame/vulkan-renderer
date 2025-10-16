@@ -38,8 +38,9 @@ set(INEXOR_SOURCE_FILES
     vulkan-renderer/wrapper/shader.cpp
     vulkan-renderer/wrapper/swapchain.cpp
     vulkan-renderer/wrapper/uniform_buffer.cpp
-    vulkan-renderer/wrapper/window.cpp
-    vulkan-renderer/wrapper/window_surface.cpp
+
+    vulkan-renderer/wrapper/window/window.cpp
+    vulkan-renderer/wrapper/window/surface.cpp
 
     vulkan-renderer/world/collision.cpp
     vulkan-renderer/world/collision_query.cpp

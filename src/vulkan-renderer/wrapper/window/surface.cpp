@@ -1,4 +1,4 @@
-#include "inexor/vulkan-renderer/wrapper/window_surface.hpp"
+#include "inexor/vulkan-renderer/wrapper/window/surface.hpp"
 
 #include "inexor/vulkan-renderer/exception.hpp"
 
@@ -7,7 +7,7 @@
 #include <cassert>
 #include <utility>
 
-namespace inexor::vulkan_renderer::wrapper {
+namespace inexor::vulkan_renderer::wrapper::window {
 
 WindowSurface::WindowSurface(const VkInstance instance, GLFWwindow *window) : m_instance(instance) {
     assert(instance);
@@ -29,4 +29,4 @@ WindowSurface::~WindowSurface() {
     vkDestroySurfaceKHR(m_instance, m_surface, nullptr);
 }
 
-} // namespace inexor::vulkan_renderer::wrapper
+} // namespace inexor::vulkan_renderer::wrapper::window

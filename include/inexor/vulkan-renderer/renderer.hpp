@@ -7,10 +7,13 @@
 #include "inexor/vulkan-renderer/time_step.hpp"
 #include "inexor/vulkan-renderer/wrapper/instance.hpp"
 #include "inexor/vulkan-renderer/wrapper/uniform_buffer.hpp"
-#include "inexor/vulkan-renderer/wrapper/window.hpp"
-#include "inexor/vulkan-renderer/wrapper/window_surface.hpp"
+#include "inexor/vulkan-renderer/wrapper/window/surface.hpp"
+#include "inexor/vulkan-renderer/wrapper/window/window.hpp"
 
 namespace inexor::vulkan_renderer {
+
+using wrapper::window::Window;
+using wrapper::window::WindowSurface;
 
 class VulkanRenderer {
 protected:
@@ -24,7 +27,7 @@ protected:
 
     std::uint32_t m_window_width{0};
     std::uint32_t m_window_height{0};
-    wrapper::Window::Mode m_window_mode{wrapper::Window::Mode::WINDOWED};
+    Window::Mode m_window_mode{Window::Mode::WINDOWED};
 
     std::string m_window_title;
 
@@ -34,10 +37,10 @@ protected:
 
     std::unique_ptr<Camera> m_camera;
 
-    std::unique_ptr<wrapper::Window> m_window;
+    std::unique_ptr<Window> m_window;
     std::unique_ptr<wrapper::Instance> m_instance;
     std::unique_ptr<wrapper::Device> m_device;
-    std::unique_ptr<wrapper::WindowSurface> m_surface;
+    std::unique_ptr<WindowSurface> m_surface;
     std::unique_ptr<wrapper::Swapchain> m_swapchain;
     std::unique_ptr<ImGUIOverlay> m_imgui_overlay;
     std::unique_ptr<RenderGraph> m_render_graph;

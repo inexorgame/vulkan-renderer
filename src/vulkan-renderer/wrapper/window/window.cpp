@@ -1,4 +1,4 @@
-#include "inexor/vulkan-renderer/wrapper/window.hpp"
+#include "inexor/vulkan-renderer/wrapper/window/window.hpp"
 
 #include <GLFW/glfw3.h>
 #include <spdlog/spdlog.h>
@@ -6,7 +6,7 @@
 #include <cassert>
 #include <stdexcept>
 
-namespace inexor::vulkan_renderer::wrapper {
+namespace inexor::vulkan_renderer::wrapper::window {
 
 Window::Window(const std::string &title, const std::uint32_t width, const std::uint32_t height, const bool visible,
                const bool resizable, const Mode mode)
@@ -99,4 +99,4 @@ bool Window::should_close() {
     return glfwWindowShouldClose(m_window) == GLFW_TRUE;
 }
 
-} // namespace inexor::vulkan_renderer::wrapper
+} // namespace inexor::vulkan_renderer::wrapper::window

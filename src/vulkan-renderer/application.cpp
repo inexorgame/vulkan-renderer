@@ -44,7 +44,8 @@ void Application::load_toml_configuration_file(const std::string &file_name) {
     const auto &configuration_title = toml::find<std::string>(renderer_configuration, "title");
     spdlog::trace("Title: {}", configuration_title);
 
-    using WindowMode = ::inexor::vulkan_renderer::wrapper::Window::Mode;
+    using WindowMode = wrapper::window::Window::Mode;
+
     const auto &wmodestr = toml::find<std::string>(renderer_configuration, "application", "window", "mode");
     if (wmodestr == "windowed") {
         m_window_mode = WindowMode::WINDOWED;
@@ -336,8 +337,10 @@ Application::Application(int argc, char **argv) {
 
     spdlog::trace("Creating Vulkan instance");
 
-    m_window =
-        std::make_unique<wrapper::Window>(m_window_title, m_window_width, m_window_height, true, true, m_window_mode);
+    using wrapper::window::Window;
+    using wrapper::window::WindowSurface;
+
+    m_window = std::make_unique<Window>(m_window_title, m_window_width, m_window_height, true, true, m_window_mode);
 
     m_instance = std::make_unique<wrapper::Instance>(
         APP_NAME, ENGINE_NAME, VK_MAKE_API_VERSION(0, APP_VERSION[0], APP_VERSION[1], APP_VERSION[2]),
@@ -346,7 +349,7 @@ Application::Application(int argc, char **argv) {
 
     m_input = std::make_unique<input::Input>();
 
-    m_surface = std::make_unique<wrapper::WindowSurface>(m_instance->instance(), m_window->get());
+    m_surface = std::make_unique<WindowSurface>(m_instance->instance(), m_window->get());
 
     setup_window_and_input_callbacks();
 

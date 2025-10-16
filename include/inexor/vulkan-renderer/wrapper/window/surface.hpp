@@ -3,7 +3,7 @@
 #include <GLFW/glfw3.h>
 #include <volk.h>
 
-namespace inexor::vulkan_renderer::wrapper {
+namespace inexor::vulkan_renderer::wrapper::window {
 
 /// @brief RAII wrapper class for VkSurfaceKHR.
 class WindowSurface {
@@ -29,4 +29,4 @@ public:
     }
 };
 
-} // namespace inexor::vulkan_renderer::wrapper
+} // namespace inexor::vulkan_renderer::wrapper::window
