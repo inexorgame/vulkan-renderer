@@ -1,9 +1,9 @@
 #include "inexor/vulkan-renderer/wrapper/device.hpp"
 
 #include "inexor/vulkan-renderer/exception.hpp"
-#include "inexor/vulkan-renderer/vk_tools/device_info.hpp"
-#include "inexor/vulkan-renderer/vk_tools/enumerate.hpp"
-#include "inexor/vulkan-renderer/vk_tools/representation.hpp"
+#include "inexor/vulkan-renderer/tools/device_info.hpp"
+#include "inexor/vulkan-renderer/tools/enumerate.hpp"
+#include "inexor/vulkan-renderer/tools/representation.hpp"
 #include "inexor/vulkan-renderer/wrapper/instance.hpp"
 #include "inexor/vulkan-renderer/wrapper/make_info.hpp"
 
@@ -67,8 +67,8 @@ bool is_extension_supported(const std::vector<VkExtensionProperties> &extensions
 /// @return ``true`` if the physical device supports all device features and device extensions
 bool is_device_suitable(const DeviceInfo &info, const VkPhysicalDeviceFeatures &required_features,
                         const std::span<const char *> required_extensions, const bool print_info = false) {
-    const auto comparable_required_features = vk_tools::get_device_features_as_vector(required_features);
-    const auto comparable_available_features = vk_tools::get_device_features_as_vector(info.features);
+    const auto comparable_required_features = tools::get_device_features_as_vector(required_features);
+    const auto comparable_available_features = tools::get_device_features_as_vector(info.features);
     constexpr auto FEATURE_COUNT = sizeof(VkPhysicalDeviceFeatures) / sizeof(VkBool32);
 
     // Loop through all physical device features and check if a feature is required but not supported
@@ -76,7 +76,7 @@ bool is_device_suitable(const DeviceInfo &info, const VkPhysicalDeviceFeatures &
         if (comparable_required_features[i] == VK_TRUE && comparable_available_features[i] == VK_FALSE) {
             if (print_info) {
                 spdlog::info("Physical device {} does not support {}!", info.name,
-                             vk_tools::get_device_feature_description(i));
+                             tools::get_device_feature_description(i));
             }
             return false;
         }
@@ -150,7 +150,7 @@ DeviceInfo build_device_info(const VkPhysicalDevice physical_device, const VkSur
         }
     }
 
-    const auto extensions = vk_tools::get_extension_properties(physical_device);
+    const auto extensions = tools::get_extension_properties(physical_device);
 
     const bool is_swapchain_supported =
         surface == nullptr || is_extension_supported(extensions, VK_KHR_SWAPCHAIN_EXTENSION_NAME);
@@ -188,7 +188,7 @@ VkPhysicalDevice Device::pick_best_physical_device(const Instance &inst, const V
                                                    const VkPhysicalDeviceFeatures &required_features,
                                                    const std::span<const char *> required_extensions) {
     // Put together all data that is required to compare the physical devices
-    const auto physical_devices = vk_tools::get_physical_devices(inst.instance());
+    const auto physical_devices = tools::get_physical_devices(inst.instance());
     std::vector<DeviceInfo> infos(physical_devices.size());
     std::transform(physical_devices.begin(), physical_devices.end(), infos.begin(),
                    [&](const VkPhysicalDevice physical_device) { return build_device_info(physical_device, surface); });
@@ -204,7 +204,7 @@ Device::Device(const Instance &inst, const VkSurfaceKHR surface, const bool pref
         throw std::runtime_error("Error: The chosen physical device {} is not suitable!");
     }
 
-    m_gpu_name = vk_tools::get_physical_device_name(m_physical_device);
+    m_gpu_name = tools::get_physical_device_name(m_physical_device);
     spdlog::trace("Creating device using graphics card: {}", m_gpu_name);
 
     spdlog::trace("Creating Vulkan device queues");
@@ -278,9 +278,9 @@ Device::Device(const Instance &inst, const VkSurfaceKHR surface, const bool pref
     VkPhysicalDeviceFeatures available_features{};
     vkGetPhysicalDeviceFeatures(physical_device, &available_features);
 
-    const auto comparable_required_features = vk_tools::get_device_features_as_vector(required_features);
-    const auto comparable_optional_features = vk_tools::get_device_features_as_vector(optional_features);
-    const auto comparable_available_features = vk_tools::get_device_features_as_vector(available_features);
+    const auto comparable_required_features = tools::get_device_features_as_vector(required_features);
+    const auto comparable_optional_features = tools::get_device_features_as_vector(optional_features);
+    const auto comparable_available_features = tools::get_device_features_as_vector(available_features);
 
     constexpr auto FEATURE_COUNT = sizeof(VkPhysicalDeviceFeatures) / sizeof(VkBool32);
     std::vector<VkBool32> features_to_enable(FEATURE_COUNT, VK_FALSE);
@@ -294,8 +294,8 @@ Device::Device(const Instance &inst, const VkSurfaceKHR surface, const bool pref
                 features_to_enable[i] = VK_TRUE;
             } else {
                 spdlog::warn("The physical device {} does not support {}!",
-                             vk_tools::get_physical_device_name(physical_device),
-                             vk_tools::get_device_feature_description(i));
+                             tools::get_physical_device_name(physical_device),
+                             tools::get_device_feature_description(i));
             }
         }
     }
@@ -452,7 +452,7 @@ void Device::execute(const std::string &name,
 
 std::optional<std::uint32_t> Device::find_queue_family_index_if(
     const std::function<bool(std::uint32_t index, const VkQueueFamilyProperties &)> &criteria_lambda) {
-    for (std::uint32_t index = 0; const auto queue_family : vk_tools::get_queue_family_properties(m_physical_device)) {
+    for (std::uint32_t index = 0; const auto queue_family : tools::get_queue_family_properties(m_physical_device)) {
         if (criteria_lambda(index, queue_family)) {
             return index;
         }

@@ -6,7 +6,7 @@
 #include "inexor/vulkan-renderer/octree_gpu_vertex.hpp"
 #include "inexor/vulkan-renderer/standard_ubo.hpp"
 #include "inexor/vulkan-renderer/tools/cla_parser.hpp"
-#include "inexor/vulkan-renderer/vk_tools/enumerate.hpp"
+#include "inexor/vulkan-renderer/tools/enumerate.hpp"
 #include "inexor/vulkan-renderer/world/collision.hpp"
 #include "inexor/vulkan-renderer/wrapper/cpu_texture.hpp"
 #include "inexor/vulkan-renderer/wrapper/descriptor_builder.hpp"
@@ -405,7 +405,7 @@ Application::Application(int argc, char **argv) {
         enable_debug_marker_device_extension = false;
     }
 
-    const auto physical_devices = vk_tools::get_physical_devices(m_instance->instance());
+    const auto physical_devices = tools::get_physical_devices(m_instance->instance());
     if (preferred_graphics_card && *preferred_graphics_card >= physical_devices.size()) {
         spdlog::critical("GPU index {} out of range!", *preferred_graphics_card);
         throw std::runtime_error("Invalid GPU index");

@@ -1,9 +1,9 @@
-#include "inexor/vulkan-renderer/vk_tools/device_info.hpp"
+#include "inexor/vulkan-renderer/tools/device_info.hpp"
 
 #include <cassert>
 #include <cstring>
 
-namespace inexor::vulkan_renderer::vk_tools {
+namespace inexor::vulkan_renderer::tools {
 
 std::vector<VkBool32> get_device_features_as_vector(const VkPhysicalDeviceFeatures &features) {
     std::vector<VkBool32> comparable_features(sizeof(VkPhysicalDeviceFeatures) / sizeof(VkBool32));
@@ -18,4 +18,4 @@ std::string get_physical_device_name(const VkPhysicalDevice physical_device) {
     return properties.deviceName;
 }
 
-} // namespace inexor::vulkan_renderer::vk_tools
+} // namespace inexor::vulkan_renderer::tools

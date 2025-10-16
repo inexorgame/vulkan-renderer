@@ -4,7 +4,7 @@
 
 #include <vector>
 
-namespace inexor::vulkan_renderer::vk_tools {
+namespace inexor::vulkan_renderer::tools {
 
 /// All functions which contain the word "all" in it, call some vkEnumerate.. function,
 /// while all functions without it call vkGet..
@@ -45,4 +45,4 @@ namespace inexor::vulkan_renderer::vk_tools {
 [[nodiscard]] std::vector<VkPresentModeKHR> get_surface_present_modes(VkPhysicalDevice physical_device,
                                                                       VkSurfaceKHR surface);
 
-} // namespace inexor::vulkan_renderer::vk_tools
+} // namespace inexor::vulkan_renderer::tools

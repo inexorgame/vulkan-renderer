@@ -1,7 +1,7 @@
 #include "inexor/vulkan-renderer/wrapper/instance.hpp"
 
 #include "inexor/vulkan-renderer/exception.hpp"
-#include "inexor/vulkan-renderer/vk_tools/representation.hpp"
+#include "inexor/vulkan-renderer/tools/representation.hpp"
 #include "inexor/vulkan-renderer/wrapper/make_info.hpp"
 
 #include <GLFW/glfw3.h>
@@ -95,7 +95,7 @@ Instance::Instance(const std::string &application_name, const std::string &engin
 
     std::uint32_t available_api_version = 0;
     if (const auto result = vkEnumerateInstanceVersion(&available_api_version); result != VK_SUCCESS) {
-        spdlog::error("Error: vkEnumerateInstanceVersion returned {}!", vk_tools::as_string(result));
+        spdlog::error("Error: vkEnumerateInstanceVersion returned {}!", tools::as_string(result));
         return;
     }
 

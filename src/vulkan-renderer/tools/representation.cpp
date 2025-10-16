@@ -1,9 +1,9 @@
-#include "inexor/vulkan-renderer/vk_tools/representation.hpp"
+#include "inexor/vulkan-renderer/tools/representation.hpp"
 
 #include <array>
 #include <cassert>
 
-namespace inexor::vulkan_renderer::vk_tools {
+namespace inexor::vulkan_renderer::tools {
 
 // Please keep the functions in here in alphabetical order (sort by function names, then by parameter types)
 
@@ -970,4 +970,4 @@ std::string_view result_to_description(const VkResult result) {
     }
 }
 
-} // namespace inexor::vulkan_renderer::vk_tools
+} // namespace inexor::vulkan_renderer::tools
