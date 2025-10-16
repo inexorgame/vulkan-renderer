@@ -1,4 +1,4 @@
-#include "inexor/vulkan-renderer/wrapper/command_buffer.hpp"
+#include "inexor/vulkan-renderer/wrapper/commands/command_buffer.hpp"
 
 #include "inexor/vulkan-renderer/exception.hpp"
 #include "inexor/vulkan-renderer/wrapper/device.hpp"
@@ -8,7 +8,7 @@
 #include <memory>
 #include <utility>
 
-namespace inexor::vulkan_renderer::wrapper {
+namespace inexor::vulkan_renderer::wrapper::commands {
 
 CommandBuffer::CommandBuffer(const Device &device, const VkCommandPool cmd_pool, std::string name)
     : m_device(device), m_name(std::move(name)) {
@@ -325,4 +325,4 @@ const CommandBuffer &CommandBuffer::submit_and_wait() const {
     }));
 }
 
-} // namespace inexor::vulkan_renderer::wrapper
+} // namespace inexor::vulkan_renderer::wrapper::commands

@@ -164,7 +164,7 @@ void ImGUIOverlay::update() {
         return;
     }
 
-    m_stage->set_on_record([this](const PhysicalStage &physical, const wrapper::CommandBuffer &cmd_buf) {
+    m_stage->set_on_record([this](const PhysicalStage &physical, const wrapper::commands::CommandBuffer &cmd_buf) {
         ImDrawData *imgui_draw_data = ImGui::GetDrawData();
         if (imgui_draw_data == nullptr) {
             return;

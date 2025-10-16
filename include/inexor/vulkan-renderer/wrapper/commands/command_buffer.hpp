@@ -9,9 +9,15 @@
 #include <vector>
 
 namespace inexor::vulkan_renderer::wrapper {
-
 // Forward declaration
-class Device;
+class wrapper::Device;
+} // namespace inexor::vulkan_renderer::wrapper
+
+namespace inexor::vulkan_renderer::wrapper::commands {
+
+// Using declarations
+using wrapper::Device;
+using wrapper::Fence;
 
 /// @brief RAII wrapper class for VkCommandBuffer.
 /// @todo Make trivially copyable (this class doesn't really "own" the command buffer, more just an OOP wrapper).
@@ -364,4 +370,4 @@ public:
     const CommandBuffer &submit_and_wait() const; // NOLINT
 };
 
-} // namespace inexor::vulkan_renderer::wrapper
+} // namespace inexor::vulkan_renderer::wrapper::commands

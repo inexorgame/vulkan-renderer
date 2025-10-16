@@ -21,8 +21,6 @@ set(INEXOR_SOURCE_FILES
     vulkan-renderer/tools/file.cpp
     vulkan-renderer/tools/representation.cpp
 
-    vulkan-renderer/wrapper/command_buffer.cpp
-    vulkan-renderer/wrapper/command_pool.cpp
     vulkan-renderer/wrapper/cpu_texture.cpp
     vulkan-renderer/wrapper/descriptor.cpp
     vulkan-renderer/wrapper/descriptor_builder.cpp
@@ -38,6 +36,9 @@ set(INEXOR_SOURCE_FILES
     vulkan-renderer/wrapper/shader.cpp
     vulkan-renderer/wrapper/swapchain.cpp
     vulkan-renderer/wrapper/uniform_buffer.cpp
+
+    vulkan-renderer/wrapper/commands/command_buffer.cpp
+    vulkan-renderer/wrapper/commands/command_pool.cpp
 
     vulkan-renderer/wrapper/window/window.cpp
     vulkan-renderer/wrapper/window/surface.cpp
