@@ -22,8 +22,6 @@ set(INEXOR_SOURCE_FILES
     vulkan-renderer/tools/representation.cpp
 
     vulkan-renderer/wrapper/cpu_texture.cpp
-    vulkan-renderer/wrapper/descriptor.cpp
-    vulkan-renderer/wrapper/descriptor_builder.cpp
     vulkan-renderer/wrapper/device.cpp
     vulkan-renderer/wrapper/framebuffer.cpp
     vulkan-renderer/wrapper/gpu_memory_buffer.cpp
@@ -37,6 +35,9 @@ set(INEXOR_SOURCE_FILES
 
     vulkan-renderer/wrapper/commands/command_buffer.cpp
     vulkan-renderer/wrapper/commands/command_pool.cpp
+
+    vulkan-renderer/wrapper/descriptors/descriptor.cpp
+    vulkan-renderer/wrapper/descriptors/descriptor_builder.cpp
 
     vulkan-renderer/wrapper/window/window.cpp
     vulkan-renderer/wrapper/window/surface.cpp

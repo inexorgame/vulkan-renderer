@@ -6,9 +6,11 @@
 #include <vector>
 
 namespace inexor::vulkan_renderer::wrapper {
-
 // Forward declaration
 class Device;
+} // namespace inexor::vulkan_renderer::wrapper
+
+namespace inexor::vulkan_renderer::wrapper::descriptors {
 
 /// @brief RAII wrapper class for resource descriptors.
 class ResourceDescriptor {
@@ -49,4 +51,4 @@ public:
     }
 };
 
-} // namespace inexor::vulkan_renderer::wrapper
+} // namespace inexor::vulkan_renderer::wrapper::descriptors

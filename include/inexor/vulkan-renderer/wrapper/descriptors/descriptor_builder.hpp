@@ -10,9 +10,12 @@
 #include <vector>
 
 namespace inexor::vulkan_renderer::wrapper {
-
-// Forward declarations
+// Forward declaration
 class Device;
+} // namespace inexor::vulkan_renderer::wrapper
+
+namespace inexor::vulkan_renderer::wrapper::descriptors {
+
 class ResourceDescriptor;
 
 class DescriptorBuilder {
@@ -96,4 +99,4 @@ DescriptorBuilder &DescriptorBuilder::add_uniform_buffer(const VkBuffer uniform_
     return *this;
 }
 
-} // namespace inexor::vulkan_renderer::wrapper
+} // namespace inexor::vulkan_renderer::wrapper::descriptors

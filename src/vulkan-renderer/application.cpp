@@ -9,7 +9,7 @@
 #include "inexor/vulkan-renderer/tools/enumerate.hpp"
 #include "inexor/vulkan-renderer/world/collision.hpp"
 #include "inexor/vulkan-renderer/wrapper/cpu_texture.hpp"
-#include "inexor/vulkan-renderer/wrapper/descriptor_builder.hpp"
+#include "inexor/vulkan-renderer/wrapper/descriptors/descriptor_builder.hpp"
 #include "inexor/vulkan-renderer/wrapper/instance.hpp"
 
 #include <GLFW/glfw3.h>
@@ -451,7 +451,7 @@ Application::Application(int argc, char **argv) {
 
     // Create an instance of the resource descriptor builder.
     // This allows us to make resource descriptors with the help of a builder pattern.
-    wrapper::DescriptorBuilder descriptor_builder(*m_device);
+    wrapper::descriptors::DescriptorBuilder descriptor_builder(*m_device);
 
     // Make use of the builder to create a resource descriptor for the uniform buffer.
     m_descriptors.emplace_back(
