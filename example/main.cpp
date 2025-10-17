@@ -32,6 +32,7 @@ int main(int argc, char *argv[]) {
 
     persons.deallocate(p1);
     persons.deallocate(p2);
+    persons.deallocate(p3);
 
     try {
         using inexor::vulkan_renderer::Application;

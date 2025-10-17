@@ -11,8 +11,7 @@ namespace inexor::vulkan_renderer::tools::allocators {
 		T value;
         PoolChunk<T> *next_pool_chunk = nullptr;		
 
-		// TODO: Should we =default this here?
-		PoolChunk() {};
+        PoolChunk() {};
         ~PoolChunk() {};
 	};
 
@@ -35,7 +34,7 @@ namespace inexor::vulkan_renderer::tools::allocators {
                 m_data = new PoolChunk<T>[size];
                 m_head = m_data;
 
-				for (std::size_t index = 0; index < m_size; index++) {
+				for (std::size_t index = 0; index < m_size-1; index++) {
 					// We must use std::addressof because the & operator could be overloaded!
                     m_data[index].next_pool_chunk = std::addressof(m_data[index+1]);
 				}
@@ -59,14 +58,10 @@ namespace inexor::vulkan_renderer::tools::allocators {
                 if (m_head==nullptr) {
                     return nullptr;
 				}
-
-				// TODO: We could simplify this further
-				auto pool_chunk = m_head;
-                m_head = m_head->next_pool_chunk;
-
-				// Placement new
-                return new (std::addressof(pool_chunk->value)) T(std::forward<arguments>(args)...);
-			}
+                auto *chunk = std::exchange(m_head, m_head->next_pool_chunk);
+                // Placement new
+                return new (std::addressof(chunk->value)) T(std::forward<arguments>(args)...);
+            }
 
 			void deallocate(T* data)
 			{
