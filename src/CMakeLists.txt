@@ -21,6 +21,8 @@ set(INEXOR_SOURCE_FILES
     vulkan-renderer/tools/file.cpp
     vulkan-renderer/tools/representation.cpp
 
+    vulkan-renderer/tools/allocators/pool_allocator.cpp
+
     vulkan-renderer/wrapper/cpu_texture.cpp
     vulkan-renderer/wrapper/descriptor.cpp
     vulkan-renderer/wrapper/descriptor_builder.cpp
