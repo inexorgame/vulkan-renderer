@@ -21,6 +21,8 @@ Checks:
 
 FormatStyle: 'file'
 HeaderFilterRegex: '^(?!.*vulkan-renderer/build).*'
+ExtraArgs:
+  - -std=c++20
 
 CheckOptions:
   - key: 'bugprone-argument-comment.CommentBoolLiterals'
