@@ -1,4 +1,4 @@
-#include "inexor/vulkan-renderer/wrapper/descriptor.hpp"
+#include "inexor/vulkan-renderer/wrapper/descriptors/descriptor.hpp"
 
 #include "inexor/vulkan-renderer/exception.hpp"
 #include "inexor/vulkan-renderer/wrapper/device.hpp"
@@ -7,7 +7,7 @@
 #include <cassert>
 #include <utility>
 
-namespace inexor::vulkan_renderer::wrapper {
+namespace inexor::vulkan_renderer::wrapper::descriptors {
 
 ResourceDescriptor::ResourceDescriptor(ResourceDescriptor &&other) noexcept : m_device(other.m_device) {
     m_name = std::move(other.m_name);
@@ -91,4 +91,4 @@ ResourceDescriptor::~ResourceDescriptor() {
     vkDestroyDescriptorPool(m_device.device(), m_descriptor_pool, nullptr);
 }
 
-} // namespace inexor::vulkan_renderer::wrapper
+} // namespace inexor::vulkan_renderer::wrapper::descriptors

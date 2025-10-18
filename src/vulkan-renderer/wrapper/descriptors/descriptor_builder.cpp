@@ -1,11 +1,11 @@
-#include "inexor/vulkan-renderer/wrapper/descriptor_builder.hpp"
+#include "inexor/vulkan-renderer/wrapper/descriptors/descriptor_builder.hpp"
 
-#include "inexor/vulkan-renderer/wrapper/descriptor.hpp"
+#include "inexor/vulkan-renderer/wrapper/descriptors/descriptor.hpp"
 #include "inexor/vulkan-renderer/wrapper/device.hpp"
 
 #include <utility>
 
-namespace inexor::vulkan_renderer::wrapper {
+namespace inexor::vulkan_renderer::wrapper::descriptors {
 
 DescriptorBuilder::DescriptorBuilder(const Device &device) : m_device(device) {
     assert(m_device.device());
@@ -58,4 +58,4 @@ DescriptorBuilder &DescriptorBuilder::add_combined_image_sampler(const VkSampler
     return *this;
 }
 
-} // namespace inexor::vulkan_renderer::wrapper
+} // namespace inexor::vulkan_renderer::wrapper::descriptors

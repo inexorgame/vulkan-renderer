@@ -1,7 +1,7 @@
 #include "inexor/vulkan-renderer/imgui.hpp"
 
 #include "inexor/vulkan-renderer/wrapper/cpu_texture.hpp"
-#include "inexor/vulkan-renderer/wrapper/descriptor_builder.hpp"
+#include "inexor/vulkan-renderer/wrapper/descriptors/descriptor_builder.hpp"
 #include "inexor/vulkan-renderer/wrapper/make_info.hpp"
 
 #include <cassert>
@@ -78,10 +78,10 @@ ImGUIOverlay::ImGUIOverlay(const wrapper::Device &device, const wrapper::Swapcha
 
     // Create an instance of the resource descriptor builder.
     // This allows us to make resource descriptors with the help of a builder pattern.
-    wrapper::DescriptorBuilder descriptor_builder(m_device);
+    wrapper::descriptors::DescriptorBuilder descriptor_builder(m_device);
 
     // Make use of the builder to create a resource descriptor for the combined image sampler.
-    m_descriptor = std::make_unique<wrapper::ResourceDescriptor>(
+    m_descriptor = std::make_unique<wrapper::descriptors::ResourceDescriptor>(
         descriptor_builder.add_combined_image_sampler(m_imgui_texture->sampler(), m_imgui_texture->image_view(), 0)
             .build("ImGUI"));
 

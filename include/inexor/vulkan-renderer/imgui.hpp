@@ -1,7 +1,7 @@
 ﻿#pragma once
 
 #include "inexor/vulkan-renderer/render_graph.hpp"
-#include "inexor/vulkan-renderer/wrapper/descriptor.hpp"
+#include "inexor/vulkan-renderer/wrapper/descriptors/descriptor.hpp"
 #include "inexor/vulkan-renderer/wrapper/gpu_texture.hpp"
 #include "inexor/vulkan-renderer/wrapper/shader.hpp"
 
@@ -32,7 +32,7 @@ class ImGUIOverlay {
     std::unique_ptr<wrapper::GpuTexture> m_imgui_texture;
     std::unique_ptr<wrapper::Shader> m_vertex_shader;
     std::unique_ptr<wrapper::Shader> m_fragment_shader;
-    std::unique_ptr<wrapper::ResourceDescriptor> m_descriptor;
+    std::unique_ptr<wrapper::descriptors::ResourceDescriptor> m_descriptor;
     std::vector<std::uint32_t> m_index_data;
     std::vector<ImDrawVert> m_vertex_data;
 
