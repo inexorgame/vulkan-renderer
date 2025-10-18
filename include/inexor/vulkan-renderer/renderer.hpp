@@ -1,6 +1,6 @@
 ﻿#pragma once
 
-#include "inexor/vulkan-renderer/camera.hpp"
+#include "inexor/vulkan-renderer/tools/camera.hpp"
 #include "inexor/vulkan-renderer/fps_counter.hpp"
 #include "inexor/vulkan-renderer/imgui.hpp"
 #include "inexor/vulkan-renderer/octree_gpu_vertex.hpp"

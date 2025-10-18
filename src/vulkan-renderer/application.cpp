@@ -1,6 +1,6 @@
 #include "inexor/vulkan-renderer/application.hpp"
 
-#include "inexor/vulkan-renderer/camera.hpp"
+#include "inexor/vulkan-renderer/tools/camera.hpp"
 #include "inexor/vulkan-renderer/exception.hpp"
 #include "inexor/vulkan-renderer/meta.hpp"
 #include "inexor/vulkan-renderer/octree_gpu_vertex.hpp"
