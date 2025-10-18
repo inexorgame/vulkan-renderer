@@ -1,11 +1,11 @@
 #include <benchmark/benchmark.h>
 
-#include "inexor/vulkan-renderer/meta.hpp"
+#include "inexor/vulkan-renderer/meta/meta.hpp"
 
 #include <iostream>
 
 int main(int argc, char **argv) {
-    using namespace inexor::vulkan_renderer;
+    using namespace inexor::vulkan_renderer::meta;
 
     // Print engine and application metadata.
     std::cout << ENGINE_NAME << ", version " << ENGINE_VERSION_STR << std::endl;

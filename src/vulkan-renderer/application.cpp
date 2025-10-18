@@ -1,7 +1,7 @@
 #include "inexor/vulkan-renderer/application.hpp"
 
 #include "inexor/vulkan-renderer/exception.hpp"
-#include "inexor/vulkan-renderer/meta.hpp"
+#include "inexor/vulkan-renderer/meta/meta.hpp"
 #include "inexor/vulkan-renderer/octree_gpu_vertex.hpp"
 #include "inexor/vulkan-renderer/standard_ubo.hpp"
 #include "inexor/vulkan-renderer/tools/camera.hpp"
@@ -286,7 +286,7 @@ void Application::initialize_spdlog() {
     auto console_sink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
 
     // A copy of the console output will automatically be saved to a logfile
-    auto file_sink = std::make_shared<spdlog::sinks::basic_file_sink_mt>(std::string(APP_NAME) + ".log", true);
+    auto file_sink = std::make_shared<spdlog::sinks::basic_file_sink_mt>(std::string(meta::APP_NAME) + ".log", true);
     auto logger = std::make_shared<spdlog::async_logger>("main", spdlog::sinks_init_list{console_sink, file_sink},
                                                          spdlog::thread_pool(), spdlog::async_overflow_policy::block);
 
@@ -302,6 +302,8 @@ void Application::initialize_spdlog() {
 
 Application::Application(int argc, char **argv) {
     initialize_spdlog();
+
+    using namespace vulkan_renderer::meta;
 
     spdlog::trace("Application version: {}.{}.{}", APP_VERSION[0], APP_VERSION[1], APP_VERSION[2]);
     spdlog::trace("Engine version: {}.{}.{}", ENGINE_VERSION[0], ENGINE_VERSION[1], ENGINE_VERSION[2]);
@@ -492,7 +494,8 @@ void Application::update_imgui_overlay() {
     ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0);
     ImGui::SetNextWindowPos(ImVec2(10, 10));
     ImGui::SetNextWindowSize(ImVec2(330, 0));
-    ImGui::Begin("Inexor Vulkan-renderer", nullptr,
+    using namespace vulkan_renderer::meta;
+    ImGui::Begin(APP_NAME, nullptr,
                  ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
     ImGui::Text("%s", m_device->gpu_name().c_str());
     ImGui::Text("Engine version %d.%d.%d (Git sha %s)", ENGINE_VERSION[0], ENGINE_VERSION[1], ENGINE_VERSION[2],
