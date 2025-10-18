@@ -1,10 +1,10 @@
 #include "inexor/vulkan-renderer/application.hpp"
 
-#include "inexor/vulkan-renderer/camera.hpp"
 #include "inexor/vulkan-renderer/exception.hpp"
 #include "inexor/vulkan-renderer/meta.hpp"
 #include "inexor/vulkan-renderer/octree_gpu_vertex.hpp"
 #include "inexor/vulkan-renderer/standard_ubo.hpp"
+#include "inexor/vulkan-renderer/tools/camera.hpp"
 #include "inexor/vulkan-renderer/tools/cla_parser.hpp"
 #include "inexor/vulkan-renderer/tools/enumerate.hpp"
 #include "inexor/vulkan-renderer/world/collision.hpp"
@@ -525,6 +525,8 @@ void Application::process_input() {
     const auto cursor_pos_delta = m_input->kbm_data().calculate_cursor_position_delta();
 
     auto deadzone_lambda = [](const float state) { return (glm::abs(state) < 0.2f) ? 0.0f : state; };
+
+    using namespace tools;
 
     if (m_camera->type() == CameraType::LOOK_AT &&
         m_input->kbm_data().is_mouse_button_pressed(GLFW_MOUSE_BUTTON_LEFT)) {

@@ -7,7 +7,7 @@
 #include <array>
 #include <vector>
 
-namespace inexor::vulkan_renderer {
+namespace inexor::vulkan_renderer::tools {
 
 namespace directions {
 /// The default value of the camera's front vector.
@@ -225,4 +225,4 @@ public:
         return m_perspective_matrix;
     }
 };
-} // namespace inexor::vulkan_renderer
+} // namespace inexor::vulkan_renderer::tools

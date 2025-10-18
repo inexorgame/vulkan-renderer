@@ -1,6 +1,5 @@
 set(INEXOR_SOURCE_FILES
     vulkan-renderer/application.cpp
-    vulkan-renderer/camera.cpp
     vulkan-renderer/exception.cpp
     vulkan-renderer/fps_counter.cpp
     vulkan-renderer/imgui.cpp
@@ -15,6 +14,7 @@ set(INEXOR_SOURCE_FILES
     vulkan-renderer/io/byte_stream.cpp
     vulkan-renderer/io/nxoc_parser.cpp
 
+    vulkan-renderer/tools/camera.cpp
     vulkan-renderer/tools/cla_parser.cpp
     vulkan-renderer/tools/device_info.cpp
     vulkan-renderer/tools/enumerate.cpp

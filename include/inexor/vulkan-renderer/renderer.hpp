@@ -1,10 +1,10 @@
 ﻿#pragma once
 
-#include "inexor/vulkan-renderer/camera.hpp"
 #include "inexor/vulkan-renderer/fps_counter.hpp"
 #include "inexor/vulkan-renderer/imgui.hpp"
 #include "inexor/vulkan-renderer/octree_gpu_vertex.hpp"
 #include "inexor/vulkan-renderer/time_step.hpp"
+#include "inexor/vulkan-renderer/tools/camera.hpp"
 #include "inexor/vulkan-renderer/wrapper/instance.hpp"
 #include "inexor/vulkan-renderer/wrapper/uniform_buffer.hpp"
 #include "inexor/vulkan-renderer/wrapper/window/surface.hpp"
@@ -35,7 +35,7 @@ protected:
 
     bool m_vsync_enabled{false};
 
-    std::unique_ptr<Camera> m_camera;
+    std::unique_ptr<tools::Camera> m_camera;
 
     std::unique_ptr<Window> m_window;
     std::unique_ptr<wrapper::Instance> m_instance;
