@@ -145,3 +145,32 @@ target_link_libraries(inexor-vulkan-renderer
     volk::volk
     Vulkan::Headers
     VulkanMemoryAllocator)
+
+if(MSVC)
+    # Group dependencies in Visual Studio
+    set(THIRD_PARTY_TARGETS
+        glfw
+        fmt
+        glm
+        imgui
+        spdlog
+        volk
+        VulkanMemoryAllocator
+        tinygltf
+        toml11
+        # Also those extra ones
+        loader_example
+        uninstall
+        update_mappings
+        Continuous
+        Experimental
+        Nightly
+        NightlyMemoryCheck
+    )
+    # Move all dependencies into a subfolder
+    set_target_properties(${THIRD_PARTY_TARGETS}
+        PROPERTIES
+            EXCLUDE_FROM_ALL TRUE
+            FOLDER "Dependencies"
+    )
+endif()
