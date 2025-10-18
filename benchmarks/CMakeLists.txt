@@ -34,3 +34,22 @@ target_link_libraries(
     PUBLIC
     benchmark::benchmark
 )
+
+if(MSVC)
+    # Group dependencies in Visual Studio
+    set(THIRD_PARTY_TARGETS
+        benchmark
+        benchmark_main
+        # Note that benchmark requires gtest
+        gmock
+        gmock_main
+        gtest
+        gtest_main
+    )
+    # Move all dependencies into a subfolder
+    set_target_properties(${THIRD_PARTY_TARGETS}
+        PROPERTIES
+            EXCLUDE_FROM_ALL TRUE
+            FOLDER "Dependencies"
+    )
+endif()

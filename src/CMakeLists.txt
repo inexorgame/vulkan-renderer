@@ -1,6 +1,5 @@
 set(INEXOR_SOURCE_FILES
     vulkan-renderer/application.cpp
-    vulkan-renderer/camera.cpp
     vulkan-renderer/exception.cpp
     vulkan-renderer/fps_counter.cpp
     vulkan-renderer/imgui.cpp
@@ -15,6 +14,7 @@ set(INEXOR_SOURCE_FILES
     vulkan-renderer/io/byte_stream.cpp
     vulkan-renderer/io/nxoc_parser.cpp
 
+    vulkan-renderer/tools/camera.cpp
     vulkan-renderer/tools/cla_parser.cpp
     vulkan-renderer/tools/device_info.cpp
     vulkan-renderer/tools/enumerate.cpp
@@ -22,8 +22,6 @@ set(INEXOR_SOURCE_FILES
     vulkan-renderer/tools/representation.cpp
 
     vulkan-renderer/wrapper/cpu_texture.cpp
-    vulkan-renderer/wrapper/descriptor.cpp
-    vulkan-renderer/wrapper/descriptor_builder.cpp
     vulkan-renderer/wrapper/device.cpp
     vulkan-renderer/wrapper/framebuffer.cpp
     vulkan-renderer/wrapper/gpu_memory_buffer.cpp
@@ -37,6 +35,9 @@ set(INEXOR_SOURCE_FILES
 
     vulkan-renderer/wrapper/commands/command_buffer.cpp
     vulkan-renderer/wrapper/commands/command_pool.cpp
+
+    vulkan-renderer/wrapper/descriptors/descriptor.cpp
+    vulkan-renderer/wrapper/descriptors/descriptor_builder.cpp
 
     vulkan-renderer/wrapper/window/window.cpp
     vulkan-renderer/wrapper/window/surface.cpp
@@ -100,8 +101,8 @@ endif()
 
 # Replace variables in header file with CMake values
 configure_file(
-    ${PROJECT_SOURCE_DIR}/include/inexor/vulkan-renderer/meta.hpp.in
-    ${CMAKE_CURRENT_BINARY_DIR}/include/inexor/vulkan-renderer/meta.hpp
+    ${PROJECT_SOURCE_DIR}/include/inexor/vulkan-renderer/meta/meta.hpp.in
+    ${CMAKE_CURRENT_BINARY_DIR}/include/inexor/vulkan-renderer/meta/meta.hpp
 )
 
 target_include_directories(
@@ -144,3 +145,32 @@ target_link_libraries(inexor-vulkan-renderer
     volk::volk
     Vulkan::Headers
     VulkanMemoryAllocator)
+
+if(MSVC)
+    # Group dependencies in Visual Studio
+    set(THIRD_PARTY_TARGETS
+        glfw
+        fmt
+        glm
+        imgui
+        spdlog
+        volk
+        VulkanMemoryAllocator
+        tinygltf
+        toml11
+        # Also those extra ones
+        loader_example
+        uninstall
+        update_mappings
+        Continuous
+        Experimental
+        Nightly
+        NightlyMemoryCheck
+    )
+    # Move all dependencies into a subfolder
+    set_target_properties(${THIRD_PARTY_TARGETS}
+        PROPERTIES
+            EXCLUDE_FROM_ALL TRUE
+            FOLDER "Dependencies"
+    )
+endif()

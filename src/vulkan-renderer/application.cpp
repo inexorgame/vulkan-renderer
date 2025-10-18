@@ -1,15 +1,15 @@
 #include "inexor/vulkan-renderer/application.hpp"
 
-#include "inexor/vulkan-renderer/camera.hpp"
 #include "inexor/vulkan-renderer/exception.hpp"
-#include "inexor/vulkan-renderer/meta.hpp"
+#include "inexor/vulkan-renderer/meta/meta.hpp"
 #include "inexor/vulkan-renderer/octree_gpu_vertex.hpp"
 #include "inexor/vulkan-renderer/standard_ubo.hpp"
+#include "inexor/vulkan-renderer/tools/camera.hpp"
 #include "inexor/vulkan-renderer/tools/cla_parser.hpp"
 #include "inexor/vulkan-renderer/tools/enumerate.hpp"
 #include "inexor/vulkan-renderer/world/collision.hpp"
 #include "inexor/vulkan-renderer/wrapper/cpu_texture.hpp"
-#include "inexor/vulkan-renderer/wrapper/descriptor_builder.hpp"
+#include "inexor/vulkan-renderer/wrapper/descriptors/descriptor_builder.hpp"
 #include "inexor/vulkan-renderer/wrapper/instance.hpp"
 
 #include <GLFW/glfw3.h>
@@ -286,7 +286,7 @@ void Application::initialize_spdlog() {
     auto console_sink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
 
     // A copy of the console output will automatically be saved to a logfile
-    auto file_sink = std::make_shared<spdlog::sinks::basic_file_sink_mt>(std::string(APP_NAME) + ".log", true);
+    auto file_sink = std::make_shared<spdlog::sinks::basic_file_sink_mt>(std::string(meta::APP_NAME) + ".log", true);
     auto logger = std::make_shared<spdlog::async_logger>("main", spdlog::sinks_init_list{console_sink, file_sink},
                                                          spdlog::thread_pool(), spdlog::async_overflow_policy::block);
 
@@ -302,6 +302,8 @@ void Application::initialize_spdlog() {
 
 Application::Application(int argc, char **argv) {
     initialize_spdlog();
+
+    using namespace vulkan_renderer::meta;
 
     spdlog::trace("Application version: {}.{}.{}", APP_VERSION[0], APP_VERSION[1], APP_VERSION[2]);
     spdlog::trace("Engine version: {}.{}.{}", ENGINE_VERSION[0], ENGINE_VERSION[1], ENGINE_VERSION[2]);
@@ -451,7 +453,7 @@ Application::Application(int argc, char **argv) {
 
     // Create an instance of the resource descriptor builder.
     // This allows us to make resource descriptors with the help of a builder pattern.
-    wrapper::DescriptorBuilder descriptor_builder(*m_device);
+    wrapper::descriptors::DescriptorBuilder descriptor_builder(*m_device);
 
     // Make use of the builder to create a resource descriptor for the uniform buffer.
     m_descriptors.emplace_back(
@@ -492,7 +494,8 @@ void Application::update_imgui_overlay() {
     ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0);
     ImGui::SetNextWindowPos(ImVec2(10, 10));
     ImGui::SetNextWindowSize(ImVec2(330, 0));
-    ImGui::Begin("Inexor Vulkan-renderer", nullptr,
+    using namespace vulkan_renderer::meta;
+    ImGui::Begin(APP_NAME, nullptr,
                  ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
     ImGui::Text("%s", m_device->gpu_name().c_str());
     ImGui::Text("Engine version %d.%d.%d (Git sha %s)", ENGINE_VERSION[0], ENGINE_VERSION[1], ENGINE_VERSION[2],
@@ -525,6 +528,8 @@ void Application::process_input() {
     const auto cursor_pos_delta = m_input->kbm_data().calculate_cursor_position_delta();
 
     auto deadzone_lambda = [](const float state) { return (glm::abs(state) < 0.2f) ? 0.0f : state; };
+
+    using namespace tools;
 
     if (m_camera->type() == CameraType::LOOK_AT &&
         m_input->kbm_data().is_mouse_button_pressed(GLFW_MOUSE_BUTTON_LEFT)) {

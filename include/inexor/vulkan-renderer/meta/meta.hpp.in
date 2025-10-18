@@ -2,7 +2,7 @@
 
 #include <array>
 
-namespace inexor::vulkan_renderer {
+namespace inexor::vulkan_renderer::meta {
 
 /// The following data will be replaced by CMake setup.
 constexpr const char *APP_NAME{"${INEXOR_APP_NAME}"};

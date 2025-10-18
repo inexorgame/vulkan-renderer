@@ -1,6 +1,6 @@
-#include "inexor/vulkan-renderer/camera.hpp"
+#include "inexor/vulkan-renderer/tools/camera.hpp"
 
-namespace inexor::vulkan_renderer {
+namespace inexor::vulkan_renderer::tools {
 
 Camera::Camera(const glm::vec3 &position, const float yaw, const float pitch, const float window_width,
                const float window_height)
@@ -144,4 +144,4 @@ void Camera::update(const float delta_time) {
     }
 }
 
-} // namespace inexor::vulkan_renderer
+} // namespace inexor::vulkan_renderer::tools
