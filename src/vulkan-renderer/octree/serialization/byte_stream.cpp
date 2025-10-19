@@ -1,9 +1,10 @@
-#include "inexor/vulkan-renderer/io/byte_stream.hpp"
+#include "inexor/vulkan-renderer/octree/serialization/byte_stream.hpp"
+
 #include "inexor/vulkan-renderer/octree/cube.hpp"
 
 #include <fstream>
 
-namespace inexor::vulkan_renderer::io {
+namespace inexor::vulkan_renderer::serialization {
 std::vector<std::uint8_t> ByteStream::read_file(const std::filesystem::path &path) {
     std::ifstream stream(path, std::ios::in | std::ios::binary);
     return {std::istreambuf_iterator<char>(stream), std::istreambuf_iterator<char>()};
@@ -109,4 +110,4 @@ void ByteStreamWriter::write(const std::array<octree::Indentation, 12> &value) {
         write<std::uint8_t>((iter->uid() << 6u) | ((++iter)->uid()));
     }
 }
-} // namespace inexor::vulkan_renderer::io
+} // namespace inexor::vulkan_renderer::serialization

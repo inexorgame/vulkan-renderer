@@ -1,13 +1,13 @@
-#include "inexor/vulkan-renderer/io/nxoc_parser.hpp"
+#include "inexor/vulkan-renderer/octree/serialization/nxoc_parser.hpp"
 
-#include "inexor/vulkan-renderer/io/byte_stream.hpp"
 #include "inexor/vulkan-renderer/octree/cube.hpp"
+#include "inexor/vulkan-renderer/octree/serialization/byte_stream.hpp"
 
 #include <fstream>
 #include <functional>
 #include <utility>
 
-namespace inexor::vulkan_renderer::io {
+namespace inexor::vulkan_renderer::serialization {
 template <>
 ByteStream NXOCParser::serialize_impl<0>(const std::shared_ptr<const octree::Cube> cube) { // NOLINT
     ByteStreamWriter writer;
@@ -86,4 +86,4 @@ std::shared_ptr<octree::Cube> NXOCParser::deserialize(const ByteStream &stream) 
         throw std::runtime_error("Unsupported octree version");
     }
 }
-} // namespace inexor::vulkan_renderer::io
+} // namespace inexor::vulkan_renderer::serialization

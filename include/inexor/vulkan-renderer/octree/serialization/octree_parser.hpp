@@ -8,7 +8,7 @@ namespace inexor::vulkan_renderer::octree {
 class Cube;
 } // namespace inexor::vulkan_renderer::octree
 
-namespace inexor::vulkan_renderer::io {
+namespace inexor::vulkan_renderer::serialization {
 
 // Forward declaration
 class ByteStream;
@@ -21,4 +21,4 @@ public:
     [[nodiscard]] virtual std::shared_ptr<octree::Cube> deserialize(const ByteStream &stream) = 0;
 };
 
-} // namespace inexor::vulkan_renderer::io
+} // namespace inexor::vulkan_renderer::serialization

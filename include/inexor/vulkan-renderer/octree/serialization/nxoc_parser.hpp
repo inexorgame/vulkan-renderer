@@ -1,6 +1,6 @@
 #pragma once
 
-#include "inexor/vulkan-renderer/io/octree_parser.hpp"
+#include "inexor/vulkan-renderer/octree/serialization/octree_parser.hpp"
 
 #include <memory>
 
@@ -10,11 +10,11 @@ class Cube;
 } // namespace inexor::vulkan_renderer::octree
 
 // Forward declaration
-namespace inexor::vulkan_renderer::io {
+namespace inexor::vulkan_renderer::serialization {
 class ByteStream;
-} // namespace inexor::vulkan_renderer::io
+} // namespace inexor::vulkan_renderer::serialization
 
-namespace inexor::vulkan_renderer::io {
+namespace inexor::vulkan_renderer::serialization {
 
 class NXOCParser : public OctreeParser {
 private:
@@ -33,4 +33,4 @@ public:
     /// Deserialization of an octree.
     [[nodiscard]] std::shared_ptr<octree::Cube> deserialize(const ByteStream &stream) final;
 };
-} // namespace inexor::vulkan_renderer::io
+} // namespace inexor::vulkan_renderer::serialization

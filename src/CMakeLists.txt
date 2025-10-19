@@ -9,9 +9,6 @@ set(INEXOR_SOURCE_FILES
     vulkan-renderer/input/input.cpp
     vulkan-renderer/input/keyboard_mouse_data.cpp
 
-    vulkan-renderer/io/byte_stream.cpp
-    vulkan-renderer/io/nxoc_parser.cpp
-
     vulkan-renderer/tools/camera.cpp
     vulkan-renderer/tools/cla_parser.cpp
     vulkan-renderer/tools/device_info.cpp
@@ -48,7 +45,11 @@ set(INEXOR_SOURCE_FILES
     vulkan-renderer/octree/collision.cpp
     vulkan-renderer/octree/collision_query.cpp
     vulkan-renderer/octree/cube.cpp
-    vulkan-renderer/octree/indentation.cpp)
+    vulkan-renderer/octree/indentation.cpp
+
+    vulkan-renderer/octree/serialization/byte_stream.cpp
+    vulkan-renderer/octree/serialization/nxoc_parser.cpp
+)
 
 foreach(FILE ${INEXOR_SOURCE_FILES})
     get_filename_component(PARENT_DIR "${FILE}" PATH)
