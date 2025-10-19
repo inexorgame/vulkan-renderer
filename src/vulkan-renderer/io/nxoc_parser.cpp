@@ -1,7 +1,6 @@
 #include "inexor/vulkan-renderer/io/nxoc_parser.hpp"
 
 #include "inexor/vulkan-renderer/io/byte_stream.hpp"
-#include "inexor/vulkan-renderer/io/exception.hpp"
 #include "inexor/vulkan-renderer/octree/cube.hpp"
 
 #include <fstream>
@@ -70,21 +69,21 @@ ByteStream NXOCParser::serialize(const std::shared_ptr<const octree::Cube> cube,
     case 0:
         return serialize_impl<0>(cube);
     default:
-        throw IoException("Unsupported octree version");
+        throw std::runtime_error("Unsupported octree version");
     }
 }
 
 std::shared_ptr<octree::Cube> NXOCParser::deserialize(const ByteStream &stream) {
     ByteStreamReader reader(stream);
     if (reader.read<std::string>(13ull) != "Inexor Octree") {
-        throw IoException("Wrong identifier");
+        throw std::runtime_error("Wrong identifier");
     }
     const auto version = reader.read<std::uint32_t>();
     switch (version) { // NOLINT
     case 0:
         return deserialize_impl<0>(stream);
     default:
-        throw IoException("Unsupported octree version");
+        throw std::runtime_error("Unsupported octree version");
     }
 }
 } // namespace inexor::vulkan_renderer::io
