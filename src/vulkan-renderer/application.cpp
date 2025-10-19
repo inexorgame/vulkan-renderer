@@ -1,6 +1,5 @@
 #include "inexor/vulkan-renderer/application.hpp"
 
-#include "inexor/vulkan-renderer/exception.hpp"
 #include "inexor/vulkan-renderer/meta/meta.hpp"
 #include "inexor/vulkan-renderer/octree/collision.hpp"
 #include "inexor/vulkan-renderer/octree_gpu_vertex.hpp"
@@ -8,6 +7,7 @@
 #include "inexor/vulkan-renderer/tools/camera.hpp"
 #include "inexor/vulkan-renderer/tools/cla_parser.hpp"
 #include "inexor/vulkan-renderer/tools/enumerate.hpp"
+#include "inexor/vulkan-renderer/tools/exception.hpp"
 #include "inexor/vulkan-renderer/wrapper/cpu_texture.hpp"
 #include "inexor/vulkan-renderer/wrapper/descriptors/descriptor_builder.hpp"
 #include "inexor/vulkan-renderer/wrapper/instance.hpp"
@@ -24,6 +24,8 @@
 #include <toml.hpp>
 
 namespace inexor::vulkan_renderer {
+
+using tools::VulkanException;
 
 void Application::load_toml_configuration_file(const std::string &file_name) {
     spdlog::trace("Loading TOML configuration file: {}", file_name);

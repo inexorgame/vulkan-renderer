@@ -1,7 +1,7 @@
 #include "inexor/vulkan-renderer/wrapper/swapchain.hpp"
 
-#include "inexor/vulkan-renderer/exception.hpp"
 #include "inexor/vulkan-renderer/tools/enumerate.hpp"
+#include "inexor/vulkan-renderer/tools/exception.hpp"
 #include "inexor/vulkan-renderer/tools/representation.hpp"
 #include "inexor/vulkan-renderer/wrapper/device.hpp"
 #include "inexor/vulkan-renderer/wrapper/make_info.hpp"
@@ -16,6 +16,8 @@
 #include <utility>
 
 namespace inexor::vulkan_renderer::wrapper {
+
+using tools::VulkanException;
 
 Swapchain::Swapchain(Device &device, const VkSurfaceKHR surface, const std::uint32_t width, const std::uint32_t height,
                      const bool vsync_enabled)

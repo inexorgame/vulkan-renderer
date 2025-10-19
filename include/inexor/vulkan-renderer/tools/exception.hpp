@@ -5,7 +5,7 @@
 #include <stdexcept>
 #include <string>
 
-namespace inexor::vulkan_renderer {
+namespace inexor::vulkan_renderer::tools {
 
 /// @brief A custom base class for exceptions
 class InexorException : public std::runtime_error {
@@ -22,4 +22,4 @@ public:
     VulkanException(std::string message, VkResult result);
 };
 
-} // namespace inexor::vulkan_renderer
+} // namespace inexor::vulkan_renderer::tools

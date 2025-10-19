@@ -1,6 +1,6 @@
 #include "inexor/vulkan-renderer/wrapper/instance.hpp"
 
-#include "inexor/vulkan-renderer/exception.hpp"
+#include "inexor/vulkan-renderer/tools/exception.hpp"
 #include "inexor/vulkan-renderer/tools/representation.hpp"
 #include "inexor/vulkan-renderer/wrapper/make_info.hpp"
 
@@ -11,6 +11,8 @@
 #include <cassert>
 
 namespace inexor::vulkan_renderer::wrapper {
+
+using tools::VulkanException;
 
 bool Instance::is_layer_supported(const std::string &layer_name) {
     std::uint32_t instance_layer_count = 0;

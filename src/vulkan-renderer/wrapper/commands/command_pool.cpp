@@ -1,6 +1,6 @@
 #include "inexor/vulkan-renderer/wrapper/commands/command_pool.hpp"
 
-#include "inexor/vulkan-renderer/exception.hpp"
+#include "inexor/vulkan-renderer/tools/exception.hpp"
 #include "inexor/vulkan-renderer/wrapper/device.hpp"
 #include "inexor/vulkan-renderer/wrapper/make_info.hpp"
 
@@ -9,6 +9,8 @@
 #include <thread>
 
 namespace inexor::vulkan_renderer::wrapper::commands {
+
+using tools::VulkanException;
 
 CommandPool::CommandPool(const Device &device, std::string name) : m_device(device), m_name(std::move(name)) {
     const auto cmd_pool_ci = make_info<VkCommandPoolCreateInfo>({

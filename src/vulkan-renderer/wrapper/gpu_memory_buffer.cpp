@@ -1,6 +1,6 @@
 #include "inexor/vulkan-renderer/wrapper/gpu_memory_buffer.hpp"
 
-#include "inexor/vulkan-renderer/exception.hpp"
+#include "inexor/vulkan-renderer/tools/exception.hpp"
 #include "inexor/vulkan-renderer/wrapper/device.hpp"
 #include "inexor/vulkan-renderer/wrapper/make_info.hpp"
 
@@ -10,6 +10,8 @@
 #include <utility>
 
 namespace inexor::vulkan_renderer::wrapper {
+
+using tools::VulkanException;
 
 GPUMemoryBuffer::GPUMemoryBuffer(const Device &device, const std::string &name, const VkDeviceSize &size,
                                  const VkBufferUsageFlags &buffer_usage, const VmaMemoryUsage &memory_usage)

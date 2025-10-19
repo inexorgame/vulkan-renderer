@@ -1,6 +1,6 @@
 #include "inexor/vulkan-renderer/wrapper/descriptors/descriptor.hpp"
 
-#include "inexor/vulkan-renderer/exception.hpp"
+#include "inexor/vulkan-renderer/tools/exception.hpp"
 #include "inexor/vulkan-renderer/wrapper/device.hpp"
 #include "inexor/vulkan-renderer/wrapper/make_info.hpp"
 
@@ -8,6 +8,8 @@
 #include <utility>
 
 namespace inexor::vulkan_renderer::wrapper::descriptors {
+
+using tools::VulkanException;
 
 ResourceDescriptor::ResourceDescriptor(ResourceDescriptor &&other) noexcept : m_device(other.m_device) {
     m_name = std::move(other.m_name);

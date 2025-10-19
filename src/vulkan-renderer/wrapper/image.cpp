@@ -1,6 +1,6 @@
 #include "inexor/vulkan-renderer/wrapper/image.hpp"
 
-#include "inexor/vulkan-renderer/exception.hpp"
+#include "inexor/vulkan-renderer/tools/exception.hpp"
 #include "inexor/vulkan-renderer/wrapper/device.hpp"
 #include "inexor/vulkan-renderer/wrapper/make_info.hpp"
 
@@ -8,6 +8,8 @@
 #include <utility>
 
 namespace inexor::vulkan_renderer::wrapper {
+
+using tools::VulkanException;
 
 Image::Image(const Device &device, const VkFormat format, const VkImageUsageFlags image_usage,
              const VkImageAspectFlags aspect_flags, const VkSampleCountFlagBits sample_count, const std::string &name,

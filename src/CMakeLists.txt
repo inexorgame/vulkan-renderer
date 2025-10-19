@@ -1,6 +1,5 @@
 set(INEXOR_SOURCE_FILES
     vulkan-renderer/application.cpp
-    vulkan-renderer/exception.cpp
     vulkan-renderer/imgui.cpp
     vulkan-renderer/render_graph.cpp
     vulkan-renderer/renderer.cpp
@@ -13,6 +12,7 @@ set(INEXOR_SOURCE_FILES
     vulkan-renderer/tools/cla_parser.cpp
     vulkan-renderer/tools/device_info.cpp
     vulkan-renderer/tools/enumerate.cpp
+    vulkan-renderer/tools/exception.cpp
     vulkan-renderer/tools/file.cpp
     vulkan-renderer/tools/fps_counter.cpp
     vulkan-renderer/tools/representation.cpp
