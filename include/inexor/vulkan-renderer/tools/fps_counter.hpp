@@ -4,7 +4,7 @@
 #include <cstdint>
 #include <optional>
 
-namespace inexor::vulkan_renderer {
+namespace inexor::vulkan_renderer::tools {
 
 /// @brief A class for counting frames per seconds.
 class FPSCounter {
@@ -18,4 +18,4 @@ public:
     std::optional<std::uint32_t> update();
 };
 
-} // namespace inexor::vulkan_renderer
+} // namespace inexor::vulkan_renderer::tools
