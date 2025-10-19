@@ -1,6 +1,6 @@
 #pragma once
 
-#include "inexor/vulkan-renderer/world/indentation.hpp"
+#include "inexor/vulkan-renderer/octree/indentation.hpp"
 
 #include <glm/gtx/vector_angle.hpp>
 #include <glm/vec3.hpp>
@@ -12,9 +12,9 @@
 #include <vector>
 
 // Forward declaration
-namespace inexor::vulkan_renderer::world {
+namespace inexor::vulkan_renderer::octree {
 class Cube;
-} // namespace inexor::vulkan_renderer::world
+} // namespace inexor::vulkan_renderer::octree
 
 // Forward declarations
 namespace inexor::vulkan_renderer::io {
@@ -22,9 +22,9 @@ class ByteStream;
 class NXOCParser;
 } // namespace inexor::vulkan_renderer::io
 
-void swap(inexor::vulkan_renderer::world::Cube &lhs, inexor::vulkan_renderer::world::Cube &rhs) noexcept;
+void swap(inexor::vulkan_renderer::octree::Cube &lhs, inexor::vulkan_renderer::octree::Cube &rhs) noexcept;
 
-namespace inexor::vulkan_renderer::world {
+namespace inexor::vulkan_renderer::octree {
 
 /// std::vector<Polygon> can probably replaced with an array.
 using Polygon = std::array<glm::vec3, 3>;
@@ -188,7 +188,7 @@ public:
 /// @param max_depth The maximum of nested octants.
 /// @param position The position where the root cube is placed.
 /// @param seed The seed used for the random number generator.
-std::shared_ptr<world::Cube> create_random_world(std::uint32_t max_depth, const glm::vec3 &position,
-                                                 std::optional<std::uint32_t> seed = std::nullopt);
+std::shared_ptr<octree::Cube> create_random_world(std::uint32_t max_depth, const glm::vec3 &position,
+                                                  std::optional<std::uint32_t> seed = std::nullopt);
 
-} // namespace inexor::vulkan_renderer::world
+} // namespace inexor::vulkan_renderer::octree

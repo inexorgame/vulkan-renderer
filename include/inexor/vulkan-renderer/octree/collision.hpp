@@ -5,7 +5,7 @@
 #include <string>
 #include <tuple>
 
-namespace inexor::vulkan_renderer::world {
+namespace inexor::vulkan_renderer::octree {
 
 /// @brief A wrapper for collisions between a ray and octree geometry.
 /// This class is used for octree collision, but it can be used for every cube-like data structure
@@ -57,4 +57,4 @@ public:
     }
 };
 
-} // namespace inexor::vulkan_renderer::world
+} // namespace inexor::vulkan_renderer::octree

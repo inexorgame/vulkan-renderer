@@ -1,9 +1,9 @@
-#include "inexor/vulkan-renderer/world/cube.hpp"
-#include "inexor/vulkan-renderer/world/indentation.hpp"
+#include "inexor/vulkan-renderer/octree/cube.hpp"
+#include "inexor/vulkan-renderer/octree/indentation.hpp"
 
 #include <random>
 
-void swap(inexor::vulkan_renderer::world::Cube &lhs, inexor::vulkan_renderer::world::Cube &rhs) noexcept {
+void swap(inexor::vulkan_renderer::octree::Cube &lhs, inexor::vulkan_renderer::octree::Cube &rhs) noexcept {
     std::swap(lhs.m_type, rhs.m_type);
     std::swap(lhs.m_size, rhs.m_size);
     std::swap(lhs.m_position, rhs.m_position);
@@ -15,7 +15,7 @@ void swap(inexor::vulkan_renderer::world::Cube &lhs, inexor::vulkan_renderer::wo
     std::swap(lhs.m_polygon_cache_valid, rhs.m_polygon_cache_valid);
 }
 
-namespace inexor::vulkan_renderer::world {
+namespace inexor::vulkan_renderer::octree {
 void Cube::remove_children() {
     for (auto &child : m_children) {
         child->remove_children();
@@ -411,7 +411,7 @@ std::vector<PolygonCache> Cube::polygons(const bool update_invalid) const {
 
     // post-order traversal
     std::function<void(const Cube &)> collect = [&collect, &polygons, &update_invalid](const Cube &cube) {
-        if (cube.type() == world::Cube::Type::OCTANT) {
+        if (cube.type() == octree::Cube::Type::OCTANT) {
             for (const auto &child : cube.children()) {
                 collect(*child);
             }
@@ -532,4 +532,4 @@ std::shared_ptr<Cube> create_random_world(std::uint32_t max_depth, const glm::ve
     return cube;
 }
 
-} // namespace inexor::vulkan_renderer::world
+} // namespace inexor::vulkan_renderer::octree

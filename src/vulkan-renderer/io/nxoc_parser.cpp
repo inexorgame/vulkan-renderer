@@ -2,7 +2,7 @@
 
 #include "inexor/vulkan-renderer/io/byte_stream.hpp"
 #include "inexor/vulkan-renderer/io/exception.hpp"
-#include "inexor/vulkan-renderer/world/cube.hpp"
+#include "inexor/vulkan-renderer/octree/cube.hpp"
 
 #include <fstream>
 #include <functional>
@@ -10,22 +10,22 @@
 
 namespace inexor::vulkan_renderer::io {
 template <>
-ByteStream NXOCParser::serialize_impl<0>(const std::shared_ptr<const world::Cube> cube) { // NOLINT
+ByteStream NXOCParser::serialize_impl<0>(const std::shared_ptr<const octree::Cube> cube) { // NOLINT
     ByteStreamWriter writer;
     writer.write<std::string>("Inexor Octree");
     writer.write<std::uint32_t>(0);
 
-    std::function<void(const std::shared_ptr<const world::Cube> &)> iter_func;
+    std::function<void(const std::shared_ptr<const octree::Cube> &)> iter_func;
     // pre-order traversal
-    iter_func = [&iter_func, &writer](const std::shared_ptr<const world::Cube> &cube) {
+    iter_func = [&iter_func, &writer](const std::shared_ptr<const octree::Cube> &cube) {
         writer.write(cube->type());
-        if (cube->type() == world::Cube::Type::OCTANT) {
+        if (cube->type() == octree::Cube::Type::OCTANT) {
             for (const auto &child : cube->children()) {
                 iter_func(child);
             }
             return;
         }
-        if (cube->type() == world::Cube::Type::NORMAL) {
+        if (cube->type() == octree::Cube::Type::NORMAL) {
             writer.write(cube->indentations());
         }
     };
@@ -35,34 +35,34 @@ ByteStream NXOCParser::serialize_impl<0>(const std::shared_ptr<const world::Cube
 }
 
 template <>
-std::shared_ptr<world::Cube> NXOCParser::deserialize_impl<0>(const ByteStream &stream) {
+std::shared_ptr<octree::Cube> NXOCParser::deserialize_impl<0>(const ByteStream &stream) {
     ByteStreamReader reader(stream);
-    std::shared_ptr<world::Cube> root = std::make_shared<world::Cube>();
+    std::shared_ptr<octree::Cube> root = std::make_shared<octree::Cube>();
 
     // Skip identifier, which is already checked.
     reader.skip(13);
     // Skip version.
     reader.skip(4);
 
-    std::function<void(std::shared_ptr<world::Cube> &)> iter_func;
+    std::function<void(std::shared_ptr<octree::Cube> &)> iter_func;
     // pre-order traversal
-    iter_func = [&iter_func, &reader](std::shared_ptr<world::Cube> &cube) {
-        cube->set_type(reader.read<world::Cube::Type>());
-        if (cube->type() == world::Cube::Type::OCTANT) {
+    iter_func = [&iter_func, &reader](std::shared_ptr<octree::Cube> &cube) {
+        cube->set_type(reader.read<octree::Cube::Type>());
+        if (cube->type() == octree::Cube::Type::OCTANT) {
             for (auto child : cube->children()) {
                 iter_func(child);
             }
             return;
         }
-        if (cube->type() == world::Cube::Type::NORMAL) {
-            cube->m_indentations = reader.read<std::array<world::Indentation, world::Cube::EDGES>>();
+        if (cube->type() == octree::Cube::Type::NORMAL) {
+            cube->m_indentations = reader.read<std::array<octree::Indentation, octree::Cube::EDGES>>();
         }
     };
     iter_func(root);
     return root;
 }
 
-ByteStream NXOCParser::serialize(const std::shared_ptr<const world::Cube> cube, const std::uint32_t version) {
+ByteStream NXOCParser::serialize(const std::shared_ptr<const octree::Cube> cube, const std::uint32_t version) {
     if (cube == nullptr) {
         throw std::invalid_argument("cube cannot be a nullptr");
     }
@@ -74,7 +74,7 @@ ByteStream NXOCParser::serialize(const std::shared_ptr<const world::Cube> cube, 
     }
 }
 
-std::shared_ptr<world::Cube> NXOCParser::deserialize(const ByteStream &stream) {
+std::shared_ptr<octree::Cube> NXOCParser::deserialize(const ByteStream &stream) {
     ByteStreamReader reader(stream);
     if (reader.read<std::string>(13ull) != "Inexor Octree") {
         throw IoException("Wrong identifier");

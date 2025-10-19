@@ -1,10 +1,10 @@
-#include "inexor/vulkan-renderer/world/collision_query.hpp"
+#include "inexor/vulkan-renderer/octree/collision_query.hpp"
 
-#include "inexor/vulkan-renderer/world/cube.hpp"
+#include "inexor/vulkan-renderer/octree/cube.hpp"
 
 #include <glm/gtx/intersect.hpp>
 
-namespace inexor::vulkan_renderer::world {
+namespace inexor::vulkan_renderer::octree {
 
 bool ray_box_collision(const std::array<glm::vec3, 2> &box_bounds, const glm::vec3 &position,
                        const glm::vec3 &direction) {
@@ -128,4 +128,4 @@ std::optional<RayCubeCollision<Cube>> ray_cube_collision_check(const Cube &cube,
     return std::nullopt;
 }
 
-} // namespace inexor::vulkan_renderer::world
+} // namespace inexor::vulkan_renderer::octree

@@ -1,5 +1,5 @@
 #include "inexor/vulkan-renderer/io/byte_stream.hpp"
-#include "inexor/vulkan-renderer/world/cube.hpp"
+#include "inexor/vulkan-renderer/octree/cube.hpp"
 
 #include <fstream>
 
@@ -59,21 +59,21 @@ std::string ByteStreamReader::read(const std::size_t &size) {
 }
 
 template <>
-world::Cube::Type ByteStreamReader::read() {
-    return static_cast<world::Cube::Type>(read<std::uint8_t>());
+octree::Cube::Type ByteStreamReader::read() {
+    return static_cast<octree::Cube::Type>(read<std::uint8_t>());
 }
 
 template <>
-std::array<world::Indentation, 12> ByteStreamReader::read() {
+std::array<octree::Indentation, 12> ByteStreamReader::read() {
     check_end(9);
-    std::array<world::Indentation, 12> indentations;
+    std::array<octree::Indentation, 12> indentations;
     auto writer = indentations.begin(); // NOLINT
     const auto end = m_iter + 9;
     while (m_iter != end) {
-        *writer++ = world::Indentation(*m_iter >> 2u);
-        *writer++ = world::Indentation(((*m_iter & 0b00000011u) << 4u) | (*(++m_iter) >> 4u));
-        *writer++ = world::Indentation(((*m_iter & 0b00001111u) << 2u) | (*(++m_iter) >> 6u));
-        *writer++ = world::Indentation(*m_iter++ & 0b00111111u);
+        *writer++ = octree::Indentation(*m_iter >> 2u);
+        *writer++ = octree::Indentation(((*m_iter & 0b00000011u) << 4u) | (*(++m_iter) >> 4u));
+        *writer++ = octree::Indentation(((*m_iter & 0b00001111u) << 2u) | (*(++m_iter) >> 6u));
+        *writer++ = octree::Indentation(*m_iter++ & 0b00111111u);
     }
     return indentations;
 }
@@ -97,12 +97,12 @@ void ByteStreamWriter::write(const std::string &value) {
 }
 
 template <>
-void ByteStreamWriter::write(const world::Cube::Type &value) {
+void ByteStreamWriter::write(const octree::Cube::Type &value) {
     write(static_cast<std::uint8_t>(value));
 }
 
 template <>
-void ByteStreamWriter::write(const std::array<world::Indentation, 12> &value) {
+void ByteStreamWriter::write(const std::array<octree::Indentation, 12> &value) {
     for (auto iter = value.begin(); iter != value.end(); iter++) { // NOLINT
         write<std::uint8_t>((iter->uid() << 2u) | ((++iter)->uid() >> 4));
         write<std::uint8_t>((iter->uid() << 4u) | ((++iter)->uid() >> 2));

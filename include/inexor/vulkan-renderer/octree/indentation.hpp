@@ -2,7 +2,7 @@
 
 #include <cstdint>
 
-namespace inexor::vulkan_renderer::world {
+namespace inexor::vulkan_renderer::octree {
 
 class Indentation {
 public:
@@ -45,4 +45,4 @@ public:
     [[nodiscard]] std::uint8_t uid() const;
 };
 
-} // namespace inexor::vulkan_renderer::world
+} // namespace inexor::vulkan_renderer::octree

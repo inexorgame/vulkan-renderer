@@ -1,6 +1,6 @@
-#include <inexor/vulkan-renderer/world/collision.hpp>
+#include <inexor/vulkan-renderer/octree/collision.hpp>
 
-#include <inexor/vulkan-renderer/world/cube.hpp>
+#include <inexor/vulkan-renderer/octree/cube.hpp>
 
 #include <glm/geometric.hpp>
 #include <glm/gtx/vector_angle.hpp>
@@ -10,7 +10,7 @@
 #include <memory>
 #include <utility>
 
-namespace inexor::vulkan_renderer::world {
+namespace inexor::vulkan_renderer::octree {
 
 template <typename T>
 RayCubeCollision<T>::RayCubeCollision(RayCubeCollision &&other) noexcept : m_cube{other.m_cube} {
@@ -180,4 +180,4 @@ RayCubeCollision<T>::RayCubeCollision(const T &cube, const glm::vec3 ray_pos, co
 // Explicit instantiation
 template RayCubeCollision<Cube>::RayCubeCollision(const Cube &, const glm::vec3, const glm::vec3);
 
-} // namespace inexor::vulkan_renderer::world
+} // namespace inexor::vulkan_renderer::octree

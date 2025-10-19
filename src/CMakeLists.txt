@@ -45,10 +45,10 @@ set(INEXOR_SOURCE_FILES
     vulkan-renderer/wrapper/synchronization/fence.cpp
     vulkan-renderer/wrapper/synchronization/semaphore.cpp
 
-    vulkan-renderer/world/collision.cpp
-    vulkan-renderer/world/collision_query.cpp
-    vulkan-renderer/world/cube.cpp
-    vulkan-renderer/world/indentation.cpp)
+    vulkan-renderer/octree/collision.cpp
+    vulkan-renderer/octree/collision_query.cpp
+    vulkan-renderer/octree/cube.cpp
+    vulkan-renderer/octree/indentation.cpp)
 
 foreach(FILE ${INEXOR_SOURCE_FILES})
     get_filename_component(PARENT_DIR "${FILE}" PATH)

@@ -1,17 +1,17 @@
 #pragma once
 
-#include "inexor/vulkan-renderer/world/collision.hpp"
+#include "inexor/vulkan-renderer/octree/collision.hpp"
 
 #include <glm/vec3.hpp>
 
 #include <optional>
 
 // Forward declaration
-namespace inexor::vulkan_renderer::world {
+namespace inexor::vulkan_renderer::octree {
 class Cube;
-} // namespace inexor::vulkan_renderer::world
+} // namespace inexor::vulkan_renderer::octree
 
-namespace inexor::vulkan_renderer::world {
+namespace inexor::vulkan_renderer::octree {
 
 // TODO: Implement PointCubeCollision
 
@@ -36,4 +36,4 @@ namespace inexor::vulkan_renderer::world {
 ray_cube_collision_check(const Cube &cube, glm::vec3 pos, glm::vec3 dir,
                          std::optional<std::uint32_t> max_depth = std::nullopt);
 
-} // namespace inexor::vulkan_renderer::world
+} // namespace inexor::vulkan_renderer::octree
