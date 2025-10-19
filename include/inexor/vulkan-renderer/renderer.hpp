@@ -1,10 +1,10 @@
 ﻿#pragma once
 
-#include "inexor/vulkan-renderer/tools/fps_counter.hpp"
 #include "inexor/vulkan-renderer/imgui.hpp"
 #include "inexor/vulkan-renderer/octree_gpu_vertex.hpp"
-#include "inexor/vulkan-renderer/time_step.hpp"
 #include "inexor/vulkan-renderer/tools/camera.hpp"
+#include "inexor/vulkan-renderer/tools/fps_counter.hpp"
+#include "inexor/vulkan-renderer/tools/time_step.hpp"
 #include "inexor/vulkan-renderer/wrapper/instance.hpp"
 #include "inexor/vulkan-renderer/wrapper/uniform_buffer.hpp"
 #include "inexor/vulkan-renderer/wrapper/window/surface.hpp"
@@ -23,7 +23,7 @@ protected:
 
     bool m_debug_report_callback_initialised{false};
 
-    TimeStep m_time_step;
+    tools::TimeStep m_time_step;
 
     std::uint32_t m_window_width{0};
     std::uint32_t m_window_height{0};
@@ -78,7 +78,7 @@ public:
     float m_time_passed{0.0f};
 
     ///
-    TimeStep m_stopwatch;
+    tools::TimeStep m_stopwatch;
 };
 
 } // namespace inexor::vulkan_renderer

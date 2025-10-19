@@ -4,7 +4,6 @@ set(INEXOR_SOURCE_FILES
     vulkan-renderer/imgui.cpp
     vulkan-renderer/render_graph.cpp
     vulkan-renderer/renderer.cpp
-    vulkan-renderer/time_step.cpp
 
     vulkan-renderer/input/gamepad_data.cpp
     vulkan-renderer/input/input.cpp
@@ -20,6 +19,7 @@ set(INEXOR_SOURCE_FILES
     vulkan-renderer/tools/file.cpp
     vulkan-renderer/tools/fps_counter.cpp
     vulkan-renderer/tools/representation.cpp
+    vulkan-renderer/tools/time_step.cpp
 
     vulkan-renderer/wrapper/cpu_texture.cpp
     vulkan-renderer/wrapper/device.cpp

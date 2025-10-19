@@ -2,7 +2,7 @@
 
 #include <chrono>
 
-namespace inexor::vulkan_renderer {
+namespace inexor::vulkan_renderer::tools {
 
 /// @brief Responsible for calculating the amount of time which has passed between rendering two frames.
 /// Since every machine has slightly different speed, it is necessary to the timestep when animating something.
@@ -26,4 +26,4 @@ public:
     [[nodiscard]] float time_step_since_initialisation();
 };
 
-} // namespace inexor::vulkan_renderer
+} // namespace inexor::vulkan_renderer::tools
