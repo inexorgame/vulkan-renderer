@@ -180,12 +180,7 @@ protected:
     explicit RenderStage(std::string name) : m_name(std::move(name)) {}
 
 public:
-    RenderStage(const RenderStage &) = delete;
-    RenderStage(RenderStage &&) = delete;
     ~RenderStage() override = default;
-
-    RenderStage &operator=(const RenderStage &) = delete;
-    RenderStage &operator=(RenderStage &&) = delete;
 
     /// @brief Specifies that this stage writes to `resource`.
     void writes_to(const RenderResource *resource);
@@ -232,12 +227,7 @@ private:
 
 public:
     explicit GraphicsStage(std::string &&name) : RenderStage(name) {}
-    GraphicsStage(const GraphicsStage &) = delete;
-    GraphicsStage(GraphicsStage &&) = delete;
     ~GraphicsStage() override = default;
-
-    GraphicsStage &operator=(const GraphicsStage &) = delete;
-    GraphicsStage &operator=(GraphicsStage &&) = delete;
 
     /// @brief Specifies that this stage should clear the screen before rendering.
     void set_clears_screen(bool clears_screen) {
@@ -277,12 +267,7 @@ protected:
     explicit PhysicalResource(const wrapper::Device &device) : m_device(device) {}
 
 public:
-    PhysicalResource(const PhysicalResource &) = delete;
-    PhysicalResource(PhysicalResource &&) = delete;
     ~PhysicalResource() override = default;
-
-    PhysicalResource &operator=(const PhysicalResource &) = delete;
-    PhysicalResource &operator=(PhysicalResource &&) = delete;
 };
 
 class PhysicalBuffer : public PhysicalResource {
@@ -294,12 +279,7 @@ private:
 
 public:
     explicit PhysicalBuffer(const wrapper::Device &device) : PhysicalResource(device) {}
-    PhysicalBuffer(const PhysicalBuffer &) = delete;
-    PhysicalBuffer(PhysicalBuffer &&) = delete;
     ~PhysicalBuffer() override;
-
-    PhysicalBuffer &operator=(const PhysicalBuffer &) = delete;
-    PhysicalBuffer &operator=(PhysicalBuffer &&) = delete;
 };
 
 class PhysicalImage : public PhysicalResource {
@@ -328,12 +308,7 @@ private:
 public:
     PhysicalBackBuffer(const wrapper::Device &device, const wrapper::Swapchain &swapchain)
         : PhysicalResource(device), m_swapchain(swapchain) {}
-    PhysicalBackBuffer(const PhysicalBackBuffer &) = delete;
-    PhysicalBackBuffer(PhysicalBackBuffer &&) = delete;
     ~PhysicalBackBuffer() override = default;
-
-    PhysicalBackBuffer &operator=(const PhysicalBackBuffer &) = delete;
-    PhysicalBackBuffer &operator=(PhysicalBackBuffer &&) = delete;
 };
 
 class PhysicalStage : public RenderGraphObject {
@@ -348,12 +323,7 @@ protected:
 
 public:
     explicit PhysicalStage(const wrapper::Device &device) : m_device(device) {}
-    PhysicalStage(const PhysicalStage &) = delete;
-    PhysicalStage(PhysicalStage &&) = delete;
     ~PhysicalStage() override;
-
-    PhysicalStage &operator=(const PhysicalStage &) = delete;
-    PhysicalStage &operator=(PhysicalStage &&) = delete;
 
     /// @brief Retrieve the pipeline layout of this physical stage.
     // TODO: This can be removed once descriptors are properly implemented in the render graph.
@@ -371,12 +341,7 @@ private:
 
 public:
     explicit PhysicalGraphicsStage(const wrapper::Device &device) : PhysicalStage(device) {}
-    PhysicalGraphicsStage(const PhysicalGraphicsStage &) = delete;
-    PhysicalGraphicsStage(PhysicalGraphicsStage &&) = delete;
     ~PhysicalGraphicsStage() override;
-
-    PhysicalGraphicsStage &operator=(const PhysicalGraphicsStage &) = delete;
-    PhysicalGraphicsStage &operator=(PhysicalGraphicsStage &&) = delete;
 };
 
 class RenderGraph {

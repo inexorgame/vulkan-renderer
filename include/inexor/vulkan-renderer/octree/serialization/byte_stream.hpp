@@ -3,7 +3,7 @@
 #include <filesystem>
 #include <vector>
 
-namespace inexor::vulkan_renderer::io {
+namespace inexor::vulkan_renderer::serialization {
 
 class ByteStream {
 protected:
@@ -51,4 +51,4 @@ public:
     void write(const T &value);
 };
 
-} // namespace inexor::vulkan_renderer::io
+} // namespace inexor::vulkan_renderer::serialization

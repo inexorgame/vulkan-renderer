@@ -29,7 +29,7 @@ target_link_libraries(
     inexor-vulkan-renderer-benchmarks
 
     PRIVATE
-    inexor-vulkan-renderer
+    inexor-vulkan-renderer-core-lib
 
     PUBLIC
     benchmark::benchmark

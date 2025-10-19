@@ -33,6 +33,7 @@ public:
 
     DescriptorBuilder(const DescriptorBuilder &) = delete;
     DescriptorBuilder(DescriptorBuilder &&) = delete;
+
     ~DescriptorBuilder() = default;
 
     DescriptorBuilder &operator=(const DescriptorBuilder &) = delete;

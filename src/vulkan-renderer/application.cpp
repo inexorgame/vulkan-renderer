@@ -1,13 +1,13 @@
 #include "inexor/vulkan-renderer/application.hpp"
 
-#include "inexor/vulkan-renderer/exception.hpp"
 #include "inexor/vulkan-renderer/meta/meta.hpp"
+#include "inexor/vulkan-renderer/octree/collision.hpp"
 #include "inexor/vulkan-renderer/octree_gpu_vertex.hpp"
 #include "inexor/vulkan-renderer/standard_ubo.hpp"
 #include "inexor/vulkan-renderer/tools/camera.hpp"
 #include "inexor/vulkan-renderer/tools/cla_parser.hpp"
 #include "inexor/vulkan-renderer/tools/enumerate.hpp"
-#include "inexor/vulkan-renderer/world/collision.hpp"
+#include "inexor/vulkan-renderer/tools/exception.hpp"
 #include "inexor/vulkan-renderer/wrapper/cpu_texture.hpp"
 #include "inexor/vulkan-renderer/wrapper/descriptors/descriptor_builder.hpp"
 #include "inexor/vulkan-renderer/wrapper/instance.hpp"
@@ -24,6 +24,8 @@
 #include <toml.hpp>
 
 namespace inexor::vulkan_renderer {
+
+using tools::VulkanException;
 
 void Application::load_toml_configuration_file(const std::string &file_name) {
     spdlog::trace("Loading TOML configuration file: {}", file_name);
@@ -140,9 +142,9 @@ void Application::load_octree_geometry(bool initialize) {
     // 4: 23 012 | 5: 184352 | 6: 1474162 | 7: 11792978 cubes, DO NOT USE 7!
     m_worlds.clear();
     m_worlds.push_back(
-        world::create_random_world(2, {0.0f, 0.0f, 0.0f}, initialize ? std::optional(42) : std::nullopt));
+        octree::create_random_world(2, {0.0f, 0.0f, 0.0f}, initialize ? std::optional(42) : std::nullopt));
     m_worlds.push_back(
-        world::create_random_world(2, {10.0f, 0.0f, 0.0f}, initialize ? std::optional(60) : std::nullopt));
+        octree::create_random_world(2, {10.0f, 0.0f, 0.0f}, initialize ? std::optional(60) : std::nullopt));
 
     m_octree_vertices.clear();
     for (const auto &world : m_worlds) {

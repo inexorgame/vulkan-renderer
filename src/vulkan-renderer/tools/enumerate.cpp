@@ -1,6 +1,6 @@
 #include "inexor/vulkan-renderer/tools/enumerate.hpp"
 
-#include "inexor/vulkan-renderer/exception.hpp"
+#include "inexor/vulkan-renderer/tools/exception.hpp"
 
 #include <cassert>
 #include <cstdint>

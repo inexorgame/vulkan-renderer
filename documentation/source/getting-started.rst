@@ -79,18 +79,18 @@ CMake Build Targets
    * - Build Target
      - Description
      - Comment
-   * - ``inexor-vulkan-renderer``
+   * - ``inexor-vulkan-renderer-core-lib``
      - The core engine library
      - 
    * - ``inexor-vulkan-renderer-example``
      - The main executable
-     - Requires ``inexor-vulkan-renderer``
+     - Requires ``inexor-vulkan-renderer-core-lib``
    * - ``inexor-vulkan-renderer-tests``
      - `Google Test <https://github.com/google/googletest>`__
-     - Requires ``inexor-vulkan-renderer``
+     - Requires ``inexor-vulkan-renderer-core-lib``
    * - ``inexor-vulkan-renderer-benchmark``
      - `Google Benchmark <https://github.com/google/benchmark>`__
-     - Requires ``inexor-vulkan-renderer``
+     - Requires ``inexor-vulkan-renderer-core-lib``
    * - ``inexor-vulkan-renderer-documentation``
      - Builds the documentation with `Sphinx <https://www.sphinx-doc.org/en/master/>`__
      -

@@ -1,11 +1,11 @@
-#include "inexor/vulkan-renderer/world/indentation.hpp"
+#include "inexor/vulkan-renderer/octree/indentation.hpp"
 
 #include <algorithm>
 #include <array>
 #include <cassert>
 #include <cmath>
 
-namespace inexor::vulkan_renderer::world {
+namespace inexor::vulkan_renderer::octree {
 Indentation::Indentation(const std::uint8_t start, const std::uint8_t end) noexcept : m_start(start), m_end(end) {}
 
 Indentation::Indentation(const std::uint8_t uid) noexcept {
@@ -77,4 +77,4 @@ void Indentation::mirror() noexcept {
 std::uint8_t Indentation::uid() const {
     return static_cast<std::uint8_t>(10 * m_start + offset() - (std::pow(m_start, 2) + m_start) / 2);
 }
-} // namespace inexor::vulkan_renderer::world
+} // namespace inexor::vulkan_renderer::octree

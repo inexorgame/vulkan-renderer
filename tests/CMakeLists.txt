@@ -31,7 +31,7 @@ target_link_libraries(
     inexor-vulkan-renderer-tests
 
     PRIVATE
-    inexor-vulkan-renderer
+    inexor-vulkan-renderer-core-lib
 
     PUBLIC
     GTest::gtest

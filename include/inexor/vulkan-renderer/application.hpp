@@ -1,9 +1,9 @@
 ﻿#pragma once
 
 #include "inexor/vulkan-renderer/input/input.hpp"
+#include "inexor/vulkan-renderer/octree/collision_query.hpp"
+#include "inexor/vulkan-renderer/octree/cube.hpp"
 #include "inexor/vulkan-renderer/renderer.hpp"
-#include "inexor/vulkan-renderer/world/collision_query.hpp"
-#include "inexor/vulkan-renderer/world/cube.hpp"
 
 // Forward declarations
 namespace inexor::vulkan_renderer::input {
@@ -22,7 +22,7 @@ class Application : public VulkanRenderer {
 
     bool m_enable_validation_layers{true};
     /// Inexor engine supports a variable number of octrees.
-    std::vector<std::shared_ptr<world::Cube>> m_worlds;
+    std::vector<std::shared_ptr<octree::Cube>> m_worlds;
 
     // If the user specified command line argument "--stop-on-validation-message", the program will call
     // std::abort(); after reporting a validation layer (error) message.

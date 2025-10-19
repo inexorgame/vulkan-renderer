@@ -1,6 +1,6 @@
 #include "inexor/vulkan-renderer/render_graph.hpp"
 
-#include "inexor/vulkan-renderer/exception.hpp"
+#include "inexor/vulkan-renderer/tools/exception.hpp"
 #include "inexor/vulkan-renderer/wrapper/commands/command_buffer.hpp"
 #include "inexor/vulkan-renderer/wrapper/make_info.hpp"
 #include "inexor/vulkan-renderer/wrapper/shader.hpp"
@@ -16,6 +16,8 @@
 #include <utility>
 
 namespace inexor::vulkan_renderer {
+
+using tools::VulkanException;
 
 void BufferResource::add_vertex_attribute(VkFormat format, std::uint32_t offset) {
     m_vertex_attributes.push_back({

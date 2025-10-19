@@ -1,6 +1,6 @@
 #include "inexor/vulkan-renderer/wrapper/window/surface.hpp"
 
-#include "inexor/vulkan-renderer/exception.hpp"
+#include "inexor/vulkan-renderer/tools/exception.hpp"
 
 #include <spdlog/spdlog.h>
 
@@ -8,6 +8,8 @@
 #include <utility>
 
 namespace inexor::vulkan_renderer::wrapper::window {
+
+using tools::VulkanException;
 
 WindowSurface::WindowSurface(const VkInstance instance, GLFWwindow *window) : m_instance(instance) {
     assert(instance);

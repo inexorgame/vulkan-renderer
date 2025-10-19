@@ -5,7 +5,7 @@
 #include <string>
 #include <tuple>
 
-namespace inexor::vulkan_renderer::world {
+namespace inexor::vulkan_renderer::octree {
 
 /// @brief A wrapper for collisions between a ray and octree geometry.
 /// This class is used for octree collision, but it can be used for every cube-like data structure
@@ -28,7 +28,6 @@ public:
     RayCubeCollision(const T &cube, glm::vec3 ray_pos, glm::vec3 ray_dir);
 
     RayCubeCollision(const RayCubeCollision &) = delete;
-
     RayCubeCollision(RayCubeCollision &&other) noexcept;
 
     ~RayCubeCollision() = default;
@@ -57,4 +56,4 @@ public:
     }
 };
 
-} // namespace inexor::vulkan_renderer::world
+} // namespace inexor::vulkan_renderer::octree
