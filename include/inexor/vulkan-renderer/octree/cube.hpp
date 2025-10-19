@@ -98,11 +98,12 @@ public:
     /// Create an empty cube.
     Cube(std::weak_ptr<Cube> parent, std::uint8_t index, float size, const glm::vec3 &position);
     /// Use clone() to create an independent copy of a cube.
-    Cube(const Cube &rhs) = delete;
+    Cube(const Cube &rhs);
     Cube(Cube &&rhs) noexcept;
     ~Cube() = default;
-    Cube &operator=(Cube rhs);
-    Cube &operator=(Cube &&) = delete;
+
+    Cube &operator=(Cube other);
+    Cube &operator=(Cube &&) noexcept;
 
     /// Get child.
     std::shared_ptr<Cube> operator[](std::size_t idx);

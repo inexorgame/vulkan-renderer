@@ -1,4 +1,5 @@
 #include "inexor/vulkan-renderer/octree/cube.hpp"
+
 #include "inexor/vulkan-renderer/octree/indentation.hpp"
 
 #include <random>
@@ -181,6 +182,11 @@ Cube::Cube(std::weak_ptr<Cube> parent, const std::uint8_t index, const float siz
 
 Cube::Cube(Cube &&rhs) noexcept : Cube() {
     swap(*this, rhs);
+}
+
+Cube &Cube::operator=(Cube &&rhs) noexcept {
+    swap(*this, rhs);
+    return *this;
 }
 
 Cube &Cube::operator=(Cube rhs) {
