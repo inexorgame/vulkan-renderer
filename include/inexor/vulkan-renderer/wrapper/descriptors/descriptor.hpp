@@ -33,6 +33,7 @@ public:
 
     ResourceDescriptor(const ResourceDescriptor &) = delete;
     ResourceDescriptor(ResourceDescriptor &&) noexcept;
+
     ~ResourceDescriptor();
 
     ResourceDescriptor &operator=(const ResourceDescriptor &) = delete;

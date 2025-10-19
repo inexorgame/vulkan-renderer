@@ -22,7 +22,7 @@ public:
     ~WindowSurface();
 
     WindowSurface &operator=(const WindowSurface &) = delete;
-    WindowSurface &operator=(WindowSurface &&) = default;
+    WindowSurface &operator=(WindowSurface &&) = delete;
 
     [[nodiscard]] VkSurfaceKHR get() const {
         return m_surface;

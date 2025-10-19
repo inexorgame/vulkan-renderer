@@ -36,7 +36,7 @@ public:
     ~CpuTexture();
 
     CpuTexture &operator=(const CpuTexture &) = delete;
-    CpuTexture &operator=(CpuTexture &&) = default;
+    CpuTexture &operator=(CpuTexture &&) = delete;
 
     [[nodiscard]] const std::string &name() const {
         return m_name;

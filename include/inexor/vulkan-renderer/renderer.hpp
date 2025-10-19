@@ -64,13 +64,7 @@ protected:
     void render_frame();
 
 public:
-    VulkanRenderer() = default;
-    VulkanRenderer(const VulkanRenderer &) = delete;
-    VulkanRenderer(VulkanRenderer &&) = delete;
     ~VulkanRenderer();
-
-    VulkanRenderer &operator=(const VulkanRenderer &) = delete;
-    VulkanRenderer &operator=(VulkanRenderer &&) = delete;
 
     bool m_window_resized{false};
 

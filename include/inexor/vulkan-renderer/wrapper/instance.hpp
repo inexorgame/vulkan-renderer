@@ -55,7 +55,7 @@ public:
     ~Instance();
 
     Instance &operator=(const Instance &) = delete;
-    Instance &operator=(Instance &&) = default;
+    Instance &operator=(Instance &&) = delete;
 
     [[nodiscard]] VkInstance instance() const {
         return m_instance;

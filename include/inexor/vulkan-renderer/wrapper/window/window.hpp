@@ -27,12 +27,8 @@ public:
     /// @param resizable True if the window should be resizable, false otherwise.
     Window(const std::string &title, std::uint32_t width, std::uint32_t height, bool visible, bool resizable,
            Mode mode);
-    Window(const Window &) = delete;
-    Window(Window &&) = delete;
-    ~Window();
 
-    Window &operator=(const Window &) = delete;
-    Window &operator=(Window &&) = delete;
+    ~Window();
 
     /// @brief In case the window has been minimized, process events until it has been restored.
     void wait_for_focus();

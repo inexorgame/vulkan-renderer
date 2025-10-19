@@ -28,7 +28,6 @@ public:
     RayCubeCollision(const T &cube, glm::vec3 ray_pos, glm::vec3 ray_dir);
 
     RayCubeCollision(const RayCubeCollision &) = delete;
-
     RayCubeCollision(RayCubeCollision &&other) noexcept;
 
     ~RayCubeCollision() = default;
