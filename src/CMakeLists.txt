@@ -64,12 +64,12 @@ foreach(FILE ${INEXOR_SOURCE_FILES})
     source_group("${GROUP}" FILES "${FILE}")
 endforeach()
 
-add_library(inexor-vulkan-renderer ${INEXOR_SOURCE_FILES})
+add_library(inexor-vulkan-renderer-core-lib ${INEXOR_SOURCE_FILES})
 
-add_dependencies(inexor-vulkan-renderer inexor-shaders)
+add_dependencies(inexor-vulkan-renderer-core-lib inexor-shaders)
 
 set_target_properties(
-    inexor-vulkan-renderer PROPERTIES
+    inexor-vulkan-renderer-core-lib PROPERTIES
 
     CXX_EXTENSIONS OFF
     CXX_STANDARD 20
@@ -77,7 +77,7 @@ set_target_properties(
 )
 
 target_compile_definitions(
-    inexor-vulkan-renderer
+    inexor-vulkan-renderer-core-lib
 
     PUBLIC
     GLFW_INCLUDE_VULKAN
@@ -89,14 +89,14 @@ target_compile_definitions(
 
 # enable multi processor building if VS project
 if(${CMAKE_GENERATOR} MATCHES "Visual Studio.*")
-    target_compile_options(inexor-vulkan-renderer PRIVATE "/MP")
+    target_compile_options(inexor-vulkan-renderer-core-lib PRIVATE "/MP")
 endif()
 
 # enable exceptions when using MSVC toolchain, makes Clang on windows possible
 # enable correct reporting of the __cplusplus macro so correct code paths are selected
 if(MSVC)
-    target_compile_options(inexor-vulkan-renderer PRIVATE "-EHs")
-    target_compile_options(inexor-vulkan-renderer PRIVATE "/Zc:__cplusplus")
+    target_compile_options(inexor-vulkan-renderer-core-lib PRIVATE "-EHs")
+    target_compile_options(inexor-vulkan-renderer-core-lib PRIVATE "/Zc:__cplusplus")
 endif()
 
 # Replace variables in header file with CMake values
@@ -106,7 +106,7 @@ configure_file(
 )
 
 target_include_directories(
-    inexor-vulkan-renderer
+    inexor-vulkan-renderer-core-lib
 
     PUBLIC
     ${PROJECT_SOURCE_DIR}/include
@@ -133,7 +133,7 @@ add_library(imgui
     ${imgui_SOURCE_DIR}/imgui_widgets.cpp)
 target_include_directories(imgui PUBLIC ${imgui_SOURCE_DIR})
 
-target_link_libraries(inexor-vulkan-renderer
+target_link_libraries(inexor-vulkan-renderer-core-lib
     PUBLIC
     fmt::fmt
     glfw

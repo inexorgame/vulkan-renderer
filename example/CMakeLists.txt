@@ -14,7 +14,7 @@ else()
 endif()
 
 target_compile_features(inexor-vulkan-renderer-example PRIVATE cxx_std_20)
-target_link_libraries(inexor-vulkan-renderer-example PRIVATE inexor-vulkan-renderer)
+target_link_libraries(inexor-vulkan-renderer-example PRIVATE inexor-vulkan-renderer-core-lib)
 
 if(${CMAKE_GENERATOR} MATCHES "Visual Studio.*")
     set_property(DIRECTORY ${PROJECT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT "inexor-vulkan-renderer-example")
