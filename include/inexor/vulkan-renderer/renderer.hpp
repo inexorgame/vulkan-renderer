@@ -19,7 +19,7 @@ class VulkanRenderer {
 protected:
     std::vector<VkPipelineShaderStageCreateInfo> m_shader_stages;
 
-    VkDebugReportCallbackEXT m_debug_report_callback{VK_NULL_HANDLE};
+    VkDebugUtilsMessengerEXT m_debug_callback{VK_NULL_HANDLE};
 
     bool m_debug_report_callback_initialised{false};
 

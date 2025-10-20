@@ -1,5 +1,6 @@
 ﻿#include "inexor/vulkan-renderer/wrapper/gpu_texture.hpp"
 
+#include "inexor/vulkan-renderer/tools/exception.hpp"
 #include "inexor/vulkan-renderer/wrapper/cpu_texture.hpp"
 #include "inexor/vulkan-renderer/wrapper/make_info.hpp"
 
@@ -96,7 +97,12 @@ void GpuTexture::create_texture_sampler() {
         .unnormalizedCoordinates = VK_FALSE,
     });
 
-    m_device.create_sampler(sampler_ci, &m_sampler, m_name);
+    if (const auto result = vkCreateSampler(m_device.device(), &sampler_ci, nullptr, &m_sampler);
+        result != VK_SUCCESS) {
+        throw tools::VulkanException("Error: vkCreateSampler failed!", result, m_name);
+    }
+
+    m_device.set_debug_name(m_sampler, m_name);
 }
 
 } // namespace inexor::vulkan_renderer::wrapper
