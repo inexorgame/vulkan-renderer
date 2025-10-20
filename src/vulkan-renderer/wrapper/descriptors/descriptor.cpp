@@ -45,19 +45,32 @@ ResourceDescriptor::ResourceDescriptor(const Device &device,
         pool_sizes.emplace_back(VkDescriptorPoolSize{descriptor_pool_type.descriptorType, 1});
     }
 
-    m_device.create_descriptor_pool(make_info<VkDescriptorPoolCreateInfo>({
-                                        .maxSets = 1,
-                                        .poolSizeCount = static_cast<std::uint32_t>(pool_sizes.size()),
-                                        .pPoolSizes = pool_sizes.data(),
-                                    }),
-                                    &m_descriptor_pool, m_name);
+    const auto descriptor_pool_ci = make_info<VkDescriptorPoolCreateInfo>({
+        .maxSets = 1,
+        .poolSizeCount = static_cast<std::uint32_t>(pool_sizes.size()),
+        .pPoolSizes = pool_sizes.data(),
+    });
 
-    m_device.create_descriptor_set_layout(
-        make_info<VkDescriptorSetLayoutCreateInfo>({
-            .bindingCount = static_cast<std::uint32_t>(m_descriptor_set_layout_bindings.size()),
-            .pBindings = m_descriptor_set_layout_bindings.data(),
-        }),
-        &m_descriptor_set_layout, m_name);
+    if (const auto result = vkCreateDescriptorPool(m_device.device(), &descriptor_pool_ci, nullptr, &m_descriptor_pool);
+        result != VK_SUCCESS) {
+        throw VulkanException("Error: vkCreateDescriptorPool failed for descriptor pool " + m_name + " !", result);
+    }
+
+    m_device.set_debug_marker_name(&m_descriptor_pool, VK_DEBUG_REPORT_OBJECT_TYPE_DESCRIPTOR_POOL_EXT, m_name);
+
+    const auto descriptor_set_layout_ci = make_info<VkDescriptorSetLayoutCreateInfo>({
+        .bindingCount = static_cast<std::uint32_t>(m_descriptor_set_layout_bindings.size()),
+        .pBindings = m_descriptor_set_layout_bindings.data(),
+    });
+
+    if (const auto result = vkCreateDescriptorSetLayout(m_device.device(), &descriptor_set_layout_ci, nullptr,
+                                                        &m_descriptor_set_layout);
+        result != VK_SUCCESS) {
+        throw VulkanException("Error: vkCreateDescriptorSetLayout failed for descriptor " + name + " !", result);
+    }
+
+    m_device.set_debug_marker_name(&m_descriptor_set_layout, VK_DEBUG_REPORT_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT_EXT,
+                                   name);
 
     const std::vector<VkDescriptorSetLayout> descriptor_set_layouts(1, m_descriptor_set_layout);
 

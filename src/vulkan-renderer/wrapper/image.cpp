@@ -55,19 +55,24 @@ Image::Image(const Device &device, const VkFormat format, const VkImageUsageFlag
     // Assign an internal name using Vulkan debug markers.
     m_device.set_debug_marker_name(m_image, VK_DEBUG_REPORT_OBJECT_TYPE_IMAGE_EXT, m_name);
 
-    m_device.create_image_view(make_info<VkImageViewCreateInfo>({
-                                   .image = m_image,
-                                   .viewType = VK_IMAGE_VIEW_TYPE_2D,
-                                   .format = format,
-                                   .subresourceRange{
-                                       .aspectMask = aspect_flags,
-                                       .baseMipLevel = 0,
-                                       .levelCount = 1,
-                                       .baseArrayLayer = 0,
-                                       .layerCount = 1,
-                                   },
-                               }),
-                               &m_image_view, m_name);
+    const auto img_view_ci = make_info<VkImageViewCreateInfo>({
+        .image = m_image,
+        .viewType = VK_IMAGE_VIEW_TYPE_2D,
+        .format = format,
+        .subresourceRange{
+            .aspectMask = aspect_flags,
+            .baseMipLevel = 0,
+            .levelCount = 1,
+            .baseArrayLayer = 0,
+            .layerCount = 1,
+        },
+    });
+
+    if (const auto result = vkCreateImageView(m_device.device(), &img_view_ci, nullptr, &m_image_view);
+        result != VK_SUCCESS) {
+        throw VulkanException("Error: vkCreateImageView failed for image view " + name + "!", result);
+    }
+    m_device.set_debug_marker_name(&m_image_view, VK_DEBUG_REPORT_OBJECT_TYPE_IMAGE_VIEW_EXT, name);
 }
 
 Image::Image(Image &&other) noexcept : m_device(other.m_device) {

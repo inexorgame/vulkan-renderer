@@ -276,7 +276,12 @@ void Swapchain::setup_swapchain(const std::uint32_t width, const std::uint32_t h
             },
         });
 
-        m_device.create_image_view(img_view_ci, &m_img_views[img_index], "swapchain image view");
+        if (const auto result = vkCreateImageView(m_device.device(), &img_view_ci, nullptr, &m_img_views[img_index]);
+            result != VK_SUCCESS) {
+            throw VulkanException("Error: vkCreateImageView failed for swapchain image view!", result);
+        }
+        m_device.set_debug_marker_name(&m_img_views[img_index], VK_DEBUG_REPORT_OBJECT_TYPE_IMAGE_VIEW_EXT,
+                                       "swapchain image view");
     }
 }
 

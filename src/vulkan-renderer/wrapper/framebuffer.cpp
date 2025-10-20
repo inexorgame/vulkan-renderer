@@ -1,5 +1,6 @@
 #include "inexor/vulkan-renderer/wrapper/framebuffer.hpp"
 
+#include "inexor/vulkan-renderer/tools/exception.hpp"
 #include "inexor/vulkan-renderer/wrapper/device.hpp"
 #include "inexor/vulkan-renderer/wrapper/make_info.hpp"
 #include "inexor/vulkan-renderer/wrapper/swapchain.hpp"
@@ -12,15 +13,21 @@ namespace inexor::vulkan_renderer::wrapper {
 Framebuffer::Framebuffer(const Device &device, VkRenderPass render_pass, const std::vector<VkImageView> &attachments,
                          const Swapchain &swapchain, std::string name)
     : m_device(device), m_name(std::move(name)) {
-    m_device.create_framebuffer(make_info<VkFramebufferCreateInfo>({
-                                    .renderPass = render_pass,
-                                    .attachmentCount = static_cast<std::uint32_t>(attachments.size()),
-                                    .pAttachments = attachments.data(),
-                                    .width = swapchain.extent().width,
-                                    .height = swapchain.extent().height,
-                                    .layers = 1,
-                                }),
-                                &m_framebuffer, m_name);
+
+    const auto framebuffer_ci = make_info<VkFramebufferCreateInfo>({
+        .renderPass = render_pass,
+        .attachmentCount = static_cast<std::uint32_t>(attachments.size()),
+        .pAttachments = attachments.data(),
+        .width = swapchain.extent().width,
+        .height = swapchain.extent().height,
+        .layers = 1,
+    });
+
+    if (const auto result = vkCreateFramebuffer(m_device.device(), &framebuffer_ci, nullptr, &m_framebuffer);
+        result != VK_SUCCESS) {
+        throw tools::VulkanException("Error: vkCreateFramebuffer failed for framebuffer " + name + "!", result);
+    }
+    m_device.set_debug_marker_name(&m_framebuffer, VK_DEBUG_REPORT_OBJECT_TYPE_FRAMEBUFFER_EXT, name);
 }
 
 Framebuffer::Framebuffer(Framebuffer &&other) noexcept : m_device(other.m_device) {
