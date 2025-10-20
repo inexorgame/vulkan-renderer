@@ -14,7 +14,7 @@ Window::Window(const std::string &title, const std::uint32_t width, const std::u
     assert(!title.empty());
 
     if (glfwInit() != GLFW_TRUE) {
-        throw std::runtime_error("Failed to initialise GLFW!");
+        throw std::runtime_error("Error: glfwInit failed for window " + title + " !");
     }
 
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);

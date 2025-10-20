@@ -91,7 +91,7 @@ void RenderGraph::build_buffer(const BufferResource &buffer_resource, PhysicalBu
     if (const auto result = vmaCreateBuffer(m_device.allocator(), &buffer_ci, &alloc_ci, &physical.m_buffer,
                                             &physical.m_allocation, &physical.m_alloc_info);
         result != VK_SUCCESS) {
-        throw VulkanException("Failed to create buffer!", result);
+        throw VulkanException("Error: Failed to create buffer!", result);
     }
 
     // TODO: Use a better naming system for memory resources inside of rendergraph

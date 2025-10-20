@@ -63,27 +63,27 @@ std::shared_ptr<octree::Cube> NXOCParser::deserialize_impl<0>(const ByteStream &
 
 ByteStream NXOCParser::serialize(const std::shared_ptr<const octree::Cube> cube, const std::uint32_t version) {
     if (cube == nullptr) {
-        throw std::invalid_argument("cube cannot be a nullptr");
+        throw std::invalid_argument("Error: Cube cannot be a nullptr");
     }
     switch (version) { // NOLINT
     case 0:
         return serialize_impl<0>(cube);
     default:
-        throw std::runtime_error("Unsupported octree version");
+        throw std::runtime_error("Error: Unsupported octree version");
     }
 }
 
 std::shared_ptr<octree::Cube> NXOCParser::deserialize(const ByteStream &stream) {
     ByteStreamReader reader(stream);
     if (reader.read<std::string>(13ull) != "Inexor Octree") {
-        throw std::runtime_error("Wrong identifier");
+        throw std::runtime_error("Error: Wrong identifier");
     }
     const auto version = reader.read<std::uint32_t>();
     switch (version) { // NOLINT
     case 0:
         return deserialize_impl<0>(stream);
     default:
-        throw std::runtime_error("Unsupported octree version");
+        throw std::runtime_error("Error: Unsupported octree version");
     }
 }
 } // namespace inexor::vulkan_renderer::serialization

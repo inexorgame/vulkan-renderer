@@ -23,7 +23,7 @@ const std::vector<std::uint8_t> &ByteStream::buffer() const {
 
 void ByteStreamReader::check_end(const std::size_t size) const {
     if (static_cast<std::size_t>(std::distance(m_iter, m_stream.buffer().end())) < size) {
-        throw std::runtime_error("end would be overrun");
+        throw std::runtime_error("Error: end of byte stream would be overrun");
     }
 }
 

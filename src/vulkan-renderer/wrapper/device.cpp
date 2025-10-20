@@ -507,7 +507,7 @@ void Device::set_memory_block_attachment(void *object, VkDebugReportObjectTypeEX
     });
 
     if (const auto result = m_vk_debug_marker_set_object_tag(m_device, &tag_info); result != VK_SUCCESS) {
-        throw VulkanException("Failed to assign Vulkan debug marker memory block!", result);
+        throw VulkanException("Error: Failed to assign Vulkan debug marker memory block!", result);
     }
 #endif
 }
