@@ -8,30 +8,6 @@
 #include <utility>
 
 namespace inexor::vulkan_renderer::serialization {
-template <>
-ByteStream NXOCParser::serialize_impl<0>(const std::shared_ptr<const octree::Cube> cube) { // NOLINT
-    ByteStreamWriter writer;
-    writer.write<std::string>("Inexor Octree");
-    writer.write<std::uint32_t>(0);
-
-    std::function<void(const std::shared_ptr<const octree::Cube> &)> iter_func;
-    // pre-order traversal
-    iter_func = [&iter_func, &writer](const std::shared_ptr<const octree::Cube> &cube) {
-        writer.write(cube->type());
-        if (cube->type() == octree::Cube::Type::OCTANT) {
-            for (const auto &child : cube->children()) {
-                iter_func(child);
-            }
-            return;
-        }
-        if (cube->type() == octree::Cube::Type::NORMAL) {
-            writer.write(cube->indentations());
-        }
-    };
-
-    iter_func(cube);
-    return writer;
-}
 
 template <>
 std::shared_ptr<octree::Cube> NXOCParser::deserialize_impl<0>(const ByteStream &stream) {
@@ -61,29 +37,55 @@ std::shared_ptr<octree::Cube> NXOCParser::deserialize_impl<0>(const ByteStream &
     return root;
 }
 
-ByteStream NXOCParser::serialize(const std::shared_ptr<const octree::Cube> cube, const std::uint32_t version) {
-    if (cube == nullptr) {
-        throw std::invalid_argument("cube cannot be a nullptr");
-    }
-    switch (version) { // NOLINT
-    case 0:
-        return serialize_impl<0>(cube);
-    default:
-        throw std::runtime_error("Unsupported octree version");
-    }
+template <>
+ByteStream NXOCParser::serialize_impl<0>(const std::shared_ptr<const octree::Cube> cube) { // NOLINT
+    ByteStreamWriter writer;
+    writer.write<std::string>("Inexor Octree");
+    writer.write<std::uint32_t>(0);
+
+    std::function<void(const std::shared_ptr<const octree::Cube> &)> iter_func;
+    // pre-order traversal
+    iter_func = [&iter_func, &writer](const std::shared_ptr<const octree::Cube> &cube) {
+        writer.write(cube->type());
+        if (cube->type() == octree::Cube::Type::OCTANT) {
+            for (const auto &child : cube->children()) {
+                iter_func(child);
+            }
+            return;
+        }
+        if (cube->type() == octree::Cube::Type::NORMAL) {
+            writer.write(cube->indentations());
+        }
+    };
+
+    iter_func(cube);
+    return writer;
 }
 
 std::shared_ptr<octree::Cube> NXOCParser::deserialize(const ByteStream &stream) {
     ByteStreamReader reader(stream);
     if (reader.read<std::string>(13ull) != "Inexor Octree") {
-        throw std::runtime_error("Wrong identifier");
+        throw std::runtime_error("Error: Wrong identifier");
     }
     const auto version = reader.read<std::uint32_t>();
     switch (version) { // NOLINT
     case 0:
         return deserialize_impl<0>(stream);
     default:
-        throw std::runtime_error("Unsupported octree version");
+        throw std::runtime_error("Error: Unsupported octree version");
     }
 }
+
+ByteStream NXOCParser::serialize(const std::shared_ptr<const octree::Cube> cube, const std::uint32_t version) {
+    if (cube == nullptr) {
+        throw std::invalid_argument("Error: Cube cannot be a nullptr");
+    }
+    switch (version) { // NOLINT
+    case 0:
+        return serialize_impl<0>(cube);
+    default:
+        throw std::runtime_error("Error: Unsupported octree version");
+    }
+}
+
 } // namespace inexor::vulkan_renderer::serialization

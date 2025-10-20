@@ -60,7 +60,7 @@ void CommandLineArgumentParser::parse_args(int argc, char **argv) {
         // We have to fail if the user doesn't specify a value for an argument expecting one (since it would mess up the
         // rest of parsing).
         if (i++ >= argc) {
-            throw std::runtime_error("No value specified for argument " + arg_name);
+            throw std::runtime_error("Error: No value specified for argument " + arg_name);
         }
 
         // NOLINTNEXTLINE

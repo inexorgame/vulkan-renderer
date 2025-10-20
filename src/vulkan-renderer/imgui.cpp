@@ -183,7 +183,7 @@ void ImGUIOverlay::update() {
             const ImDrawList *cmd_list = imgui_draw_data->CmdLists[i]; // NOLINT
             for (std::int32_t j = 0; j < cmd_list->CmdBuffer.Size; j++) {
                 const ImDrawCmd &draw_cmd = cmd_list->CmdBuffer[j];
-                vkCmdDrawIndexed(cmd_buf.get(), draw_cmd.ElemCount, 1, index_offset, vertex_offset, 0);
+                vkCmdDrawIndexed(cmd_buf.cmd_buffer(), draw_cmd.ElemCount, 1, index_offset, vertex_offset, 0);
                 index_offset += draw_cmd.ElemCount;
             }
             vertex_offset += cmd_list->VtxBuffer.Size;

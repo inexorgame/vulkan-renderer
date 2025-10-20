@@ -2,6 +2,7 @@
 
 #include <GLFW/glfw3.h>
 
+#include <array>
 #include <cstdint>
 #include <string>
 
@@ -30,25 +31,23 @@ public:
 
     ~Window();
 
-    /// @brief In case the window has been minimized, process events until it has been restored.
-    void wait_for_focus();
+    [[nodiscard]] std::array<int, 2> get_framebuffer_size() const {
+        int width = 0;
+        int height = 0;
+        glfwGetFramebufferSize(m_window, &width, &height);
+        return {width, height};
+    }
 
-    /// @brief Change the window title.
-    /// @param title The new title of the window.
-    void set_title(const std::string &title);
+    [[nodiscard]] std::uint32_t height() const {
+        return m_height;
+    }
 
-    /// @brief Set the GLFW window user pointer.
-    /// @param user_ptr The window user pointer.
-    // @note Since GLFW is a C-style API, we can't use a class method as callback for window resize.
-    void set_user_ptr(void *user_ptr);
+    [[nodiscard]] Mode mode() const {
+        return m_mode;
+    }
 
-    /// @brief Set up the window resize callback.
-    /// @param frame_buffer_resize_callback The window resize callback.
-    void set_resize_callback(GLFWframebuffersizefun frame_buffer_resize_callback);
-
-    /// @brief Call glfwSetKeyCallback.
-    /// @param key_input_callback The keyboard input callback.
-    void set_keyboard_button_callback(GLFWkeyfun keyboard_button_callback);
+    /// @brief Call glfwPollEvents.
+    static void poll();
 
     /// @brief Call glfwSetCursorPosCallback.
     /// @param cursor_pos_callback They cursor position callback.
@@ -62,31 +61,40 @@ public:
     /// @param mouse_scroll_callback The mouse scroll callback.
     void set_mouse_scroll_callback(GLFWscrollfun mouse_scroll_callback);
 
-    /// @brief Call glfwShowWindow.
-    void show();
+    /// @brief Call glfwSetKeyCallback.
+    /// @param key_input_callback The keyboard input callback.
+    void set_keyboard_button_callback(GLFWkeyfun keyboard_button_callback);
 
-    /// @brief Call glfwPollEvents.
-    static void poll();
+    /// @brief Set up the window resize callback.
+    /// @param frame_buffer_resize_callback The window resize callback.
+    void set_resize_callback(GLFWframebuffersizefun frame_buffer_resize_callback);
+
+    /// @brief Change the window title.
+    /// @param title The new title of the window.
+    void set_title(const std::string &title);
+
+    /// @brief Set the GLFW window user pointer.
+    /// @param user_ptr The window user pointer.
+    // @note Since GLFW is a C-style API, we can't use a class method as callback for window resize.
+    void set_user_ptr(void *user_ptr);
 
     /// @brief Check if the window is about to close.
     /// @return ``true`` if the window will be closed.
     bool should_close();
 
-    [[nodiscard]] GLFWwindow *get() const {
-        return m_window;
-    }
+    /// @brief Call glfwShowWindow.
+    void show();
 
     [[nodiscard]] std::uint32_t width() const {
         return m_width;
     }
 
-    [[nodiscard]] std::uint32_t height() const {
-        return m_height;
+    [[nodiscard]] auto window() const {
+        return m_window;
     }
 
-    [[nodiscard]] Mode mode() const {
-        return m_mode;
-    }
+    /// @brief In case the window has been minimized, process events until it has been restored.
+    void wait_for_focus();
 };
 
 } // namespace inexor::vulkan_renderer::wrapper::window

@@ -15,16 +15,6 @@ private:
     static constexpr std::uint32_t REQUIRED_VK_API_VERSION{VK_API_VERSION_1_2};
 
 public:
-    /// @brief Check if a certain instance layer is available on the system.
-    /// @param layer_name The name of the instance layer.
-    /// @return ``true`` if the instance layer is supported.
-    [[nodiscard]] static bool is_layer_supported(const std::string &layer_name);
-
-    /// @brief Check if a certain instance extension is supported on the system.
-    /// @param extension_name The name of the instance extension.
-    /// @return ``true`` if the instance extension is supported.
-    [[nodiscard]] static bool is_extension_supported(const std::string &extension_name);
-
     /// @brief Construct the Vulkan instance and specify the requested instance layers and instance extensions.
     /// @param application_name The Vulkan application's internal application name
     /// @param engine_name The Vulkan application's internal engine name
@@ -60,6 +50,16 @@ public:
     [[nodiscard]] VkInstance instance() const {
         return m_instance;
     }
+
+    /// @brief Check if a certain instance extension is supported on the system.
+    /// @param extension_name The name of the instance extension.
+    /// @return ``true`` if the instance extension is supported.
+    [[nodiscard]] static bool is_extension_supported(const std::string &extension_name);
+
+    /// @brief Check if a certain instance layer is available on the system.
+    /// @param layer_name The name of the instance layer.
+    /// @return ``true`` if the instance layer is supported.
+    [[nodiscard]] static bool is_layer_supported(const std::string &layer_name);
 };
 
 } // namespace inexor::vulkan_renderer::wrapper

@@ -39,16 +39,16 @@ public:
     Image &operator=(const Image &) = delete;
     Image &operator=(Image &&) = delete;
 
+    [[nodiscard]] VkImage get() const {
+        return m_image;
+    }
+
     [[nodiscard]] VkFormat image_format() const {
         return m_format;
     }
 
     [[nodiscard]] VkImageView image_view() const {
         return m_image_view;
-    }
-
-    [[nodiscard]] VkImage get() const {
-        return m_image;
     }
 };
 

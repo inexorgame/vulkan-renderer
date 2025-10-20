@@ -30,9 +30,30 @@ bool Indentation::operator!=(const Indentation &rhs) const {
     return !(*this == rhs);
 }
 
-void Indentation::set_start(std::uint8_t position) noexcept {
-    this->m_start = std::clamp<std::uint8_t>(position, 0, Indentation::MAX);
-    this->m_end = std::clamp<std::uint8_t>(this->m_end, this->m_start, Indentation::MAX);
+std::uint8_t Indentation::end() const noexcept {
+    return Indentation::MAX - this->m_end;
+}
+
+std::uint8_t Indentation::end_abs() const noexcept {
+    return this->m_end;
+}
+
+void Indentation::indent_end(std::uint8_t steps) noexcept {
+    this->set_end(this->m_end - steps);
+}
+
+void Indentation::indent_start(std::uint8_t steps) noexcept {
+    this->set_start(this->m_start + steps);
+}
+
+void Indentation::mirror() noexcept {
+    std::uint8_t new_start = end();
+    m_end = Indentation::MAX - m_start;
+    m_start = new_start;
+}
+
+std::uint8_t Indentation::offset() const noexcept {
+    return this->m_end - this->m_start;
 }
 
 void Indentation::set_end(std::uint8_t position) noexcept {
@@ -40,38 +61,17 @@ void Indentation::set_end(std::uint8_t position) noexcept {
     this->m_start = std::clamp<std::uint8_t>(this->m_start, 0, this->m_end);
 }
 
-std::uint8_t Indentation::start_abs() const noexcept {
-    return this->m_start;
-}
-
-std::uint8_t Indentation::end_abs() const noexcept {
-    return this->m_end;
+void Indentation::set_start(std::uint8_t position) noexcept {
+    this->m_start = std::clamp<std::uint8_t>(position, 0, Indentation::MAX);
+    this->m_end = std::clamp<std::uint8_t>(this->m_end, this->m_start, Indentation::MAX);
 }
 
 std::uint8_t Indentation::start() const noexcept {
     return this->m_start;
 }
 
-std::uint8_t Indentation::end() const noexcept {
-    return Indentation::MAX - this->m_end;
-}
-
-std::uint8_t Indentation::offset() const noexcept {
-    return this->m_end - this->m_start;
-}
-
-void Indentation::indent_start(std::uint8_t steps) noexcept {
-    this->set_start(this->m_start + steps);
-}
-
-void Indentation::indent_end(std::uint8_t steps) noexcept {
-    this->set_end(this->m_end - steps);
-}
-
-void Indentation::mirror() noexcept {
-    std::uint8_t new_start = end();
-    m_end = Indentation::MAX - m_start;
-    m_start = new_start;
+std::uint8_t Indentation::start_abs() const noexcept {
+    return this->m_start;
 }
 
 std::uint8_t Indentation::uid() const {

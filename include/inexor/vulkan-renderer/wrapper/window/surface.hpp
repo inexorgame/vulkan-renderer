@@ -24,7 +24,7 @@ public:
     WindowSurface &operator=(const WindowSurface &) = delete;
     WindowSurface &operator=(WindowSurface &&) = delete;
 
-    [[nodiscard]] VkSurfaceKHR get() const {
+    [[nodiscard]] auto surface() const {
         return m_surface;
     }
 };

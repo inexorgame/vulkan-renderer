@@ -31,7 +31,7 @@ public:
     Semaphore &operator=(const Semaphore &) = delete;
     Semaphore &operator=(Semaphore &&) = delete;
 
-    [[nodiscard]] const VkSemaphore *semaphore() const {
+    [[nodiscard]] auto semaphore() const {
         return &m_semaphore;
     }
 };

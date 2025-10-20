@@ -35,7 +35,7 @@ public:
     Framebuffer &operator=(const Framebuffer &) = delete;
     Framebuffer &operator=(Framebuffer &&) = delete;
 
-    [[nodiscard]] VkFramebuffer get() const {
+    [[nodiscard]] auto framebuffer() const {
         return m_framebuffer;
     }
 };

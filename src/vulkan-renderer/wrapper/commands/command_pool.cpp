@@ -40,9 +40,8 @@ const CommandBuffer &CommandPool::request_command_buffer(const std::string &name
     // Try to find a command buffer which is currently not used
     for (const auto &cmd_buf : m_cmd_bufs) {
         if (cmd_buf->fence_status() == VK_SUCCESS) {
-            // Reset the command buffer's fence to make it usable again
             cmd_buf->reset_fence();
-            m_device.set_debug_marker_name(*cmd_buf->ptr(), VK_DEBUG_REPORT_OBJECT_TYPE_COMMAND_BUFFER_EXT, name);
+            cmd_buf->set_debug_name(name);
             cmd_buf->begin_command_buffer();
             return *cmd_buf;
         }

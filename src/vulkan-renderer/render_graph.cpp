@@ -42,7 +42,7 @@ void GraphicsStage::bind_buffer(const BufferResource *buffer, const std::uint32_
 void GraphicsStage::uses_shader(const wrapper::Shader &shader) {
     m_shaders.push_back(wrapper::make_info<VkPipelineShaderStageCreateInfo>({
         .stage = shader.type(),
-        .module = shader.module(),
+        .module = shader.shader_module(),
         .pName = shader.entry_point().c_str(),
     }));
 }
@@ -91,7 +91,7 @@ void RenderGraph::build_buffer(const BufferResource &buffer_resource, PhysicalBu
     if (const auto result = vmaCreateBuffer(m_device.allocator(), &buffer_ci, &alloc_ci, &physical.m_buffer,
                                             &physical.m_allocation, &physical.m_alloc_info);
         result != VK_SUCCESS) {
-        throw VulkanException("Failed to create buffer!", result);
+        throw VulkanException("Error: Failed to create buffer!", result);
     }
 
     // TODO: Use a better naming system for memory resources inside of rendergraph
@@ -187,7 +187,7 @@ void RenderGraph::record_command_buffer(const RenderStage *stage, const wrapper:
 
         cmd_buf.begin_render_pass(wrapper::make_info<VkRenderPassBeginInfo>({
             .renderPass = phys_graphics_stage->m_render_pass,
-            .framebuffer = phys_graphics_stage->m_framebuffers.at(image_index).get(),
+            .framebuffer = phys_graphics_stage->m_framebuffers.at(image_index).framebuffer(),
             .renderArea{
                 .extent = m_swapchain.extent(),
             },

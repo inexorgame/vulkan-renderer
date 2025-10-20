@@ -11,21 +11,6 @@ DescriptorBuilder::DescriptorBuilder(const Device &device) : m_device(device) {
     assert(m_device.device());
 }
 
-ResourceDescriptor DescriptorBuilder::build(std::string name) {
-    assert(!m_layout_bindings.empty());
-    assert(!m_write_sets.empty());
-    assert(m_write_sets.size() == m_layout_bindings.size());
-
-    // Generate a new resource descriptor.
-    ResourceDescriptor generated_descriptor(m_device, std::move(m_layout_bindings), std::move(m_write_sets),
-                                            std::move(name));
-
-    m_descriptor_buffer_infos.clear();
-    m_descriptor_image_infos.clear();
-
-    return std::move(generated_descriptor);
-}
-
 DescriptorBuilder &DescriptorBuilder::add_combined_image_sampler(const VkSampler image_sampler,
                                                                  const VkImageView image_view,
                                                                  const std::uint32_t binding,
@@ -58,4 +43,18 @@ DescriptorBuilder &DescriptorBuilder::add_combined_image_sampler(const VkSampler
     return *this;
 }
 
+ResourceDescriptor DescriptorBuilder::build(std::string name) {
+    assert(!m_layout_bindings.empty());
+    assert(!m_write_sets.empty());
+    assert(m_write_sets.size() == m_layout_bindings.size());
+
+    // Generate a new resource descriptor.
+    ResourceDescriptor generated_descriptor(m_device, std::move(m_layout_bindings), std::move(m_write_sets),
+                                            std::move(name));
+
+    m_descriptor_buffer_infos.clear();
+    m_descriptor_image_infos.clear();
+
+    return std::move(generated_descriptor);
+}
 } // namespace inexor::vulkan_renderer::wrapper::descriptors

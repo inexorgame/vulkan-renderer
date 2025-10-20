@@ -14,7 +14,7 @@ Window::Window(const std::string &title, const std::uint32_t width, const std::u
     assert(!title.empty());
 
     if (glfwInit() != GLFW_TRUE) {
-        throw std::runtime_error("Failed to initialise GLFW!");
+        throw std::runtime_error("Error: glfwInit failed for window " + title + " !");
     }
 
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
@@ -45,17 +45,28 @@ Window::~Window() {
     glfwTerminate();
 }
 
-void Window::wait_for_focus() {
-    int current_width = 0;
-    int current_height = 0;
+void Window::poll() {
+    glfwPollEvents();
+}
 
-    do {
-        glfwWaitEvents();
-        glfwGetFramebufferSize(m_window, &current_width, &current_height);
-    } while (current_width == 0 || current_height == 0);
+void Window::set_cursor_position_callback(GLFWcursorposfun cursor_pos_callback) {
+    glfwSetCursorPosCallback(m_window, cursor_pos_callback);
+}
 
-    m_width = current_width;
-    m_height = current_height;
+void Window::set_keyboard_button_callback(GLFWkeyfun keyboard_button_callback) {
+    glfwSetKeyCallback(m_window, keyboard_button_callback);
+}
+
+void Window::set_mouse_button_callback(GLFWmousebuttonfun mouse_button_callback) {
+    glfwSetMouseButtonCallback(m_window, mouse_button_callback);
+}
+
+void Window::set_mouse_scroll_callback(GLFWscrollfun mouse_scroll_callback) {
+    glfwSetScrollCallback(m_window, mouse_scroll_callback);
+}
+
+void Window::set_resize_callback(GLFWframebuffersizefun frame_buffer_resize_callback) {
+    glfwSetFramebufferSizeCallback(m_window, frame_buffer_resize_callback);
 }
 
 void Window::set_title(const std::string &title) {
@@ -67,36 +78,25 @@ void Window::set_user_ptr(void *user_ptr) {
     glfwSetWindowUserPointer(m_window, user_ptr);
 }
 
-void Window::set_resize_callback(GLFWframebuffersizefun frame_buffer_resize_callback) {
-    glfwSetFramebufferSizeCallback(m_window, frame_buffer_resize_callback);
-}
-
-void Window::set_keyboard_button_callback(GLFWkeyfun keyboard_button_callback) {
-    glfwSetKeyCallback(m_window, keyboard_button_callback);
-}
-
-void Window::set_cursor_position_callback(GLFWcursorposfun cursor_pos_callback) {
-    glfwSetCursorPosCallback(m_window, cursor_pos_callback);
-}
-
-void Window::set_mouse_button_callback(GLFWmousebuttonfun mouse_button_callback) {
-    glfwSetMouseButtonCallback(m_window, mouse_button_callback);
-}
-
-void Window::set_mouse_scroll_callback(GLFWscrollfun mouse_scroll_callback) {
-    glfwSetScrollCallback(m_window, mouse_scroll_callback);
-}
-
 void Window::show() {
     glfwShowWindow(m_window);
 }
 
-void Window::poll() {
-    glfwPollEvents();
-}
-
 bool Window::should_close() {
     return glfwWindowShouldClose(m_window) == GLFW_TRUE;
+}
+
+void Window::wait_for_focus() {
+    int current_width = 0;
+    int current_height = 0;
+
+    do {
+        glfwWaitEvents();
+        glfwGetFramebufferSize(m_window, &current_width, &current_height);
+    } while (current_width == 0 || current_height == 0);
+
+    m_width = current_width;
+    m_height = current_height;
 }
 
 } // namespace inexor::vulkan_renderer::wrapper::window

@@ -35,14 +35,14 @@ public:
     Fence &operator=(const Fence &) = delete;
     Fence &operator=(Fence &&) = delete;
 
-    [[nodiscard]] VkFence get() const {
-        return m_fence;
-    }
-
     /// @brief Block fence by calling vkWaitForFences and wait until fence condition is fulfilled.
     /// @param timeout_limit The time to wait in milliseconds. If no time is specified, the numeric maximum value
     /// is used.
     void block(std::uint64_t timeout_limit = std::numeric_limits<std::uint64_t>::max()) const;
+
+    [[nodiscard]] auto fence() const {
+        return m_fence;
+    }
 
     /// @brief Call vkResetFences.
     void reset() const;

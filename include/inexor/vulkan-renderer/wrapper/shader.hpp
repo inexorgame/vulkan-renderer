@@ -46,20 +46,20 @@ public:
     Shader &operator=(const Shader &) = delete;
     Shader &operator=(Shader &&) = delete;
 
-    [[nodiscard]] const std::string &name() const {
-        return m_name;
-    }
-
     [[nodiscard]] const std::string &entry_point() const {
         return m_entry_point;
     }
 
-    [[nodiscard]] VkShaderStageFlagBits type() const {
-        return m_type;
+    [[nodiscard]] const std::string &name() const {
+        return m_name;
     }
 
-    [[nodiscard]] VkShaderModule module() const {
+    [[nodiscard]] VkShaderModule shader_module() const {
         return m_shader_module;
+    }
+
+    [[nodiscard]] VkShaderStageFlagBits type() const {
+        return m_type;
     }
 };
 

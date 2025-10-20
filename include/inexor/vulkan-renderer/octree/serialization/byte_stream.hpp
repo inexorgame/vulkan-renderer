@@ -15,16 +15,19 @@ protected:
 public:
     ByteStream() = default;
     explicit ByteStream(std::vector<std::uint8_t> buffer);
+
     /// Read from file.
     explicit ByteStream(const std::filesystem::path &path);
 
-    [[nodiscard]] std::size_t size() const;
     [[nodiscard]] const std::vector<std::uint8_t> &buffer() const;
+
+    [[nodiscard]] std::size_t size() const;
 };
 
 class ByteStreamReader {
 private:
     const ByteStream &m_stream;
+
     /// Stream iterator.
     std::vector<std::uint8_t>::const_iterator m_iter;
 
@@ -33,13 +36,14 @@ private:
 public:
     explicit ByteStreamReader(const ByteStream &stream);
 
-    [[nodiscard]] std::size_t remaining() const;
-    /// Skip 'size' bytes (std::uint8_t).
-    void skip(std::size_t size);
-
     /// Generic read method.
     template <typename T, typename... Args>
     [[nodiscard]] T read(const Args &...);
+
+    [[nodiscard]] std::size_t remaining() const;
+
+    /// Skip 'size' bytes (std::uint8_t).
+    void skip(std::size_t size);
 };
 
 class ByteStreamWriter : public ByteStream {

@@ -22,18 +22,18 @@ private:
 public:
     GamepadInputData() = default;
 
+    [[nodiscard]] glm::vec2 calculate_joystick_axes_delta(std::int32_t joystick);
+
+    [[nodiscard]] glm::vec2 current_joystick_axes(std::int32_t joystick);
+
+    [[nodiscard]] bool is_button_pressed(std::int32_t button, std::int32_t joystick = GLFW_JOYSTICK_1);
+
     void press_button(std::int32_t button, std::int32_t joystick = GLFW_JOYSTICK_1);
 
     void release_button(std::int32_t button, std::int32_t joystick = GLFW_JOYSTICK_1);
 
-    [[nodiscard]] bool is_button_pressed(std::int32_t button, std::int32_t joystick = GLFW_JOYSTICK_1);
-
-    [[nodiscard]] bool was_button_pressed_once(std::int32_t button, std::int32_t joystick = GLFW_JOYSTICK_1);
-
     void set_joystick_axis(std::int32_t axis, float state, std::int32_t joystick = GLFW_JOYSTICK_1);
 
-    [[nodiscard]] glm::vec2 current_joystick_axes(std::int32_t joystick);
-
-    [[nodiscard]] glm::vec2 calculate_joystick_axes_delta(std::int32_t joystick);
+    [[nodiscard]] bool was_button_pressed_once(std::int32_t button, std::int32_t joystick = GLFW_JOYSTICK_1);
 };
 } // namespace inexor::vulkan_renderer::input

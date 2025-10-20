@@ -107,66 +107,44 @@ public:
 
     /// Get child.
     std::shared_ptr<Cube> operator[](std::size_t idx);
+
     /// Get child.
     std::shared_ptr<const Cube> operator[](std::size_t idx) const; // NOLINT
-
-    /// Clone a cube, which has no relations to the current one or its children.
-    /// It will be a root cube.
-    [[nodiscard]] std::shared_ptr<Cube> clone() const;
-
-    /// Is the current cube root.
-    [[nodiscard]] bool is_root() const noexcept;
-    /// At which child level this cube is.
-    /// root cube = 0
-    [[nodiscard]] std::size_t grid_level() const noexcept;
-    /// Count the number of Type::SOLID and Type::NORMAL cubes.
-    [[nodiscard]] std::size_t count_geometry_cubes() const noexcept;
-
-    [[nodiscard]] glm::vec3 center() const noexcept {
-        return m_position + 0.5f * m_size;
-    }
-
-    [[nodiscard]] glm::vec3 position() const noexcept {
-        return m_position;
-    }
 
     [[nodiscard]] std::array<glm::vec3, 2> bounding_box() const {
         return {m_position, {m_position.x + m_size, m_position.y + m_size, m_position.z + m_size}};
     }
 
-    [[nodiscard]] float size() const noexcept {
-        return m_size;
+    [[nodiscard]] glm::vec3 center() const noexcept {
+        return m_position + 0.5f * m_size;
     }
-
-    /// Set a new type.
-    void set_type(Type new_type);
-    /// Get type.
-    [[nodiscard]] Type type() const noexcept;
 
     /// Get children.
     [[nodiscard]] const std::array<std::shared_ptr<Cube>, Cube::SUB_CUBES> &children() const;
-    /// Get indentations.
-    [[nodiscard]] std::array<Indentation, Cube::EDGES> indentations() const noexcept;
 
-    /// Set an indent by the edge id.
-    void set_indent(std::uint8_t edge_id, Indentation indentation);
+    /// Clone a cube, which has no relations to the current one or its children.
+    /// It will be a root cube.
+    [[nodiscard]] std::shared_ptr<Cube> clone() const;
+
+    /// Count the number of Type::SOLID and Type::NORMAL cubes.
+    [[nodiscard]] std::size_t count_geometry_cubes() const noexcept;
+
+    /// At which child level this cube is.
+    /// root cube = 0
+    [[nodiscard]] std::size_t grid_level() const noexcept;
+
     /// Indent a specific edge by steps.
     /// @param positive_direction Indent in  positive axis direction.
     void indent(std::uint8_t edge_id, bool positive_direction, std::uint8_t steps);
 
-    /// Rotate the cube 90° clockwise around the given axis. Repeats with the given rotations.
-    /// @param axis Only one index should be one.
-    /// @param rotations Value does not need to be adjusted beforehand. (e.g. mod 4)
-    void rotate(const RotationAxis::Type &axis, int rotations);
+    /// Get indentations.
+    [[nodiscard]] std::array<Indentation, Cube::EDGES> indentations() const noexcept;
 
-    /// TODO: in special cases some polygons have no surface, if completely surrounded by others
-    /// \warning Will update the cache even if it is considered as valid.
-    void update_polygon_cache() const;
     /// Invalidate polygon cache.
     void invalidate_polygon_cache() const;
-    /// Recursive way to collect all the caches.
-    /// @param update_invalid If true it will update invalid polygon caches.
-    [[nodiscard]] std::vector<PolygonCache> polygons(bool update_invalid = false) const;
+
+    /// Is the current cube root.
+    [[nodiscard]] bool is_root() const noexcept;
 
     /// Get the (face) neighbor of this cube by using a similar implementation to Samets "OT_GTEQ_FACE_NEIGHBOR(P,I)".
     /// @brief Get the (face) neighbor of this cube.
@@ -178,6 +156,36 @@ public:
     /// (https://web.archive.org/web/20190712063957/http://www.cs.umd.edu/~hjs/pubs/SameCVGIP89.pdf)
     /// Computer Vision, Graphics, and Image Processing. 46 (3), 367-386.
     [[nodiscard]] std::shared_ptr<Cube> neighbor(NeighborAxis axis, NeighborDirection direction);
+
+    /// Recursive way to collect all the caches.
+    /// @param update_invalid If true it will update invalid polygon caches.
+    [[nodiscard]] std::vector<PolygonCache> polygons(bool update_invalid = false) const;
+
+    [[nodiscard]] glm::vec3 position() const noexcept {
+        return m_position;
+    }
+
+    /// Rotate the cube 90° clockwise around the given axis. Repeats with the given rotations.
+    /// @param axis Only one index should be one.
+    /// @param rotations Value does not need to be adjusted beforehand. (e.g. mod 4)
+    void rotate(const RotationAxis::Type &axis, int rotations);
+
+    /// Set an indent by the edge id.
+    void set_indent(std::uint8_t edge_id, Indentation indentation);
+
+    /// Set a new type.
+    void set_type(Type new_type);
+
+    [[nodiscard]] float size() const noexcept {
+        return m_size;
+    }
+
+    /// Get type.
+    [[nodiscard]] Type type() const noexcept;
+
+    /// TODO: in special cases some polygons have no surface, if completely surrounded by others
+    /// \warning Will update the cache even if it is considered as valid.
+    void update_polygon_cache() const;
 };
 
 /// @brief Construct a randomly generated cube world.

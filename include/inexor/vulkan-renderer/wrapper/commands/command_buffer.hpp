@@ -81,6 +81,10 @@ class CommandBuffer {
     /// @return A const reference to the this pointer (allowing method calls to be chained)
     const CommandBuffer &end_command_buffer() const; // NOLINT
 
+    /// Set the internal debug name of the command buffer.
+    /// @param name The name of the command buffer.
+    void set_debug_name(const std::string &name);
+
 public:
     /// Default constructor
     /// @param device A const reference to the device wrapper class
@@ -337,16 +341,12 @@ public:
     // Graphics commands
     // TODO(): Switch to taking in OOP wrappers when we have them (e.g. bind_vertex_buffers takes in a VertexBuffer)
 
-    [[nodiscard]] VkCommandBuffer get() const {
+    [[nodiscard]] auto cmd_buffer() const {
         return m_command_buffer;
     }
 
     [[nodiscard]] const Fence &get_wait_fence() const {
         return *m_wait_fence;
-    }
-
-    [[nodiscard]] const VkCommandBuffer *ptr() const {
-        return &m_command_buffer;
     }
 
     /// Call the reset method of the Fence member

@@ -4,6 +4,11 @@
 #include <spdlog/spdlog.h>
 
 namespace inexor::vulkan_renderer::input {
+
+void Input::cursor_position_callback(GLFWwindow * /*window*/, double x_pos, double y_pos) {
+    m_kbm_data.set_cursor_pos(x_pos, y_pos);
+}
+
 void Input::key_callback(GLFWwindow * /*window*/, int key, int /*scancode*/, int action, int /*mods*/) {
     if (key < 0 || key > GLFW_KEY_LAST) {
         return;
@@ -19,10 +24,6 @@ void Input::key_callback(GLFWwindow * /*window*/, int key, int /*scancode*/, int
     default:
         break;
     }
-}
-
-void Input::cursor_position_callback(GLFWwindow * /*window*/, double x_pos, double y_pos) {
-    m_kbm_data.set_cursor_pos(x_pos, y_pos);
 }
 
 void Input::mouse_button_callback(GLFWwindow * /*window*/, int button, int action, int /*mods*/) {
@@ -46,6 +47,11 @@ void Input::mouse_scroll_callback(GLFWwindow * /*window*/, double /*x_offset*/, 
     m_kbm_data.set_mouse_wheel_offset(y_offset);
 }
 
+void Input::update() {
+    glfwPollEvents();
+    update_gamepad_data();
+}
+
 void Input::update_gamepad_data() {
     if (glfwJoystickIsGamepad(GLFW_JOYSTICK_1) != 1) {
         return;
@@ -66,8 +72,4 @@ void Input::update_gamepad_data() {
     }
 }
 
-void Input::update() {
-    glfwPollEvents();
-    update_gamepad_data();
-}
 } // namespace inexor::vulkan_renderer::input
