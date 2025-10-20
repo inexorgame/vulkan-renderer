@@ -22,8 +22,10 @@ CommandBuffer::CommandBuffer(const Device &device, const VkCommandPool cmd_pool,
 
     if (const auto result = vkAllocateCommandBuffers(m_device.device(), &cmd_buf_ai, &m_command_buffer);
         result != VK_SUCCESS) {
-        throw VulkanException("Error: vkAllocateCommandBuffers failed!", result);
+        throw VulkanException("Error: vkAllocateCommandBuffers failed!", result, m_name);
     }
+
+    m_device.set_debug_marker_name(&m_command_buffer, VK_DEBUG_REPORT_OBJECT_TYPE_COMMAND_BUFFER_EXT, m_name);
 
     m_wait_fence = std::make_unique<Fence>(m_device, m_name, false);
 }

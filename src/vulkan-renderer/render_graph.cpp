@@ -91,7 +91,7 @@ void RenderGraph::build_buffer(const BufferResource &buffer_resource, PhysicalBu
     if (const auto result = vmaCreateBuffer(m_device.allocator(), &buffer_ci, &alloc_ci, &physical.m_buffer,
                                             &physical.m_allocation, &physical.m_alloc_info);
         result != VK_SUCCESS) {
-        throw VulkanException("Error: Failed to create buffer!", result);
+        throw VulkanException("Error: Failed to create buffer!", result, "rendergraph buffer");
     }
 
     // TODO: Use a better naming system for memory resources inside of rendergraph
@@ -125,7 +125,7 @@ void RenderGraph::build_image(const TextureResource &texture_resource, PhysicalI
     if (const auto result = vmaCreateImage(m_device.allocator(), &image_ci, alloc_ci, &physical.m_image,
                                            &physical.m_allocation, &alloc_info);
         result != VK_SUCCESS) {
-        throw VulkanException("Error: vkCreateImage failed for rendergraph image", result);
+        throw VulkanException("Error: vkCreateImage failed!", result);
     }
 
     // TODO: Use a better naming system for memory resources inside of rendergraph
@@ -148,8 +148,7 @@ void RenderGraph::build_image_view(const TextureResource &texture_resource, Phys
 
     if (const auto result = vkCreateImageView(m_device.device(), &image_view_ci, nullptr, &physical.m_image_view);
         result != VK_SUCCESS) {
-        throw VulkanException("Error: vkCreateImageView failed for image view " + texture_resource.m_name + "!",
-                              result);
+        throw VulkanException("Error: vkCreateImageView failed!", result, texture_resource.m_name);
     }
 }
 
@@ -164,9 +163,10 @@ void RenderGraph::build_pipeline_layout(const RenderStage *stage, PhysicalStage 
     if (const auto result =
             vkCreatePipelineLayout(m_device.device(), &pipeline_layout_ci, nullptr, &physical.m_pipeline_layout);
         result != VK_SUCCESS) {
-        throw VulkanException("Error: vkCreatePipelineLayout failed for pipeline layout " + stage->name() + "!",
-                              result);
+        throw VulkanException("Error: vkCreatePipelineLayout failed!", result, stage->name());
     }
+    m_device.set_debug_marker_name(&physical.m_pipeline_layout, VK_DEBUG_REPORT_OBJECT_TYPE_PIPELINE_LAYOUT_EXT,
+                                   stage->name());
 }
 
 void RenderGraph::record_command_buffer(const RenderStage *stage, const wrapper::commands::CommandBuffer &cmd_buf,
@@ -303,8 +303,9 @@ void RenderGraph::build_render_pass(const GraphicsStage *stage, PhysicalGraphics
 
     if (const auto result = vkCreateRenderPass(m_device.device(), &render_pass_ci, nullptr, &physical.m_render_pass);
         result != VK_SUCCESS) {
-        throw VulkanException("Error: vkCreateRenderPass failed for renderpass " + stage->name() + " !", result);
+        throw VulkanException("Error: vkCreateRenderPass failed!", result, stage->name());
     }
+    m_device.set_debug_marker_name(&physical.m_render_pass, VK_DEBUG_REPORT_OBJECT_TYPE_RENDER_PASS_EXT, stage->name());
 }
 
 void RenderGraph::build_graphics_pipeline(const GraphicsStage *stage, PhysicalGraphicsStage &physical) const {
@@ -417,8 +418,9 @@ void RenderGraph::build_graphics_pipeline(const GraphicsStage *stage, PhysicalGr
     if (const auto result =
             vkCreateGraphicsPipelines(m_device.device(), nullptr, 1, &pipeline_ci, nullptr, &physical.m_pipeline);
         result != VK_SUCCESS) {
-        throw VulkanException("Error: vkCreateGraphicsPipelines failed for pipeline " + stage->name() + " !", result);
+        throw VulkanException("Error: vkCreateGraphicsPipelines failed!", result, stage->name());
     }
+    m_device.set_debug_marker_name(&physical.m_pipeline, VK_DEBUG_REPORT_OBJECT_TYPE_PIPELINE_EXT, stage->name());
 }
 
 void RenderGraph::compile(const RenderResource *target) {

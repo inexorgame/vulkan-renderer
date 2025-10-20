@@ -53,7 +53,7 @@ ResourceDescriptor::ResourceDescriptor(const Device &device,
 
     if (const auto result = vkCreateDescriptorPool(m_device.device(), &descriptor_pool_ci, nullptr, &m_descriptor_pool);
         result != VK_SUCCESS) {
-        throw VulkanException("Error: vkCreateDescriptorPool failed for descriptor pool " + m_name + " !", result);
+        throw VulkanException("Error: vkCreateDescriptorPool failed!", result, m_name);
     }
 
     m_device.set_debug_marker_name(&m_descriptor_pool, VK_DEBUG_REPORT_OBJECT_TYPE_DESCRIPTOR_POOL_EXT, m_name);
@@ -66,11 +66,11 @@ ResourceDescriptor::ResourceDescriptor(const Device &device,
     if (const auto result = vkCreateDescriptorSetLayout(m_device.device(), &descriptor_set_layout_ci, nullptr,
                                                         &m_descriptor_set_layout);
         result != VK_SUCCESS) {
-        throw VulkanException("Error: vkCreateDescriptorSetLayout failed for descriptor " + name + " !", result);
+        throw VulkanException("Error: vkCreateDescriptorSetLayout failed!", result, m_name);
     }
 
     m_device.set_debug_marker_name(&m_descriptor_set_layout, VK_DEBUG_REPORT_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT_EXT,
-                                   name);
+                                   m_name);
 
     const std::vector<VkDescriptorSetLayout> descriptor_set_layouts(1, m_descriptor_set_layout);
 
@@ -84,7 +84,7 @@ ResourceDescriptor::ResourceDescriptor(const Device &device,
 
     if (const auto result = vkAllocateDescriptorSets(device.device(), &descriptor_set_ai, m_descriptor_sets.data());
         result != VK_SUCCESS) {
-        throw VulkanException("Error: vkAllocateDescriptorSets failed for descriptor " + m_name + " !", result);
+        throw VulkanException("Error: vkAllocateDescriptorSets failed!", result, m_name);
     }
 
     for (const auto &descriptor_set : m_descriptor_sets) {

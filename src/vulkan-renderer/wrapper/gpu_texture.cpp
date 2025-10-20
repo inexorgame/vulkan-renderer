@@ -99,7 +99,7 @@ void GpuTexture::create_texture_sampler() {
 
     if (const auto result = vkCreateSampler(m_device.device(), &sampler_ci, nullptr, &m_sampler);
         result != VK_SUCCESS) {
-        throw tools::VulkanException("Error: vkCreateSampler failed for sampler " + m_name + " !", result);
+        throw tools::VulkanException("Error: vkCreateSampler failed!", result, m_name);
     }
 
     m_device.set_debug_marker_name(&m_sampler, VK_DEBUG_REPORT_OBJECT_TYPE_SAMPLER_EXT, m_name);

@@ -481,7 +481,7 @@ void Device::set_debug_marker_name(void *object, VkDebugReportObjectTypeEXT obje
     });
 
     if (const auto result = m_vk_debug_marker_set_object_name(m_device, &name_info); result != VK_SUCCESS) {
-        throw VulkanException("Failed to assign Vulkan debug marker name " + name + "!", result);
+        throw VulkanException("Error: PFN_vkDebugMarkerSetObjectNameEXT failed!", result, name);
     }
 #endif
 }
@@ -507,7 +507,7 @@ void Device::set_memory_block_attachment(void *object, VkDebugReportObjectTypeEX
     });
 
     if (const auto result = m_vk_debug_marker_set_object_tag(m_device, &tag_info); result != VK_SUCCESS) {
-        throw VulkanException("Error: Failed to assign Vulkan debug marker memory block!", result);
+        throw VulkanException("Error: PFN_vkDebugMarkerSetObjectTagEXT failed!", result);
     }
 #endif
 }

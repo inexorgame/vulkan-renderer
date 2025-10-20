@@ -40,11 +40,11 @@ GPUMemoryBuffer::GPUMemoryBuffer(const Device &device, const std::string &name, 
     if (const auto result = vmaCreateBuffer(m_device.allocator(), &buffer_ci, &m_allocation_ci, &m_buffer,
                                             &m_allocation, &m_allocation_info);
         result != VK_SUCCESS) {
-        throw VulkanException("Error: GPU memory buffer allocation for " + name + " failed!", result);
+        throw VulkanException("Error: vmaCreateBuffer failed!", result, m_name);
     }
 
     // Assign an internal debug marker name to this buffer.
-    m_device.set_debug_marker_name(m_buffer, VK_DEBUG_REPORT_OBJECT_TYPE_BUFFER_EXT, name);
+    m_device.set_debug_marker_name(m_buffer, VK_DEBUG_REPORT_OBJECT_TYPE_BUFFER_EXT, m_name);
 
     vmaSetAllocationName(m_device.allocator(), m_allocation, m_name.c_str());
 }

@@ -278,7 +278,7 @@ void Swapchain::setup_swapchain(const std::uint32_t width, const std::uint32_t h
 
         if (const auto result = vkCreateImageView(m_device.device(), &img_view_ci, nullptr, &m_img_views[img_index]);
             result != VK_SUCCESS) {
-            throw VulkanException("Error: vkCreateImageView failed for swapchain image view!", result);
+            throw VulkanException("Error: vkCreateImageView failed!", result, "swapchain image view " + img_index);
         }
         m_device.set_debug_marker_name(&m_img_views[img_index], VK_DEBUG_REPORT_OBJECT_TYPE_IMAGE_VIEW_EXT,
                                        "swapchain image view");

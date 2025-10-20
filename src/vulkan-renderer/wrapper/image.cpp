@@ -47,7 +47,7 @@ Image::Image(const Device &device, const VkFormat format, const VkImageUsageFlag
     if (const auto result = vmaCreateImage(m_device.allocator(), &image_ci, &vma_allocation_ci, &m_image, &m_allocation,
                                            &m_allocation_info);
         result != VK_SUCCESS) {
-        throw VulkanException("Error: vmaCreateImage failed for image " + m_name + "!", result);
+        throw VulkanException("Error: vmaCreateImage failed!", result, m_name);
     }
 
     vmaSetAllocationName(m_device.allocator(), m_allocation, m_name.c_str());
@@ -70,9 +70,9 @@ Image::Image(const Device &device, const VkFormat format, const VkImageUsageFlag
 
     if (const auto result = vkCreateImageView(m_device.device(), &img_view_ci, nullptr, &m_image_view);
         result != VK_SUCCESS) {
-        throw VulkanException("Error: vkCreateImageView failed for image view " + name + "!", result);
+        throw VulkanException("Error: vkCreateImageView failed!", result, m_name);
     }
-    m_device.set_debug_marker_name(&m_image_view, VK_DEBUG_REPORT_OBJECT_TYPE_IMAGE_VIEW_EXT, name);
+    m_device.set_debug_marker_name(&m_image_view, VK_DEBUG_REPORT_OBJECT_TYPE_IMAGE_VIEW_EXT, m_name);
 }
 
 Image::Image(Image &&other) noexcept : m_device(other.m_device) {
