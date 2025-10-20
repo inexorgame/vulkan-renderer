@@ -343,7 +343,7 @@ Application::Application(int argc, char **argv) {
 
     const auto physical_devices = tools::get_physical_devices(m_instance->instance());
     if (preferred_graphics_card && *preferred_graphics_card >= physical_devices.size()) {
-        spdlog::critical("GPU index {} out of range!", *preferred_graphics_card);
+        spdlog::critical("GPU index {} is out of range!", *preferred_graphics_card);
         // TODO: This should not be an exception. Use default gpu selection mechanism instead and print a warning.
         throw std::runtime_error("Invalid GPU index");
     }
@@ -363,7 +363,7 @@ Application::Application(int argc, char **argv) {
 
 #ifndef NDEBUG
     if (enable_debug_marker_device_extension) {
-        required_extensions.push_back(VK_EXT_DEBUG_MARKER_EXTENSION_NAME);
+        required_extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
     }
 #endif
 
