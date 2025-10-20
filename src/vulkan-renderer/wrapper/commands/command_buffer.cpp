@@ -316,7 +316,8 @@ const CommandBuffer &CommandBuffer::submit_and_wait(const std::span<const VkSubm
     return *this;
 }
 
-const CommandBuffer &CommandBuffer::submit_and_wait(const VkSubmitInfo submit_info) const {
+const CommandBuffer &CommandBuffer::submit_and_wait(VkSubmitInfo submit_info) const {
+    submit_info.pCommandBuffers = &m_command_buffer;
     return submit_and_wait({&submit_info, 1});
 }
 
@@ -325,6 +326,10 @@ const CommandBuffer &CommandBuffer::submit_and_wait() const {
         .commandBufferCount = 1,
         .pCommandBuffers = &m_command_buffer,
     }));
+}
+
+void CommandBuffer::set_debug_name(const std::string &name) {
+    m_device.set_debug_marker_name(&m_command_buffer, VK_DEBUG_REPORT_OBJECT_TYPE_COMMAND_BUFFER_EXT, name);
 }
 
 } // namespace inexor::vulkan_renderer::wrapper::commands

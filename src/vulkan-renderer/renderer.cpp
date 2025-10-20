@@ -66,11 +66,9 @@ void VulkanRenderer::recreate_swapchain() {
     // Query the framebuffer size here again although the window width is set during framebuffer resize callback
     // The reason for this is that the framebuffer size could already be different again because we missed a poll
     // This seems to be an issue on Linux only though
-    int window_width = 0;
-    int window_height = 0;
-    // TODO: This should be abstracted itno a method of the Window wrapper.
-    glfwGetFramebufferSize(m_window->window(), &window_width, &window_height);
+    auto [window_width, window_height] = m_window->get_framebuffer_size();
 
+    // TODO: This should be abstracted itno a method of the Window wrapper.
     // TODO: This is quite naive, we don't need to recompile the whole render graph on swapchain invalidation.
     m_render_graph.reset();
     // Recreate the swapchain
@@ -109,7 +107,6 @@ void VulkanRenderer::render_frame() {
         .pWaitSemaphores = m_swapchain->image_available_semaphore(),
         .pWaitDstStageMask = stage_mask.data(),
         .commandBufferCount = 1,
-        .pCommandBuffers = cmd_buf.cmd_buffer_ptr(),
     }));
 
     m_swapchain->present(image_index);

@@ -2,6 +2,7 @@
 
 #include <GLFW/glfw3.h>
 
+#include <array>
 #include <cstdint>
 #include <string>
 
@@ -86,6 +87,13 @@ public:
 
     [[nodiscard]] Mode mode() const {
         return m_mode;
+    }
+
+    [[nodiscard]] std::array<int, 2> get_framebuffer_size() const {
+        int width = 0;
+        int height = 0;
+        glfwGetFramebufferSize(m_window, &width, &height);
+        return {width, height};
     }
 };
 

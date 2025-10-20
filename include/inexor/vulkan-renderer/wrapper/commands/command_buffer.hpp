@@ -81,6 +81,10 @@ class CommandBuffer {
     /// @return A const reference to the this pointer (allowing method calls to be chained)
     const CommandBuffer &end_command_buffer() const; // NOLINT
 
+    /// Set the internal debug name of the command buffer.
+    /// @param name The name of the command buffer.
+    void set_debug_name(const std::string &name);
+
 public:
     /// Default constructor
     /// @param device A const reference to the device wrapper class
@@ -339,11 +343,6 @@ public:
 
     [[nodiscard]] auto cmd_buffer() const {
         return m_command_buffer;
-    }
-
-    // TODO: Instead of exposing this, there should be a private "set_name" method which only CommandPool can access!
-    [[nodiscard]] auto cmd_buffer_ptr() const {
-        return &m_command_buffer;
     }
 
     [[nodiscard]] const Fence &get_wait_fence() const {
