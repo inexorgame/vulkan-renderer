@@ -73,8 +73,8 @@ bool Instance::is_extension_supported(const std::string &extension_name) {
 
 Instance::Instance(const std::string &application_name, const std::string &engine_name,
                    const std::uint32_t application_version, const std::uint32_t engine_version,
-                   bool enable_validation_layers, bool enable_renderdoc_layer,
-                   const std::vector<std::string> &requested_instance_extensions,
+                   const PFN_vkDebugUtilsMessengerCallbackEXT debug_callback, bool enable_validation_layers,
+                   bool enable_renderdoc_layer, const std::vector<std::string> &requested_instance_extensions,
                    const std::vector<std::string> &requested_instance_layers) {
     assert(!application_name.empty());
     assert(!engine_name.empty());
@@ -238,19 +238,46 @@ Instance::Instance(const std::string &application_name, const std::string &engin
     }
 
     volkLoadInstanceOnly(m_instance);
+
+    // Note that we can only call is_extension_supported afer volkLoadInstanceOnly!
+    if (!is_extension_supported(VK_EXT_DEBUG_UTILS_EXTENSION_NAME)) {
+        // Don't forget to destroy the instance before throwing the exception!
+        vkDestroyInstance(m_instance, nullptr);
+        throw tools::InexorException("Error: VK_EXT_DEBUG_UTILS_EXTENSION_NAME is not supported!");
+    }
+
+    const auto dbg_messenger_ci = make_info<VkDebugUtilsMessengerCreateInfoEXT>({
+        .messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT |
+                           VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT |
+                           VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT,
+        .messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT |
+                       VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT,
+        .pfnUserCallback = debug_callback,
+        .pUserData = nullptr,
+    });
+
+    if (const auto result = vkCreateDebugUtilsMessengerEXT(m_instance, &dbg_messenger_ci, nullptr, &m_debug_callback);
+        result != VK_SUCCESS) {
+        // Don't forget to destroy the instance before throwing the exception!
+        vkDestroyInstance(m_instance, nullptr);
+        throw VulkanException("Error: vkCreateDebugUtilsMessengerEXT failed!", result);
+    }
 }
 
 Instance::Instance(const std::string &application_name, const std::string &engine_name,
                    const std::uint32_t application_version, const std::uint32_t engine_version,
-                   bool enable_validation_layers, bool enable_renderdoc_layer)
-    : Instance(application_name, engine_name, application_version, engine_version, enable_validation_layers,
-               enable_renderdoc_layer, {}, {}) {}
+                   const PFN_vkDebugUtilsMessengerCallbackEXT debug_callback, bool enable_validation_layers,
+                   bool enable_renderdoc_layer)
+    : Instance(application_name, engine_name, application_version, engine_version, debug_callback,
+               enable_validation_layers, enable_renderdoc_layer, {}, {}) {}
 
 Instance::Instance(Instance &&other) noexcept {
     m_instance = std::exchange(other.m_instance, nullptr);
+    m_debug_callback = std::exchange(other.m_debug_callback, nullptr);
 }
 
 Instance::~Instance() {
+    vkDestroyDebugUtilsMessengerEXT(m_instance, m_debug_callback, nullptr);
     vkDestroyInstance(m_instance, nullptr);
 }
 

@@ -25,7 +25,7 @@ CommandBuffer::CommandBuffer(const Device &device, const VkCommandPool cmd_pool,
         throw VulkanException("Error: vkAllocateCommandBuffers failed!", result, m_name);
     }
 
-    m_device.set_debug_marker_name(&m_command_buffer, VK_DEBUG_REPORT_OBJECT_TYPE_COMMAND_BUFFER_EXT, m_name);
+    m_device.set_debug_name(m_command_buffer, m_name);
 
     m_wait_fence = std::make_unique<Fence>(m_device, m_name, false);
 }
@@ -331,7 +331,7 @@ const CommandBuffer &CommandBuffer::submit_and_wait() const {
 }
 
 void CommandBuffer::set_debug_name(const std::string &name) {
-    m_device.set_debug_marker_name(&m_command_buffer, VK_DEBUG_REPORT_OBJECT_TYPE_COMMAND_BUFFER_EXT, name);
+    m_device.set_debug_name(m_command_buffer, name);
 }
 
 } // namespace inexor::vulkan_renderer::wrapper::commands

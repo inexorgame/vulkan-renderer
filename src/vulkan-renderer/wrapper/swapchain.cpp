@@ -280,8 +280,7 @@ void Swapchain::setup_swapchain(const std::uint32_t width, const std::uint32_t h
             result != VK_SUCCESS) {
             throw VulkanException("Error: vkCreateImageView failed!", result, "swapchain image view " + img_index);
         }
-        m_device.set_debug_marker_name(&m_img_views[img_index], VK_DEBUG_REPORT_OBJECT_TYPE_IMAGE_VIEW_EXT,
-                                       "swapchain image view");
+        m_device.set_debug_name(m_img_views[img_index], "swapchain image view");
     }
 }
 

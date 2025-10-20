@@ -35,7 +35,7 @@ Shader::Shader(const Device &device, const VkShaderStageFlagBits type, const std
         result != VK_SUCCESS) {
         throw tools::VulkanException("Error: vkCreateShaderModule failed!", result, m_name);
     }
-    m_device.set_debug_marker_name(&m_shader_module, VK_DEBUG_REPORT_OBJECT_TYPE_SHADER_MODULE_EXT, m_name);
+    m_device.set_debug_name(m_shader_module, m_name);
 }
 
 Shader::Shader(Shader &&other) noexcept : m_device(other.m_device) {

@@ -22,7 +22,7 @@ Fence::Fence(const Device &device, const std::string &name, const bool in_signal
     if (const auto result = vkCreateFence(m_device.device(), &fence_ci, nullptr, &m_fence); result != VK_SUCCESS) {
         throw tools::VulkanException("Error: vkCreateFence failed!", result, m_name);
     }
-    m_device.set_debug_marker_name(&m_fence, VK_DEBUG_REPORT_OBJECT_TYPE_FENCE_EXT, m_name);
+    m_device.set_debug_name(m_fence, m_name);
 }
 
 Fence::Fence(Fence &&other) noexcept : m_device(other.m_device) {

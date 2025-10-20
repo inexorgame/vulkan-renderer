@@ -53,7 +53,7 @@ Image::Image(const Device &device, const VkFormat format, const VkImageUsageFlag
     vmaSetAllocationName(m_device.allocator(), m_allocation, m_name.c_str());
 
     // Assign an internal name using Vulkan debug markers.
-    m_device.set_debug_marker_name(m_image, VK_DEBUG_REPORT_OBJECT_TYPE_IMAGE_EXT, m_name);
+    m_device.set_debug_name(m_image, m_name);
 
     const auto img_view_ci = make_info<VkImageViewCreateInfo>({
         .image = m_image,
@@ -72,7 +72,7 @@ Image::Image(const Device &device, const VkFormat format, const VkImageUsageFlag
         result != VK_SUCCESS) {
         throw VulkanException("Error: vkCreateImageView failed!", result, m_name);
     }
-    m_device.set_debug_marker_name(&m_image_view, VK_DEBUG_REPORT_OBJECT_TYPE_IMAGE_VIEW_EXT, m_name);
+    m_device.set_debug_name(m_image_view, m_name);
 }
 
 Image::Image(Image &&other) noexcept : m_device(other.m_device) {

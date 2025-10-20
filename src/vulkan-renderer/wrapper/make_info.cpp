@@ -59,6 +59,18 @@ VkDebugReportCallbackCreateInfoEXT make_info(VkDebugReportCallbackCreateInfoEXT 
 }
 
 template <>
+VkDebugUtilsMessengerCreateInfoEXT make_info(VkDebugUtilsMessengerCreateInfoEXT info) {
+    info.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
+    return info;
+}
+
+template <>
+VkDebugUtilsObjectNameInfoEXT make_info(VkDebugUtilsObjectNameInfoEXT info) {
+    info.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT;
+    return info;
+}
+
+template <>
 VkDescriptorPoolCreateInfo make_info(VkDescriptorPoolCreateInfo info) {
     info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
     return info;

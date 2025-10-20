@@ -165,8 +165,7 @@ void RenderGraph::build_pipeline_layout(const RenderStage *stage, PhysicalStage 
         result != VK_SUCCESS) {
         throw VulkanException("Error: vkCreatePipelineLayout failed!", result, stage->name());
     }
-    m_device.set_debug_marker_name(&physical.m_pipeline_layout, VK_DEBUG_REPORT_OBJECT_TYPE_PIPELINE_LAYOUT_EXT,
-                                   stage->name());
+    m_device.set_debug_name(physical.m_pipeline_layout, stage->name());
 }
 
 void RenderGraph::record_command_buffer(const RenderStage *stage, const wrapper::commands::CommandBuffer &cmd_buf,
@@ -305,7 +304,7 @@ void RenderGraph::build_render_pass(const GraphicsStage *stage, PhysicalGraphics
         result != VK_SUCCESS) {
         throw VulkanException("Error: vkCreateRenderPass failed!", result, stage->name());
     }
-    m_device.set_debug_marker_name(&physical.m_render_pass, VK_DEBUG_REPORT_OBJECT_TYPE_RENDER_PASS_EXT, stage->name());
+    m_device.set_debug_name(physical.m_render_pass, stage->name());
 }
 
 void RenderGraph::build_graphics_pipeline(const GraphicsStage *stage, PhysicalGraphicsStage &physical) const {
@@ -420,7 +419,7 @@ void RenderGraph::build_graphics_pipeline(const GraphicsStage *stage, PhysicalGr
         result != VK_SUCCESS) {
         throw VulkanException("Error: vkCreateGraphicsPipelines failed!", result, stage->name());
     }
-    m_device.set_debug_marker_name(&physical.m_pipeline, VK_DEBUG_REPORT_OBJECT_TYPE_PIPELINE_EXT, stage->name());
+    m_device.set_debug_name(physical.m_pipeline, stage->name());
 }
 
 void RenderGraph::compile(const RenderResource *target) {

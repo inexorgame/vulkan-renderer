@@ -18,7 +18,7 @@ Semaphore::Semaphore(const Device &device, const std::string &name) : m_device(d
         result != VK_SUCCESS) {
         throw tools::VulkanException("Error: vkCreateSemaphore failed!", result, m_name);
     }
-    m_device.set_debug_marker_name(&m_semaphore, VK_DEBUG_REPORT_OBJECT_TYPE_SEMAPHORE_EXT, m_name);
+    m_device.set_debug_name(m_semaphore, m_name);
 }
 
 Semaphore::Semaphore(Semaphore &&other) noexcept : m_device(other.m_device) {

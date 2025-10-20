@@ -44,7 +44,7 @@ GPUMemoryBuffer::GPUMemoryBuffer(const Device &device, const std::string &name, 
     }
 
     // Assign an internal debug marker name to this buffer.
-    m_device.set_debug_marker_name(m_buffer, VK_DEBUG_REPORT_OBJECT_TYPE_BUFFER_EXT, m_name);
+    m_device.set_debug_name(m_buffer, m_name);
 
     vmaSetAllocationName(m_device.allocator(), m_allocation, m_name.c_str());
 }

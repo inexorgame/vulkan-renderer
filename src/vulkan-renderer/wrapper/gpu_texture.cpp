@@ -102,7 +102,7 @@ void GpuTexture::create_texture_sampler() {
         throw tools::VulkanException("Error: vkCreateSampler failed!", result, m_name);
     }
 
-    m_device.set_debug_marker_name(&m_sampler, VK_DEBUG_REPORT_OBJECT_TYPE_SAMPLER_EXT, m_name);
+    m_device.set_debug_name(m_sampler, m_name);
 }
 
 } // namespace inexor::vulkan_renderer::wrapper
