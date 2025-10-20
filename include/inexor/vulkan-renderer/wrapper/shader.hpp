@@ -58,7 +58,7 @@ public:
         return m_type;
     }
 
-    [[nodiscard]] VkShaderModule module() const {
+    [[nodiscard]] VkShaderModule shader_module() const {
         return m_shader_module;
     }
 };

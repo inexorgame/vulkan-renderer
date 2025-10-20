@@ -68,7 +68,8 @@ void VulkanRenderer::recreate_swapchain() {
     // This seems to be an issue on Linux only though
     int window_width = 0;
     int window_height = 0;
-    glfwGetFramebufferSize(m_window->get(), &window_width, &window_height);
+    // TODO: This should be abstracted itno a method of the Window wrapper.
+    glfwGetFramebufferSize(m_window->window(), &window_width, &window_height);
 
     // TODO: This is quite naive, we don't need to recompile the whole render graph on swapchain invalidation.
     m_render_graph.reset();
@@ -108,7 +109,7 @@ void VulkanRenderer::render_frame() {
         .pWaitSemaphores = m_swapchain->image_available_semaphore(),
         .pWaitDstStageMask = stage_mask.data(),
         .commandBufferCount = 1,
-        .pCommandBuffers = cmd_buf.ptr(),
+        .pCommandBuffers = cmd_buf.cmd_buffer_ptr(),
     }));
 
     m_swapchain->present(image_index);

@@ -35,7 +35,7 @@ public:
     Fence &operator=(const Fence &) = delete;
     Fence &operator=(Fence &&) = delete;
 
-    [[nodiscard]] VkFence get() const {
+    [[nodiscard]] auto fence() const {
         return m_fence;
     }
 

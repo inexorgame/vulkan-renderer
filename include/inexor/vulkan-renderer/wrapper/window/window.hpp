@@ -72,7 +72,7 @@ public:
     /// @return ``true`` if the window will be closed.
     bool should_close();
 
-    [[nodiscard]] GLFWwindow *get() const {
+    [[nodiscard]] auto window() const {
         return m_window;
     }
 

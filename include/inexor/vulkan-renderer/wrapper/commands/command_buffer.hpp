@@ -337,16 +337,17 @@ public:
     // Graphics commands
     // TODO(): Switch to taking in OOP wrappers when we have them (e.g. bind_vertex_buffers takes in a VertexBuffer)
 
-    [[nodiscard]] VkCommandBuffer get() const {
+    [[nodiscard]] auto cmd_buffer() const {
         return m_command_buffer;
+    }
+
+    // TODO: Instead of exposing this, there should be a private "set_name" method which only CommandPool can access!
+    [[nodiscard]] auto cmd_buffer_ptr() const {
+        return &m_command_buffer;
     }
 
     [[nodiscard]] const Fence &get_wait_fence() const {
         return *m_wait_fence;
-    }
-
-    [[nodiscard]] const VkCommandBuffer *ptr() const {
-        return &m_command_buffer;
     }
 
     /// Call the reset method of the Fence member

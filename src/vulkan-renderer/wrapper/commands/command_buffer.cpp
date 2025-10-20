@@ -293,7 +293,7 @@ const CommandBuffer &CommandBuffer::submit(const std::span<const VkSubmitInfo> s
     end_command_buffer();
 
     if (const auto result = vkQueueSubmit(m_device.graphics_queue(), static_cast<std::uint32_t>(submit_infos.size()),
-                                          submit_infos.data(), m_wait_fence->get())) {
+                                          submit_infos.data(), m_wait_fence->fence())) {
         throw VulkanException("Error: vkQueueSubmit failed!", result);
     }
     return *this;

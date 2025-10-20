@@ -110,7 +110,7 @@ public:
     Device &operator=(const Device &) = delete;
     Device &operator=(Device &&) = delete;
 
-    [[nodiscard]] VkDevice device() const {
+    [[nodiscard]] auto device() const {
         return m_device;
     }
 

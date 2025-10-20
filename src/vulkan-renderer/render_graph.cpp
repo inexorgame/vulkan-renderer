@@ -42,7 +42,7 @@ void GraphicsStage::bind_buffer(const BufferResource *buffer, const std::uint32_
 void GraphicsStage::uses_shader(const wrapper::Shader &shader) {
     m_shaders.push_back(wrapper::make_info<VkPipelineShaderStageCreateInfo>({
         .stage = shader.type(),
-        .module = shader.module(),
+        .module = shader.shader_module(),
         .pName = shader.entry_point().c_str(),
     }));
 }
@@ -187,7 +187,7 @@ void RenderGraph::record_command_buffer(const RenderStage *stage, const wrapper:
 
         cmd_buf.begin_render_pass(wrapper::make_info<VkRenderPassBeginInfo>({
             .renderPass = phys_graphics_stage->m_render_pass,
-            .framebuffer = phys_graphics_stage->m_framebuffers.at(image_index).get(),
+            .framebuffer = phys_graphics_stage->m_framebuffers.at(image_index).framebuffer(),
             .renderArea{
                 .extent = m_swapchain.extent(),
             },

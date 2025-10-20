@@ -37,12 +37,8 @@ public:
     CommandPool &operator=(const CommandPool &) = delete;
     CommandPool &operator=(CommandPool &&) = delete;
 
-    [[nodiscard]] VkCommandPool get() const {
+    [[nodiscard]] auto cmd_pool() const {
         return m_cmd_pool;
-    }
-
-    [[nodiscard]] const VkCommandPool *ptr() const {
-        return &m_cmd_pool;
     }
 
     /// Request a command buffer
