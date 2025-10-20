@@ -77,7 +77,7 @@ bool is_device_suitable(const DeviceInfo &info, const VkPhysicalDeviceFeatures &
     for (std::size_t i = 0; i < FEATURE_COUNT; i++) {
         if (comparable_required_features[i] == VK_TRUE && comparable_available_features[i] == VK_FALSE) {
             if (print_info) {
-                spdlog::info("Physical device {} does not support {}!", info.name,
+                spdlog::warn("Physical device {} does not support {}!", info.name,
                              tools::get_device_feature_description(i));
             }
             return false;
@@ -87,7 +87,7 @@ bool is_device_suitable(const DeviceInfo &info, const VkPhysicalDeviceFeatures &
     for (const auto &extension : required_extensions) {
         if (!is_extension_supported(info.extensions, extension)) {
             if (print_info) {
-                spdlog::info("Physical device {} does not support extension {}!", info.name, extension);
+                spdlog::warn("Physical device {} does not support extension {}!", info.name, extension);
             }
             return false;
         }
@@ -202,8 +202,10 @@ Device::Device(const Instance &inst, const VkSurfaceKHR surface, const bool pref
                const VkPhysicalDeviceFeatures &required_features, const VkPhysicalDeviceFeatures &optional_features)
     : m_physical_device(physical_device) {
 
-    if (!is_device_suitable(build_device_info(physical_device, surface), required_features, required_extensions)) {
-        throw std::runtime_error("Error: The chosen physical device {} is not suitable!");
+    const auto device_info = build_device_info(physical_device, surface);
+
+    if (!is_device_suitable(device_info, required_features, required_extensions, true)) {
+        throw std::runtime_error("Error: The chosen physical device " + device_info.name + " is not suitable!");
     }
 
     m_gpu_name = tools::get_physical_device_name(m_physical_device);
