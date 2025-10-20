@@ -63,9 +63,6 @@ class CommandLineArgumentParser {
         // Disables vulkan debug markers (even if --renderdoc is specified).
         {"--no-vk-debug-markers", false},
 
-        // Enables the RenderDoc debug layer.
-        {"--renderdoc", false},
-
         // Enables vertical synchronisation (limits FPS to monitor refresh rate).
         {"--vsync", false},
 
