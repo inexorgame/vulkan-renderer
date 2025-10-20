@@ -43,16 +43,6 @@ public:
     // TODO: Support uniform buffer offset in VkDescriptorBufferInfo.
     // TODO: Offer overloaded methods which expose more fields of the structures.
 
-    /// @brief Adds a uniform buffer to the descriptor container.
-    /// @tparam T The type of the uniform buffer.
-    /// @param uniform_buffer The uniform buffer which contains the data which will be accessed by the shader.
-    /// @param binding The binding index which will be used in the SPIR-V shader.
-    /// @param shader_stage The shader stage the uniform buffer will be used in, most likely the vertex shader.
-    /// @return A const reference to this DescriptorBuilder instance.
-    template <typename T>
-    DescriptorBuilder &add_uniform_buffer(VkBuffer uniform_buffer, std::uint32_t binding,
-                                          VkShaderStageFlagBits shader_stage = VK_SHADER_STAGE_VERTEX_BIT);
-
     /// @brief Adds a combined image sampler to the descriptor container.
     /// @param image_sampler The pointer to the combined image sampler.
     /// @param image_view The pointer to the image view.
@@ -62,6 +52,16 @@ public:
     DescriptorBuilder &add_combined_image_sampler(VkSampler image_sampler, VkImageView image_view,
                                                   std::uint32_t binding,
                                                   VkShaderStageFlagBits shader_stage = VK_SHADER_STAGE_FRAGMENT_BIT);
+
+    /// @brief Adds a uniform buffer to the descriptor container.
+    /// @tparam T The type of the uniform buffer.
+    /// @param uniform_buffer The uniform buffer which contains the data which will be accessed by the shader.
+    /// @param binding The binding index which will be used in the SPIR-V shader.
+    /// @param shader_stage The shader stage the uniform buffer will be used in, most likely the vertex shader.
+    /// @return A const reference to this DescriptorBuilder instance.
+    template <typename T>
+    DescriptorBuilder &add_uniform_buffer(VkBuffer uniform_buffer, std::uint32_t binding,
+                                          VkShaderStageFlagBits shader_stage = VK_SHADER_STAGE_VERTEX_BIT);
 
     /// @brief Builds the resource descriptor.
     /// @param name The internal name of the resource descriptor.

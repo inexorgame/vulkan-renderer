@@ -39,20 +39,20 @@ public:
         return m_cube;
     }
 
-    [[nodiscard]] const glm::vec3 &intersection() const noexcept {
-        return m_intersection;
-    }
-
-    [[nodiscard]] const glm::vec3 &face() const noexcept {
-        return m_selected_face;
-    }
-
     [[nodiscard]] const glm::vec3 &corner() const noexcept {
         return m_nearest_corner;
     }
 
     [[nodiscard]] const glm::vec3 &edge() const noexcept {
         return m_nearest_edge;
+    }
+
+    [[nodiscard]] const glm::vec3 &face() const noexcept {
+        return m_selected_face;
+    }
+
+    [[nodiscard]] const glm::vec3 &intersection() const noexcept {
+        return m_intersection;
     }
 };
 

@@ -83,11 +83,11 @@ private:
     bool m_update_view_matrix{false};
     bool m_update_perspective_matrix{false};
 
-    void update_vectors();
+    [[nodiscard]] bool is_moving() const;
 
     void update_matrices();
 
-    [[nodiscard]] bool is_moving() const;
+    void update_vectors();
 
 public:
     /// @brief Default constructor.
@@ -100,6 +100,105 @@ public:
 
     // TODO: Add more overloaded constructors.
 
+    [[nodiscard]] float aspect_ratio() const {
+        return m_aspect_ratio;
+    }
+
+    /// @brief Change the zoom of the camera.
+    /// @param offset The mouse wheel offset change.
+    void change_zoom(float offset);
+
+    [[nodiscard]] float far_plane() const {
+        return m_far_plane;
+    }
+
+    [[nodiscard]] float fov() const {
+        return m_fov;
+    }
+
+    [[nodiscard]] const glm::vec3 &front() const {
+        return m_front;
+    }
+
+    [[nodiscard]] float movement_speed() const {
+        return m_movement_speed;
+    }
+
+    [[nodiscard]] float near_plane() const {
+        return m_near_plane;
+    }
+
+    [[nodiscard]] const glm::mat4 &perspective_matrix() {
+        update_matrices();
+        return m_perspective_matrix;
+    }
+
+    [[nodiscard]] float pitch() const {
+        return m_pitch;
+    }
+
+    [[nodiscard]] const glm::vec3 &position() const {
+        return m_position;
+    }
+
+    [[nodiscard]] const glm::vec3 &right() const {
+        return m_right;
+    }
+
+    [[nodiscard]] float roll() const {
+        return m_roll;
+    }
+
+    /// @brief Rotates the camera around x, y, and z axis.
+    /// @param delta_yaw The yaw angle.
+    /// @param delta_pitch The pitch angle.
+    /// @param delta_roll The roll angle.
+    void rotate(float delta_yaw, float delta_pitch, float delta_roll = 0.0f);
+
+    [[nodiscard]] const glm::vec3 &rotation() const {
+        return m_front;
+    }
+
+    [[nodiscard]] float rotation_speed() const {
+        return m_rotation_speed;
+    }
+
+    /// @brief Set the aspect ratio (window width divided by window height) of the camera view matrix.
+    /// @param width The width of the window.
+    /// @param height The height of the window.
+    void set_aspect_ratio(float width, float height);
+
+    /// @brief Set the far plane distance of the camera.
+    /// @param far_plane The far plane distance.
+    void set_far_plane(float far_plane);
+
+    /// @brief Set the movement speed of the camera.
+    /// @param speed The movement speed of the camera.
+    void set_movement_speed(float speed);
+
+    /// @brief Notify the camera if a certain key is pressed or released.
+    /// @param key The key which was pressed or released.
+    /// @param pressed ``true`` if the key is pressed.
+    void set_movement_state(CameraMovement key, bool pressed);
+
+    /// @brief Set the near plane distance of the camera.
+    /// @param near_plane The near plane distance.
+    void set_near_plane(float near_plane);
+
+    /// @brief Set the position of the camera.
+    /// @param position The position of the camera.
+    void set_position(glm::vec3 position);
+
+    /// @brief Set the camera's rotation.
+    /// @param yaw The yaw angle.
+    /// @param pitch The pitch angle.
+    /// @param roll The roll angle.
+    void set_rotation(float yaw, float pitch, float roll);
+
+    /// @brief Set the rotation speed of the camera.
+    /// @param speed The rotation speed of the camera.
+    void set_rotation_speed(float speed);
+
     /// @brief Set the camera type.
     /// @note We will implement more camera types in the future.
     /// @param type The camera type.
@@ -109,107 +208,9 @@ public:
         return m_type;
     }
 
-    /// @brief Notify the camera if a certain key is pressed or released.
-    /// @param key The key which was pressed or released.
-    /// @param pressed ``true`` if the key is pressed.
-    void set_movement_state(CameraMovement key, bool pressed);
-
-    /// @brief Set the position of the camera.
-    /// @param position The position of the camera.
-    void set_position(glm::vec3 position);
-
-    [[nodiscard]] const glm::vec3 &position() const {
-        return m_position;
-    }
-
-    /// @brief Set the aspect ratio (window width divided by window height) of the camera view matrix.
-    /// @param width The width of the window.
-    /// @param height The height of the window.
-    void set_aspect_ratio(float width, float height);
-
-    [[nodiscard]] float aspect_ratio() const {
-        return m_aspect_ratio;
-    }
-
-    [[nodiscard]] float fov() const {
-        return m_fov;
-    }
-
-    /// @brief Set the movement speed of the camera.
-    /// @param speed The movement speed of the camera.
-    void set_movement_speed(float speed);
-
-    [[nodiscard]] float movement_speed() const {
-        return m_movement_speed;
-    }
-
-    /// @brief Set the rotation speed of the camera.
-    /// @param speed The rotation speed of the camera.
-    void set_rotation_speed(float speed);
-
-    [[nodiscard]] float rotation_speed() const {
-        return m_rotation_speed;
-    }
-
-    /// @brief Rotates the camera around x, y, and z axis.
-    /// @param delta_yaw The yaw angle.
-    /// @param delta_pitch The pitch angle.
-    /// @param delta_roll The roll angle.
-    void rotate(float delta_yaw, float delta_pitch, float delta_roll = 0.0f);
-
-    /// @brief Set the camera's rotation.
-    /// @param yaw The yaw angle.
-    /// @param pitch The pitch angle.
-    /// @param roll The roll angle.
-    void set_rotation(float yaw, float pitch, float roll);
-
-    [[nodiscard]] const glm::vec3 &rotation() const {
-        return m_front;
-    }
-
-    [[nodiscard]] float yaw() const {
-        return m_yaw;
-    }
-
-    [[nodiscard]] float pitch() const {
-        return m_pitch;
-    }
-
-    [[nodiscard]] float roll() const {
-        return m_roll;
-    }
-
-    [[nodiscard]] const glm::vec3 &front() const {
-        return m_front;
-    }
-
     [[nodiscard]] const glm::vec3 &up() const {
         return m_up;
     }
-
-    [[nodiscard]] const glm::vec3 &right() const {
-        return m_right;
-    }
-
-    /// @brief Set the near plane distance of the camera.
-    /// @param near_plane The near plane distance.
-    void set_near_plane(float near_plane);
-
-    [[nodiscard]] float near_plane() const {
-        return m_near_plane;
-    }
-
-    /// @brief Set the far plane distance of the camera.
-    /// @param far_plane The far plane distance.
-    void set_far_plane(float far_plane);
-
-    [[nodiscard]] float far_plane() const {
-        return m_far_plane;
-    }
-
-    /// @brief Change the zoom of the camera.
-    /// @param offset The mouse wheel offset change.
-    void change_zoom(float offset);
 
     /// @brief Update the camera (recalculate vectors and matrices).
     /// @param delta_time The change in time since the last frame.
@@ -220,9 +221,8 @@ public:
         return m_view_matrix;
     }
 
-    [[nodiscard]] const glm::mat4 &perspective_matrix() {
-        update_matrices();
-        return m_perspective_matrix;
+    [[nodiscard]] float yaw() const {
+        return m_yaw;
     }
 };
 } // namespace inexor::vulkan_renderer::tools

@@ -14,9 +14,16 @@ private:
 public:
     Input() = default;
 
+    /// @brief Call glfwSetCursorPosCallback.
+    /// @param window The window that received the event.
+    /// @param x_pos The new x-coordinate, in screen coordinates, of the cursor.
+    /// @param y_pos The new y-coordinate, in screen coordinates, of the cursor.
+    void cursor_position_callback(GLFWwindow *window, double x_pos, double y_pos);
+
     GamepadInputData &gamepad_data() {
         return m_gamepad_data;
     }
+
     KeyboardMouseInputData &kbm_data() {
         return m_kbm_data;
     }
@@ -28,12 +35,6 @@ public:
     /// @param action GLFW_PRESS, GLFW_RELEASE or GLFW_REPEAT.
     /// @param mods Bit field describing which modifier keys were held down.
     void key_callback(GLFWwindow *window, int key, int scancode, int action, int mods);
-
-    /// @brief Call glfwSetCursorPosCallback.
-    /// @param window The window that received the event.
-    /// @param x_pos The new x-coordinate, in screen coordinates, of the cursor.
-    /// @param y_pos The new y-coordinate, in screen coordinates, of the cursor.
-    void cursor_position_callback(GLFWwindow *window, double x_pos, double y_pos);
 
     /// @brief Call glfwSetMouseButtonCallback.
     /// @param window The window that received the event.
@@ -48,8 +49,8 @@ public:
     /// @param y_offset The change of y-offset of the mouse wheel.
     void mouse_scroll_callback(GLFWwindow *window, double x_offset, double y_offset);
 
-    void update_gamepad_data();
-
     void update();
+
+    void update_gamepad_data();
 };
 } // namespace inexor::vulkan_renderer::input

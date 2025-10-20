@@ -5,6 +5,7 @@
 #include <fstream>
 
 namespace inexor::vulkan_renderer::serialization {
+
 std::vector<std::uint8_t> ByteStream::read_file(const std::filesystem::path &path) {
     std::ifstream stream(path, std::ios::in | std::ios::binary);
     return {std::istreambuf_iterator<char>(stream), std::istreambuf_iterator<char>()};
@@ -14,11 +15,12 @@ ByteStream::ByteStream(std::vector<std::uint8_t> buffer) : m_buffer(std::move(bu
 
 ByteStream::ByteStream(const std::filesystem::path &path) : ByteStream(read_file(path)) {}
 
-std::size_t ByteStream::size() const {
-    return m_buffer.size();
-}
 const std::vector<std::uint8_t> &ByteStream::buffer() const {
     return m_buffer;
+}
+
+std::size_t ByteStream::size() const {
+    return m_buffer.size();
 }
 
 void ByteStreamReader::check_end(const std::size_t size) const {
@@ -33,10 +35,6 @@ void ByteStreamReader::skip(const std::size_t size) {
     const std::size_t skip = std::min(
         size, std::size_t(std::distance<std::vector<std::uint8_t>::const_iterator>(m_iter, m_stream.buffer().end())));
     std::advance(m_iter, skip);
-}
-
-std::size_t ByteStreamReader::remaining() const {
-    return std::distance<std::vector<std::uint8_t>::const_iterator>(m_iter, m_stream.buffer().end());
 }
 
 template <>
@@ -77,6 +75,10 @@ std::array<octree::Indentation, 12> ByteStreamReader::read() {
         *writer++ = octree::Indentation(*m_iter++ & 0b00111111u);
     }
     return indentations;
+}
+
+std::size_t ByteStreamReader::remaining() const {
+    return std::distance<std::vector<std::uint8_t>::const_iterator>(m_iter, m_stream.buffer().end());
 }
 
 template <>

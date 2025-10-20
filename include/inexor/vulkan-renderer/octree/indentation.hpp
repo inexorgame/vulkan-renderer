@@ -19,28 +19,35 @@ public:
     bool operator==(const Indentation &rhs) const;
     bool operator!=(const Indentation &rhs) const;
 
-    /// Set absolute value of start.
-    void set_start(std::uint8_t position) noexcept;
-    /// Set absolute value of end.
-    void set_end(std::uint8_t position) noexcept;
-
-    /// Absolute value of start.
-    [[nodiscard]] std::uint8_t start_abs() const noexcept;
-    /// Absolute value of end.
-    [[nodiscard]] std::uint8_t end_abs() const noexcept;
-    /// Positive indent, relative from start's point.
-    [[nodiscard]] std::uint8_t start() const noexcept;
     /// Positive indent, relative from end's point.
     [[nodiscard]] std::uint8_t end() const noexcept;
-    /// Difference between start and end.
-    [[nodiscard]] std::uint8_t offset() const noexcept;
+
+    /// Absolute value of end.
+    [[nodiscard]] std::uint8_t end_abs() const noexcept;
+
+    /// Positive steps into the direction of start.
+    void indent_end(std::uint8_t steps) noexcept;
 
     /// Positive steps into the direction of end.
     void indent_start(std::uint8_t steps) noexcept;
-    /// Positive steps into the direction of start.
-    void indent_end(std::uint8_t steps) noexcept;
+
     /// Mirror the indentation, such that the distance from 0 to start and distance from end to max switches
     void mirror() noexcept;
+
+    /// Difference between start and end.
+    [[nodiscard]] std::uint8_t offset() const noexcept;
+
+    /// Set absolute value of end.
+    void set_end(std::uint8_t position) noexcept;
+
+    /// Set absolute value of start.
+    void set_start(std::uint8_t position) noexcept;
+
+    /// Positive indent, relative from start's point.
+    [[nodiscard]] std::uint8_t start() const noexcept;
+
+    /// Absolute value of start.
+    [[nodiscard]] std::uint8_t start_abs() const noexcept;
 
     [[nodiscard]] std::uint8_t uid() const;
 };

@@ -76,11 +76,6 @@ class CommandLineArgumentParser {
     std::optional<CommandLineArgumentTemplate> make_arg_template(const std::string &argument_name) const;
 
 public:
-    /// @brief Parses the command line arguments.
-    /// @param argc The number of arguments passed in the command line.
-    /// @param argv An array of strings containing `argc` elements.
-    void parse_args(int argc, char **argv);
-
     /// @brief Attempts to retrieve the argument `name` as type `T`.
     /// @param name The whole name of the argument (e.g. --renderdoc)
     /// @return `std::nullopt` if argument `name` wasn't specified by the user at all, `true` if the argument was
@@ -97,6 +92,11 @@ public:
         }
         return it->second.as<T>();
     }
+
+    /// @brief Parses the command line arguments.
+    /// @param argc The number of arguments passed in the command line.
+    /// @param argv An array of strings containing `argc` elements.
+    void parse_args(int argc, char **argv);
 
     /// @brief Returns the number of parsed command line arguments.
     [[nodiscard]] std::size_t parsed_arg_count() const {
