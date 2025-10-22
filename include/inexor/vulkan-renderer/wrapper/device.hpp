@@ -215,9 +215,12 @@ public:
                                            reinterpret_cast<std::uint64_t>(vk_object), name);
     }
 
-    /// Call vkDeviceWaitIdle
-    /// @exception VulkanException vkDeviceWaitIdle call failed
-    void wait_idle() const;
+    /// Call vkDeviceWaitIdle or vkQueueWaitIdle depending on whether ``queue`` is specified.
+    /// @warning Avoid using those methods because they result in bad gpu performance!
+    /// @param queue (``VK_NULL_HANDLE`` by default).
+    /// @exception VulkanException ``vkDeviceWaitIdle`` call failed.
+    /// @exception VulkanException ``vkQueueWaitIdle`` call failed.
+    void wait_idle(VkQueue queue = VK_NULL_HANDLE) const;
 };
 
 } // namespace inexor::vulkan_renderer::wrapper

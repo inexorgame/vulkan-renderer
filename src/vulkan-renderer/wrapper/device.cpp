@@ -373,6 +373,7 @@ Device::Device(const Instance &inst, const VkSurfaceKHR surface, const bool pref
 }
 
 Device::Device(Device &&other) noexcept {
+    // TODO: Check me
     m_device = std::exchange(other.m_device, nullptr);
     m_physical_device = std::exchange(other.m_physical_device, nullptr);
 }
@@ -422,7 +423,7 @@ bool Device::surface_supports_usage(const VkSurfaceKHR surface, const VkImageUsa
 
 void Device::execute(const std::string &name,
                      const std::function<void(const CommandBuffer &cmd_buf)> &cmd_lambda) const {
-    // TODO: Support other queues (not just graphics)
+    // TODO: Support other queues (not just graphics)!
     const auto &cmd_buf = thread_graphics_pool().request_command_buffer(name);
     cmd_lambda(cmd_buf);
     cmd_buf.submit_and_wait();
@@ -440,9 +441,10 @@ std::optional<std::uint32_t> Device::find_queue_family_index_if(
 }
 
 CommandPool &Device::thread_graphics_pool() const {
-    // Note that thread_graphics_pool is implicitely static!
+    // Note that thread_local implies that thread_graphics_pool is implicitely static!
     thread_local CommandPool *thread_graphics_pool = nullptr; // NOLINT
     if (thread_graphics_pool == nullptr) {
+        // TODO: What actually to do if the command pool exceeds its memory use?
         auto cmd_pool = std::make_unique<CommandPool>(*this, "graphics pool");
         std::scoped_lock locker(m_mutex);
         thread_graphics_pool = m_cmd_pools.emplace_back(std::move(cmd_pool)).get();
@@ -470,9 +472,15 @@ void Device::set_debug_utils_object_name(const VkObjectType obj_type, const std:
     }
 }
 
-void Device::wait_idle() const {
-    if (const auto result = vkDeviceWaitIdle(m_device); result != VK_SUCCESS) {
-        throw VulkanException("Error: vkDeviceWaitIdle failed!", result);
+void Device::wait_idle(const VkQueue queue) const {
+    if (queue == VK_NULL_HANDLE) {
+        if (const auto result = vkDeviceWaitIdle(m_device); result != VK_SUCCESS) {
+            throw VulkanException("Error: vkDeviceWaitIdle failed!", result);
+        }
+    } else {
+        if (const auto result = vkQueueWaitIdle(queue); result != VK_SUCCESS) {
+            throw VulkanException("Error: vkQueueWaitIdle failed!", result);
+        }
     }
 }
 
