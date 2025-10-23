@@ -268,27 +268,21 @@ Application::Application(int argc, char **argv) {
 
     load_toml_configuration_file("configuration/renderer.toml");
 
-    // If the user specified command line argument "--no-validation", the Khronos validation instance layer will be
-    // disabled. For debug builds, this is not advisable! Always use validation layers during development!
-    const auto disable_validation = cla_parser.arg<bool>("--no-validation");
-    if (disable_validation.value_or(false)) {
-        spdlog::warn("--no-validation specified, disabling validation layers");
-        m_enable_validation_layers = false;
-    }
-
     spdlog::trace("Creating Vulkan instance");
 
+    using input::Input;
+    using wrapper::Instance;
     using wrapper::window::Window;
     using wrapper::window::WindowSurface;
 
     m_window = std::make_unique<Window>(m_window_title, m_window_width, m_window_height, true, true, m_window_mode);
 
-    m_instance = std::make_unique<wrapper::Instance>(
+    m_instance = std::make_unique<Instance>(
         APP_NAME, ENGINE_NAME, VK_MAKE_API_VERSION(0, APP_VERSION[0], APP_VERSION[1], APP_VERSION[2]),
         VK_MAKE_API_VERSION(0, ENGINE_VERSION[0], ENGINE_VERSION[1], ENGINE_VERSION[2]),
-        validation_layer_debug_messenger_callback, m_enable_validation_layers);
+        validation_layer_debug_messenger_callback);
 
-    m_input = std::make_unique<input::Input>();
+    m_input = std::make_unique<Input>();
 
     m_surface = std::make_unique<WindowSurface>(m_instance->instance(), m_window->window());
 

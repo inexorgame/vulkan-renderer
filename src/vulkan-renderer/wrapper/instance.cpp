@@ -14,81 +14,18 @@ namespace inexor::vulkan_renderer::wrapper {
 
 using tools::VulkanException;
 
-bool Instance::is_layer_supported(const std::string &layer_name) {
-    std::uint32_t instance_layer_count = 0;
-
-    if (const auto result = vkEnumerateInstanceLayerProperties(&instance_layer_count, nullptr); result != VK_SUCCESS) {
-        throw VulkanException("Error: vkEnumerateInstanceLayerProperties failed!", result);
-    }
-
-    if (instance_layer_count == 0) {
-        // This is not an error. Some platforms simply don't have any instance layers.
-        spdlog::info("No Vulkan instance layers available!");
-        return false;
-    }
-
-    std::vector<VkLayerProperties> instance_layers(instance_layer_count);
-
-    // Store all available instance layers.
-    if (const auto result = vkEnumerateInstanceLayerProperties(&instance_layer_count, instance_layers.data());
-        result != VK_SUCCESS) {
-        throw VulkanException("Error: vkEnumerateInstanceLayerProperties failed!", result);
-    }
-
-    // Search for the requested instance layer.
-    return std::find_if(instance_layers.begin(), instance_layers.end(), [&](const VkLayerProperties instance_layer) {
-               return instance_layer.layerName == layer_name;
-           }) != instance_layers.end();
-}
-
-bool Instance::is_extension_supported(const std::string &extension_name) {
-    std::uint32_t instance_extension_count = 0;
-
-    if (const auto result = vkEnumerateInstanceExtensionProperties(nullptr, &instance_extension_count, nullptr);
-        result != VK_SUCCESS) {
-        throw VulkanException("Error: vkEnumerateInstanceExtensionProperties failed!", result);
-    }
-
-    if (instance_extension_count == 0) {
-        // This is not an error. Some platforms simply don't have any instance extensions.
-        spdlog::info("No Vulkan instance extensions available!");
-        return false;
-    }
-
-    std::vector<VkExtensionProperties> instance_extensions(instance_extension_count);
-
-    // Store all available instance extensions.
-    if (const auto result =
-            vkEnumerateInstanceExtensionProperties(nullptr, &instance_extension_count, instance_extensions.data());
-        result != VK_SUCCESS) {
-        throw VulkanException("Error: vkEnumerateInstanceExtensionProperties failed!", result);
-    }
-
-    // Search for the requested instance extension.
-    return std::find_if(instance_extensions.begin(), instance_extensions.end(),
-                        [&](const VkExtensionProperties instance_extension) {
-                            return instance_extension.extensionName == extension_name;
-                        }) != instance_extensions.end();
-}
-
-Instance::Instance(const std::string &application_name, const std::string &engine_name,
-                   const std::uint32_t application_version, const std::uint32_t engine_version,
-                   const PFN_vkDebugUtilsMessengerCallbackEXT debug_callback, bool enable_validation_layers,
-                   const std::vector<std::string> &requested_instance_extensions,
-                   const std::vector<std::string> &requested_instance_layers) {
-    assert(!application_name.empty());
-    assert(!engine_name.empty());
-
-    spdlog::trace("Initializing Vulkan metaloader");
+Instance::Instance(const std::string &app_name, const std::string &engine_name, const std::uint32_t app_version,
+                   const std::uint32_t engine_version, const PFN_vkDebugUtilsMessengerCallbackEXT debug_callback,
+                   const std::span<const char *> required_extensions, const std::span<const char *> required_layers) {
+    spdlog::trace("Initializing volk metaloader");
     if (const auto result = volkInitialize(); result != VK_SUCCESS) {
-        throw std::runtime_error("Error: Could not initialize Vulkan with volk metaloader! Make sure to update the "
-                                 "drivers of your graphics card!");
+        throw std::runtime_error("Error: Could not initialize Vulkan with volk metaloader (volkInitialize failed)! "
+                                 "Make sure to update the drivers of your graphics card!");
     }
 
-    spdlog::trace("Initialising Vulkan instance");
-    spdlog::trace("Application name: {}", application_name);
-    spdlog::trace("Application version: {}.{}.{}", VK_API_VERSION_MAJOR(application_version),
-                  VK_API_VERSION_MINOR(application_version), VK_API_VERSION_PATCH(application_version));
+    spdlog::trace("Application name: {}", app_name);
+    spdlog::trace("Application version: {}.{}.{}", VK_API_VERSION_MAJOR(app_version), VK_API_VERSION_MINOR(app_version),
+                  VK_API_VERSION_PATCH(app_version));
     spdlog::trace("Engine name: {}", engine_name);
     spdlog::trace("Engine version: {}.{}.{}", VK_API_VERSION_MAJOR(engine_version),
                   VK_API_VERSION_MINOR(engine_version), VK_API_VERSION_PATCH(engine_version));
@@ -97,8 +34,7 @@ Instance::Instance(const std::string &application_name, const std::string &engin
 
     std::uint32_t available_api_version = 0;
     if (const auto result = vkEnumerateInstanceVersion(&available_api_version); result != VK_SUCCESS) {
-        spdlog::error("Error: vkEnumerateInstanceVersion returned {}!", tools::as_string(result));
-        return;
+        throw VulkanException("Error: vkEnumerateInstanceVersion failed!", result);
     }
 
     // This code will throw an exception if the required version of Vulkan API is not available on the system
@@ -118,21 +54,15 @@ Instance::Instance(const std::string &application_name, const std::string &engin
     }
 
     const auto app_info = make_info<VkApplicationInfo>({
-        .pApplicationName = application_name.c_str(),
-        .applicationVersion = application_version,
+        .pApplicationName = app_name.c_str(),
+        .applicationVersion = app_version,
         .pEngineName = engine_name.c_str(),
         .engineVersion = engine_version,
         .apiVersion = REQUIRED_VK_API_VERSION,
     });
 
     std::vector<const char *> instance_extension_wishlist = {
-#ifndef NDEBUG
-        // In debug mode, we use the following instance extensions:
-        // This one is for assigning internal names to Vulkan resources.
         VK_EXT_DEBUG_UTILS_EXTENSION_NAME,
-        // This one is for setting up a Vulkan debug report callback function.
-        VK_EXT_DEBUG_REPORT_EXTENSION_NAME,
-#endif
     };
 
     std::uint32_t glfw_extension_count = 0;
@@ -155,8 +85,8 @@ Instance::Instance(const std::string &application_name, const std::string &engin
 
     // We have to check which instance extensions of our wishlist are available on the current system!
     // Add requested instance extensions to wishlist.
-    for (const auto &requested_instance_extension : requested_instance_extensions) {
-        instance_extension_wishlist.push_back(requested_instance_extension.c_str());
+    for (const auto &extension : required_extensions) {
+        instance_extension_wishlist.push_back(extension);
     }
 
     std::vector<const char *> enabled_instance_extensions{};
@@ -177,23 +107,18 @@ Instance::Instance(const std::string &application_name, const std::string &engin
 
     spdlog::trace("Instance layer wishlist:");
 
-#ifndef NDEBUG
     // We can't stress enough how important it is to use validation layers during development!
     // Validation layers in Vulkan are in-depth error checks for the application's use of the API.
     // They check for a multitude of possible errors. They can be disabled easily for releases.
     // Understand that in contrary to other APIs, in Vulkan API the driver provides no error checks
     // for you! If you use Vulkan API incorrectly, your application will likely just crash.
     // To avoid this, you must use validation layers during development!
-    if (enable_validation_layers) {
-        spdlog::trace("   - VK_LAYER_KHRONOS_validation");
-        instance_layers_wishlist.push_back("VK_LAYER_KHRONOS_validation");
-    }
-
-#endif
+    spdlog::trace("   - VK_LAYER_KHRONOS_validation");
+    instance_layers_wishlist.push_back("VK_LAYER_KHRONOS_validation");
 
     // Add requested instance layers to wishlist.
-    for (const auto &instance_layer : requested_instance_layers) {
-        instance_layers_wishlist.push_back(instance_layer.c_str());
+    for (const auto &instance_layer : required_layers) {
+        instance_layers_wishlist.push_back(instance_layer);
     }
 
     std::vector<const char *> enabled_instance_layers{};
@@ -219,10 +144,12 @@ Instance::Instance(const std::string &application_name, const std::string &engin
         .ppEnabledExtensionNames = enabled_instance_extensions.data(),
     });
 
+    spdlog::trace("Initialising Vulkan instance");
     if (const auto result = vkCreateInstance(&instance_ci, nullptr, &m_instance); result != VK_SUCCESS) {
         throw VulkanException("Error: vkCreateInstance failed!", result);
     }
 
+    spdlog::trace("Loading Vulkan instance with volkLoadInstanceOnly");
     volkLoadInstanceOnly(m_instance);
 
     // Note that we can only call is_extension_supported afer volkLoadInstanceOnly!
@@ -242,6 +169,7 @@ Instance::Instance(const std::string &application_name, const std::string &engin
         .pUserData = nullptr,
     });
 
+    spdlog::trace("Creating Vulkan debug utils messenger callback");
     if (const auto result = vkCreateDebugUtilsMessengerEXT(m_instance, &dbg_messenger_ci, nullptr, &m_debug_callback);
         result != VK_SUCCESS) {
         // Don't forget to destroy the instance before throwing the exception!
@@ -249,12 +177,6 @@ Instance::Instance(const std::string &application_name, const std::string &engin
         throw VulkanException("Error: vkCreateDebugUtilsMessengerEXT failed!", result);
     }
 }
-
-Instance::Instance(const std::string &application_name, const std::string &engine_name,
-                   const std::uint32_t application_version, const std::uint32_t engine_version,
-                   const PFN_vkDebugUtilsMessengerCallbackEXT debug_callback, bool enable_validation_layers)
-    : Instance(application_name, engine_name, application_version, engine_version, debug_callback,
-               enable_validation_layers, {}, {}) {}
 
 Instance::Instance(Instance &&other) noexcept {
     m_instance = std::exchange(other.m_instance, nullptr);
@@ -264,6 +186,53 @@ Instance::Instance(Instance &&other) noexcept {
 Instance::~Instance() {
     vkDestroyDebugUtilsMessengerEXT(m_instance, m_debug_callback, nullptr);
     vkDestroyInstance(m_instance, nullptr);
+}
+
+bool Instance::is_extension_supported(const std::string &extension_name) {
+    std::uint32_t instance_extension_count = 0;
+    if (const auto result = vkEnumerateInstanceExtensionProperties(nullptr, &instance_extension_count, nullptr);
+        result != VK_SUCCESS) {
+        throw VulkanException("Error: vkEnumerateInstanceExtensionProperties failed!", result);
+    }
+    if (instance_extension_count == 0) {
+        // This is not an error. Some platforms simply don't have any instance extensions.
+        spdlog::info("No Vulkan instance extensions available!");
+        return false;
+    }
+    std::vector<VkExtensionProperties> instance_extensions(instance_extension_count);
+    // Store all available instance extensions.
+    if (const auto result =
+            vkEnumerateInstanceExtensionProperties(nullptr, &instance_extension_count, instance_extensions.data());
+        result != VK_SUCCESS) {
+        throw VulkanException("Error: vkEnumerateInstanceExtensionProperties failed!", result);
+    }
+    // Search for the requested instance extension.
+    return std::find_if(instance_extensions.begin(), instance_extensions.end(),
+                        [&](const VkExtensionProperties instance_extension) {
+                            return instance_extension.extensionName == extension_name;
+                        }) != instance_extensions.end();
+}
+
+bool Instance::is_layer_supported(const std::string &layer_name) {
+    std::uint32_t instance_layer_count = 0;
+    if (const auto result = vkEnumerateInstanceLayerProperties(&instance_layer_count, nullptr); result != VK_SUCCESS) {
+        throw VulkanException("Error: vkEnumerateInstanceLayerProperties failed!", result);
+    }
+    if (instance_layer_count == 0) {
+        // This is not an error. Some platforms simply don't have any instance layers.
+        spdlog::info("No Vulkan instance layers available!");
+        return false;
+    }
+    std::vector<VkLayerProperties> instance_layers(instance_layer_count);
+    // Store all available instance layers.
+    if (const auto result = vkEnumerateInstanceLayerProperties(&instance_layer_count, instance_layers.data());
+        result != VK_SUCCESS) {
+        throw VulkanException("Error: vkEnumerateInstanceLayerProperties failed!", result);
+    }
+    // Search for the requested instance layer.
+    return std::find_if(instance_layers.begin(), instance_layers.end(), [&](const VkLayerProperties instance_layer) {
+               return instance_layer.layerName == layer_name;
+           }) != instance_layers.end();
 }
 
 } // namespace inexor::vulkan_renderer::wrapper

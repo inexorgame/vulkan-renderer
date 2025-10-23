@@ -39,9 +39,6 @@ private:
     std::string m_gpu_name;
     VkPhysicalDeviceFeatures m_enabled_features{};
 
-    bool m_debug_markers_enabled{false};
-    bool m_debug_utils_enabled{false};
-
     // We have to specify this, although it is likely not really used by the gpu.
     static constexpr float DEFAULT_QUEUE_PRIORITY{1.0f};
 
@@ -185,34 +182,15 @@ public:
         }
 
         using tools::VulkanException;
-        // Use VK_EXT_debug_utils if enabled because this is newer than VK_EXT_debug_marker.
-        if (m_debug_utils_enabled) {
-            const auto dbg_obj_name = wrapper::make_info<VkDebugUtilsObjectNameInfoEXT>({
-                .objectType = tools::get_vk_object_type(vk_object),
-                .objectHandle = reinterpret_cast<std::uint64_t>(vk_object),
-                .pObjectName = name.c_str(),
-            });
+        const auto dbg_obj_name = wrapper::make_info<VkDebugUtilsObjectNameInfoEXT>({
+            .objectType = tools::get_vk_object_type(vk_object),
+            .objectHandle = reinterpret_cast<std::uint64_t>(vk_object),
+            .pObjectName = name.c_str(),
+        });
 
-            if (const auto result = vkSetDebugUtilsObjectNameEXT(m_device, &dbg_obj_name); result != VK_SUCCESS) {
-                throw VulkanException("Error: vkSetDebugUtilsObjectNameEXT failed!", result);
-            }
+        if (const auto result = vkSetDebugUtilsObjectNameEXT(m_device, &dbg_obj_name); result != VK_SUCCESS) {
+            throw VulkanException("Error: vkSetDebugUtilsObjectNameEXT failed!", result);
         }
-        // Use VK_EXT_debug_marker if VK_EXT_debug_utils is not available.
-        else if (m_debug_markers_enabled) {
-            const auto dbg_obj_name = wrapper::make_info<VkDebugMarkerObjectNameInfoEXT>({
-                .objectType = tools::get_vk_debug_report_object_type(vk_object),
-                .object = reinterpret_cast<std::uint64_t>(vk_object),
-                .pObjectName = name.c_str(),
-            });
-
-            if (const auto result = vkDebugMarkerSetObjectNameEXT(m_device, &dbg_obj_name); result != VK_SUCCESS) {
-                throw VulkanException("Error: vkDebugMarkerSetObjectNameEXT failed!", result);
-            }
-        }
-        // Neigher VK_EXT_debug_utils nor VK_EXT_debug_marker is enabled.
-        spdlog::warn("Can't assign internal debug name '{}' to '{}' (neither VK_EXT_debug_utils nor "
-                     "VK_EXT_debug_marker available)!",
-                     name, tools::as_string(tools::get_vk_object_type(vk_object)));
     }
 
     /// Call vkDeviceWaitIdle or vkQueueWaitIdle depending on whether ``queue`` is specified.
