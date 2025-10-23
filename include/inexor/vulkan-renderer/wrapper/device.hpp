@@ -17,18 +17,6 @@ class Instance;
 using wrapper::commands::CommandBuffer;
 using wrapper::commands::CommandPool;
 
-/// A wrapper struct for physical device data
-struct DeviceInfo {
-    std::string name;
-    VkPhysicalDevice physical_device{nullptr};
-    VkPhysicalDeviceType type{VK_PHYSICAL_DEVICE_TYPE_OTHER};
-    VkDeviceSize total_device_local{0};
-    VkPhysicalDeviceFeatures features{};
-    std::vector<VkExtensionProperties> extensions;
-    bool presentation_supported{false};
-    bool swapchain_supported{false};
-};
-
 /// A RAII wrapper class for VkDevice, VkPhysicalDevice and VkQueues
 /// @note There is no method ``is_layer_supported`` in this wrapper class because device layers are deprecated.
 class Device {
@@ -65,27 +53,6 @@ class Device {
     CommandPool &thread_graphics_pool() const;
 
 public:
-    /// Pick the best physical device automatically
-    /// @param physical_device_infos The data of the physical devices
-    /// @param required_features The required device features
-    /// @param required_extensions The required device extensions
-    /// @exception std::runtime_error There are no physical devices are available at all
-    /// @exception std::runtime_error No suitable physical device could be determined
-    /// @return The chosen physical device which is most suitable
-    static VkPhysicalDevice pick_best_physical_device(std::vector<DeviceInfo> &&physical_device_infos,
-                                                      const VkPhysicalDeviceFeatures &required_features,
-                                                      std::span<const char *> required_extensions);
-
-    /// Pick the best physical device automatically
-    /// @param inst The Vulkan instance
-    /// @param surface The window surface
-    /// @param required_features The required device features
-    /// @param required_extensions The required device extensions
-    /// @return The chosen physical device which is most suitable
-    static VkPhysicalDevice pick_best_physical_device(const Instance &inst, VkSurfaceKHR surface,
-                                                      const VkPhysicalDeviceFeatures &required_features,
-                                                      std::span<const char *> required_extensions);
-
     /// Default constructor
     /// @param inst The Vulkan instance
     /// @param surface The window surface

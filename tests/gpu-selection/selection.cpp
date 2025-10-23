@@ -1,10 +1,10 @@
 #include <gtest/gtest.h>
 
-#include <inexor/vulkan-renderer/wrapper/device.hpp>
+#include "inexor/vulkan-renderer/tools/device_info.hpp"
 
 #include <spdlog/spdlog.h>
 
-namespace inexor::vulkan_renderer::wrapper {
+namespace inexor::vulkan_renderer::tools {
 
 const VkPhysicalDevice device1{reinterpret_cast<VkPhysicalDevice>(0x1)}; // NOLINT
 const VkPhysicalDevice device2{reinterpret_cast<VkPhysicalDevice>(0x2)}; // NOLINT
@@ -32,7 +32,7 @@ TEST(GpuSelection, PhysicalDeviceTypeTest) {
     };
 
     std::vector physical_devices{gpu1, gpu2};
-    EXPECT_EQ(Device::pick_best_physical_device(std::move(physical_devices), {}, {}), device1);
+    EXPECT_EQ(pick_best_physical_device(std::move(physical_devices), {}, {}), device1);
 }
 
 TEST(GpuSelection, DeviceLocalMemoryTest) {
@@ -58,7 +58,7 @@ TEST(GpuSelection, DeviceLocalMemoryTest) {
     };
 
     std::vector physical_devices{gpu1, gpu2};
-    EXPECT_EQ(Device::pick_best_physical_device(std::move(physical_devices), {}, {}), device1);
+    EXPECT_EQ(pick_best_physical_device(std::move(physical_devices), {}, {}), device1);
 }
 
 TEST(GpuSelection, SwapchainTest) {
@@ -84,7 +84,7 @@ TEST(GpuSelection, SwapchainTest) {
     };
 
     std::vector physical_devices{gpu1, gpu2};
-    EXPECT_EQ(Device::pick_best_physical_device(std::move(physical_devices), {}, {}), device1);
+    EXPECT_EQ(pick_best_physical_device(std::move(physical_devices), {}, {}), device1);
 }
 
 TEST(GpuSelection, PresentationTest) {
@@ -110,7 +110,7 @@ TEST(GpuSelection, PresentationTest) {
     };
 
     std::vector physical_devices{gpu1, gpu2};
-    EXPECT_EQ(Device::pick_best_physical_device(std::move(physical_devices), {}, {}), device1);
+    EXPECT_EQ(pick_best_physical_device(std::move(physical_devices), {}, {}), device1);
 }
 
 TEST(GpuSelection, DeviceFeatureTest) {
@@ -150,7 +150,7 @@ TEST(GpuSelection, DeviceFeatureTest) {
         VkPhysicalDeviceFeatures one_feature_enabled2{};
         std::memcpy(&one_feature_enabled2, one_feature_enabled.data(), sizeof(VkPhysicalDeviceFeatures));
         std::vector physical_devices{gpu1, gpu2};
-        EXPECT_EQ(Device::pick_best_physical_device(std::move(physical_devices), one_feature_enabled2, {}), device1);
+        EXPECT_EQ(pick_best_physical_device(std::move(physical_devices), one_feature_enabled2, {}), device1);
     }
 }
 
@@ -180,7 +180,7 @@ TEST(GpuSelection, DeviceExtensionTest) {
 
     std::vector physical_devices{gpu1, gpu2};
     std::vector<const char *> required_extension{VK_EXT_DEBUG_MARKER_EXTENSION_NAME};
-    EXPECT_EQ(Device::pick_best_physical_device(std::move(physical_devices), {}, required_extension), device1);
+    EXPECT_EQ(pick_best_physical_device(std::move(physical_devices), {}, required_extension), device1);
 }
 
-} // namespace inexor::vulkan_renderer::wrapper
+} // namespace inexor::vulkan_renderer::tools

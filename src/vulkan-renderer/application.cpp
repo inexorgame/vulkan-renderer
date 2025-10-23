@@ -6,6 +6,7 @@
 #include "inexor/vulkan-renderer/standard_ubo.hpp"
 #include "inexor/vulkan-renderer/tools/camera.hpp"
 #include "inexor/vulkan-renderer/tools/cla_parser.hpp"
+#include "inexor/vulkan-renderer/tools/device_info.hpp"
 #include "inexor/vulkan-renderer/tools/enumerate.hpp"
 #include "inexor/vulkan-renderer/tools/exception.hpp"
 #include "inexor/vulkan-renderer/wrapper/cpu_texture.hpp"
@@ -369,8 +370,8 @@ Application::Application(int argc, char **argv) {
 
     const VkPhysicalDevice physical_device =
         preferred_graphics_card ? physical_devices[*preferred_graphics_card]
-                                : wrapper::Device::pick_best_physical_device(*m_instance, m_surface->surface(),
-                                                                             required_features, required_extensions);
+                                : tools::pick_best_physical_device(*m_instance, m_surface->surface(), required_features,
+                                                                   required_extensions);
 
     m_device =
         std::make_unique<wrapper::Device>(*m_instance, m_surface->surface(), use_distinct_data_transfer_queue,
