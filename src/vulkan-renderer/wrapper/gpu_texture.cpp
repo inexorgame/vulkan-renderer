@@ -59,7 +59,7 @@ void GpuTexture::create_texture(void *texture_data, const std::size_t texture_si
         .imageExtent = {static_cast<uint32_t>(m_texture_width), static_cast<uint32_t>(m_texture_height), 1},
     };
 
-    m_device.execute(m_name, [&](const CommandBuffer &cmd_buf) {
+    m_device.execute(m_name, VulkanQueueType::QUEUE_TYPE_GRAPHICS, [&](const CommandBuffer &cmd_buf) {
         cmd_buf
             .change_image_layout(m_texture_image->get(), VK_IMAGE_LAYOUT_UNDEFINED,
                                  VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL)

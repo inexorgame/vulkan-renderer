@@ -25,9 +25,10 @@ class CommandPool {
 
 public:
     /// Default constructor
-    /// @param device The device wrapper instance
-    /// @param name The internal debug marker name which will be assigned to this command pool
-    CommandPool(const Device &device, std::string name);
+    /// @param device The device wrapper instance.
+    /// @param queue_family_index The queue family index to use.
+    /// @param name The internal debug marker name which will be assigned to this command pool.
+    CommandPool(const Device &device, std::uint32_t queue_family_index, std::string name);
 
     CommandPool(const CommandPool &) = delete;
     CommandPool(CommandPool &&) noexcept;

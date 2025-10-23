@@ -96,7 +96,8 @@ void VulkanRenderer::render_frame() {
     }
 
     const auto image_index = m_swapchain->acquire_next_image_index();
-    const auto &cmd_buf = m_device->request_command_buffer("rendergraph");
+    const auto &cmd_buf =
+        m_device->request_command_buffer(wrapper::VulkanQueueType::QUEUE_TYPE_GRAPHICS, "rendergraph");
 
     m_render_graph->render(image_index, cmd_buf);
 

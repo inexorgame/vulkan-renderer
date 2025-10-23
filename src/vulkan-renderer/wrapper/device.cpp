@@ -208,7 +208,10 @@ Device::Device(const Instance &inst, const VkSurfaceKHR surface, const bool pref
     }
 }
 
-Device::Device(Device &&other) noexcept {
+Device::Device(Device &&other) noexcept : m_cmd_pools(std::move(other.m_cmd_pools)) {
+    // After moving the cmd_pools, the memory is in a valid but unspecified state.
+    // By calling .clear(), we bring it back into a defined state again.
+    other.m_cmd_pools.clear();
     // TODO: Check me
     m_device = std::exchange(other.m_device, nullptr);
     m_physical_device = std::exchange(other.m_physical_device, nullptr);
@@ -257,10 +260,9 @@ bool Device::surface_supports_usage(const VkSurfaceKHR surface, const VkImageUsa
     return (capabilities.supportedUsageFlags & usage) != 0u;
 }
 
-void Device::execute(const std::string &name,
+void Device::execute(const std::string &name, const VulkanQueueType queue_type,
                      const std::function<void(const CommandBuffer &cmd_buf)> &cmd_lambda) const {
-    // TODO: Support other queues (not just graphics)!
-    const auto &cmd_buf = thread_graphics_pool().request_command_buffer(name);
+    const auto &cmd_buf = get_thread_command_pool(queue_type).request_command_buffer(name);
     cmd_lambda(cmd_buf);
     cmd_buf.submit_and_wait();
 }
@@ -276,36 +278,59 @@ std::optional<std::uint32_t> Device::find_queue_family_index_if(
     return std::nullopt;
 }
 
-CommandPool &Device::thread_graphics_pool() const {
+CommandPool &Device::get_thread_command_pool(const VulkanQueueType queue_type) const {
     // Note that thread_local implies that thread_graphics_pool is implicitely static!
-    thread_local CommandPool *thread_graphics_pool = nullptr; // NOLINT
-    if (thread_graphics_pool == nullptr) {
-        // TODO: What actually to do if the command pool exceeds its memory use?
-        auto cmd_pool = std::make_unique<CommandPool>(*this, "graphics pool");
-        std::scoped_lock locker(m_mutex);
-        thread_graphics_pool = m_cmd_pools.emplace_back(std::move(cmd_pool)).get();
+    thread_local CommandPool *thread_graphics_cmd_pool = nullptr;       // NOLINT
+    thread_local CommandPool *thread_compute_cmd_pool = nullptr;        // NOLINT
+    thread_local CommandPool *thread_transfer_cmd_pool = nullptr;       // NOLINT
+    thread_local CommandPool *thread_sparse_binding_cmd_pool = nullptr; // NOLINT
+
+    switch (queue_type) {
+    case VulkanQueueType::QUEUE_TYPE_GRAPHICS: {
+        if (thread_graphics_cmd_pool == nullptr) {
+            auto cmd_pool =
+                std::make_unique<CommandPool>(*this, m_graphics_queue_family_index, "graphics command pool");
+            std::unique_lock lock(m_mutex);
+            thread_graphics_cmd_pool = m_cmd_pools.emplace_back(std::move(cmd_pool)).get();
+        }
+        std::shared_lock lock(m_mutex);
+        return *thread_graphics_cmd_pool;
     }
-    return *thread_graphics_pool;
+    case VulkanQueueType::QUEUE_TYPE_COMPUTE: {
+        if (thread_compute_cmd_pool == nullptr) {
+            auto cmd_pool = std::make_unique<CommandPool>(*this, m_compute_queue_family_index, "compute command pool");
+            std::unique_lock lock(m_mutex);
+            thread_compute_cmd_pool = m_cmd_pools.emplace_back(std::move(cmd_pool)).get();
+        }
+        std::shared_lock lock(m_mutex);
+        return *thread_compute_cmd_pool;
+    }
+    case VulkanQueueType::QUEUE_TYPE_TRANSFER: {
+        if (thread_transfer_cmd_pool == nullptr) {
+            auto cmd_pool =
+                std::make_unique<CommandPool>(*this, m_transfer_queue_family_index, "transfer command pool");
+            std::unique_lock lock(m_mutex);
+            thread_transfer_cmd_pool = m_cmd_pools.emplace_back(std::move(cmd_pool)).get();
+        }
+        std::shared_lock lock(m_mutex);
+        return *thread_transfer_cmd_pool;
+    }
+    case VulkanQueueType::QUEUE_TYPE_SPARSE_BINDING: {
+        if (thread_sparse_binding_cmd_pool == nullptr) {
+            auto cmd_pool = std::make_unique<CommandPool>(*this, m_sparse_binding_queue_family_index,
+                                                          "sparse binding command pool");
+            std::shared_lock lock(m_mutex);
+            thread_sparse_binding_cmd_pool = m_cmd_pools.emplace_back(std::move(cmd_pool)).get();
+        }
+        std::shared_lock lock(m_mutex);
+        return *thread_sparse_binding_cmd_pool;
+    }
+    }
+    throw std::runtime_error("Error: Unknown VuklkanQueueType!");
 }
 
-const CommandBuffer &Device::request_command_buffer(const std::string &name) {
-    return thread_graphics_pool().request_command_buffer(name);
-}
-
-void Device::set_debug_utils_object_name(const VkObjectType obj_type, const std::uint64_t obj_handle,
-                                         const std::string &name) const {
-    if (!obj_handle) {
-        throw std::runtime_error("Parameter 'obj_handle' is invalid!");
-    }
-    const auto dbg_obj_name = wrapper::make_info<VkDebugUtilsObjectNameInfoEXT>({
-        .objectType = obj_type,
-        .objectHandle = obj_handle,
-        .pObjectName = name.c_str(),
-    });
-
-    if (const auto result = vkSetDebugUtilsObjectNameEXT(m_device, &dbg_obj_name); result != VK_SUCCESS) {
-        throw VulkanException("Error: vkSetDebugUtilsObjectNameEXT failed!", result);
-    }
+const CommandBuffer &Device::request_command_buffer(const VulkanQueueType queue_type, const std::string &name) {
+    return get_thread_command_pool(queue_type).request_command_buffer(name);
 }
 
 void Device::wait_idle(const VkQueue queue) const {

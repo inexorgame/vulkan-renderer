@@ -6,6 +6,7 @@
 #include <array>
 #include <functional>
 #include <optional>
+#include <shared_mutex>
 #include <span>
 #include <string>
 
@@ -14,10 +15,19 @@ namespace inexor::vulkan_renderer::wrapper {
 // Forward declaration
 class Instance;
 
+// Using declarations
 using wrapper::commands::CommandBuffer;
 using wrapper::commands::CommandPool;
 
-/// A RAII wrapper class for VkDevice, VkPhysicalDevice and VkQueues
+/// An enum for the queue type.
+enum class VulkanQueueType {
+    QUEUE_TYPE_GRAPHICS,
+    QUEUE_TYPE_COMPUTE,
+    QUEUE_TYPE_TRANSFER,
+    QUEUE_TYPE_SPARSE_BINDING,
+};
+
+/// RAII wrapper class for VkDevice, VkPhysicalDevice and VkQueues.
 /// @note There is no method ``is_layer_supported`` in this wrapper class because device layers are deprecated.
 class Device {
     VkDevice m_device{VK_NULL_HANDLE};
@@ -29,28 +39,23 @@ class Device {
     VkQueue m_graphics_queue{VK_NULL_HANDLE};
     VkQueue m_present_queue{VK_NULL_HANDLE};
     VkQueue m_transfer_queue{VK_NULL_HANDLE};
+    VkQueue m_sparse_binding_queue{VK_NULL_HANDLE};
 
     std::uint32_t m_present_queue_family_index{0};
     std::uint32_t m_graphics_queue_family_index{0};
+    std::uint32_t m_compute_queue_family_index{0};
     std::uint32_t m_transfer_queue_family_index{0};
+    std::uint32_t m_sparse_binding_queue_family_index{0};
 
     /// According to NVidia, we should aim for one command pool per thread
     /// https://developer.nvidia.com/blog/vulkan-dos-donts/
     mutable std::vector<std::unique_ptr<CommandPool>> m_cmd_pools;
-    mutable std::mutex m_mutex;
+    mutable std::shared_mutex m_mutex;
 
-    /// Set the debug name of a Vulkan object using debug utils extension (VK_EXT_debug_utils)
-    /// @note We thought about overloading this method several times so the obj_type is set automatically depending on
-    /// the type of the obj_handle you pass in, but it would make the code larger while being a little harder to
-    /// understand what's really going on.
-    /// @param obj_type The Vulkan object type
-    /// @param obj_handle The Vulkan object handle (must not be nullptr!)
-    /// @param name the internal debug name of the Vulkan object
-    void set_debug_utils_object_name(VkObjectType obj_type, std::uint64_t obj_handle, const std::string &name) const;
-
-    /// Get the thread_local command pool
-    /// @note This method will create a command pool for the thread if it doesn't already exist
-    CommandPool &thread_graphics_pool() const;
+    /// Get the thread_local command pool.
+    /// @param queue_type The Vulkan queue type.
+    /// @note This method will create a command pool for the thread if it doesn't already exist.
+    CommandPool &get_thread_command_pool(VulkanQueueType queue_type) const;
 
 public:
     /// Default constructor
@@ -106,8 +111,10 @@ public:
     /// the given command pool, begins the command buffer, executes the lambda, ends recording the command buffer,
     /// submits it and waits for it.
     /// @param name The internal debug name of the command buffer (must not be empty)
+    /// @param queue_type The queue type which determines which command pool is used.
     /// @param cmd_lambda The command lambda to execute
-    void execute(const std::string &name, const std::function<void(const CommandBuffer &cmd_buf)> &cmd_lambda) const;
+    void execute(const std::string &name, const VulkanQueueType queue_type,
+                 const std::function<void(const CommandBuffer &cmd_buf)> &cmd_lambda) const;
 
     /// Find a queue family index that suits a specific criteria
     /// @param criteria_lambda The lambda to sort out unsuitable queue families
@@ -144,22 +151,12 @@ public:
         return m_transfer_queue;
     }
 
-    [[nodiscard]] std::uint32_t graphics_queue_family_index() const {
-        return m_graphics_queue_family_index;
-    }
-
-    [[nodiscard]] std::uint32_t present_queue_family_index() const {
-        return m_present_queue_family_index;
-    }
-
-    [[nodiscard]] std::uint32_t transfer_queue_family_index() const {
-        return m_transfer_queue_family_index;
-    }
-
     /// Request a command buffer from the thread_local command pool
+    /// @param queue_type The Vulkan queue type which is required because a command pool is created with a queue family
+    /// index associated with it.
     /// @param name The name which will be assigned to the command buffer
     /// @return A command buffer from the thread_local command pool
-    [[nodiscard]] const CommandBuffer &request_command_buffer(const std::string &name);
+    [[nodiscard]] const CommandBuffer &request_command_buffer(VulkanQueueType queue_type, const std::string &name);
 
     /// Check if a surface supports a certain image usage
     /// @param surface The window surface
@@ -176,10 +173,7 @@ public:
     /// @param name The internal debug name of the Vulkan object (must not be empty!)
     template <typename VulkanObjectType>
     void set_debug_name(const VulkanObjectType vk_object, const std::string &name) const {
-        // The get_vulkan_object_type template allows us to convert the template parameter into a VK_OBJECT_TYPE
-        // There is no other trivial way in C++ to do this as far as we know
-        return set_debug_utils_object_name(tools::get_vulkan_object_type(vk_object),
-                                           reinterpret_cast<std::uint64_t>(vk_object), name);
+        // TODO: Implement!
     }
 
     /// Call vkDeviceWaitIdle or vkQueueWaitIdle depending on whether ``queue`` is specified.
