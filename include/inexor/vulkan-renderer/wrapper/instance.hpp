@@ -12,11 +12,12 @@ namespace inexor::vulkan_renderer::wrapper {
 class Instance {
 private:
     VkInstance m_instance{VK_NULL_HANDLE};
-    static constexpr std::uint32_t REQUIRED_VK_API_VERSION{VK_API_VERSION_1_2};
-
     VkDebugUtilsMessengerEXT m_debug_callback{VK_NULL_HANDLE};
 
 public:
+    // This is the version of Vulkan API that we use.
+    static constexpr std::uint32_t REQUIRED_VK_API_VERSION{VK_API_VERSION_1_2};
+
     /// @brief Construct the Vulkan instance and specify the requested instance layers and instance extensions.
     /// @param application_name The Vulkan application's internal application name
     /// @param engine_name The Vulkan application's internal engine name

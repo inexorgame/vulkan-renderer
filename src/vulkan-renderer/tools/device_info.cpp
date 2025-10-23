@@ -59,10 +59,10 @@ DeviceInfo build_device_info(const VkPhysicalDevice physical_device, const VkSur
 bool compare_physical_devices(const VkPhysicalDeviceFeatures &required_features,
                               const std::span<const char *> required_extensions, const DeviceInfo &lhs,
                               const DeviceInfo &rhs) {
-    if (!is_device_suitable(rhs, required_features, required_extensions)) {
+    if (!is_gpu_suitable(rhs, required_features, required_extensions)) {
         return true;
     }
-    if (!is_device_suitable(lhs, required_features, required_extensions)) {
+    if (!is_gpu_suitable(lhs, required_features, required_extensions)) {
         return false;
     }
     if (device_type_rating(lhs) > device_type_rating(rhs)) {
@@ -99,8 +99,8 @@ std::string get_physical_device_name(const VkPhysicalDevice physical_device) {
     return properties.deviceName;
 }
 
-bool is_device_suitable(const DeviceInfo &info, const VkPhysicalDeviceFeatures &required_features,
-                        const std::span<const char *> required_extensions, const bool print_info) {
+bool is_gpu_suitable(const DeviceInfo &info, const VkPhysicalDeviceFeatures &required_features,
+                     const std::span<const char *> required_extensions, const bool print_info) {
     const auto comparable_required_features = get_device_features_as_vector(required_features);
     const auto comparable_available_features = get_device_features_as_vector(info.features);
     constexpr auto FEATURE_COUNT = sizeof(VkPhysicalDeviceFeatures) / sizeof(VkBool32);
@@ -140,7 +140,7 @@ VkPhysicalDevice pick_best_physical_device(std::vector<DeviceInfo> &&physical_de
     std::sort(physical_device_infos.begin(), physical_device_infos.end(), [&](const auto &lhs, const auto &rhs) {
         return compare_physical_devices(required_features, required_extensions, lhs, rhs);
     });
-    if (!is_device_suitable(physical_device_infos.front(), required_features, required_extensions, true)) {
+    if (!is_gpu_suitable(physical_device_infos.front(), required_features, required_extensions, true)) {
         throw std::runtime_error("Error: Could not determine a suitable physical device!");
     }
     return physical_device_infos.front().physical_device;

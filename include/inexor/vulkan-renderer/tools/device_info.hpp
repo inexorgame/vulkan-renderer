@@ -66,8 +66,8 @@ struct DeviceInfo {
 /// @param print_message If ``true``, an info message will be printed to the console if a device feature or device
 /// extension is not supported (``true`` by default)
 /// @return ``true`` if the physical device supports all device features and device extensions
-[[nodiscard]] bool is_device_suitable(const DeviceInfo &info, const VkPhysicalDeviceFeatures &required_features,
-                                      const std::span<const char *> required_extensions, bool print_info = false);
+[[nodiscard]] bool is_gpu_suitable(const DeviceInfo &info, const VkPhysicalDeviceFeatures &required_features,
+                                   const std::span<const char *> required_extensions, bool print_info = false);
 
 /// Check if a device extension is supported by a physical device
 /// @param extensions The device extensions

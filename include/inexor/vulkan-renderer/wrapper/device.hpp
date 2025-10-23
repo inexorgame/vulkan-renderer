@@ -1,7 +1,9 @@
 #pragma once
 
+#include "inexor/vulkan-renderer/tools/exception.hpp"
 #include "inexor/vulkan-renderer/tools/representation.hpp"
 #include "inexor/vulkan-renderer/wrapper/commands/command_pool.hpp"
+#include "inexor/vulkan-renderer/wrapper/make_info.hpp"
 
 #include <array>
 #include <functional>
@@ -30,22 +32,30 @@ enum class VulkanQueueType {
 /// RAII wrapper class for VkDevice, VkPhysicalDevice and VkQueues.
 /// @note There is no method ``is_layer_supported`` in this wrapper class because device layers are deprecated.
 class Device {
+private:
     VkDevice m_device{VK_NULL_HANDLE};
     VkPhysicalDevice m_physical_device{VK_NULL_HANDLE};
     VmaAllocator m_allocator{VK_NULL_HANDLE};
     std::string m_gpu_name;
     VkPhysicalDeviceFeatures m_enabled_features{};
 
-    VkQueue m_graphics_queue{VK_NULL_HANDLE};
-    VkQueue m_present_queue{VK_NULL_HANDLE};
-    VkQueue m_transfer_queue{VK_NULL_HANDLE};
-    VkQueue m_sparse_binding_queue{VK_NULL_HANDLE};
+    bool m_debug_markers_enabled{false};
+    bool m_debug_utils_enabled{false};
 
-    std::uint32_t m_present_queue_family_index{0};
+    // We have to specify this, although it is likely not really used by the gpu.
+    static constexpr float DEFAULT_QUEUE_PRIORITY{1.0f};
+
+    VkQueue m_graphics_queue{VK_NULL_HANDLE};
+    VkQueue m_transfer_queue{VK_NULL_HANDLE};
+    VkQueue m_compute_queue{VK_NULL_HANDLE};
+    VkQueue m_sparse_binding_queue{VK_NULL_HANDLE};
+    VkQueue m_present_queue{VK_NULL_HANDLE};
+
     std::uint32_t m_graphics_queue_family_index{0};
     std::uint32_t m_compute_queue_family_index{0};
     std::uint32_t m_transfer_queue_family_index{0};
     std::uint32_t m_sparse_binding_queue_family_index{0};
+    std::uint32_t m_present_queue_family_index{0};
 
     /// According to NVidia, we should aim for one command pool per thread
     /// https://developer.nvidia.com/blog/vulkan-dos-donts/
@@ -53,7 +63,7 @@ class Device {
     mutable std::shared_mutex m_mutex;
 
     /// Get the thread_local command pool.
-    /// @param queue_type The Vulkan queue type.
+    /// @param queue_type The Vulkan queue type
     /// @note This method will create a command pool for the thread if it doesn't already exist.
     CommandPool &get_thread_command_pool(VulkanQueueType queue_type) const;
 
@@ -61,20 +71,17 @@ public:
     /// Default constructor
     /// @param inst The Vulkan instance
     /// @param surface The window surface
-    /// @param prefer_distinct_transfer_queue Specifies if a distinct transfer queue will be preferred
-    /// @param physical_device The physical device
-    /// @param required_extensions The required device extensions
+    /// @param desired_gpu The physical device
     /// @param required_features The required device features which the physical device must all support
-    /// @param optional_features The optional device features which do not necessarily have to be present
+    /// @param required_extensions The required device extensions
     /// @exception std::runtime_error The physical device is not suitable
     /// @exception std::runtime_error No graphics queue could be found
     /// @exception std::runtime_error No presentation queue could be found
     /// @exception VulkanException vkCreateDevice call failed
     /// @exception VulkanException vmaCreateAllocator call failed
     /// @note The creation of the physical device will not fail if one of the optional device features is not available
-    Device(const Instance &inst, VkSurfaceKHR surface, bool prefer_distinct_transfer_queue,
-           VkPhysicalDevice physical_device, std::span<const char *> required_extensions,
-           const VkPhysicalDeviceFeatures &required_features, const VkPhysicalDeviceFeatures &optional_features = {});
+    Device(const Instance &inst, VkSurfaceKHR surface, VkPhysicalDevice physical_device,
+           const VkPhysicalDeviceFeatures &required_features, std::span<const char *> required_extensions);
 
     Device(const Device &) = delete;
     Device(Device &&) noexcept;
@@ -172,8 +179,37 @@ public:
     /// @param vk_object The Vulkan object to assign a name to
     /// @param name The internal debug name of the Vulkan object (must not be empty!)
     template <typename VulkanObjectType>
-    void set_debug_name(const VulkanObjectType vk_object, const std::string &name) const {
-        // TODO: Implement!
+    void set_debug_name(const VulkanObjectType &vk_object, const std::string &name) const {
+        if (!vk_object) {
+            throw std::runtime_error("Error: Parameter 'vk_object' is invalid!");
+        }
+
+        using tools::VulkanException;
+        // Use VK_EXT_debug_utils if enabled because this is newer than VK_EXT_debug_marker.
+        if (m_debug_utils_enabled) {
+            const auto dbg_obj_name = wrapper::make_info<VkDebugUtilsObjectNameInfoEXT>({
+                .objectType = tools::get_vk_object_type(vk_object),
+                .objectHandle = reinterpret_cast<std::uint64_t>(vk_object),
+                .pObjectName = name.c_str(),
+            });
+
+            if (const auto result = vkSetDebugUtilsObjectNameEXT(m_device, &dbg_obj_name); result != VK_SUCCESS) {
+                throw VulkanException("Error: vkSetDebugUtilsObjectNameEXT failed!", result);
+            }
+        }
+        // Use VK_EXT_debug_marker if VK_EXT_debug_utils is not available.
+        else if (m_debug_markers_enabled) {
+            const auto dbg_obj_name = wrapper::make_info<VkDebugMarkerObjectNameInfoEXT>({
+                .objectType = tools::get_vk_debug_report_object_type(vk_object),
+                .object = reinterpret_cast<std::uint64_t>(vk_object),
+                .pObjectName = name.c_str(),
+            });
+
+            if (const auto result = vkDebugMarkerSetObjectNameEXT(m_device, &dbg_obj_name); result != VK_SUCCESS) {
+                throw VulkanException("Error: vkDebugMarkerSetObjectNameEXT failed!", result);
+            }
+        }
+        // Neigher VK_EXT_debug_utils nor VK_EXT_debug_marker is available.
     }
 
     /// Call vkDeviceWaitIdle or vkQueueWaitIdle depending on whether ``queue`` is specified.

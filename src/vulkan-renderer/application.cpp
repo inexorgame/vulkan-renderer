@@ -321,17 +321,6 @@ Application::Application(int argc, char **argv) {
         m_vsync_enabled = false;
     }
 
-    bool use_distinct_data_transfer_queue = true;
-
-    // Ignore distinct data transfer queue
-    const auto forbid_distinct_data_transfer_queue = cla_parser.arg<bool>("--no-separate-data-queue");
-    if (forbid_distinct_data_transfer_queue.value_or(false)) {
-        spdlog::warn("Command line argument --no-separate-data-queue specified");
-        spdlog::warn("This will force the application to avoid using a distinct queue for data transfer to GPU");
-        spdlog::warn("Performance loss might be a result of this!");
-        use_distinct_data_transfer_queue = false;
-    }
-
     bool enable_debug_marker_device_extension = true;
 
     // Check if Vulkan debug markers should be disabled.
@@ -353,29 +342,18 @@ Application::Application(int argc, char **argv) {
         // Add required physical device features here
     };
 
-    const VkPhysicalDeviceFeatures optional_features{
-        // Add optional physical device features here
-    };
-
     std::vector<const char *> required_extensions{
         // Since we want to draw on a window, we need the swapchain extension
         VK_KHR_SWAPCHAIN_EXTENSION_NAME,
     };
-
-#ifndef NDEBUG
-    if (enable_debug_marker_device_extension) {
-        required_extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
-    }
-#endif
 
     const VkPhysicalDevice physical_device =
         preferred_graphics_card ? physical_devices[*preferred_graphics_card]
                                 : tools::pick_best_physical_device(*m_instance, m_surface->surface(), required_features,
                                                                    required_extensions);
 
-    m_device =
-        std::make_unique<wrapper::Device>(*m_instance, m_surface->surface(), use_distinct_data_transfer_queue,
-                                          physical_device, required_extensions, required_features, optional_features);
+    m_device = std::make_unique<wrapper::Device>(*m_instance, m_surface->surface(), physical_device, required_features,
+                                                 required_extensions);
 
     m_swapchain = std::make_unique<wrapper::Swapchain>(*m_device, m_surface->surface(), m_window->width(),
                                                        m_window->height(), m_vsync_enabled);
