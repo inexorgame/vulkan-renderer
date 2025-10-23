@@ -315,16 +315,6 @@ Application::Application(int argc, char **argv) {
         m_vsync_enabled = false;
     }
 
-    bool enable_debug_marker_device_extension = true;
-
-    // Check if Vulkan debug markers should be disabled.
-    // Those are only available if RenderDoc instance layer is enabled!
-    const auto no_vulkan_debug_markers = cla_parser.arg<bool>("--no-vk-debug-markers");
-    if (no_vulkan_debug_markers.value_or(false)) {
-        spdlog::warn("--no-vk-debug-markers specified, disabling useful debug markers!");
-        enable_debug_marker_device_extension = false;
-    }
-
     const auto physical_devices = tools::get_physical_devices(m_instance->instance());
     if (preferred_graphics_card && *preferred_graphics_card >= physical_devices.size()) {
         spdlog::critical("GPU index {} is out of range!", *preferred_graphics_card);
