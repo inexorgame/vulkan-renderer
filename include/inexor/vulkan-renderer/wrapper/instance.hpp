@@ -8,7 +8,7 @@
 
 namespace inexor::vulkan_renderer::wrapper {
 
-/// @brief RAII wrapper class for VkInstances.
+/// RAII wrapper class for VkInstance
 class Instance {
 private:
     VkInstance m_instance{VK_NULL_HANDLE};
@@ -24,8 +24,8 @@ public:
     /// @param app_version The app version.
     /// @param engine_version The engine version.
     /// @param debug_callback The callback (used by ``VK_EXT_debug_utils``).
-    /// @param required_extensions The required instance extensions.
-    /// @param required_layers The required instance layers.
+    /// @param required_extensions The required instance extensions (empty by default).
+    /// @param required_layers The required instance layers (empty by default).
     Instance(const std::string &app_name, const std::string &engine_name, std::uint32_t app_version,
              std::uint32_t engine_version, const PFN_vkDebugUtilsMessengerCallbackEXT debug_callback,
              const std::span<const char *> required_extensions = {},
