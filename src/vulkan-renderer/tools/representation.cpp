@@ -26,6 +26,72 @@ std::string_view as_string(const VkCompositeAlphaFlagBitsKHR flag) {
     }
 }
 
+template <>
+std::string_view as_string(const VkDebugReportObjectTypeEXT obj_type) {
+    switch (obj_type) {
+    case VK_DEBUG_REPORT_OBJECT_TYPE_UNKNOWN_EXT:
+        return "Unknown";
+    case VK_DEBUG_REPORT_OBJECT_TYPE_INSTANCE_EXT:
+        return "VkInstance";
+    case VK_DEBUG_REPORT_OBJECT_TYPE_PHYSICAL_DEVICE_EXT:
+        return "VkPhysicalDevice";
+    case VK_DEBUG_REPORT_OBJECT_TYPE_DEVICE_EXT:
+        return "VkDevice";
+    case VK_DEBUG_REPORT_OBJECT_TYPE_QUEUE_EXT:
+        return "VkQueue";
+    case VK_DEBUG_REPORT_OBJECT_TYPE_SEMAPHORE_EXT:
+        return "VkSemaphore";
+    case VK_DEBUG_REPORT_OBJECT_TYPE_COMMAND_BUFFER_EXT:
+        return "VkCommandBuffer";
+    case VK_DEBUG_REPORT_OBJECT_TYPE_FENCE_EXT:
+        return "VkFence";
+    case VK_DEBUG_REPORT_OBJECT_TYPE_DEVICE_MEMORY_EXT:
+        return "VkDeviceMemory";
+    case VK_DEBUG_REPORT_OBJECT_TYPE_BUFFER_EXT:
+        return "VkBuffer";
+    case VK_DEBUG_REPORT_OBJECT_TYPE_IMAGE_EXT:
+        return "VkImage";
+    case VK_DEBUG_REPORT_OBJECT_TYPE_EVENT_EXT:
+        return "VkEvent";
+    case VK_DEBUG_REPORT_OBJECT_TYPE_QUERY_POOL_EXT:
+        return "VkQueryPool";
+    case VK_DEBUG_REPORT_OBJECT_TYPE_BUFFER_VIEW_EXT:
+        return "VkBufferView";
+    case VK_DEBUG_REPORT_OBJECT_TYPE_IMAGE_VIEW_EXT:
+        return "VkImageView";
+    case VK_DEBUG_REPORT_OBJECT_TYPE_SHADER_MODULE_EXT:
+        return "VkShaderModule";
+    case VK_DEBUG_REPORT_OBJECT_TYPE_PIPELINE_CACHE_EXT:
+        return "VkPipelineCache";
+    case VK_DEBUG_REPORT_OBJECT_TYPE_PIPELINE_LAYOUT_EXT:
+        return "VkPipelineLayout";
+    case VK_DEBUG_REPORT_OBJECT_TYPE_RENDER_PASS_EXT:
+        return "VkRenderPass";
+    case VK_DEBUG_REPORT_OBJECT_TYPE_PIPELINE_EXT:
+        return "VkPipeline";
+    case VK_DEBUG_REPORT_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT_EXT:
+        return "VkDescriptorSetLayout";
+    case VK_DEBUG_REPORT_OBJECT_TYPE_SAMPLER_EXT:
+        return "VkSampler";
+    case VK_DEBUG_REPORT_OBJECT_TYPE_DESCRIPTOR_POOL_EXT:
+        return "VkDescriptorPool";
+    case VK_DEBUG_REPORT_OBJECT_TYPE_DESCRIPTOR_SET_EXT:
+        return "VkDescriptorSet";
+    case VK_DEBUG_REPORT_OBJECT_TYPE_FRAMEBUFFER_EXT:
+        return "VkFramebuffer";
+    case VK_DEBUG_REPORT_OBJECT_TYPE_COMMAND_POOL_EXT:
+        return "VkCommandPool";
+    case VK_DEBUG_REPORT_OBJECT_TYPE_SURFACE_KHR_EXT:
+        return "VkSurfaceKHR";
+    case VK_DEBUG_REPORT_OBJECT_TYPE_SWAPCHAIN_KHR_EXT:
+        return "VkSwapchainKHR";
+    case VK_DEBUG_REPORT_OBJECT_TYPE_DEBUG_REPORT_CALLBACK_EXT_EXT:
+        return "VkDebugReportCallbackEXT";
+    default:
+        return "Unknown VkDebugReportObjectTypeEXT";
+    }
+}
+
 /// Convert a VkFormat value into the corresponding std::string_view
 /// @param format The VkFormat to convert
 /// @return A std::string_view which contains the format
@@ -589,6 +655,64 @@ std::string_view as_string(const VkMemoryHeapFlagBits mem_heap_flag_bit) {
         return "VK_MEMORY_HEAP_FLAG_BITS_MAX_ENUM";
     default:
         return "Unknown VkMemoryHeapFlagBits";
+    }
+}
+
+template <>
+std::string_view as_string(const VkObjectType obj_type) {
+    switch (obj_type) {
+    case VK_OBJECT_TYPE_BUFFER:
+        return "VkBuffer";
+    case VK_OBJECT_TYPE_COMMAND_BUFFER:
+        return "VkCommandBuffer";
+    case VK_OBJECT_TYPE_COMMAND_POOL:
+        return "VkCommandPool";
+    case VK_OBJECT_TYPE_INSTANCE:
+        return "VkInstance";
+    case VK_OBJECT_TYPE_PHYSICAL_DEVICE:
+        return "VkPhysicalDevice";
+    case VK_OBJECT_TYPE_DESCRIPTOR_POOL:
+        return "VkDescriptorPool";
+    case VK_OBJECT_TYPE_DESCRIPTOR_SET:
+        return "VkDescriptorSet";
+    case VK_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT:
+        return "VkDescriptorSetLayout";
+    case VK_OBJECT_TYPE_DEVICE:
+        return "VkDevice";
+    case VK_OBJECT_TYPE_EVENT:
+        return "VkEvent";
+    case VK_OBJECT_TYPE_FENCE:
+        return "VkFence";
+    case VK_OBJECT_TYPE_FRAMEBUFFER:
+        return "VkFramebuffer";
+    case VK_OBJECT_TYPE_IMAGE:
+        return "VkImage";
+    case VK_OBJECT_TYPE_IMAGE_VIEW:
+        return "VkImageView";
+    case VK_OBJECT_TYPE_PIPELINE:
+        return "VkPipeline";
+    case VK_OBJECT_TYPE_PIPELINE_CACHE:
+        return "VkPipelineCache";
+    case VK_OBJECT_TYPE_PIPELINE_LAYOUT:
+        return "VkPipelineLayout";
+    case VK_OBJECT_TYPE_QUERY_POOL:
+        return "VkQueryPool";
+    case VK_OBJECT_TYPE_QUEUE:
+        return "VkQueue";
+    case VK_OBJECT_TYPE_RENDER_PASS:
+        return "VkRenderPass";
+    case VK_OBJECT_TYPE_SAMPLER:
+        return "VkSampler";
+    case VK_OBJECT_TYPE_SEMAPHORE:
+        return "VkSemaphore";
+    case VK_OBJECT_TYPE_SHADER_MODULE:
+        return "VkShaderModule";
+    case VK_OBJECT_TYPE_SURFACE_KHR:
+        return "VkSurfaceKHR";
+    case VK_OBJECT_TYPE_SWAPCHAIN_KHR:
+        return "VkSwapchainKHR";
+    default:
+        return "Unknown VkObjectType";
     }
 }
 

@@ -209,7 +209,10 @@ public:
                 throw VulkanException("Error: vkDebugMarkerSetObjectNameEXT failed!", result);
             }
         }
-        // Neigher VK_EXT_debug_utils nor VK_EXT_debug_marker is available.
+        // Neigher VK_EXT_debug_utils nor VK_EXT_debug_marker is enabled.
+        spdlog::warn("Can't assign internal debug name '{}' to '{}' (neither VK_EXT_debug_utils nor "
+                     "VK_EXT_debug_marker available)!",
+                     name, tools::as_string(tools::get_vk_object_type(vk_object)));
     }
 
     /// Call vkDeviceWaitIdle or vkQueueWaitIdle depending on whether ``queue`` is specified.
