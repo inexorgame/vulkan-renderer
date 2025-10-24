@@ -6,6 +6,7 @@
 #include "inexor/vulkan-renderer/standard_ubo.hpp"
 #include "inexor/vulkan-renderer/tools/camera.hpp"
 #include "inexor/vulkan-renderer/tools/cla_parser.hpp"
+#include "inexor/vulkan-renderer/tools/device_info.hpp"
 #include "inexor/vulkan-renderer/tools/enumerate.hpp"
 #include "inexor/vulkan-renderer/tools/exception.hpp"
 #include "inexor/vulkan-renderer/wrapper/cpu_texture.hpp"
@@ -267,27 +268,21 @@ Application::Application(int argc, char **argv) {
 
     load_toml_configuration_file("configuration/renderer.toml");
 
-    // If the user specified command line argument "--no-validation", the Khronos validation instance layer will be
-    // disabled. For debug builds, this is not advisable! Always use validation layers during development!
-    const auto disable_validation = cla_parser.arg<bool>("--no-validation");
-    if (disable_validation.value_or(false)) {
-        spdlog::warn("--no-validation specified, disabling validation layers");
-        m_enable_validation_layers = false;
-    }
-
     spdlog::trace("Creating Vulkan instance");
 
+    using input::Input;
+    using wrapper::Instance;
     using wrapper::window::Window;
     using wrapper::window::WindowSurface;
 
     m_window = std::make_unique<Window>(m_window_title, m_window_width, m_window_height, true, true, m_window_mode);
 
-    m_instance = std::make_unique<wrapper::Instance>(
+    m_instance = std::make_unique<Instance>(
         APP_NAME, ENGINE_NAME, VK_MAKE_API_VERSION(0, APP_VERSION[0], APP_VERSION[1], APP_VERSION[2]),
         VK_MAKE_API_VERSION(0, ENGINE_VERSION[0], ENGINE_VERSION[1], ENGINE_VERSION[2]),
-        validation_layer_debug_messenger_callback, m_enable_validation_layers);
+        validation_layer_debug_messenger_callback);
 
-    m_input = std::make_unique<input::Input>();
+    m_input = std::make_unique<Input>();
 
     m_surface = std::make_unique<WindowSurface>(m_instance->instance(), m_window->window());
 
@@ -320,27 +315,6 @@ Application::Application(int argc, char **argv) {
         m_vsync_enabled = false;
     }
 
-    bool use_distinct_data_transfer_queue = true;
-
-    // Ignore distinct data transfer queue
-    const auto forbid_distinct_data_transfer_queue = cla_parser.arg<bool>("--no-separate-data-queue");
-    if (forbid_distinct_data_transfer_queue.value_or(false)) {
-        spdlog::warn("Command line argument --no-separate-data-queue specified");
-        spdlog::warn("This will force the application to avoid using a distinct queue for data transfer to GPU");
-        spdlog::warn("Performance loss might be a result of this!");
-        use_distinct_data_transfer_queue = false;
-    }
-
-    bool enable_debug_marker_device_extension = true;
-
-    // Check if Vulkan debug markers should be disabled.
-    // Those are only available if RenderDoc instance layer is enabled!
-    const auto no_vulkan_debug_markers = cla_parser.arg<bool>("--no-vk-debug-markers");
-    if (no_vulkan_debug_markers.value_or(false)) {
-        spdlog::warn("--no-vk-debug-markers specified, disabling useful debug markers!");
-        enable_debug_marker_device_extension = false;
-    }
-
     const auto physical_devices = tools::get_physical_devices(m_instance->instance());
     if (preferred_graphics_card && *preferred_graphics_card >= physical_devices.size()) {
         spdlog::critical("GPU index {} is out of range!", *preferred_graphics_card);
@@ -352,29 +326,18 @@ Application::Application(int argc, char **argv) {
         // Add required physical device features here
     };
 
-    const VkPhysicalDeviceFeatures optional_features{
-        // Add optional physical device features here
-    };
-
     std::vector<const char *> required_extensions{
         // Since we want to draw on a window, we need the swapchain extension
         VK_KHR_SWAPCHAIN_EXTENSION_NAME,
     };
 
-#ifndef NDEBUG
-    if (enable_debug_marker_device_extension) {
-        required_extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
-    }
-#endif
-
     const VkPhysicalDevice physical_device =
         preferred_graphics_card ? physical_devices[*preferred_graphics_card]
-                                : wrapper::Device::pick_best_physical_device(*m_instance, m_surface->surface(),
-                                                                             required_features, required_extensions);
+                                : tools::pick_best_physical_device(*m_instance, m_surface->surface(), required_features,
+                                                                   required_extensions);
 
-    m_device =
-        std::make_unique<wrapper::Device>(*m_instance, m_surface->surface(), use_distinct_data_transfer_queue,
-                                          physical_device, required_extensions, required_features, optional_features);
+    m_device = std::make_unique<wrapper::Device>(*m_instance, m_surface->surface(), physical_device, required_features,
+                                                 required_extensions);
 
     m_swapchain = std::make_unique<wrapper::Swapchain>(*m_device, m_surface->surface(), m_window->width(),
                                                        m_window->height(), m_vsync_enabled);

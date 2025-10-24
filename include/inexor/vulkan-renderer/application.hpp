@@ -20,7 +20,6 @@ class Application : public VulkanRenderer {
 
     std::unique_ptr<input::Input> m_input;
 
-    bool m_enable_validation_layers{true};
     /// Inexor engine supports a variable number of octrees.
     std::vector<std::shared_ptr<octree::Cube>> m_worlds;
 

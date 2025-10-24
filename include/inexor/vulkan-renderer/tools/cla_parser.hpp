@@ -51,21 +51,10 @@ class CommandLineArgumentParser {
         // Specifies which GPU to use (by array index).
         {"--gpu", true},
 
-        // Disables the use of the special data transfer queue (forces use of the graphics queue).
-        {"--no-separate-data-queue", false},
-
-        // Disables GPU info printing.
-        {"--no-stats", false},
-
-        // Disables the Khronos vulkan validation layer.
-        {"--no-validation", false},
-
-        // Disables vulkan debug markers (even if --renderdoc is specified).
-        {"--no-vk-debug-markers", false},
-
         // Enables vertical synchronisation (limits FPS to monitor refresh rate).
         {"--vsync", false},
 
+        // Stop after one validation message occurs (can help prevent console spam).
         {"--stop-on-validation-message", false}};
 
     std::unordered_map<std::string, CommandLineArgumentValue> m_parsed_arguments;
