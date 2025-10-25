@@ -21,12 +21,12 @@ class Instance;
 using wrapper::commands::CommandBuffer;
 using wrapper::commands::CommandPool;
 
-/// An enum for the queue type.
+/// An enum for the queue type
 enum class VulkanQueueType {
     QUEUE_TYPE_GRAPHICS,
     QUEUE_TYPE_COMPUTE,
     QUEUE_TYPE_TRANSFER,
-    QUEUE_TYPE_SPARSE_BINDING,
+    // @TODO Implement sparse binding queue and further queue types.
 };
 
 /// RAII wrapper class for VkDevice, VkPhysicalDevice and VkQueues.
@@ -39,20 +39,15 @@ private:
     std::string m_gpu_name;
     VkPhysicalDeviceFeatures m_enabled_features{};
 
-    // We have to specify this, although it is likely not really used by the gpu.
-    static constexpr float DEFAULT_QUEUE_PRIORITY{1.0f};
-
     VkQueue m_graphics_queue{VK_NULL_HANDLE};
     VkQueue m_transfer_queue{VK_NULL_HANDLE};
     VkQueue m_compute_queue{VK_NULL_HANDLE};
-    VkQueue m_sparse_binding_queue{VK_NULL_HANDLE};
     VkQueue m_present_queue{VK_NULL_HANDLE};
 
-    std::uint32_t m_graphics_queue_family_index{0};
-    std::uint32_t m_compute_queue_family_index{0};
-    std::uint32_t m_transfer_queue_family_index{0};
-    std::uint32_t m_sparse_binding_queue_family_index{0};
-    std::uint32_t m_present_queue_family_index{0};
+    std::optional<std::uint32_t> m_graphics_queue_family_index{0};
+    std::optional<std::uint32_t> m_compute_queue_family_index{0};
+    std::optional<std::uint32_t> m_transfer_queue_family_index{0};
+    std::optional<std::uint32_t> m_present_queue_family_index{0};
 
     /// According to NVidia, we should aim for one command pool per thread
     /// https://developer.nvidia.com/blog/vulkan-dos-donts/
@@ -63,6 +58,8 @@ private:
     /// @param queue_type The Vulkan queue type
     /// @note This method will create a command pool for the thread if it doesn't already exist.
     CommandPool &get_thread_command_pool(VulkanQueueType queue_type) const;
+
+    // @TODO Implement get_thread_command_pool with "transfer if available, graphics otherwise" for copy operations.
 
 public:
     /// Default constructor
@@ -114,12 +111,6 @@ public:
     void execute(const std::string &name, const VulkanQueueType queue_type,
                  const std::function<void(const CommandBuffer &cmd_buf)> &cmd_lambda) const;
 
-    /// Find a queue family index that suits a specific criteria
-    /// @param criteria_lambda The lambda to sort out unsuitable queue families
-    /// @return The queue family index which was found (if any), ``std::nullopt`` otherwise
-    std::optional<std::uint32_t> find_queue_family_index_if(
-        const std::function<bool(std::uint32_t index, const VkQueueFamilyProperties &)> &criteria_lambda);
-
     [[nodiscard]] VkPhysicalDevice physical_device() const {
         return m_physical_device;
     }
@@ -137,14 +128,30 @@ public:
         return m_gpu_name;
     }
 
+    [[nodiscard]] bool has_compute_queue() const {
+        return m_compute_queue != VK_NULL_HANDLE;
+    }
+
+    [[nodiscard]] bool has_transfer_queue() const {
+        return m_transfer_queue != VK_NULL_HANDLE;
+    }
+
+    // TODO: Move to command buffer wrapper!
+    [[nodiscard]] VkQueue compute_queue() const {
+        return m_graphics_queue;
+    }
+
+    // TODO: Move to command buffer wrapper!
     [[nodiscard]] VkQueue graphics_queue() const {
         return m_graphics_queue;
     }
 
+    // TODO: Move to command buffer wrapper!
     [[nodiscard]] VkQueue present_queue() const {
         return m_present_queue;
     }
 
+    // TODO: Move to command buffer wrapper!
     [[nodiscard]] VkQueue transfer_queue() const {
         return m_transfer_queue;
     }

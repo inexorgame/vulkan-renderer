@@ -3,6 +3,7 @@
 #include "inexor/vulkan-renderer/tools/device_info.hpp"
 #include "inexor/vulkan-renderer/tools/enumerate.hpp"
 #include "inexor/vulkan-renderer/tools/exception.hpp"
+#include "inexor/vulkan-renderer/tools/queue_selection.hpp"
 #include "inexor/vulkan-renderer/tools/representation.hpp"
 #include "inexor/vulkan-renderer/wrapper/instance.hpp"
 #include "inexor/vulkan-renderer/wrapper/make_info.hpp"
@@ -33,152 +34,52 @@ Device::Device(const Instance &inst, const VkSurfaceKHR surface, const VkPhysica
 
     // Check if this gpu is even suitable for the application's purposes.
     if (!tools::is_gpu_suitable(gpu_info, required_features, required_extensions, true)) {
-        spdlog::error("Error: Selected GPU {} was evaluated as unsuitable!", gpu_info.name);
+        spdlog::error("Error: Selected GPU '{}' was evaluated as unsuitable!", gpu_info.name);
 
         // Attempt to pick another GPU automatically instead.
         m_physical_device = tools::pick_best_physical_device(inst, surface, required_features, required_extensions);
-        spdlog::warn("GPU {} was selected automatically as alternative!",
-                     tools::get_physical_device_name(m_physical_device));
+        m_gpu_name = tools::get_physical_device_name(m_physical_device);
+        spdlog::warn("GPU '{}' was selected automatically as alternative!", m_gpu_name);
     } else {
         // The desired GPU turned out to be suitable.
-        spdlog::trace("Creating physical device using GPU {}", gpu_info.name);
+        spdlog::trace("Creating physical device using GPU '{}'", gpu_info.name);
         m_physical_device = desired_gpu;
+        m_gpu_name = gpu_info.name;
     }
-
-    // @TODO Migrate to separate code and write tests for finding the right queue family indices!
 
     spdlog::trace("Creating Vulkan queues");
-    std::vector<VkDeviceQueueCreateInfo> queues_to_create;
 
-    // Find a queue family index which supports VK_QUEUE_GRAPHICS_BIT.
-    auto graphics_queue_family_index_candidate =
-        find_queue_family_index_if([&](const std::uint32_t index, const VkQueueFamilyProperties &props) {
-            // Check if the graphics flag is set for any queue.
-            return is_presentation_supported(surface, index) && ((props.queueFlags & VK_QUEUE_GRAPHICS_BIT) != 0u);
-        });
+    const auto props = tools::get_queue_family_properties(m_physical_device);
+    const auto optimal_queues = tools::determine_queue_family_indices(props, gpu_info.name);
 
-    if (!graphics_queue_family_index_candidate) {
-        // This should be extremely unlikely.
-        throw std::runtime_error("Error: Could not find any queue with VK_QUEUE_GRAPHICS_BIT!");
-    }
-    // Select that candidate as queue family index for graphics.
-    m_graphics_queue_family_index = graphics_queue_family_index_candidate.value();
-
-    queues_to_create.push_back(make_info<VkDeviceQueueCreateInfo>({
-        .queueFamilyIndex = m_graphics_queue_family_index,
-        .queueCount = 1,
-        .pQueuePriorities = &DEFAULT_QUEUE_PRIORITY,
-    }));
-
-    // Find a queue family index which supports transfer but is not the queue family index for graphics!
-    auto transfer_queue_family_index_candidate =
-        find_queue_family_index_if([&](const std::uint32_t index, const VkQueueFamilyProperties &props) {
-            return (props.queueFlags & VK_QUEUE_TRANSFER_BIT) && (index != m_graphics_queue_family_index);
-        });
-
-    if (!transfer_queue_family_index_candidate) {
-        spdlog::warn("Failed to find a distinct transfer queue for GPU {}!", gpu_info.name);
-        // This is not an error, so do not throw an exception in this case!
-        // It simply means that we can't have a dedicated queue just for transfer which is not the graphics queue!
-        // We try again by finding any queue that supports transfer, even if it not distinct from graphics queue.
-        transfer_queue_family_index_candidate =
-            find_queue_family_index_if([&](const std::uint32_t index, const VkQueueFamilyProperties &props) {
-                return props.queueFlags & VK_QUEUE_TRANSFER_BIT;
-            });
-        if (!transfer_queue_family_index_candidate) {
-            // This should be a very unlikely case, but still.
-            spdlog::critical("Error: GPU {} does not have any transfer queue!", gpu_info.name);
-            spdlog::warn("Attempting to use graphics queue as transfer queue instead.");
-            // We still try to use the graphics queue in this case, which should work.
-            transfer_queue_family_index_candidate = m_graphics_queue_family_index;
-        }
-        // We found a queue which supports transfer, but it is not distinct from the graphics queue.
+    // We can live without a transfer queue, we can live without a compute queue, but we can't live without graphics.
+    if (!optimal_queues.graphics) {
+        throw std::runtime_error("Error: No queue found with VK_QUEUE_TYPE_GRAPHICS_BIT for GPU '" + m_gpu_name + "'");
     }
 
-    m_transfer_queue_family_index = transfer_queue_family_index_candidate.value();
-
-    if (m_transfer_queue_family_index != m_graphics_queue_family_index) {
-        queues_to_create.push_back(make_info<VkDeviceQueueCreateInfo>({
-            .queueFamilyIndex = m_transfer_queue_family_index,
-            .queueCount = 1,
-            .pQueuePriorities = &DEFAULT_QUEUE_PRIORITY,
-        }));
-    }
-
-    // Find a queue family index which supports compute, but is neither graphics nor transfer queue!
-    auto compute_queue_family_index_candidate =
-        find_queue_family_index_if([&](const std::uint32_t index, const VkQueueFamilyProperties &props) {
-            return (props.queueFlags & VK_QUEUE_COMPUTE_BIT) && (index != m_graphics_queue_family_index) &&
-                   (index != m_transfer_queue_family_index);
-        });
-
-    if (!compute_queue_family_index_candidate) {
-        spdlog::warn("Failed to find a distinct compute queue for GPU {}!", gpu_info.name);
-        compute_queue_family_index_candidate =
-            find_queue_family_index_if([&](const std::uint32_t index, const VkQueueFamilyProperties &props) {
-                return (props.queueFlags & VK_QUEUE_COMPUTE_BIT);
-            });
-        if (!compute_queue_family_index_candidate) {
-            spdlog::critical("Error: GPU {} Does not have any compute queue!", gpu_info.name);
-            spdlog::warn("Attempting to use graphics queue as compute queue instead.");
-            // We still try to use the graphics queue in this case, which should work.
-            compute_queue_family_index_candidate = m_graphics_queue_family_index;
-        }
-        // We found a queue which supports compute, but it is not distinct!
-    }
-
-    m_compute_queue_family_index = compute_queue_family_index_candidate.value();
-
-    if (m_compute_queue_family_index != m_graphics_queue_family_index) {
-        queues_to_create.push_back(make_info<VkDeviceQueueCreateInfo>({
-            .queueFamilyIndex = m_compute_queue_family_index,
-            .queueCount = 1,
-            .pQueuePriorities = &DEFAULT_QUEUE_PRIORITY,
-        }));
-    }
-
-    // Find a queue family index which supports sparse binding, but is not graphics, transfer, or compute queue!
-    auto sparse_binding_queue_family_index_candidate =
-        find_queue_family_index_if([&](const std::uint32_t index, const VkQueueFamilyProperties &props) {
-            return (props.queueFlags & VK_QUEUE_SPARSE_BINDING_BIT) &&
-                   (index != graphics_queue_family_index_candidate) && (index != m_transfer_queue_family_index) &&
-                   (index != m_compute_queue_family_index);
-        });
-
-    if (!sparse_binding_queue_family_index_candidate) {
-        spdlog::warn("GPU {} doesn't have a distinct sparse binding queue!", gpu_info.name);
-        sparse_binding_queue_family_index_candidate =
-            find_queue_family_index_if([&](const std::uint32_t index, const VkQueueFamilyProperties &props) {
-                return (props.queueFlags & VK_QUEUE_SPARSE_BINDING_BIT);
-            });
-        if (!sparse_binding_queue_family_index_candidate) {
-            spdlog::critical("Error: GPU {} Does not have any sparse binding queue!", gpu_info.name);
-            spdlog::warn("Attempting to use graphics queue as compute queue instead.");
-            // We still try to use the graphics queue in this case, which should work.
-            sparse_binding_queue_family_index_candidate = m_graphics_queue_family_index;
-        }
-        // We found a queue which supports sparse binding, but it is not distinct!
-    }
-
-    m_sparse_binding_queue_family_index = sparse_binding_queue_family_index_candidate.value();
-
-    if (m_sparse_binding_queue_family_index != m_graphics_queue_family_index) {
-        queues_to_create.push_back(make_info<VkDeviceQueueCreateInfo>({
-            .queueFamilyIndex = m_sparse_binding_queue_family_index,
-            .queueCount = 1,
-            .pQueuePriorities = &DEFAULT_QUEUE_PRIORITY,
-        }));
-    }
+    m_graphics_queue_family_index = optimal_queues.graphics;
+    // This could be std::nullopt!
+    m_compute_queue_family_index = optimal_queues.compute;
+    // This could be std::nullopt!
+    m_transfer_queue_family_index = optimal_queues.transfer;
+    // @TODO Implement sparse binding queue and further queue types.
 
     const auto device_ci = make_info<VkDeviceCreateInfo>({
-        .queueCreateInfoCount = static_cast<std::uint32_t>(queues_to_create.size()),
-        .pQueueCreateInfos = queues_to_create.data(),
+        .queueCreateInfoCount = static_cast<std::uint32_t>(optimal_queues.queues_to_create.size()),
+        .pQueueCreateInfos = optimal_queues.queues_to_create.data(),
         .enabledExtensionCount = static_cast<std::uint32_t>(required_extensions.size()),
         .ppEnabledExtensionNames = required_extensions.data(),
         .pEnabledFeatures = &m_enabled_features,
     });
 
-    spdlog::trace("Creating physical device");
+    auto print_queue_family_index = [&](const std::optional<std::uint32_t> index) {
+        return index ? std::to_string(index.value()) : std::string("NONE");
+    };
+
+    spdlog::trace("Creating device from GPU '{}' with queue family indices: [graphics: {}, compute: {}, transfer: {}]",
+                  m_gpu_name, print_queue_family_index(m_graphics_queue_family_index),
+                  print_queue_family_index(m_compute_queue_family_index),
+                  print_queue_family_index(m_transfer_queue_family_index));
     if (const auto result = vkCreateDevice(m_physical_device, &device_ci, nullptr, &m_device); result != VK_SUCCESS) {
         throw VulkanException("Error: vkCreateDevice failed!", result);
     }
@@ -187,22 +88,34 @@ Device::Device(const Instance &inst, const VkSurfaceKHR surface, const VkPhysica
     volkLoadDevice(m_device);
 
     spdlog::trace("Getting Vulkan queues from device");
-    // Get the queues from the device that was just created.
     // It's important to call vkGetDeviceQueue after volkLoadDevice!
-    vkGetDeviceQueue(m_device, m_graphics_queue_family_index, 0, &m_graphics_queue);
-    vkGetDeviceQueue(m_device, m_transfer_queue_family_index, 0, &m_transfer_queue);
-    vkGetDeviceQueue(m_device, m_compute_queue_family_index, 0, &m_compute_queue);
-    vkGetDeviceQueue(m_device, m_sparse_binding_queue_family_index, 0, &m_sparse_binding_queue);
+
+    // We already checked earlier if the graphics queue family index is not std::nullopt.
+    vkGetDeviceQueue(m_device, m_graphics_queue_family_index.value(), 0, &m_graphics_queue);
+
+    // Do we have any queue for compute?
+    if (m_compute_queue_family_index) {
+        vkGetDeviceQueue(m_device, m_compute_queue_family_index.value(), 0, &m_compute_queue);
+    }
+    // Do we have any queue for compute?
+    if (m_transfer_queue_family_index) {
+        vkGetDeviceQueue(m_device, m_transfer_queue_family_index.value(), 0, &m_transfer_queue);
+    }
+    // @TODO Implement sparse binding queue and further queue types.
 
     // Check if compute or transfer queue can be used for presenting
-    if (is_presentation_supported(surface, m_compute_queue_family_index)) {
+    if (m_compute_queue_family_index && is_presentation_supported(surface, m_compute_queue_family_index.value())) {
         spdlog::trace("Using compute queue for vkQueuePresentKHR");
         m_present_queue = m_compute_queue;
-    } else if (is_presentation_supported(surface, m_transfer_queue_family_index)) {
+    } else if (m_transfer_queue_family_index &&
+               is_presentation_supported(surface, m_transfer_queue_family_index.value())) {
         spdlog::trace("Using transfer queue for vkQueuePresentKHR");
         m_present_queue = m_transfer_queue;
     } else {
-        // Note that we already checked earlier if graphics queue supports presentation.
+        if (!is_presentation_supported(surface, m_graphics_queue_family_index.value())) {
+            // This should be extremely unlikely.
+            throw std::runtime_error("Error: Graphics queue does not support present on GPU '" + m_gpu_name + "'");
+        }
         spdlog::trace("Using graphics queue for vkQueuePresentKHR");
         m_present_queue = m_graphics_queue;
     }
@@ -281,29 +194,19 @@ void Device::execute(const std::string &name, const VulkanQueueType queue_type,
     cmd_buf.submit_and_wait();
 }
 
-std::optional<std::uint32_t> Device::find_queue_family_index_if(
-    const std::function<bool(std::uint32_t index, const VkQueueFamilyProperties &)> &criteria_lambda) {
-    for (std::uint32_t index = 0; const auto &queue_family : tools::get_queue_family_properties(m_physical_device)) {
-        if (criteria_lambda(index, queue_family)) {
-            return index;
-        }
-        index++;
-    }
-    return std::nullopt;
-}
-
 CommandPool &Device::get_thread_command_pool(const VulkanQueueType queue_type) const {
     // Note that thread_local implies that thread_graphics_pool is implicitely static!
-    thread_local CommandPool *thread_graphics_cmd_pool = nullptr;       // NOLINT
-    thread_local CommandPool *thread_compute_cmd_pool = nullptr;        // NOLINT
-    thread_local CommandPool *thread_transfer_cmd_pool = nullptr;       // NOLINT
-    thread_local CommandPool *thread_sparse_binding_cmd_pool = nullptr; // NOLINT
+    thread_local CommandPool *thread_graphics_cmd_pool = nullptr; // NOLINT
+    thread_local CommandPool *thread_compute_cmd_pool = nullptr;  // NOLINT
+    thread_local CommandPool *thread_transfer_cmd_pool = nullptr; // NOLINT
 
     switch (queue_type) {
     case VulkanQueueType::QUEUE_TYPE_GRAPHICS: {
         if (thread_graphics_cmd_pool == nullptr) {
+            // Note that we checked during construction that there is a valid queue family index for graphics.
+            // There is no need for additional error checking here.
             auto cmd_pool =
-                std::make_unique<CommandPool>(*this, m_graphics_queue_family_index, "graphics command pool");
+                std::make_unique<CommandPool>(*this, m_graphics_queue_family_index.value(), "graphics command pool");
             std::unique_lock lock(m_mutex);
             thread_graphics_cmd_pool = m_cmd_pools.emplace_back(std::move(cmd_pool)).get();
         }
@@ -312,7 +215,11 @@ CommandPool &Device::get_thread_command_pool(const VulkanQueueType queue_type) c
     }
     case VulkanQueueType::QUEUE_TYPE_COMPUTE: {
         if (thread_compute_cmd_pool == nullptr) {
-            auto cmd_pool = std::make_unique<CommandPool>(*this, m_compute_queue_family_index, "compute command pool");
+            if (!has_compute_queue()) {
+                throw std::runtime_error("Error: GPU '" + m_gpu_name + "' has no compute queue!");
+            }
+            auto cmd_pool =
+                std::make_unique<CommandPool>(*this, m_compute_queue_family_index.value(), "compute command pool");
             std::unique_lock lock(m_mutex);
             thread_compute_cmd_pool = m_cmd_pools.emplace_back(std::move(cmd_pool)).get();
         }
@@ -321,23 +228,16 @@ CommandPool &Device::get_thread_command_pool(const VulkanQueueType queue_type) c
     }
     case VulkanQueueType::QUEUE_TYPE_TRANSFER: {
         if (thread_transfer_cmd_pool == nullptr) {
+            if (!has_transfer_queue()) {
+                throw std::runtime_error("Error: GPU '" + m_gpu_name + "' has no transfer queue!");
+            }
             auto cmd_pool =
-                std::make_unique<CommandPool>(*this, m_transfer_queue_family_index, "transfer command pool");
+                std::make_unique<CommandPool>(*this, m_transfer_queue_family_index.value(), "transfer command pool");
             std::unique_lock lock(m_mutex);
             thread_transfer_cmd_pool = m_cmd_pools.emplace_back(std::move(cmd_pool)).get();
         }
         std::shared_lock lock(m_mutex);
         return *thread_transfer_cmd_pool;
-    }
-    case VulkanQueueType::QUEUE_TYPE_SPARSE_BINDING: {
-        if (thread_sparse_binding_cmd_pool == nullptr) {
-            auto cmd_pool = std::make_unique<CommandPool>(*this, m_sparse_binding_queue_family_index,
-                                                          "sparse binding command pool");
-            std::shared_lock lock(m_mutex);
-            thread_sparse_binding_cmd_pool = m_cmd_pools.emplace_back(std::move(cmd_pool)).get();
-        }
-        std::shared_lock lock(m_mutex);
-        return *thread_sparse_binding_cmd_pool;
     }
     }
     throw std::runtime_error("Error: Unknown VuklkanQueueType!");
