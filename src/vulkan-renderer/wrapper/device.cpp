@@ -38,12 +38,13 @@ Device::Device(const Instance &inst, const VkSurfaceKHR surface, const VkPhysica
 
         // Attempt to pick another GPU automatically instead.
         m_physical_device = tools::pick_best_physical_device(inst, surface, required_features, required_extensions);
-        spdlog::warn("GPU {} was selected automatically as alternative!",
-                     tools::get_physical_device_name(m_physical_device));
+        m_gpu_name = tools::get_physical_device_name(m_physical_device);
+        spdlog::warn("GPU {} was selected automatically as alternative!", m_gpu_name);
     } else {
         // The desired GPU turned out to be suitable.
         spdlog::trace("Creating physical device using GPU {}", gpu_info.name);
         m_physical_device = desired_gpu;
+        m_gpu_name = gpu_info.name;
     }
 
     spdlog::trace("Creating Vulkan queues");
@@ -92,8 +93,6 @@ Device::Device(const Instance &inst, const VkSurfaceKHR surface, const VkPhysica
         spdlog::trace("Using graphics queue for vkQueuePresentKHR");
         m_present_queue = m_graphics_queue;
     }
-
-    m_gpu_name = gpu_info.name;
 
     VmaVulkanFunctions vma_vk_functions{
         .vkGetInstanceProcAddr = vkGetInstanceProcAddr,
