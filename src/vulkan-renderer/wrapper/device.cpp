@@ -34,15 +34,15 @@ Device::Device(const Instance &inst, const VkSurfaceKHR surface, const VkPhysica
 
     // Check if this gpu is even suitable for the application's purposes.
     if (!tools::is_gpu_suitable(gpu_info, required_features, required_extensions, true)) {
-        spdlog::error("Error: Selected GPU {} was evaluated as unsuitable!", gpu_info.name);
+        spdlog::error("Error: Selected GPU '{}' was evaluated as unsuitable!", gpu_info.name);
 
         // Attempt to pick another GPU automatically instead.
         m_physical_device = tools::pick_best_physical_device(inst, surface, required_features, required_extensions);
         m_gpu_name = tools::get_physical_device_name(m_physical_device);
-        spdlog::warn("GPU {} was selected automatically as alternative!", m_gpu_name);
+        spdlog::warn("GPU '{}' was selected automatically as alternative!", m_gpu_name);
     } else {
         // The desired GPU turned out to be suitable.
-        spdlog::trace("Creating physical device using GPU {}", gpu_info.name);
+        spdlog::trace("Creating physical device using GPU '{}'", gpu_info.name);
         m_physical_device = desired_gpu;
         m_gpu_name = gpu_info.name;
     }
@@ -52,6 +52,18 @@ Device::Device(const Instance &inst, const VkSurfaceKHR surface, const VkPhysica
     const auto props = tools::get_queue_family_properties(m_physical_device);
     const auto optimal_queues = tools::determine_queue_family_indices(props, gpu_info.name);
 
+    // We can live without a transfer queue, we can live without a compute queue, but we can't live without graphics.
+    if (!optimal_queues.graphics) {
+        throw std::runtime_error("Error: No queue found with VK_QUEUE_TYPE_GRAPHICS_BIT for GPU '" + m_gpu_name + "'");
+    }
+
+    m_graphics_queue_family_index = optimal_queues.graphics;
+    // This could be std::nullopt!
+    m_compute_queue_family_index = optimal_queues.compute;
+    // This could be std::nullopt!
+    m_transfer_queue_family_index = optimal_queues.transfer;
+    // @TODO Implement sparse binding queue and further queue types.
+
     const auto device_ci = make_info<VkDeviceCreateInfo>({
         .queueCreateInfoCount = static_cast<std::uint32_t>(optimal_queues.queues_to_create.size()),
         .pQueueCreateInfos = optimal_queues.queues_to_create.data(),
@@ -60,7 +72,14 @@ Device::Device(const Instance &inst, const VkSurfaceKHR surface, const VkPhysica
         .pEnabledFeatures = &m_enabled_features,
     });
 
-    spdlog::trace("Creating physical device");
+    auto print_queue_family_index = [&](const std::optional<std::uint32_t> index) {
+        return index ? std::to_string(index.value()) : std::string("NONE");
+    };
+
+    spdlog::trace("Creating device from GPU '{}' with queue family indices: [graphics: {}, compute: {}, transfer: {}]",
+                  m_gpu_name, print_queue_family_index(m_graphics_queue_family_index),
+                  print_queue_family_index(m_compute_queue_family_index),
+                  print_queue_family_index(m_transfer_queue_family_index));
     if (const auto result = vkCreateDevice(m_physical_device, &device_ci, nullptr, &m_device); result != VK_SUCCESS) {
         throw VulkanException("Error: vkCreateDevice failed!", result);
     }
@@ -68,28 +87,35 @@ Device::Device(const Instance &inst, const VkSurfaceKHR surface, const VkPhysica
     spdlog::trace("Loading Vulkan dynamically using volk metaloader library");
     volkLoadDevice(m_device);
 
-    m_graphics_queue_family_index = optimal_queues.graphics.value();
-    m_transfer_queue_family_index = optimal_queues.transfer.value();
-    m_compute_queue_family_index = optimal_queues.compute.value();
-    // @TODO Implement sparse binding queue and further queue types.
-
     spdlog::trace("Getting Vulkan queues from device");
-    // Get the queues from the device that was just created.
     // It's important to call vkGetDeviceQueue after volkLoadDevice!
-    vkGetDeviceQueue(m_device, m_graphics_queue_family_index, 0, &m_graphics_queue);
-    vkGetDeviceQueue(m_device, m_transfer_queue_family_index, 0, &m_transfer_queue);
-    vkGetDeviceQueue(m_device, m_compute_queue_family_index, 0, &m_compute_queue);
+
+    // We already checked earlier if the graphics queue family index is not std::nullopt.
+    vkGetDeviceQueue(m_device, m_graphics_queue_family_index.value(), 0, &m_graphics_queue);
+
+    // Do we have any queue for compute?
+    if (m_compute_queue_family_index) {
+        vkGetDeviceQueue(m_device, m_compute_queue_family_index.value(), 0, &m_compute_queue);
+    }
+    // Do we have any queue for compute?
+    if (m_transfer_queue_family_index) {
+        vkGetDeviceQueue(m_device, m_transfer_queue_family_index.value(), 0, &m_transfer_queue);
+    }
     // @TODO Implement sparse binding queue and further queue types.
 
     // Check if compute or transfer queue can be used for presenting
-    if (is_presentation_supported(surface, m_compute_queue_family_index)) {
+    if (m_compute_queue_family_index && is_presentation_supported(surface, m_compute_queue_family_index.value())) {
         spdlog::trace("Using compute queue for vkQueuePresentKHR");
         m_present_queue = m_compute_queue;
-    } else if (is_presentation_supported(surface, m_transfer_queue_family_index)) {
+    } else if (m_transfer_queue_family_index &&
+               is_presentation_supported(surface, m_transfer_queue_family_index.value())) {
         spdlog::trace("Using transfer queue for vkQueuePresentKHR");
         m_present_queue = m_transfer_queue;
     } else {
-        // Note that we already checked earlier if graphics queue supports presentation.
+        if (!is_presentation_supported(surface, m_graphics_queue_family_index.value())) {
+            // This should be extremely unlikely.
+            throw std::runtime_error("Error: Graphics queue does not support present on GPU '" + m_gpu_name + "'");
+        }
         spdlog::trace("Using graphics queue for vkQueuePresentKHR");
         m_present_queue = m_graphics_queue;
     }
@@ -177,8 +203,10 @@ CommandPool &Device::get_thread_command_pool(const VulkanQueueType queue_type) c
     switch (queue_type) {
     case VulkanQueueType::QUEUE_TYPE_GRAPHICS: {
         if (thread_graphics_cmd_pool == nullptr) {
+            // Note that we checked during construction that there is a valid queue family index for graphics.
+            // There is no need for additional error checking here.
             auto cmd_pool =
-                std::make_unique<CommandPool>(*this, m_graphics_queue_family_index, "graphics command pool");
+                std::make_unique<CommandPool>(*this, m_graphics_queue_family_index.value(), "graphics command pool");
             std::unique_lock lock(m_mutex);
             thread_graphics_cmd_pool = m_cmd_pools.emplace_back(std::move(cmd_pool)).get();
         }
@@ -187,7 +215,11 @@ CommandPool &Device::get_thread_command_pool(const VulkanQueueType queue_type) c
     }
     case VulkanQueueType::QUEUE_TYPE_COMPUTE: {
         if (thread_compute_cmd_pool == nullptr) {
-            auto cmd_pool = std::make_unique<CommandPool>(*this, m_compute_queue_family_index, "compute command pool");
+            if (!has_compute_queue()) {
+                throw std::runtime_error("Error: GPU '" + m_gpu_name + "' has no compute queue!");
+            }
+            auto cmd_pool =
+                std::make_unique<CommandPool>(*this, m_compute_queue_family_index.value(), "compute command pool");
             std::unique_lock lock(m_mutex);
             thread_compute_cmd_pool = m_cmd_pools.emplace_back(std::move(cmd_pool)).get();
         }
@@ -196,8 +228,11 @@ CommandPool &Device::get_thread_command_pool(const VulkanQueueType queue_type) c
     }
     case VulkanQueueType::QUEUE_TYPE_TRANSFER: {
         if (thread_transfer_cmd_pool == nullptr) {
+            if (!has_transfer_queue()) {
+                throw std::runtime_error("Error: GPU '" + m_gpu_name + "' has no transfer queue!");
+            }
             auto cmd_pool =
-                std::make_unique<CommandPool>(*this, m_transfer_queue_family_index, "transfer command pool");
+                std::make_unique<CommandPool>(*this, m_transfer_queue_family_index.value(), "transfer command pool");
             std::unique_lock lock(m_mutex);
             thread_transfer_cmd_pool = m_cmd_pools.emplace_back(std::move(cmd_pool)).get();
         }

@@ -9,11 +9,12 @@ namespace inexor::vulkan_renderer::tools {
 
 QueueFamilyIndexCandidates determine_queue_family_indices(const std::vector<VkQueueFamilyProperties> &props,
                                                           const std::string &gpu_name) {
-    // This lambda will help us to search for a queue family index which matches our requirements.
+    // This lambda will help us to search for a queue family which matches our requirements.
     auto find_queue_family_index_if =
-        [&](const std::function<bool(std::uint32_t index, const VkQueueFamilyProperties &)> &selection_callback)
+        [&](const std::function<bool(std::uint32_t, const VkQueueFamilyProperties &)> &selection_callback)
         -> std::optional<std::uint32_t> {
         for (std::uint32_t index = 0; const auto &queue_family : props) {
+            // Invoke the std::function that was specified by the programmer.
             if (selection_callback(index, queue_family)) {
                 return index;
             }
@@ -27,13 +28,13 @@ QueueFamilyIndexCandidates determine_queue_family_indices(const std::vector<VkQu
     // STEP 1: Find a queue family for graphics.
     const auto graphics_candidate =
         find_queue_family_index_if([&](const std::uint32_t index, const VkQueueFamilyProperties &props) {
-            // It makes no sense to search for a distinct queue family which supports only graphics,
-            // because this practically does not exist on desktop machines.
+            // It makes no sense to search for a distinct queue family which supports only graphics and no other queue
+            // type, because - to the best of our knowledge - this practically does not exist on desktop machines.
             return (props.queueFlags & VK_QUEUE_GRAPHICS_BIT) != 0u;
         });
 
     if (!graphics_candidate) {
-        // Ww have not found a queue family for graphics. This should be extremely unlikely.
+        // Ww have not found a queue family for graphics. This should be very unlikely.
         if (!gpu_name.empty()) {
             spdlog::error("Could not find any queue family with VK_QUEUE_GRAPHICS_BIT on GPU '{}'", gpu_name);
         }
@@ -54,9 +55,9 @@ QueueFamilyIndexCandidates determine_queue_family_indices(const std::vector<VkQu
     auto compute_candidate =
         find_queue_family_index_if([&](const std::uint32_t index, const VkQueueFamilyProperties &props) {
             // Try to find a queue family for compute but not graphics or transfer!
-            return ((props.queueFlags & VK_QUEUE_COMPUTE_BIT) != 0u) &&
-                   ((props.queueFlags & VK_QUEUE_GRAPHICS_BIT) == 0u) &&
-                   ((props.queueFlags & VK_QUEUE_TRANSFER_BIT) == 0u) &&
+            return ((props.queueFlags & VK_QUEUE_COMPUTE_BIT) != 0u) &&  // is compute
+                   ((props.queueFlags & VK_QUEUE_GRAPHICS_BIT) == 0u) && // is not graphics
+                   ((props.queueFlags & VK_QUEUE_TRANSFER_BIT) == 0u) && // is not transfer
                    // It gets tricky here: We must make sure that the graphics queue family is even valid!
                    (return_value.graphics.has_value() ? (index != return_value.graphics.value()) : true);
         });
@@ -113,9 +114,9 @@ QueueFamilyIndexCandidates determine_queue_family_indices(const std::vector<VkQu
     auto transfer_candidate =
         find_queue_family_index_if([&](const std::uint32_t index, const VkQueueFamilyProperties &props) {
             // Try to find a queue family index which supports transfer but is not the graphics queue!
-            return ((props.queueFlags & VK_QUEUE_TRANSFER_BIT) != 0u) &&
-                   ((props.queueFlags & VK_QUEUE_GRAPHICS_BIT) == 0u) &&
-                   ((props.queueFlags & VK_QUEUE_COMPUTE_BIT) == 0u) &&
+            return ((props.queueFlags & VK_QUEUE_TRANSFER_BIT) != 0u) && // is transfer
+                   ((props.queueFlags & VK_QUEUE_GRAPHICS_BIT) == 0u) && // is not graphics
+                   ((props.queueFlags & VK_QUEUE_COMPUTE_BIT) == 0u) &&  // is not compute
                    // It gets tricky here: We must make sure that the graphics queue family is even valid!
                    (return_value.graphics.has_value() ? (index != return_value.graphics.value()) : true) &&
                    // It gets tricky here: We must make sure that the transfer queue family is even valid!
