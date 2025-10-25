@@ -8,7 +8,7 @@
 namespace inexor::vulkan_renderer::tools {
 
 QueueFamilyIndexCandidates determine_queue_family_indices(const std::vector<VkQueueFamilyProperties> &props,
-                                                          const std::string gpu_name) {
+                                                          const std::string &gpu_name) {
     // This lambda will help us to search for a queue family index which matches our requirements.
     auto find_queue_family_index_if =
         [&](const std::function<bool(std::uint32_t index, const VkQueueFamilyProperties &)> &selection_callback)
@@ -66,6 +66,7 @@ QueueFamilyIndexCandidates determine_queue_family_indices(const std::vector<VkQu
         if (!gpu_name.empty()) {
             spdlog::warn("Could not find a distinct queue family with VK_QUEUE_COMPUTE_BIT for GPU '{}'!", gpu_name);
         }
+
         // This means that all available compute queues are of some other queue type as well, for example graphics.
         // In this case, we just try to find any queue which can be used for compute.
         compute_candidate =
@@ -77,6 +78,7 @@ QueueFamilyIndexCandidates determine_queue_family_indices(const std::vector<VkQu
                 // extremely unlikely and not really that useful in real life scenarios.
                 return (props.queueFlags & VK_QUEUE_COMPUTE_BIT) != 0u;
             });
+
         if (!compute_candidate) {
             if (!gpu_name.empty()) {
                 spdlog::error("Could not find any queue family with VK_QUEUE_COMPUTE_BIT on GPU '{}'", gpu_name);
@@ -125,12 +127,14 @@ QueueFamilyIndexCandidates determine_queue_family_indices(const std::vector<VkQu
         if (!gpu_name.empty()) {
             spdlog::warn("Could not find a distinct queue family with VK_QUEUE_TRANSFER_BIT on GPU '{}'!", gpu_name);
         }
+
         // This means that all available transfer queues are of some other queue type as well, for example graphics.
         // In this case, we just try to find any queue which can be used for transfer.
         transfer_candidate =
             find_queue_family_index_if([&](const std::uint32_t index, const VkQueueFamilyProperties &props) {
                 return (props.queueFlags & VK_QUEUE_TRANSFER_BIT) != 0u;
             });
+
         if (!transfer_candidate) {
             if (!gpu_name.empty()) {
                 spdlog::error("Could not find any queue with VK_QUEUE_TRANSFER_BIT on GPU '{}'!", gpu_name);

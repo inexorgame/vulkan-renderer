@@ -19,12 +19,13 @@ struct QueueFamilyIndexCandidates {
     std::vector<VkDeviceQueueCreateInfo> queues_to_create;
 };
 
-///
+/// Automatically selects queue family indices for graphics, compute, and transfer.
+/// This code also fills the "queues to create" std::vector of QueueFamilyIndexCandidates.
 /// @param name The name of the graphics card.
 /// @param props The queue family properties of a physical device.
-/// @exception std::runtime_error If no queue with VK_QUEUE_GRAPHICS_BIT could be found.
-/// @return
+/// @return A filled QueueFamilyIndexCandidates struct with the queue family indices and the vector of queues to create.
+/// Each queue family index could be ``std::nullopt``!.
 [[nodiscard]] QueueFamilyIndexCandidates
-determine_queue_family_indices(const std::vector<VkQueueFamilyProperties> &props, std::string name = "");
+determine_queue_family_indices(const std::vector<VkQueueFamilyProperties> &props, const std::string &name = "");
 
 } // namespace inexor::vulkan_renderer::tools
