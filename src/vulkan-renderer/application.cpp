@@ -150,7 +150,6 @@ VkBool32 Application::validation_layer_debug_messenger_callback(const VkDebugUti
         spdlog::warn("{}", data->pMessage);
     } else if (severity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT) {
         spdlog::critical("{}", data->pMessage);
-        // TODO: Respect --stop-on-validation-error command line argument!
     }
     return VK_FALSE;
 }
@@ -287,14 +286,6 @@ Application::Application(int argc, char **argv) {
     m_surface = std::make_unique<WindowSurface>(m_instance->instance(), m_window->window());
 
     setup_window_and_input_callbacks();
-
-#ifndef NDEBUG
-    if (cla_parser.arg<bool>("--stop-on-validation-message").value_or(false)) {
-        spdlog::warn("--stop-on-validation-message specified. Application will call a breakpoint after reporting a "
-                     "validation layer message");
-        m_stop_on_validation_message = true;
-    }
-#endif
 
     spdlog::trace("Creating window surface");
 

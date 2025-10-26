@@ -23,10 +23,6 @@ class Application : public VulkanRenderer {
     /// Inexor engine supports a variable number of octrees.
     std::vector<std::shared_ptr<octree::Cube>> m_worlds;
 
-    // If the user specified command line argument "--stop-on-validation-message", the program will call
-    // std::abort(); after reporting a validation layer (error) message.
-    bool m_stop_on_validation_message{false};
-
     /// The callback for validation messages (VK_EXT_debug_utils)
     /// @param severity The severity of the message (info, warning, error)
     /// @param type The type of message (validation, performance)
