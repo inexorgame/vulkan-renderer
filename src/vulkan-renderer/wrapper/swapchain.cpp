@@ -22,6 +22,10 @@ using tools::VulkanException;
 Swapchain::Swapchain(Device &device, const VkSurfaceKHR surface, const std::uint32_t width, const std::uint32_t height,
                      const bool vsync_enabled)
     : m_device(device), m_surface(surface), m_vsync_enabled(vsync_enabled) {
+    if (vkCreateSwapchainKHR == nullptr) {
+        throw std::runtime_error("Error: vkCreateSwapchainKHR is not available! Did you forget to enable "
+                                 "VK_KHR_swapchain device extension?");
+    }
     m_img_available = std::make_unique<Semaphore>(m_device, "Swapchain image available");
     setup_swapchain(width, height, vsync_enabled);
 }

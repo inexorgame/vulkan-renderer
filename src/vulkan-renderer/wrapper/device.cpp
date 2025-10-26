@@ -50,7 +50,7 @@ Device::Device(const Instance &inst, const VkSurfaceKHR surface, const VkPhysica
     spdlog::trace("Creating Vulkan queues");
 
     const auto props = tools::get_queue_family_properties(m_physical_device);
-    const auto optimal_queues = tools::determine_queue_family_indices(props, gpu_info.name);
+    const auto optimal_queues = tools::determine_queue_family_indices(props);
 
     // We can live without a transfer queue, we can live without a compute queue, but we can't live without graphics.
     if (!optimal_queues.graphics) {
@@ -62,7 +62,8 @@ Device::Device(const Instance &inst, const VkSurfaceKHR surface, const VkPhysica
     m_compute_queue_family_index = optimal_queues.compute;
     // This could be std::nullopt!
     m_transfer_queue_family_index = optimal_queues.transfer;
-    // @TODO Implement sparse binding queue and further queue types.
+    // This could be std::nullopt!
+    m_sparse_binding_queue_family_index = optimal_queues.sparse_binding;
 
     const auto device_ci = make_info<VkDeviceCreateInfo>({
         .queueCreateInfoCount = static_cast<std::uint32_t>(optimal_queues.queues_to_create.size()),
@@ -76,10 +77,13 @@ Device::Device(const Instance &inst, const VkSurfaceKHR surface, const VkPhysica
         return index ? std::to_string(index.value()) : std::string("NONE");
     };
 
-    spdlog::trace("Creating device from GPU '{}' with queue family indices: [graphics: {}, compute: {}, transfer: {}]",
+    spdlog::trace("Creating device from GPU '{}' with queue family indices: [graphics: {}, compute: {}, transfer: {}, "
+                  "sparse binding: {}]",
                   m_gpu_name, print_queue_family_index(m_graphics_queue_family_index),
                   print_queue_family_index(m_compute_queue_family_index),
-                  print_queue_family_index(m_transfer_queue_family_index));
+                  print_queue_family_index(m_transfer_queue_family_index),
+                  print_queue_family_index(m_sparse_binding_queue_family_index));
+
     if (const auto result = vkCreateDevice(m_physical_device, &device_ci, nullptr, &m_device); result != VK_SUCCESS) {
         throw VulkanException("Error: vkCreateDevice failed!", result);
     }
@@ -101,22 +105,33 @@ Device::Device(const Instance &inst, const VkSurfaceKHR surface, const VkPhysica
     if (m_transfer_queue_family_index) {
         vkGetDeviceQueue(m_device, m_transfer_queue_family_index.value(), 0, &m_transfer_queue);
     }
-    // @TODO Implement sparse binding queue and further queue types.
+    // Do we have any queue for sparse binding?
+    if (m_sparse_binding_queue_family_index) {
+        vkGetDeviceQueue(m_device, m_sparse_binding_queue_family_index.value(), 0, &m_sparse_binding_queue);
+    }
 
     // Check if compute or transfer queue can be used for presenting
     if (m_compute_queue_family_index && is_presentation_supported(surface, m_compute_queue_family_index.value())) {
-        spdlog::trace("Using compute queue for vkQueuePresentKHR");
+        spdlog::trace("Using compute queue [queue family index: {}] for vkQueuePresentKHR",
+                      m_compute_queue_family_index.value());
         m_present_queue = m_compute_queue;
     } else if (m_transfer_queue_family_index &&
                is_presentation_supported(surface, m_transfer_queue_family_index.value())) {
-        spdlog::trace("Using transfer queue for vkQueuePresentKHR");
+        spdlog::trace("Using transfer queue [queue family index: {}] for vkQueuePresentKHR",
+                      m_transfer_queue_family_index.value());
+        m_present_queue = m_transfer_queue;
+    } else if (m_sparse_binding_queue_family_index &&
+               is_presentation_supported(surface, m_sparse_binding_queue_family_index.value())) {
+        spdlog::trace("Using sparse binding queue [queue family index: {}] for vkQueuePresentKHR",
+                      m_sparse_binding_queue_family_index.value());
         m_present_queue = m_transfer_queue;
     } else {
         if (!is_presentation_supported(surface, m_graphics_queue_family_index.value())) {
             // This should be extremely unlikely.
             throw std::runtime_error("Error: Graphics queue does not support present on GPU '" + m_gpu_name + "'");
         }
-        spdlog::trace("Using graphics queue for vkQueuePresentKHR");
+        spdlog::trace("Using graphics queue [queue family index: {}] for vkQueuePresentKHR",
+                      m_graphics_queue_family_index.value());
         m_present_queue = m_graphics_queue;
     }
 
@@ -196,9 +211,10 @@ void Device::execute(const std::string &name, const VulkanQueueType queue_type,
 
 CommandPool &Device::get_thread_command_pool(const VulkanQueueType queue_type) const {
     // Note that thread_local implies that thread_graphics_pool is implicitely static!
-    thread_local CommandPool *thread_graphics_cmd_pool = nullptr; // NOLINT
-    thread_local CommandPool *thread_compute_cmd_pool = nullptr;  // NOLINT
-    thread_local CommandPool *thread_transfer_cmd_pool = nullptr; // NOLINT
+    thread_local CommandPool *thread_graphics_cmd_pool = nullptr;       // NOLINT
+    thread_local CommandPool *thread_compute_cmd_pool = nullptr;        // NOLINT
+    thread_local CommandPool *thread_transfer_cmd_pool = nullptr;       // NOLINT
+    thread_local CommandPool *thread_sparse_binding_cmd_pool = nullptr; // NOLINT
 
     switch (queue_type) {
     case VulkanQueueType::QUEUE_TYPE_GRAPHICS: {
@@ -215,7 +231,7 @@ CommandPool &Device::get_thread_command_pool(const VulkanQueueType queue_type) c
     }
     case VulkanQueueType::QUEUE_TYPE_COMPUTE: {
         if (thread_compute_cmd_pool == nullptr) {
-            if (!has_compute_queue()) {
+            if (!has_any_compute_queue()) {
                 throw std::runtime_error("Error: GPU '" + m_gpu_name + "' has no compute queue!");
             }
             auto cmd_pool =
@@ -228,11 +244,24 @@ CommandPool &Device::get_thread_command_pool(const VulkanQueueType queue_type) c
     }
     case VulkanQueueType::QUEUE_TYPE_TRANSFER: {
         if (thread_transfer_cmd_pool == nullptr) {
-            if (!has_transfer_queue()) {
+            if (!has_any_transfer_queue()) {
                 throw std::runtime_error("Error: GPU '" + m_gpu_name + "' has no transfer queue!");
             }
             auto cmd_pool =
                 std::make_unique<CommandPool>(*this, m_transfer_queue_family_index.value(), "transfer command pool");
+            std::unique_lock lock(m_mutex);
+            thread_transfer_cmd_pool = m_cmd_pools.emplace_back(std::move(cmd_pool)).get();
+        }
+        std::shared_lock lock(m_mutex);
+        return *thread_transfer_cmd_pool;
+    }
+    case VulkanQueueType::QUEUE_TYPE_SPARSE_BINDING: {
+        if (thread_transfer_cmd_pool == nullptr) {
+            if (!has_any_sparse_binding_queue()) {
+                throw std::runtime_error("Error: GPU '" + m_gpu_name + "' has no sparse binding queue!");
+            }
+            auto cmd_pool = std::make_unique<CommandPool>(*this, m_transfer_queue_family_index.value(),
+                                                          "sparse binding command pool");
             std::unique_lock lock(m_mutex);
             thread_transfer_cmd_pool = m_cmd_pools.emplace_back(std::move(cmd_pool)).get();
         }
