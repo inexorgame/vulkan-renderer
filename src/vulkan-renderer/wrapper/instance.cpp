@@ -12,14 +12,15 @@
 
 namespace inexor::vulkan_renderer::wrapper {
 
+using tools::InexorException;
 using tools::VulkanException;
 
 Instance::Instance(const std::string &app_name, const std::string &engine_name, const std::uint32_t app_version,
-                   const std::uint32_t engine_version, const PFN_vkDebugUtilsMessengerCallbackEXT debug_callback,
-                   const std::span<const char *> required_extensions, const std::span<const char *> required_layers) {
+                   const std::uint32_t engine_version, const std::span<const char *> required_extensions,
+                   const std::span<const char *> required_layers) {
     spdlog::trace("Initializing volk metaloader");
     if (const auto result = volkInitialize(); result != VK_SUCCESS) {
-        throw std::runtime_error("Error: Could not initialize Vulkan with volk metaloader (volkInitialize failed)! "
+        throw std::runtime_error("Error: Could not initialize Vulkan with volk metaloader: volkInitialize() failed! "
                                  "Make sure to update the drivers of your graphics card!");
     }
 
@@ -36,6 +37,9 @@ Instance::Instance(const std::string &app_name, const std::string &engine_name, 
     if (const auto result = vkEnumerateInstanceVersion(&available_api_version); result != VK_SUCCESS) {
         throw VulkanException("Error: vkEnumerateInstanceVersion failed!", result);
     }
+
+    spdlog::trace("Available Vulkan API version: {}.{}.{}", VK_API_VERSION_MAJOR(available_api_version),
+                  VK_API_VERSION_MINOR(available_api_version), VK_API_VERSION_PATCH(available_api_version));
 
     // This code will throw an exception if the required version of Vulkan API is not available on the system
     if (VK_API_VERSION_MAJOR(REQUIRED_VK_API_VERSION) > VK_API_VERSION_MAJOR(available_api_version) ||
@@ -151,40 +155,13 @@ Instance::Instance(const std::string &app_name, const std::string &engine_name, 
 
     spdlog::trace("Loading Vulkan instance with volkLoadInstanceOnly");
     volkLoadInstanceOnly(m_instance);
-
-    // Note that we can only call is_extension_supported afer volkLoadInstanceOnly!
-    if (!is_extension_supported(VK_EXT_DEBUG_UTILS_EXTENSION_NAME)) {
-        // Don't forget to destroy the instance before throwing the exception!
-        vkDestroyInstance(m_instance, nullptr);
-        throw tools::InexorException("Error: VK_EXT_DEBUG_UTILS_EXTENSION_NAME is not supported!");
-    }
-
-    const auto dbg_messenger_ci = make_info<VkDebugUtilsMessengerCreateInfoEXT>({
-        .messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT |
-                           VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT |
-                           VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT,
-        .messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT |
-                       VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT,
-        .pfnUserCallback = debug_callback,
-        .pUserData = nullptr,
-    });
-
-    spdlog::trace("Creating Vulkan debug utils messenger callback");
-    if (const auto result = vkCreateDebugUtilsMessengerEXT(m_instance, &dbg_messenger_ci, nullptr, &m_debug_callback);
-        result != VK_SUCCESS) {
-        // Don't forget to destroy the instance before throwing the exception!
-        vkDestroyInstance(m_instance, nullptr);
-        throw VulkanException("Error: vkCreateDebugUtilsMessengerEXT failed!", result);
-    }
 }
 
 Instance::Instance(Instance &&other) noexcept {
     m_instance = std::exchange(other.m_instance, nullptr);
-    m_debug_callback = std::exchange(other.m_debug_callback, nullptr);
 }
 
 Instance::~Instance() {
-    vkDestroyDebugUtilsMessengerEXT(m_instance, m_debug_callback, nullptr);
     vkDestroyInstance(m_instance, nullptr);
 }
 

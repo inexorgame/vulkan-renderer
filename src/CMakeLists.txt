@@ -20,6 +20,7 @@ set(INEXOR_SOURCE_FILES
     vulkan-renderer/tools/time_step.cpp
 
     vulkan-renderer/wrapper/cpu_texture.cpp
+    vulkan-renderer/wrapper/debug_callback.cpp
     vulkan-renderer/wrapper/device.cpp
     vulkan-renderer/wrapper/framebuffer.cpp
     vulkan-renderer/wrapper/gpu_memory_buffer.cpp

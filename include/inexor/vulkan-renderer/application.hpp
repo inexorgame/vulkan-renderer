@@ -4,6 +4,9 @@
 #include "inexor/vulkan-renderer/octree/collision_query.hpp"
 #include "inexor/vulkan-renderer/octree/cube.hpp"
 #include "inexor/vulkan-renderer/renderer.hpp"
+#include "inexor/vulkan-renderer/wrapper/debug_callback.hpp"
+
+#include <memory>
 
 // Forward declarations
 namespace inexor::vulkan_renderer::input {
@@ -22,6 +25,8 @@ class Application : public VulkanRenderer {
 
     /// Inexor engine supports a variable number of octrees.
     std::vector<std::shared_ptr<octree::Cube>> m_worlds;
+
+    std::unique_ptr<wrapper::VulkanDebugUtilsCallback> m_dbg_callback;
 
     /// The callback for validation messages (VK_EXT_debug_utils)
     /// @param severity The severity of the message (info, warning, error)

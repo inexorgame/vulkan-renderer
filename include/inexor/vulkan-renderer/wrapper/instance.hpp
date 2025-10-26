@@ -3,6 +3,7 @@
 #include <volk.h>
 
 #include <cstdint>
+#include <memory>
 #include <span>
 #include <string>
 
@@ -12,10 +13,9 @@ namespace inexor::vulkan_renderer::wrapper {
 class Instance {
 private:
     VkInstance m_instance{VK_NULL_HANDLE};
-    VkDebugUtilsMessengerEXT m_debug_callback{VK_NULL_HANDLE};
 
 public:
-    // This is the version of Vulkan API that we use.
+    // This is the version of Vulkan API that we use in the entire engine.
     static constexpr std::uint32_t REQUIRED_VK_API_VERSION{VK_API_VERSION_1_2};
 
     /// Default constructor
@@ -23,12 +23,10 @@ public:
     /// @param engine_name The engine name.
     /// @param app_version The app version.
     /// @param engine_version The engine version.
-    /// @param debug_callback The callback (used by ``VK_EXT_debug_utils``).
     /// @param required_extensions The required instance extensions (empty by default).
     /// @param required_layers The required instance layers (empty by default).
     Instance(const std::string &app_name, const std::string &engine_name, std::uint32_t app_version,
-             std::uint32_t engine_version, const PFN_vkDebugUtilsMessengerCallbackEXT debug_callback,
-             const std::span<const char *> required_extensions = {},
+             std::uint32_t engine_version, const std::span<const char *> required_extensions = {},
              const std::span<const char *> required_layers = {});
 
     Instance(const Instance &) = delete;

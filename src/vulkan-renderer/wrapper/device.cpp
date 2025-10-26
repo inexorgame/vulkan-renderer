@@ -77,9 +77,10 @@ Device::Device(const Instance &inst, const VkSurfaceKHR surface, const VkPhysica
         return index ? std::to_string(index.value()) : std::string("NONE");
     };
 
-    spdlog::trace("Creating device from GPU '{}' with queue family indices: [graphics: {}, compute: {}, transfer: {}, "
-                  "sparse binding: {}]",
-                  m_gpu_name, print_queue_family_index(m_graphics_queue_family_index),
+    spdlog::trace("Creating device from GPU '{}'", m_gpu_name);
+
+    spdlog::trace("Selected queue family indices: [graphics: {}, compute: {}, transfer: {}, sparse binding: {}]",
+                  print_queue_family_index(m_graphics_queue_family_index),
                   print_queue_family_index(m_compute_queue_family_index),
                   print_queue_family_index(m_transfer_queue_family_index),
                   print_queue_family_index(m_sparse_binding_queue_family_index));
