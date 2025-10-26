@@ -4,9 +4,6 @@
 #include "inexor/vulkan-renderer/octree/collision_query.hpp"
 #include "inexor/vulkan-renderer/octree/cube.hpp"
 #include "inexor/vulkan-renderer/renderer.hpp"
-#include "inexor/vulkan-renderer/wrapper/debug_callback.hpp"
-
-#include <memory>
 
 // Forward declarations
 namespace inexor::vulkan_renderer::input {
@@ -23,21 +20,13 @@ class Application : public VulkanRenderer {
 
     std::unique_ptr<input::Input> m_input;
 
-    /// Inexor engine supports a variable number of octrees.
-    std::vector<std::shared_ptr<octree::Cube>> m_worlds;
-
-    std::unique_ptr<wrapper::VulkanDebugUtilsCallback> m_dbg_callback;
-
-    /// The callback for validation messages (VK_EXT_debug_utils)
-    /// @param severity The severity of the message (info, warning, error)
-    /// @param type The type of message (validation, performance)
-    /// @param data Additional data related to the message
-    /// @param user_data Additional user-defined data related to the message
-    /// @return This will always return ``VK_FALSE``, meaning the app will continue to run
     static VkBool32 validation_layer_debug_messenger_callback(VkDebugUtilsMessageSeverityFlagBitsEXT severity,
                                                               VkDebugUtilsMessageTypeFlagsEXT type,
                                                               const VkDebugUtilsMessengerCallbackDataEXT *data,
                                                               void *user_data);
+
+    /// Inexor engine supports a variable number of octrees.
+    std::vector<std::shared_ptr<octree::Cube>> m_worlds;
 
     /// @brief Load the configuration of the renderer from a TOML configuration file.
     /// @brief file_name The TOML configuration file.

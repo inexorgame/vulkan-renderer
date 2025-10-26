@@ -6,9 +6,6 @@
 
 namespace inexor::vulkan_renderer::tools {
 
-/// All functions which contain the word "all" in it, call some vkEnumerate.. function,
-/// while all functions without it call vkGet..
-
 /// Call vkEnumerateDeviceExtensionProperties
 /// @note Because device layers are deprecated in Vulkan, we are not exposing the ``pLayerName`` parameter of
 /// ``vkEnumerateDeviceExtensionProperties`` as a parameter here
@@ -16,6 +13,14 @@ namespace inexor::vulkan_renderer::tools {
 /// @exception VulkanException vkEnumerateDeviceExtensionProperties call failed
 /// @return A std::vector of all device extension properties of a physical device (this can be empty!)
 [[nodiscard]] std::vector<VkExtensionProperties> get_extension_properties(VkPhysicalDevice physical_device);
+
+/// Get all available instance extensions.
+/// @return The available instance extensions.
+[[nodiscard]] std::vector<VkExtensionProperties> get_instance_extensions();
+
+/// Get all available instance layers.
+/// @return The available instance layers.
+[[nodiscard]] std::vector<VkLayerProperties> get_instance_layers();
 
 /// Call vkEnumeratePhysicalDevices
 /// @param inst The Vulkan instance

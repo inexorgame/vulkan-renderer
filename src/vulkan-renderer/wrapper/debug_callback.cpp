@@ -23,7 +23,7 @@ VulkanDebugUtilsCallback::VulkanDebugUtilsCallback(const Instance &inst,
                                      "VK_EXT_debug_utils instance extension (if available on the system)!");
     }
     if (debug_callback == nullptr) {
-        throw std::runtime_error("Error: Parameter 'debug_callback' is invalid!");
+        throw tools::InexorException("Error: Parameter 'debug_callback' is invalid!");
     }
 
     const auto dbg_messenger_ci = make_info<VkDebugUtilsMessengerCreateInfoEXT>({
@@ -36,7 +36,7 @@ VulkanDebugUtilsCallback::VulkanDebugUtilsCallback(const Instance &inst,
         .pUserData = nullptr,
     });
 
-    spdlog::trace("Calling vkCreateDebugUtilsMessengerEXT to create messenger callback (VK_EXT_debug_utils)");
+    spdlog::trace("Creating debug utils messenger callback (VK_EXT_debug_utils)");
     if (const auto result =
             vkCreateDebugUtilsMessengerEXT(m_instance.instance(), &dbg_messenger_ci, nullptr, &m_debug_callback);
         result != VK_SUCCESS) {

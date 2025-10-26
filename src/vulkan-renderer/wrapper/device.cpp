@@ -89,7 +89,7 @@ Device::Device(const Instance &inst, const VkSurfaceKHR surface, const VkPhysica
         throw VulkanException("Error: vkCreateDevice failed!", result);
     }
 
-    spdlog::trace("Loading Vulkan dynamically using volk metaloader library");
+    spdlog::trace("Loading Vulkan device-level function pointers with volkLoadDevice");
     volkLoadDevice(m_device);
 
     spdlog::trace("Getting Vulkan queues from device");
@@ -261,7 +261,7 @@ CommandPool &Device::get_thread_command_pool(const VulkanQueueType queue_type) c
             if (!has_any_sparse_binding_queue()) {
                 throw std::runtime_error("Error: GPU '" + m_gpu_name + "' has no sparse binding queue!");
             }
-            auto cmd_pool = std::make_unique<CommandPool>(*this, m_transfer_queue_family_index.value(),
+            auto cmd_pool = std::make_unique<CommandPool>(*this, m_sparse_binding_queue_family_index.value(),
                                                           "sparse binding command pool");
             std::unique_lock lock(m_mutex);
             thread_transfer_cmd_pool = m_cmd_pools.emplace_back(std::move(cmd_pool)).get();
