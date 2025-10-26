@@ -26,7 +26,7 @@ enum class VulkanQueueType {
     QUEUE_TYPE_GRAPHICS,
     QUEUE_TYPE_COMPUTE,
     QUEUE_TYPE_TRANSFER,
-    // @TODO Implement sparse binding queue and further queue types.
+    QUEUE_TYPE_SPARSE_BINDING,
 };
 
 /// RAII wrapper class for VkDevice, VkPhysicalDevice and VkQueues.
@@ -42,11 +42,13 @@ private:
     VkQueue m_graphics_queue{VK_NULL_HANDLE};
     VkQueue m_transfer_queue{VK_NULL_HANDLE};
     VkQueue m_compute_queue{VK_NULL_HANDLE};
+    VkQueue m_sparse_binding_queue{VK_NULL_HANDLE};
     VkQueue m_present_queue{VK_NULL_HANDLE};
 
     std::optional<std::uint32_t> m_graphics_queue_family_index{0};
     std::optional<std::uint32_t> m_compute_queue_family_index{0};
     std::optional<std::uint32_t> m_transfer_queue_family_index{0};
+    std::optional<std::uint32_t> m_sparse_binding_queue_family_index{0};
     std::optional<std::uint32_t> m_present_queue_family_index{0};
 
     /// According to NVidia, we should aim for one command pool per thread
@@ -128,11 +130,15 @@ public:
         return m_gpu_name;
     }
 
-    [[nodiscard]] bool has_compute_queue() const {
+    [[nodiscard]] bool has_any_compute_queue() const {
         return m_compute_queue != VK_NULL_HANDLE;
     }
 
-    [[nodiscard]] bool has_transfer_queue() const {
+    [[nodiscard]] bool has_any_transfer_queue() const {
+        return m_transfer_queue != VK_NULL_HANDLE;
+    }
+
+    [[nodiscard]] bool has_any_sparse_binding_queue() const {
         return m_transfer_queue != VK_NULL_HANDLE;
     }
 
