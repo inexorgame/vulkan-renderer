@@ -14,26 +14,6 @@ You can start vulkan-renderer with the following command line arguments:
 
 .. note:: The engine checks if this index is valid. If the index is invalid, automatic GPU selection rules apply.
 
-.. option:: --no-separate-data-queue
-
-    Disables the use of the special `data transfer queue <https://www.khronos.org/registry/vulkan/specs/1.1-extensions/html/vkspec.html#devsandqueues-queues>`__ (forces use of the graphics queue).
-
-.. warning:: Enabling this option could decrease the overall performance. Don't enable this option unless you have to.
-
-.. option:: --no-validation
-
-    Disables `Vulkan validation layers <https://github.com/KhronosGroup/Vulkan-ValidationLayers>`__.
-
-.. warning:: You should never disable validation layers because they offer extensive error checks for debugging.
-
-.. option:: --no-vk-debug-markers
-
-    Disables `Vulkan debug markers <https://www.saschawillems.de/blog/2016/05/28/tutorial-on-using-vulkans-vk_ext_debug_marker-with-renderdoc/>`__ (even if ``--renderdoc`` is specified).
-
-.. option:: --renderdoc
-
-    Enables the `RenderDoc <https://renderdoc.org/>`__ debug layer.
-
 .. option:: --vsync
 
 .. warning:: Vsync is currently not implemented. The command line argument will be ignored.

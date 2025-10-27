@@ -20,23 +20,13 @@ class Application : public VulkanRenderer {
 
     std::unique_ptr<input::Input> m_input;
 
-    /// Inexor engine supports a variable number of octrees.
-    std::vector<std::shared_ptr<octree::Cube>> m_worlds;
-
-    // If the user specified command line argument "--stop-on-validation-message", the program will call
-    // std::abort(); after reporting a validation layer (error) message.
-    bool m_stop_on_validation_message{false};
-
-    /// The callback for validation messages (VK_EXT_debug_utils)
-    /// @param severity The severity of the message (info, warning, error)
-    /// @param type The type of message (validation, performance)
-    /// @param data Additional data related to the message
-    /// @param user_data Additional user-defined data related to the message
-    /// @return This will always return ``VK_FALSE``, meaning the app will continue to run
     static VkBool32 validation_layer_debug_messenger_callback(VkDebugUtilsMessageSeverityFlagBitsEXT severity,
                                                               VkDebugUtilsMessageTypeFlagsEXT type,
                                                               const VkDebugUtilsMessengerCallbackDataEXT *data,
                                                               void *user_data);
+
+    /// Inexor engine supports a variable number of octrees.
+    std::vector<std::shared_ptr<octree::Cube>> m_worlds;
 
     /// @brief Load the configuration of the renderer from a TOML configuration file.
     /// @brief file_name The TOML configuration file.

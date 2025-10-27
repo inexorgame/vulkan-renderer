@@ -26,6 +26,7 @@
 
 namespace inexor::vulkan_renderer {
 
+using tools::InexorException;
 using tools::VulkanException;
 
 void Application::load_toml_configuration_file(const std::string &file_name) {
@@ -34,8 +35,8 @@ void Application::load_toml_configuration_file(const std::string &file_name) {
     std::ifstream toml_file(file_name, std::ios::in);
     if (!toml_file) {
         // If you are using CLion, go to "Edit Configurations" and select "Working Directory".
-        throw std::runtime_error("Could not find configuration file: " + file_name +
-                                 "! You must set the working directory properly in your IDE");
+        throw InexorException("Could not find configuration file: " + file_name +
+                              "! You must set the working directory properly in your IDE");
     }
 
     toml_file.close();
@@ -150,7 +151,6 @@ VkBool32 Application::validation_layer_debug_messenger_callback(const VkDebugUti
         spdlog::warn("{}", data->pMessage);
     } else if (severity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT) {
         spdlog::critical("{}", data->pMessage);
-        // TODO: Respect --stop-on-validation-error command line argument!
     }
     return VK_FALSE;
 }
@@ -259,8 +259,8 @@ Application::Application(int argc, char **argv) {
 
     using namespace vulkan_renderer::meta;
 
-    spdlog::trace("Application version: {}.{}.{}", APP_VERSION[0], APP_VERSION[1], APP_VERSION[2]);
-    spdlog::trace("Engine version: {}.{}.{}", ENGINE_VERSION[0], ENGINE_VERSION[1], ENGINE_VERSION[2]);
+    spdlog::trace("Application version: {}", APP_VERSION_STR);
+    spdlog::trace("Engine version: {}", ENGINE_VERSION_STR);
 
     // TODO (GH-558): Consider to use a command line argument parsing library.
     tools::CommandLineArgumentParser cla_parser;
@@ -277,24 +277,60 @@ Application::Application(int argc, char **argv) {
 
     m_window = std::make_unique<Window>(m_window_title, m_window_width, m_window_height, true, true, m_window_mode);
 
-    m_instance = std::make_unique<Instance>(
-        APP_NAME, ENGINE_NAME, VK_MAKE_API_VERSION(0, APP_VERSION[0], APP_VERSION[1], APP_VERSION[2]),
-        VK_MAKE_API_VERSION(0, ENGINE_VERSION[0], ENGINE_VERSION[1], ENGINE_VERSION[2]),
-        validation_layer_debug_messenger_callback);
+    std::vector<const char *> instance_layers;
+    std::vector<const char *> instance_extensions;
+
+    // It is very important to start using Vulkan API by initializing volk with the following function call, otherwise
+    // even the most basic Vulkan functions which do not depend on a VkInstance or a VkDevice will not be available!
+    spdlog::trace("Initializing volk metaloader");
+    if (const auto result = volkInitialize(); result != VK_SUCCESS) {
+        throw tools::InexorException(
+            "Error: Could not initialize Vulkan with volk metaloader: volkInitialize() failed! "
+            "Make sure to update the drivers of your graphics card!");
+    }
+
+    // If the instance extension "VK_EXT_debug_utils" is available on the system, enable it.
+    if (wrapper::is_instance_extension_supported(VK_EXT_DEBUG_UTILS_EXTENSION_NAME)) {
+        instance_extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
+    }
+
+    // Get the instance extensions which are required by glfw library.
+    std::uint32_t glfw_extension_count = 0;
+    auto *glfw_extensions = glfwGetRequiredInstanceExtensions(&glfw_extension_count);
+    if (glfw_extension_count == 0) {
+        throw tools::InexorException(
+            "Error: glfwGetRequiredInstanceExtensions returned 0 required instance extensions!");
+    }
+
+    spdlog::trace("Required GLFW instance extensions:");
+    for (std::size_t index = 0; index < glfw_extension_count; index++) {
+        // We must make sure that each instance extension that is required by glfw is available on the system.
+        if (!wrapper::is_instance_extension_supported(glfw_extensions[index])) {
+            // If any of the instance extensions that is required by glfw is not available, we will fail.
+            throw tools::InexorException("Error: glfw instance extension '" + std::string(glfw_extensions[index]) +
+                                         "' is not available on the system!");
+        } else {
+            spdlog::trace("   - {}", glfw_extensions[index]);
+            instance_extensions.push_back(glfw_extensions[index]);
+        }
+    }
+
+    if (wrapper::is_instance_layer_supported("VK_LAYER_KHRONOS_validation")) {
+        instance_layers.push_back("VK_LAYER_KHRONOS_validation");
+    } else {
+        spdlog::error("Instance layer 'VK_LAYER_KHRONOS_validation' is not available on this system!");
+    }
+
+    m_instance = std::make_unique<Instance>(instance_layers, instance_extensions);
+
+    m_dbg_callback =
+        std::make_unique<wrapper::VulkanDebugUtilsCallback>(*m_instance, validation_layer_debug_messenger_callback);
 
     m_input = std::make_unique<Input>();
 
     m_surface = std::make_unique<WindowSurface>(m_instance->instance(), m_window->window());
 
     setup_window_and_input_callbacks();
-
-#ifndef NDEBUG
-    if (cla_parser.arg<bool>("--stop-on-validation-message").value_or(false)) {
-        spdlog::warn("--stop-on-validation-message specified. Application will call a breakpoint after reporting a "
-                     "validation layer message");
-        m_stop_on_validation_message = true;
-    }
-#endif
 
     spdlog::trace("Creating window surface");
 
@@ -393,8 +429,7 @@ void Application::update_imgui_overlay() {
     ImGui::Begin(APP_NAME, nullptr,
                  ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
     ImGui::Text("%s", m_device->gpu_name().c_str());
-    ImGui::Text("Engine version %d.%d.%d (Git sha %s)", ENGINE_VERSION[0], ENGINE_VERSION[1], ENGINE_VERSION[2],
-                BUILD_GIT);
+    ImGui::Text("Engine version %s (git SHA %s)", ENGINE_VERSION_STR, BUILD_GIT);
     ImGui::Text("Vulkan API %d.%d.%d", VK_API_VERSION_MAJOR(VK_API_VERSION_1_2),
                 VK_API_VERSION_MINOR(VK_API_VERSION_1_2), VK_API_VERSION_PATCH(VK_API_VERSION_1_2));
     const auto cam_pos = m_camera->position();

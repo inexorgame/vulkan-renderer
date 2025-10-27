@@ -5,13 +5,21 @@
 #include "inexor/vulkan-renderer/tools/camera.hpp"
 #include "inexor/vulkan-renderer/tools/fps_counter.hpp"
 #include "inexor/vulkan-renderer/tools/time_step.hpp"
+#include "inexor/vulkan-renderer/wrapper/debug_callback.hpp"
 #include "inexor/vulkan-renderer/wrapper/instance.hpp"
 #include "inexor/vulkan-renderer/wrapper/uniform_buffer.hpp"
 #include "inexor/vulkan-renderer/wrapper/window/surface.hpp"
 #include "inexor/vulkan-renderer/wrapper/window/window.hpp"
 
+#include <memory>
+
 namespace inexor::vulkan_renderer {
 
+// Using declarations
+using wrapper::Device;
+using wrapper::Instance;
+using wrapper::Shader;
+using wrapper::Swapchain;
 using wrapper::window::Window;
 using wrapper::window::WindowSurface;
 
@@ -19,9 +27,13 @@ class VulkanRenderer {
 protected:
     std::vector<VkPipelineShaderStageCreateInfo> m_shader_stages;
 
-    VkDebugUtilsMessengerEXT m_debug_callback{VK_NULL_HANDLE};
+    // Make sure to declare the instance before the debug utils messenger callback
+    // to ensure the correct order of destruction.
+    std::unique_ptr<Instance> m_instance;
 
-    bool m_debug_report_callback_initialised{false};
+    std::unique_ptr<wrapper::VulkanDebugUtilsCallback> m_dbg_callback;
+
+    // @TODO Debug utils messenger callback should be part of the core renderer?
 
     tools::TimeStep m_time_step;
 
@@ -38,14 +50,13 @@ protected:
     std::unique_ptr<tools::Camera> m_camera;
 
     std::unique_ptr<Window> m_window;
-    std::unique_ptr<wrapper::Instance> m_instance;
-    std::unique_ptr<wrapper::Device> m_device;
+    std::unique_ptr<Device> m_device;
     std::unique_ptr<WindowSurface> m_surface;
-    std::unique_ptr<wrapper::Swapchain> m_swapchain;
+    std::unique_ptr<Swapchain> m_swapchain;
     std::unique_ptr<ImGUIOverlay> m_imgui_overlay;
     std::unique_ptr<RenderGraph> m_render_graph;
 
-    std::vector<wrapper::Shader> m_shaders;
+    std::vector<Shader> m_shaders;
     std::vector<wrapper::GpuTexture> m_textures;
     std::vector<wrapper::UniformBuffer> m_uniform_buffers;
     std::vector<wrapper::descriptors::ResourceDescriptor> m_descriptors;

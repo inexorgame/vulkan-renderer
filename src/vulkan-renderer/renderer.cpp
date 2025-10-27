@@ -120,16 +120,10 @@ void VulkanRenderer::render_frame() {
 
 VulkanRenderer::~VulkanRenderer() {
     spdlog::trace("Shutting down vulkan renderer");
-
     if (m_device == nullptr) {
         return;
     }
-
     m_device->wait_idle();
-
-    if (!m_debug_report_callback_initialised) {
-        return;
-    }
 }
 
 } // namespace inexor::vulkan_renderer
