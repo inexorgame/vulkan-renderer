@@ -26,9 +26,6 @@
 
 namespace inexor::vulkan_renderer {
 
-using tools::InexorException;
-using tools::VulkanException;
-
 void Application::load_toml_configuration_file(const std::string &file_name) {
     spdlog::trace("Loading TOML configuration file: {}", file_name);
 
@@ -270,11 +267,6 @@ Application::Application(int argc, char **argv) {
 
     spdlog::trace("Creating Vulkan instance");
 
-    using input::Input;
-    using wrapper::Instance;
-    using wrapper::window::Window;
-    using wrapper::window::WindowSurface;
-
     m_window = std::make_unique<Window>(m_window_title, m_window_width, m_window_height, true, true, m_window_mode);
 
     std::vector<const char *> instance_layers;
@@ -284,9 +276,7 @@ Application::Application(int argc, char **argv) {
     // even the most basic Vulkan functions which do not depend on a VkInstance or a VkDevice will not be available!
     spdlog::trace("Initializing volk metaloader");
     if (const auto result = volkInitialize(); result != VK_SUCCESS) {
-        throw tools::InexorException(
-            "Error: Could not initialize Vulkan with volk metaloader: volkInitialize() failed! "
-            "Make sure to update the drivers of your graphics card!");
+        throw tools::InexorException("Error: Vulkan initialization with volk metaloader library failed!");
     }
 
     // If the instance extension "VK_EXT_debug_utils" is available on the system, enable it.

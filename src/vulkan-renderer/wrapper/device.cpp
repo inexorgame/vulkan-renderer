@@ -2,34 +2,33 @@
 
 #include "inexor/vulkan-renderer/tools/device_info.hpp"
 #include "inexor/vulkan-renderer/tools/enumerate.hpp"
-#include "inexor/vulkan-renderer/tools/exception.hpp"
 #include "inexor/vulkan-renderer/tools/queue_selection.hpp"
 #include "inexor/vulkan-renderer/tools/representation.hpp"
 #include "inexor/vulkan-renderer/wrapper/instance.hpp"
 #include "inexor/vulkan-renderer/wrapper/make_info.hpp"
 
+#define VMA_DEBUG_MARGIN 16
+#define VMA_DEBUG_DETECT_CORRUPTION 1
 #define VMA_IMPLEMENTATION
-
-// Enforce specified number of bytes as a margin before and after every allocation.
-#define VMA_DEBUG_MARGIN 16 // NOLINT
-
-// Enable validation of contents of the margins.
-#define VMA_DEBUG_DETECT_CORRUPTION 1 // NOLINT
+#include <vk_mem_alloc.h>
 
 #include <spdlog/spdlog.h>
-#include <vk_mem_alloc.h>
 
 #include <algorithm>
 #include <cassert>
 #include <fstream>
 #include <utility>
 
-using inexor::vulkan_renderer::tools::VulkanException;
-
 namespace inexor::vulkan_renderer::wrapper {
 
 Device::Device(const Instance &inst, const VkSurfaceKHR surface, const VkPhysicalDevice desired_gpu,
-               const VkPhysicalDeviceFeatures &required_features, const std::span<const char *> required_extensions) {
+               const VkPhysicalDeviceFeatures &required_features, const std::span<const char *> required_extensions)
+    : m_enabled_features(required_features) {
+    // Lets just be safe and check if these function pointers are really available.
+    if (vkCreateDevice == nullptr) {
+        throw InexorException("Error: Function pointer 'vkCreateDevice' is not available!");
+    }
+
     // Get information about the desired gpu.
     const auto gpu_info = tools::build_device_info(desired_gpu, surface);
 
@@ -66,6 +65,9 @@ Device::Device(const Instance &inst, const VkSurfaceKHR surface, const VkPhysica
     // This could be std::nullopt!
     m_sparse_binding_queue_family_index = optimal_queues.sparse_binding;
 
+    // Store the enabled features.
+    m_enabled_features = required_features;
+
     const auto device_ci = make_info<VkDeviceCreateInfo>({
         .queueCreateInfoCount = static_cast<std::uint32_t>(optimal_queues.queues_to_create.size()),
         .pQueueCreateInfos = optimal_queues.queues_to_create.data(),
@@ -78,13 +80,13 @@ Device::Device(const Instance &inst, const VkSurfaceKHR surface, const VkPhysica
         return index ? std::to_string(index.value()) : std::string("NONE");
     };
 
-    spdlog::trace("Creating device from GPU '{}'", m_gpu_name);
-
     spdlog::trace("Selected queue family indices: [graphics: {}, compute: {}, transfer: {}, sparse binding: {}]",
                   print_queue_family_index(m_graphics_queue_family_index),
                   print_queue_family_index(m_compute_queue_family_index),
                   print_queue_family_index(m_transfer_queue_family_index),
                   print_queue_family_index(m_sparse_binding_queue_family_index));
+
+    spdlog::trace("Creating device from GPU '{}'", m_gpu_name);
 
     if (const auto result = vkCreateDevice(m_physical_device, &device_ci, nullptr, &m_device); result != VK_SUCCESS) {
         throw VulkanException("Error: vkCreateDevice failed!", result);
@@ -92,6 +94,19 @@ Device::Device(const Instance &inst, const VkSurfaceKHR surface, const VkPhysica
 
     spdlog::trace("Loading Vulkan device-level function pointers with volkLoadDevice");
     volkLoadDevice(m_device);
+
+    // Let's just check if these function pointers is really available now.
+    // There checks are probably redundant because volkLoadDevice would have thrown an exception already if they were
+    // not available. If volk would still not have catched this, it would either be a bug in volk or something with the
+    // available Vulkan API runtime is fundamentally wrong.
+    if (vkDestroyDevice == nullptr) {
+        throw InexorException("Error: Function pointer 'vkDestroyDevice' is not available!");
+    }
+    if (vkGetDeviceQueue == nullptr) {
+        // To ensure the strong exception guarantee, we must destroy the device again here.
+        vkDestroyDevice(m_device, nullptr);
+        throw InexorException("Error: Function pointer 'vkGetDeviceQueue' is not available!");
+    }
 
     spdlog::trace("Getting Vulkan queues from device");
     // It's important to call vkGetDeviceQueue after volkLoadDevice!
@@ -152,6 +167,8 @@ Device::Device(const Instance &inst, const VkSurfaceKHR surface, const VkPhysica
 
     spdlog::trace("Creating instance of Vulkan Memory Allocator (VMA)");
     if (const auto result = vmaCreateAllocator(&vma_ci, &m_allocator); result != VK_SUCCESS) {
+        // To ensure the strong exception guarantee, we must destroy the device again here.
+        vkDestroyDevice(m_device, nullptr);
         throw VulkanException("Error: vmaCreateAllocator failed!", result);
     }
 }
