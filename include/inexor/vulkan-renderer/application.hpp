@@ -49,4 +49,12 @@ public:
     void run();
 };
 
+// Using declarations
+using input::Input;
+using tools::InexorException;
+using tools::VulkanException;
+using wrapper::Instance;
+using wrapper::window::Window;
+using wrapper::window::WindowSurface;
+
 } // namespace inexor::vulkan_renderer
