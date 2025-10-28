@@ -6,6 +6,8 @@
 
 #include <spdlog/spdlog.h>
 
+#include <format>
+#include <sstream>
 #include <thread>
 #include <utility>
 
@@ -20,9 +22,10 @@ CommandPool::CommandPool(const Device &device, const std::uint32_t queue_family_
         .queueFamilyIndex = queue_family_index,
     });
 
-    // Get the thread id as string for naming the command pool and the command buffers
-    const std::size_t thread_id = std::hash<std::thread::id>{}(std::this_thread::get_id());
-    spdlog::trace("Creating command pool for thread {}", thread_id);
+    // Converting the thread ID to std::string is more complicated than you might think, we need a stringstream.
+    std::ostringstream oss;
+    oss << std::this_thread::get_id();
+    spdlog::trace("Creating command pool for thread ID {}", oss.str());
 
     if (const auto result = vkCreateCommandPool(m_device.device(), &cmd_pool_ci, nullptr, &m_cmd_pool);
         result != VK_SUCCESS) {
