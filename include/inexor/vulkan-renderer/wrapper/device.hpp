@@ -18,10 +18,12 @@ namespace inexor::vulkan_renderer::wrapper {
 class Instance;
 
 // Using declarations
+using tools::InexorException;
+using tools::VulkanException;
 using wrapper::commands::CommandBuffer;
 using wrapper::commands::CommandPool;
 
-/// An enum for the queue type
+/// An enum for the supported queue type
 enum class VulkanQueueType {
     QUEUE_TYPE_GRAPHICS,
     QUEUE_TYPE_COMPUTE,
@@ -29,7 +31,7 @@ enum class VulkanQueueType {
     QUEUE_TYPE_SPARSE_BINDING,
 };
 
-/// RAII wrapper class for VkDevice, VkPhysicalDevice and VkQueues.
+/// RAII wrapper class for `VkDevice`, `VkPhysicalDevice` and `VkQueue`.
 /// @note There is no method ``is_layer_supported`` in this wrapper class because device layers are deprecated.
 class Device {
 private:
@@ -91,25 +93,27 @@ public:
         return m_device;
     }
 
-    /// Call vkGetPhysicalDeviceSurfaceCapabilitiesKHR
-    /// @param surface The window surface
-    /// @exception VulkanException vkGetPhysicalDeviceSurfaceCapabilitiesKHR call failed
+    /// Call `vkGetPhysicalDeviceSurfaceCapabilitiesKHR`.
+    /// @param surface The window surface.
+    /// @exception VulkanException Calling `vkGetPhysicalDeviceSurfaceCapabilitiesKHR` failed
     /// @return The surface capabilities
     [[nodiscard]] VkSurfaceCapabilitiesKHR get_surface_capabilities(VkSurfaceKHR surface) const;
 
-    /// Call vkGetPhysicalDeviceSurfaceSupportKHR
-    /// @param surface The window surface
-    /// @param queue_family_index The queue family index
-    /// @exception VulkanException vkGetPhysicalDeviceSurfaceSupportKHR call failed
-    /// @return ``true`` if presentation is supported
+    /// Call `vkGetPhysicalDeviceSurfaceSupportKHR`.
+    /// @note It was decided to place this function here into the device wrapper and not into the surface wrapper
+    /// because the `VkPhysicalDevice` is required to call `vkGetPhysicalDeviceSurfaceSupportKHR`.
+    /// @param surface The window surface.
+    /// @param queue_family_index The queue family index.
+    /// @exception VulkanException Calling `vkGetPhysicalDeviceSurfaceSupportKHR` failed.
+    /// @return `true` if presentation is supported.
     [[nodiscard]] bool is_presentation_supported(VkSurfaceKHR surface, std::uint32_t queue_family_index) const;
 
     /// A wrapper method for beginning, ending and submitting command buffers. This method calls the request method for
     /// the given command pool, begins the command buffer, executes the lambda, ends recording the command buffer,
     /// submits it and waits for it.
-    /// @param name The internal debug name of the command buffer (must not be empty)
+    /// @param name The internal debug name of the command buffer (must not be empty).
     /// @param queue_type The queue type which determines which command pool is used.
-    /// @param cmd_lambda The command lambda to execute
+    /// @param cmd_lambda The command lambda to execute.
     void execute(const std::string &name, const VulkanQueueType queue_type,
                  const std::function<void(const CommandBuffer &cmd_buf)> &cmd_lambda) const;
 
@@ -121,8 +125,7 @@ public:
         return m_allocator;
     }
 
-    /// @note Enabled features = required features + optional features which are supported
-    [[nodiscard]] const VkPhysicalDeviceFeatures &enabled_device_features() const {
+    [[nodiscard]] const VkPhysicalDeviceFeatures &enabled_features() const {
         return m_enabled_features;
     }
 
@@ -162,33 +165,32 @@ public:
         return m_transfer_queue;
     }
 
-    /// Request a command buffer from the thread_local command pool
+    /// Request a command buffer from the thread_local command pool.
     /// @param queue_type The Vulkan queue type which is required because a command pool is created with a queue family
     /// index associated with it.
-    /// @param name The name which will be assigned to the command buffer
-    /// @return A command buffer from the thread_local command pool
+    /// @param name The name which will be assigned to the command buffer.
+    /// @return A command buffer from the thread_local command pool.
     [[nodiscard]] const CommandBuffer &request_command_buffer(VulkanQueueType queue_type, const std::string &name);
 
-    /// Check if a surface supports a certain image usage
-    /// @param surface The window surface
-    /// @param usage The requested image usage
-    /// @return ``true`` if the format feature is supported
+    /// Check if a surface supports a certain image usage.
+    /// @param surface The window surface.
+    /// @param usage The requested image usage.
+    /// @return `true` if the format feature is supported.
     [[nodiscard]] bool surface_supports_usage(VkSurfaceKHR surface, VkImageUsageFlagBits usage) const;
 
     /// Automatically detect the type of a Vulkan object and set the internal debug name to it
     /// @tparam VulkanObjectType The Vulkan object type. This template parameter will be automatically translated into
-    /// the matching ``VkObjectType`` using ``vk_tools::get_vulkan_object_type(vk_object)``. This is the most advanced
-    /// abstraction that we found and it's really easy to use set_debug_name now because it's not possible to make a
+    /// the matching `VkObjectType` using `vk_tools::get_vulkan_object_type(vk_object)`. This is the most advanced
+    /// abstraction that we found and it's really easy to use `set_debug_name` now because it's not possible to make a
     /// mistake because you don't have to specify the VkObjectType manually when naming a Vulkan object.
-    /// @param vk_object The Vulkan object to assign a name to
-    /// @param name The internal debug name of the Vulkan object (must not be empty!)
+    /// @param vk_object The Vulkan object to assign a name to.
+    /// @param name The internal debug name of the Vulkan object (must not be empty!).
     template <typename VulkanObjectType>
     void set_debug_name(const VulkanObjectType &vk_object, const std::string &name) const {
         if (!vk_object) {
-            throw std::runtime_error("Error: Parameter 'vk_object' is invalid!");
+            throw InexorException("Error: Parameter 'vk_object' is invalid!");
         }
 
-        using tools::VulkanException;
         const auto dbg_obj_name = wrapper::make_info<VkDebugUtilsObjectNameInfoEXT>({
             .objectType = tools::get_vk_object_type(vk_object),
             .objectHandle = reinterpret_cast<std::uint64_t>(vk_object),
@@ -200,11 +202,11 @@ public:
         }
     }
 
-    /// Call vkDeviceWaitIdle or vkQueueWaitIdle depending on whether ``queue`` is specified.
-    /// @warning Avoid using those methods because they result in bad gpu performance!
-    /// @param queue (``VK_NULL_HANDLE`` by default).
-    /// @exception VulkanException ``vkDeviceWaitIdle`` call failed.
-    /// @exception VulkanException ``vkQueueWaitIdle`` call failed.
+    /// Call `vkDeviceWaitIdle` or `vkQueueWaitIdle` depending on whether `queue` is specified.
+    /// @warning Avoid using those methods because they result in bad gpu performance due to global stalls!
+    /// @param queue (`VK_NULL_HANDLE` by default).
+    /// @exception VulkanException `vkDeviceWaitIdle` call failed.
+    /// @exception VulkanException `vkQueueWaitIdle` call failed.
     void wait_idle(VkQueue queue = VK_NULL_HANDLE) const;
 };
 
