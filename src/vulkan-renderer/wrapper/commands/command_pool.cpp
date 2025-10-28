@@ -7,6 +7,7 @@
 #include <spdlog/spdlog.h>
 
 #include <thread>
+#include <utility>
 
 namespace inexor::vulkan_renderer::wrapper::commands {
 

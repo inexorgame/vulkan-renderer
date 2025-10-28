@@ -22,6 +22,7 @@
 #include <algorithm>
 #include <cassert>
 #include <fstream>
+#include <utility>
 
 using inexor::vulkan_renderer::tools::VulkanException;
 

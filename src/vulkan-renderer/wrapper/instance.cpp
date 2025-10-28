@@ -11,6 +11,7 @@
 #include <spdlog/spdlog.h>
 
 #include <cassert>
+#include <utility>
 
 namespace inexor::vulkan_renderer::wrapper {
 

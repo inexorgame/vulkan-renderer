@@ -4,7 +4,6 @@
 
 #include <cassert>
 #include <cstdint>
-#include <utility>
 
 namespace inexor::vulkan_renderer::tools {
 
