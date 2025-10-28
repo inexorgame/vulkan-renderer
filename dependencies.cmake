@@ -70,12 +70,14 @@ FetchContent_Declare(spdlog
 FetchContent_Declare(stb
     GIT_REPOSITORY https://github.com/nothings/stb.git
     GIT_TAG f7f20f39fe4f206c6f19e26ebfef7b261ee59ee4
+    # Do not enable shallow download on stb because it will cause a CMake error!
     GIT_PROGRESS ON)
 
 # Loader for models in glTF2 format
 FetchContent_Declare(tinygltf
     GIT_REPOSITORY https://github.com/syoyo/tinygltf.git
     GIT_TAG v2.9.2
+    GIT_SHALLOW ON
     GIT_PROGRESS ON
     FIND_PACKAGE_ARGS 2.9.2)
 
@@ -91,6 +93,7 @@ FetchContent_Declare(toml
 FetchContent_Declare(vma
     GIT_REPOSITORY https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator.git
     GIT_TAG v3.1.0
+    GIT_SHALLOW ON
     GIT_PROGRESS ON
     FIND_PACKAGE_ARGS 3.1.0)
 
@@ -98,6 +101,7 @@ FetchContent_Declare(vma
 FetchContent_Declare(volk
     GIT_REPOSITORY https://github.com/zeux/volk
     GIT_TAG 1.3.270
+    GIT_SHALLOW ON
     GIT_PROGRESS ON
     FIND_PACKAGE_ARGS 1.3.270)
 
@@ -105,5 +109,6 @@ FetchContent_Declare(volk
 FetchContent_Declare(Vulkan
     GIT_REPOSITORY https://github.com/KhronosGroup/Vulkan-Headers
     GIT_TAG v1.3.283
+    GIT_SHALLOW ON
     GIT_PROGRESS ON
     FIND_PACKAGE_ARGS 1.3.283)
