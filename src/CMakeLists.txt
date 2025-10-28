@@ -121,7 +121,7 @@ target_include_directories(
 FetchContent_MakeAvailable(fmt)
 FetchContent_MakeAvailable(spdlog)
 FetchContent_MakeAvailable(stb)
-FetchContent_MakeAvailable(toml)
+FetchContent_MakeAvailable(tomlplusplus)
 FetchContent_MakeAvailable(Vulkan)
 FetchContent_MakeAvailable(volk)
 FetchContent_MakeAvailable(vma)
@@ -144,7 +144,7 @@ target_link_libraries(inexor-vulkan-renderer-core-lib
     imgui
     spdlog::spdlog_header_only
     tinygltf
-    toml11::toml11
+    tomlplusplus::tomlplusplus
     volk::volk
     Vulkan::Headers
     VulkanMemoryAllocator)
@@ -160,15 +160,10 @@ if(MSVC)
         volk
         VulkanMemoryAllocator
         tinygltf
-        toml11
         # Also those extra ones
         loader_example
         uninstall
         update_mappings
-        Continuous
-        Experimental
-        Nightly
-        NightlyMemoryCheck
     )
     # Move all dependencies into a subfolder
     set_target_properties(${THIRD_PARTY_TARGETS}

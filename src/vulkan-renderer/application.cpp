@@ -21,14 +21,16 @@
 #include <spdlog/spdlog.h>
 
 #include <random>
+#include <string_view>
 #include <thread>
-#include <toml.hpp>
+#include <toml++/toml.hpp>
 
 namespace inexor::vulkan_renderer {
 
 void Application::load_toml_configuration_file(const std::string &file_name) {
     spdlog::trace("Loading TOML configuration file: {}", file_name);
 
+    // @TODO Switch to std::filesystem::exists
     std::ifstream toml_file(file_name, std::ios::in);
     if (!toml_file) {
         // If you are using CLion, go to "Edit Configurations" and select "Working Directory".
@@ -38,66 +40,63 @@ void Application::load_toml_configuration_file(const std::string &file_name) {
 
     toml_file.close();
 
-    // Load the TOML file using toml11.
-    auto renderer_configuration = toml::parse(file_name);
+    // Load the TOML file using tomlplusplus.
+    auto config_file = toml::parse_file(file_name);
 
-    // Search for the title of the configuration file and print it to debug output.
-    const auto &configuration_title = toml::find<std::string>(renderer_configuration, "title");
-    spdlog::trace("Title: {}", configuration_title);
+    const std::string_view project_title = config_file["title"].value_or("");
+    spdlog::trace("Title: {}", project_title);
 
     using WindowMode = wrapper::window::Window::Mode;
 
-    const auto &wmodestr = toml::find<std::string>(renderer_configuration, "application", "window", "mode");
-    if (wmodestr == "windowed") {
+    const std::string_view wnd_mode = config_file["application"]["window"]["mode"].value_or("windowed");
+
+    if (wnd_mode == "windowed") {
         m_window_mode = WindowMode::WINDOWED;
-    } else if (wmodestr == "windowed_fullscreen") {
+    } else if (wnd_mode == "windowed_fullscreen") {
         m_window_mode = WindowMode::WINDOWED_FULLSCREEN;
-    } else if (wmodestr == "fullscreen") {
+    } else if (wnd_mode == "fullscreen") {
         m_window_mode = WindowMode::FULLSCREEN;
     } else {
-        spdlog::warn("Invalid application window mode: {}", wmodestr);
+        spdlog::warn("Invalid application window mode: {}", wnd_mode);
         m_window_mode = WindowMode::WINDOWED;
     }
 
-    m_window_width = toml::find<int>(renderer_configuration, "application", "window", "width");
-    m_window_height = toml::find<int>(renderer_configuration, "application", "window", "height");
-    m_window_title = toml::find<std::string>(renderer_configuration, "application", "window", "name");
+    m_window_width = config_file["application"]["window"]["width"].value_or(1280);
+    m_window_height = config_file["application"]["window"]["height"].value_or(720);
+    m_window_title = config_file["application"]["window"]["name"].value_or("Undefined Window Title!");
     spdlog::trace("Window: {}, {} x {}", m_window_title, m_window_width, m_window_height);
 
-    m_texture_files = toml::find<std::vector<std::string>>(renderer_configuration, "textures", "files");
-
     spdlog::trace("Textures:");
-
-    for (const auto &texture_file : m_texture_files) {
+    const auto texture_files = config_file["textures"]["files"].as_array();
+    for (const auto &value : *texture_files) {
+        const auto texture_file = value.value_or("");
         spdlog::trace("   - {}", texture_file);
+        m_texture_files.push_back(texture_file);
     }
-
-    m_gltf_model_files = toml::find<std::vector<std::string>>(renderer_configuration, "glTFmodels", "files");
 
     spdlog::trace("glTF 2.0 models:");
-
-    for (const auto &gltf_model_file : m_gltf_model_files) {
+    const auto gltf_models = config_file["glTFmodels"]["files"].as_array();
+    for (const auto &value : *gltf_models) {
+        const std::string gltf_model_file = value.value_or("");
         spdlog::trace("   - {}", gltf_model_file);
+        m_gltf_model_files.push_back(gltf_model_file);
     }
-
-    m_vertex_shader_files = toml::find<std::vector<std::string>>(renderer_configuration, "shaders", "vertex", "files");
 
     spdlog::trace("Vertex shaders:");
-
-    for (const auto &vertex_shader_file : m_vertex_shader_files) {
+    const auto vertex_shader_files = config_file["shaders"]["vertex"]["files"].as_array();
+    for (const auto &value : *vertex_shader_files) {
+        const std::string vertex_shader_file = value.value_or("");
         spdlog::trace("   - {}", vertex_shader_file);
+        m_vertex_shader_files.push_back(vertex_shader_file);
     }
-
-    m_fragment_shader_files =
-        toml::find<std::vector<std::string>>(renderer_configuration, "shaders", "fragment", "files");
 
     spdlog::trace("Fragment shaders:");
-
-    for (const auto &fragment_shader_file : m_fragment_shader_files) {
+    const auto fragment_shader_files = config_file["shaders"]["fragment"]["files"].as_array();
+    for (const auto &value : *fragment_shader_files) {
+        const std::string fragment_shader_file = value.value_or("");
         spdlog::trace("   - {}", fragment_shader_file);
+        m_fragment_shader_files.push_back(fragment_shader_file);
     }
-
-    // TODO: Load more info from TOML file.
 }
 
 void Application::load_shaders() {
@@ -272,8 +271,9 @@ Application::Application(int argc, char **argv) {
     std::vector<const char *> instance_layers;
     std::vector<const char *> instance_extensions;
 
-    // It is very important to start using Vulkan API by initializing volk with the following function call, otherwise
-    // even the most basic Vulkan functions which do not depend on a VkInstance or a VkDevice will not be available!
+    // It is very important to start using Vulkan API by initializing volk with the following function call,
+    // otherwise even the most basic Vulkan functions which do not depend on a VkInstance or a VkDevice will not be
+    // available!
     spdlog::trace("Initializing volk metaloader");
     if (const auto result = volkInitialize(); result != VK_SUCCESS) {
         throw tools::InexorException("Error: Vulkan initialization with volk metaloader library failed!");

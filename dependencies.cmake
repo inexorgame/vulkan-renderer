@@ -82,12 +82,11 @@ FetchContent_Declare(tinygltf
     FIND_PACKAGE_ARGS 2.9.2)
 
 # Library for TOML configuration files
-FetchContent_Declare(toml
-    GIT_REPOSITORY https://github.com/ToruNiina/toml11.git
-    GIT_TAG v4.0.3
-    GIT_SHALLOW ON
+FetchContent_Declare(tomlplusplus
+    GIT_REPOSITORY https://github.com/marzer/tomlplusplus.git
+    GIT_TAG v3.4.0
     GIT_PROGRESS ON
-    FIND_PACKAGE_ARGS 4.0.3)
+    FIND_PACKAGE_ARGS 3.4.0)
 
 # Vulkan Memory Allocator library
 FetchContent_Declare(vma
