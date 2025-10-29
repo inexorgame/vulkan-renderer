@@ -91,6 +91,7 @@ std::size_t Cube::count_geometry_cubes() const noexcept {
 
 std::shared_ptr<Cube> create_random_world(std::uint32_t max_depth, const glm::vec3 &position,
                                           std::optional<std::uint32_t> seed) {
+    // @TODO Use new abstraction code for random number generation here as well
     static std::random_device rd;
     std::mt19937 mt(seed ? *seed : rd());
     std::uniform_int_distribution<std::uint32_t> indent(0, 44);

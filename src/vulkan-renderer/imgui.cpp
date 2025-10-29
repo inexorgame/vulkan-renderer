@@ -119,52 +119,8 @@ ImGUIOverlay::ImGUIOverlay(const wrapper::Device &device, const wrapper::Swapcha
         .dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO,
         .alphaBlendOp = VK_BLEND_OP_ADD,
     });
-}
 
-ImGUIOverlay::~ImGUIOverlay() {
-    ImGui::DestroyContext();
-}
-
-void ImGUIOverlay::update() {
-    ImDrawData *imgui_draw_data = ImGui::GetDrawData();
-    if (imgui_draw_data == nullptr) {
-        return;
-    }
-
-    if (imgui_draw_data->TotalIdxCount == 0 || imgui_draw_data->TotalVtxCount == 0) {
-        return;
-    }
-
-    bool should_update = false;
-    if (m_index_data.size() != imgui_draw_data->TotalIdxCount) {
-        m_index_data.clear();
-        for (std::size_t i = 0; i < imgui_draw_data->CmdListsCount; i++) {
-            const ImDrawList *cmd_list = imgui_draw_data->CmdLists[i]; // NOLINT
-            for (std::size_t j = 0; j < cmd_list->IdxBuffer.Size; j++) {
-                m_index_data.push_back(cmd_list->IdxBuffer.Data[j]); // NOLINT
-            }
-        }
-        m_index_buffer->upload_data(m_index_data);
-        should_update = true;
-    }
-
-    if (m_vertex_data.size() != imgui_draw_data->TotalVtxCount) {
-        m_vertex_data.clear();
-        for (std::size_t i = 0; i < imgui_draw_data->CmdListsCount; i++) {
-            const ImDrawList *cmd_list = imgui_draw_data->CmdLists[i]; // NOLINT
-            for (std::size_t j = 0; j < cmd_list->VtxBuffer.Size; j++) {
-                m_vertex_data.push_back(cmd_list->VtxBuffer.Data[j]); // NOLINT
-            }
-        }
-        m_vertex_buffer->upload_data(m_vertex_data);
-        should_update = true;
-    }
-
-    if (!should_update) {
-        return;
-    }
-
-    m_stage->set_on_record([this](const PhysicalStage &physical, const wrapper::commands::CommandBuffer &cmd_buf) {
+    m_stage->set_on_record([&](const PhysicalStage &physical, const wrapper::commands::CommandBuffer &cmd_buf) {
         ImDrawData *imgui_draw_data = ImGui::GetDrawData();
         if (imgui_draw_data == nullptr) {
             return;
@@ -189,6 +145,31 @@ void ImGUIOverlay::update() {
             vertex_offset += cmd_list->VtxBuffer.Size;
         }
     });
+}
+
+ImGUIOverlay::~ImGUIOverlay() {
+    ImGui::DestroyContext();
+}
+
+void ImGUIOverlay::update() {
+    ImDrawData *imgui_draw_data = ImGui::GetDrawData();
+    if (!imgui_draw_data || imgui_draw_data->TotalVtxCount == 0)
+        return;
+
+    m_vertex_data.clear();
+    m_index_data.clear();
+
+    for (std::size_t i = 0; i < imgui_draw_data->CmdListsCount; i++) {
+        const ImDrawList *cmd_list = imgui_draw_data->CmdLists[i];
+        m_vertex_data.insert(m_vertex_data.end(), cmd_list->VtxBuffer.Data,
+                             cmd_list->VtxBuffer.Data + cmd_list->VtxBuffer.Size);
+        m_index_data.insert(m_index_data.end(), cmd_list->IdxBuffer.Data,
+                            cmd_list->IdxBuffer.Data + cmd_list->IdxBuffer.Size);
+    }
+
+    // Upload buffers every frame
+    m_vertex_buffer->upload_data(m_vertex_data);
+    m_index_buffer->upload_data(m_index_data);
 }
 
 } // namespace inexor::vulkan_renderer

@@ -30,6 +30,7 @@ void Camera::rotate(const float delta_yaw, const float delta_pitch, const float 
     m_pitch += delta_pitch;
     m_roll += delta_roll;
     m_pitch = std::clamp(m_pitch, m_pitch_min, m_pitch_max);
+    m_update_view_matrix = true;
     update_vectors();
 }
 
@@ -73,12 +74,17 @@ void Camera::set_near_plane(const float near_plane) {
 void Camera::set_position(const glm::vec3 position) {
     m_position = position;
     m_update_view_matrix = true;
+    update_matrices();
+    update_vectors();
 }
 
 void Camera::set_rotation(const float yaw, const float pitch, const float roll) {
     m_yaw = m_mouse_sensitivity * yaw;
     m_pitch = m_mouse_sensitivity * pitch;
     m_roll = m_mouse_sensitivity * roll;
+    m_update_view_matrix = true;
+    update_matrices();
+    update_vectors();
 }
 
 void Camera::set_rotation_speed(const float speed) {
@@ -91,22 +97,24 @@ void Camera::set_type(const CameraType type) {
 
 void Camera::update(const float delta_time) {
     if (m_type == CameraType::LOOK_AT && is_moving()) {
-        const float move_speed = delta_time * m_movement_speed;
-
-        if (m_keys[0] && !m_keys[2]) {
-            m_position += m_front * move_speed;
+        update_vectors();
+        if (is_moving()) {
+            const float move_speed = delta_time * m_movement_speed;
+            if (m_keys[0] && !m_keys[2]) {
+                m_position += m_front * move_speed;
+            }
+            if (m_keys[1] && !m_keys[3]) {
+                m_position -= m_right * move_speed;
+            }
+            if (m_keys[2] && !m_keys[0]) {
+                m_position -= m_front * move_speed;
+            }
+            if (m_keys[3] && !m_keys[1]) {
+                m_position += m_right * move_speed;
+            }
         }
-        if (m_keys[1] && !m_keys[3]) {
-            m_position -= m_right * move_speed;
-        }
-        if (m_keys[2] && !m_keys[0]) {
-            m_position -= m_front * move_speed;
-        }
-        if (m_keys[3] && !m_keys[1]) {
-            m_position += m_right * move_speed;
-        }
-
         m_update_view_matrix = true;
+        update_matrices();
     }
 }
 
