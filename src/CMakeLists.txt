@@ -13,7 +13,7 @@ set(INEXOR_SOURCE_FILES
     vulkan-renderer/tools/enumerate.cpp
     vulkan-renderer/tools/exception.cpp
     vulkan-renderer/tools/file.cpp
-    vulkan-renderer/tools/fps_counter.cpp
+    vulkan-renderer/tools/fps_limiter.cpp
     vulkan-renderer/tools/queue_selection.cpp
     vulkan-renderer/tools/representation.cpp
     vulkan-renderer/tools/time_step.cpp
