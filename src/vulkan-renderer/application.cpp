@@ -387,6 +387,12 @@ Application::Application(int argc, char **argv) {
     m_swapchain = std::make_unique<wrapper::Swapchain>(*m_device, m_surface->surface(), m_window->width(),
                                                        m_window->height(), m_vsync_enabled);
 
+    m_camera =
+        std::make_unique<tools::Camera>(glm::vec3(6.0f, 10.0f, 2.0f), 180.0f, 0.0f,
+                                        static_cast<float>(m_window->width()), static_cast<float>(m_window->height()));
+    m_camera->set_movement_speed(5.0f);
+    m_camera->set_rotation_speed(0.5f);
+
     load_shaders();
 
     m_uniform_buffers.emplace_back(*m_device, "matrices uniform buffer", sizeof(UniformBufferObject));
