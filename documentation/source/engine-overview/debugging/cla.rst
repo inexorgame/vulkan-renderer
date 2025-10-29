@@ -16,8 +16,6 @@ You can start vulkan-renderer with the following command line arguments:
 
 .. option:: --vsync
 
-.. warning:: Vsync is currently not implemented. The command line argument will be ignored.
-
     Enables `vertical synchronization <https://en.wikipedia.org/wiki/Analog_television#Vertical_synchronization>`__ (limits FPS to monitor refresh rate).
 
 .. option:: --maxfps <fps>
