@@ -9,7 +9,6 @@ set(INEXOR_SOURCE_FILES
     vulkan-renderer/input/keyboard_mouse_data.cpp
 
     vulkan-renderer/tools/camera.cpp
-    vulkan-renderer/tools/cla_parser.cpp
     vulkan-renderer/tools/device_info.cpp
     vulkan-renderer/tools/enumerate.cpp
     vulkan-renderer/tools/exception.cpp
@@ -118,6 +117,7 @@ target_include_directories(
 )
 
 # Declare use of dependencies
+FetchContent_MakeAvailable(CLI11)
 FetchContent_MakeAvailable(fmt)
 FetchContent_MakeAvailable(spdlog)
 FetchContent_MakeAvailable(stb)
@@ -138,6 +138,7 @@ target_include_directories(imgui PUBLIC ${imgui_SOURCE_DIR})
 
 target_link_libraries(inexor-vulkan-renderer-core-lib
     PUBLIC
+    CLI11::CLI11
     fmt::fmt
     glfw
     glm::glm
@@ -152,14 +153,15 @@ target_link_libraries(inexor-vulkan-renderer-core-lib
 if(MSVC)
     # Group dependencies in Visual Studio
     set(THIRD_PARTY_TARGETS
-        glfw
+        CLI11
         fmt
+        glfw
         glm
         imgui
         spdlog
+        tinygltf
         volk
         VulkanMemoryAllocator
-        tinygltf
         # Also those extra ones
         loader_example
         uninstall

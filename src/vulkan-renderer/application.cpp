@@ -5,7 +5,6 @@
 #include "inexor/vulkan-renderer/octree_gpu_vertex.hpp"
 #include "inexor/vulkan-renderer/standard_ubo.hpp"
 #include "inexor/vulkan-renderer/tools/camera.hpp"
-#include "inexor/vulkan-renderer/tools/cla_parser.hpp"
 #include "inexor/vulkan-renderer/tools/device_info.hpp"
 #include "inexor/vulkan-renderer/tools/enumerate.hpp"
 #include "inexor/vulkan-renderer/tools/exception.hpp"
@@ -13,6 +12,7 @@
 #include "inexor/vulkan-renderer/wrapper/descriptors/descriptor_builder.hpp"
 #include "inexor/vulkan-renderer/wrapper/instance.hpp"
 
+#include <CLI/CLI.hpp>
 #include <GLFW/glfw3.h>
 #include <glm/gtc/matrix_transform.hpp>
 #include <spdlog/async.h>
@@ -258,9 +258,13 @@ Application::Application(int argc, char **argv) {
     spdlog::trace("Application version: {}", APP_VERSION_STR);
     spdlog::trace("Engine version: {}", ENGINE_VERSION_STR);
 
-    // TODO (GH-558): Consider to use a command line argument parsing library.
-    tools::CommandLineArgumentParser cla_parser;
-    cla_parser.parse_args(argc, argv);
+    // Parse command line arguments.
+    CLI::App app{"vulkan-renderer"};
+    argv = app.ensure_utf8(argv);
+    app.add_flag("--vsync", m_vsync_enabled);
+    std::optional<std::uint32_t> preferred_gpu;
+    app.add_option("--gpu", preferred_gpu);
+    app.parse(argc, argv);
 
     load_toml_configuration_file("configuration/renderer.toml");
 
@@ -324,26 +328,19 @@ Application::Application(int argc, char **argv) {
 
     spdlog::trace("Creating window surface");
 
-    // The user can specify with "--gpu <number>" which graphics card to prefer.
-    auto preferred_graphics_card = cla_parser.arg<std::uint32_t>("--gpu");
-    if (preferred_graphics_card) {
-        spdlog::trace("Preferential graphics card index {} specified", *preferred_graphics_card);
+    if (preferred_gpu) {
+        spdlog::trace("Preferential graphics card index {} specified", *preferred_gpu);
     }
 
-    // If the user specified command line argument "--vsync", the presentation engine waits
-    // for the next vertical blanking period to update the current image.
-    const auto enable_vertical_synchronisation = cla_parser.arg<bool>("--vsync");
-    if (enable_vertical_synchronisation.value_or(false)) {
+    if (m_vsync_enabled) {
         spdlog::trace("V-sync enabled!");
-        m_vsync_enabled = true;
     } else {
         spdlog::trace("V-sync disabled!");
-        m_vsync_enabled = false;
     }
 
     const auto physical_devices = tools::get_physical_devices(m_instance->instance());
-    if (preferred_graphics_card && *preferred_graphics_card >= physical_devices.size()) {
-        spdlog::critical("GPU index {} is out of range!", *preferred_graphics_card);
+    if (preferred_gpu && *preferred_gpu >= physical_devices.size()) {
+        spdlog::critical("GPU index {} is out of range!", *preferred_gpu);
         // TODO: This should not be an exception. Use default gpu selection mechanism instead and print a warning.
         throw std::runtime_error("Invalid GPU index");
     }
@@ -358,9 +355,9 @@ Application::Application(int argc, char **argv) {
     };
 
     const VkPhysicalDevice physical_device =
-        preferred_graphics_card ? physical_devices[*preferred_graphics_card]
-                                : tools::pick_best_physical_device(*m_instance, m_surface->surface(), required_features,
-                                                                   required_extensions);
+        preferred_gpu ? physical_devices[*preferred_gpu]
+                      : tools::pick_best_physical_device(*m_instance, m_surface->surface(), required_features,
+                                                         required_extensions);
 
     m_device = std::make_unique<wrapper::Device>(*m_instance, m_surface->surface(), physical_device, required_features,
                                                  required_extensions);
