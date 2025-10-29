@@ -3,7 +3,7 @@
 #include "inexor/vulkan-renderer/imgui.hpp"
 #include "inexor/vulkan-renderer/octree_gpu_vertex.hpp"
 #include "inexor/vulkan-renderer/tools/camera.hpp"
-#include "inexor/vulkan-renderer/tools/fps_counter.hpp"
+#include "inexor/vulkan-renderer/tools/fps_limiter.hpp"
 #include "inexor/vulkan-renderer/tools/time_step.hpp"
 #include "inexor/vulkan-renderer/wrapper/debug_callback.hpp"
 #include "inexor/vulkan-renderer/wrapper/instance.hpp"
@@ -43,8 +43,6 @@ protected:
 
     std::string m_window_title;
 
-    tools::FPSCounter m_fps_counter;
-
     bool m_vsync_enabled{false};
 
     std::unique_ptr<tools::Camera> m_camera;
@@ -75,6 +73,7 @@ protected:
     void render_frame();
 
 public:
+    tools::FPSLimiter m_fps_limiter;
     ~VulkanRenderer();
 
     bool m_window_resized{false};

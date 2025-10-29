@@ -282,7 +282,11 @@ Application::Application(int argc, char **argv) {
     app.add_flag("--vsync", m_vsync_enabled);
     std::optional<std::uint32_t> preferred_gpu;
     app.add_option("--gpu", preferred_gpu);
+    std::uint32_t max_fps = tools::FPSLimiter::DEFAULT_FPS;
+    app.add_option("--maxfps", max_fps);
     app.parse(argc, argv);
+
+    m_fps_limiter.set_max_fps(max_fps);
 
     load_toml_configuration_file("configuration/renderer.toml");
 
@@ -516,20 +520,22 @@ void Application::run() {
 
     while (!m_window->should_close()) {
         m_window->poll();
-        m_input->update_gamepad_data();
-        update_uniform_buffers();
-        update_imgui_overlay();
-        render_frame();
-        process_input();
-        if (m_input->kbm_data().was_key_pressed_once(GLFW_KEY_N)) {
-            load_octree_geometry(false);
-            generate_octree_indices();
-            m_index_buffer->upload_data(m_octree_indices);
-            m_vertex_buffer->upload_data(m_octree_vertices);
+        if (m_fps_limiter.is_next_frame_allowed()) {
+            m_input->update_gamepad_data();
+            update_uniform_buffers();
+            update_imgui_overlay();
+            render_frame();
+            process_input();
+            if (m_input->kbm_data().was_key_pressed_once(GLFW_KEY_N)) {
+                load_octree_geometry(false);
+                generate_octree_indices();
+                m_index_buffer->upload_data(m_octree_indices);
+                m_vertex_buffer->upload_data(m_octree_vertices);
+            }
+            m_camera->update(m_time_passed);
+            m_time_passed = m_stopwatch.time_step();
+            check_octree_collisions();
         }
-        m_camera->update(m_time_passed);
-        m_time_passed = m_stopwatch.time_step();
-        check_octree_collisions();
     }
 }
 

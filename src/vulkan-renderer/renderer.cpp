@@ -112,7 +112,7 @@ void VulkanRenderer::render_frame() {
 
     m_swapchain->present(image_index);
 
-    if (auto fps_value = m_fps_counter.update()) {
+    if (auto fps_value = m_fps_limiter.get_fps()) {
         m_window->set_title("Inexor Vulkan API renderer demo - " + std::to_string(*fps_value) + " FPS");
         spdlog::trace("FPS: {}, window size: {} x {}", *fps_value, m_window->width(), m_window->height());
     }
