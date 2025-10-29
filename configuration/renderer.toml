@@ -1,7 +1,7 @@
 # This configuration file contains all options for the vulkan-renderer.
 # Do not change any values unless you know exactly what you are doing!
 
-title = "vulkan-renderer-configuration"
+title = "Inexor vulkan-renderer"
 
 #TODO: Declare further TOML configuration files here?
 
@@ -14,8 +14,8 @@ name = "Inexor-Engine"
 [application.window]
 mode = "windowed"
 width = 1280
-height = 720
-name = "Inexor-Vulkan-Renderer"
+height = 900
+name = "Inexor vulkan-renderer"
 
 [shaders]
 [shaders.vertex]

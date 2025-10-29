@@ -13,6 +13,14 @@ FetchContent_Declare(benchmark
     GIT_SHALLOW ON
     GIT_PROGRESS ON
     FIND_PACKAGE_ARGS 1.8.5)
+    
+# Command line argument parsing library
+FetchContent_Declare(CLI11
+    GIT_REPOSITORY https://github.com/CLIUtils/CLI11.git
+    GIT_TAG v2.6.1
+    GIT_SHALLOW ON
+    GIT_PROGRESS ON
+    FIND_PACKAGE_ARGS 2.6.1)
 
 # Formatting library
 FetchContent_Declare(fmt
@@ -70,27 +78,29 @@ FetchContent_Declare(spdlog
 FetchContent_Declare(stb
     GIT_REPOSITORY https://github.com/nothings/stb.git
     GIT_TAG f7f20f39fe4f206c6f19e26ebfef7b261ee59ee4
+    # Do not enable shallow download on stb because it will cause a CMake error!
     GIT_PROGRESS ON)
 
 # Loader for models in glTF2 format
 FetchContent_Declare(tinygltf
     GIT_REPOSITORY https://github.com/syoyo/tinygltf.git
     GIT_TAG v2.9.2
+    GIT_SHALLOW ON
     GIT_PROGRESS ON
     FIND_PACKAGE_ARGS 2.9.2)
 
 # Library for TOML configuration files
-FetchContent_Declare(toml
-    GIT_REPOSITORY https://github.com/ToruNiina/toml11.git
-    GIT_TAG v4.0.3
-    GIT_SHALLOW ON
+FetchContent_Declare(tomlplusplus
+    GIT_REPOSITORY https://github.com/marzer/tomlplusplus.git
+    GIT_TAG v3.4.0
     GIT_PROGRESS ON
-    FIND_PACKAGE_ARGS 4.0.3)
+    FIND_PACKAGE_ARGS 3.4.0)
 
 # Vulkan Memory Allocator library
 FetchContent_Declare(vma
     GIT_REPOSITORY https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator.git
     GIT_TAG v3.1.0
+    GIT_SHALLOW ON
     GIT_PROGRESS ON
     FIND_PACKAGE_ARGS 3.1.0)
 
@@ -98,6 +108,7 @@ FetchContent_Declare(vma
 FetchContent_Declare(volk
     GIT_REPOSITORY https://github.com/zeux/volk
     GIT_TAG 1.3.270
+    GIT_SHALLOW ON
     GIT_PROGRESS ON
     FIND_PACKAGE_ARGS 1.3.270)
 
@@ -105,5 +116,6 @@ FetchContent_Declare(volk
 FetchContent_Declare(Vulkan
     GIT_REPOSITORY https://github.com/KhronosGroup/Vulkan-Headers
     GIT_TAG v1.3.283
+    GIT_SHALLOW ON
     GIT_PROGRESS ON
     FIND_PACKAGE_ARGS 1.3.283)

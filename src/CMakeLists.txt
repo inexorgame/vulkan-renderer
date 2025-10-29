@@ -9,7 +9,6 @@ set(INEXOR_SOURCE_FILES
     vulkan-renderer/input/keyboard_mouse_data.cpp
 
     vulkan-renderer/tools/camera.cpp
-    vulkan-renderer/tools/cla_parser.cpp
     vulkan-renderer/tools/device_info.cpp
     vulkan-renderer/tools/enumerate.cpp
     vulkan-renderer/tools/exception.cpp
@@ -118,10 +117,11 @@ target_include_directories(
 )
 
 # Declare use of dependencies
+FetchContent_MakeAvailable(CLI11)
 FetchContent_MakeAvailable(fmt)
 FetchContent_MakeAvailable(spdlog)
 FetchContent_MakeAvailable(stb)
-FetchContent_MakeAvailable(toml)
+FetchContent_MakeAvailable(tomlplusplus)
 FetchContent_MakeAvailable(Vulkan)
 FetchContent_MakeAvailable(volk)
 FetchContent_MakeAvailable(vma)
@@ -138,13 +138,14 @@ target_include_directories(imgui PUBLIC ${imgui_SOURCE_DIR})
 
 target_link_libraries(inexor-vulkan-renderer-core-lib
     PUBLIC
+    CLI11::CLI11
     fmt::fmt
     glfw
     glm::glm
     imgui
     spdlog::spdlog_header_only
     tinygltf
-    toml11::toml11
+    tomlplusplus::tomlplusplus
     volk::volk
     Vulkan::Headers
     VulkanMemoryAllocator)
@@ -152,23 +153,19 @@ target_link_libraries(inexor-vulkan-renderer-core-lib
 if(MSVC)
     # Group dependencies in Visual Studio
     set(THIRD_PARTY_TARGETS
-        glfw
+        CLI11
         fmt
+        glfw
         glm
         imgui
         spdlog
+        tinygltf
         volk
         VulkanMemoryAllocator
-        tinygltf
-        toml11
         # Also those extra ones
         loader_example
         uninstall
         update_mappings
-        Continuous
-        Experimental
-        Nightly
-        NightlyMemoryCheck
     )
     # Move all dependencies into a subfolder
     set_target_properties(${THIRD_PARTY_TARGETS}

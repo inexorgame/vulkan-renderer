@@ -5,7 +5,6 @@
 #include "inexor/vulkan-renderer/octree_gpu_vertex.hpp"
 #include "inexor/vulkan-renderer/standard_ubo.hpp"
 #include "inexor/vulkan-renderer/tools/camera.hpp"
-#include "inexor/vulkan-renderer/tools/cla_parser.hpp"
 #include "inexor/vulkan-renderer/tools/device_info.hpp"
 #include "inexor/vulkan-renderer/tools/enumerate.hpp"
 #include "inexor/vulkan-renderer/tools/exception.hpp"
@@ -13,6 +12,7 @@
 #include "inexor/vulkan-renderer/wrapper/descriptors/descriptor_builder.hpp"
 #include "inexor/vulkan-renderer/wrapper/instance.hpp"
 
+#include <CLI/CLI.hpp>
 #include <GLFW/glfw3.h>
 #include <glm/gtc/matrix_transform.hpp>
 #include <spdlog/async.h>
@@ -21,14 +21,16 @@
 #include <spdlog/spdlog.h>
 
 #include <random>
+#include <string_view>
 #include <thread>
-#include <toml.hpp>
+#include <toml++/toml.hpp>
 
 namespace inexor::vulkan_renderer {
 
 void Application::load_toml_configuration_file(const std::string &file_name) {
     spdlog::trace("Loading TOML configuration file: {}", file_name);
 
+    // @TODO Switch to std::filesystem::exists
     std::ifstream toml_file(file_name, std::ios::in);
     if (!toml_file) {
         // If you are using CLion, go to "Edit Configurations" and select "Working Directory".
@@ -38,66 +40,63 @@ void Application::load_toml_configuration_file(const std::string &file_name) {
 
     toml_file.close();
 
-    // Load the TOML file using toml11.
-    auto renderer_configuration = toml::parse(file_name);
+    // Load the TOML file using tomlplusplus.
+    auto config_file = toml::parse_file(file_name);
 
-    // Search for the title of the configuration file and print it to debug output.
-    const auto &configuration_title = toml::find<std::string>(renderer_configuration, "title");
-    spdlog::trace("Title: {}", configuration_title);
+    const std::string_view project_title = config_file["title"].value_or("");
+    spdlog::trace("Title: {}", project_title);
 
     using WindowMode = wrapper::window::Window::Mode;
 
-    const auto &wmodestr = toml::find<std::string>(renderer_configuration, "application", "window", "mode");
-    if (wmodestr == "windowed") {
+    const std::string_view wnd_mode = config_file["application"]["window"]["mode"].value_or("windowed");
+
+    if (wnd_mode == "windowed") {
         m_window_mode = WindowMode::WINDOWED;
-    } else if (wmodestr == "windowed_fullscreen") {
+    } else if (wnd_mode == "windowed_fullscreen") {
         m_window_mode = WindowMode::WINDOWED_FULLSCREEN;
-    } else if (wmodestr == "fullscreen") {
+    } else if (wnd_mode == "fullscreen") {
         m_window_mode = WindowMode::FULLSCREEN;
     } else {
-        spdlog::warn("Invalid application window mode: {}", wmodestr);
+        spdlog::warn("Invalid application window mode: {}", wnd_mode);
         m_window_mode = WindowMode::WINDOWED;
     }
 
-    m_window_width = toml::find<int>(renderer_configuration, "application", "window", "width");
-    m_window_height = toml::find<int>(renderer_configuration, "application", "window", "height");
-    m_window_title = toml::find<std::string>(renderer_configuration, "application", "window", "name");
+    m_window_width = config_file["application"]["window"]["width"].value_or(1280);
+    m_window_height = config_file["application"]["window"]["height"].value_or(720);
+    m_window_title = config_file["application"]["window"]["name"].value_or("Undefined Window Title!");
     spdlog::trace("Window: {}, {} x {}", m_window_title, m_window_width, m_window_height);
 
-    m_texture_files = toml::find<std::vector<std::string>>(renderer_configuration, "textures", "files");
-
     spdlog::trace("Textures:");
-
-    for (const auto &texture_file : m_texture_files) {
+    const auto texture_files = config_file["textures"]["files"].as_array();
+    for (const auto &value : *texture_files) {
+        const auto texture_file = value.value_or("");
         spdlog::trace("   - {}", texture_file);
+        m_texture_files.push_back(texture_file);
     }
-
-    m_gltf_model_files = toml::find<std::vector<std::string>>(renderer_configuration, "glTFmodels", "files");
 
     spdlog::trace("glTF 2.0 models:");
-
-    for (const auto &gltf_model_file : m_gltf_model_files) {
+    const auto gltf_models = config_file["glTFmodels"]["files"].as_array();
+    for (const auto &value : *gltf_models) {
+        const std::string gltf_model_file = value.value_or("");
         spdlog::trace("   - {}", gltf_model_file);
+        m_gltf_model_files.push_back(gltf_model_file);
     }
-
-    m_vertex_shader_files = toml::find<std::vector<std::string>>(renderer_configuration, "shaders", "vertex", "files");
 
     spdlog::trace("Vertex shaders:");
-
-    for (const auto &vertex_shader_file : m_vertex_shader_files) {
+    const auto vertex_shader_files = config_file["shaders"]["vertex"]["files"].as_array();
+    for (const auto &value : *vertex_shader_files) {
+        const std::string vertex_shader_file = value.value_or("");
         spdlog::trace("   - {}", vertex_shader_file);
+        m_vertex_shader_files.push_back(vertex_shader_file);
     }
-
-    m_fragment_shader_files =
-        toml::find<std::vector<std::string>>(renderer_configuration, "shaders", "fragment", "files");
 
     spdlog::trace("Fragment shaders:");
-
-    for (const auto &fragment_shader_file : m_fragment_shader_files) {
+    const auto fragment_shader_files = config_file["shaders"]["fragment"]["files"].as_array();
+    for (const auto &value : *fragment_shader_files) {
+        const std::string fragment_shader_file = value.value_or("");
         spdlog::trace("   - {}", fragment_shader_file);
+        m_fragment_shader_files.push_back(fragment_shader_file);
     }
-
-    // TODO: Load more info from TOML file.
 }
 
 void Application::load_shaders() {
@@ -259,9 +258,13 @@ Application::Application(int argc, char **argv) {
     spdlog::trace("Application version: {}", APP_VERSION_STR);
     spdlog::trace("Engine version: {}", ENGINE_VERSION_STR);
 
-    // TODO (GH-558): Consider to use a command line argument parsing library.
-    tools::CommandLineArgumentParser cla_parser;
-    cla_parser.parse_args(argc, argv);
+    // Parse command line arguments.
+    CLI::App app{"vulkan-renderer"};
+    argv = app.ensure_utf8(argv);
+    app.add_flag("--vsync", m_vsync_enabled);
+    std::optional<std::uint32_t> preferred_gpu;
+    app.add_option("--gpu", preferred_gpu);
+    app.parse(argc, argv);
 
     load_toml_configuration_file("configuration/renderer.toml");
 
@@ -272,8 +275,9 @@ Application::Application(int argc, char **argv) {
     std::vector<const char *> instance_layers;
     std::vector<const char *> instance_extensions;
 
-    // It is very important to start using Vulkan API by initializing volk with the following function call, otherwise
-    // even the most basic Vulkan functions which do not depend on a VkInstance or a VkDevice will not be available!
+    // It is very important to start using Vulkan API by initializing volk with the following function call,
+    // otherwise even the most basic Vulkan functions which do not depend on a VkInstance or a VkDevice will not be
+    // available!
     spdlog::trace("Initializing volk metaloader");
     if (const auto result = volkInitialize(); result != VK_SUCCESS) {
         throw tools::InexorException("Error: Vulkan initialization with volk metaloader library failed!");
@@ -324,28 +328,21 @@ Application::Application(int argc, char **argv) {
 
     spdlog::trace("Creating window surface");
 
-    // The user can specify with "--gpu <number>" which graphics card to prefer.
-    auto preferred_graphics_card = cla_parser.arg<std::uint32_t>("--gpu");
-    if (preferred_graphics_card) {
-        spdlog::trace("Preferential graphics card index {} specified", *preferred_graphics_card);
+    if (preferred_gpu) {
+        spdlog::trace("Preferential graphics card index {} specified", *preferred_gpu);
     }
 
-    // If the user specified command line argument "--vsync", the presentation engine waits
-    // for the next vertical blanking period to update the current image.
-    const auto enable_vertical_synchronisation = cla_parser.arg<bool>("--vsync");
-    if (enable_vertical_synchronisation.value_or(false)) {
+    if (m_vsync_enabled) {
         spdlog::trace("V-sync enabled!");
-        m_vsync_enabled = true;
     } else {
         spdlog::trace("V-sync disabled!");
-        m_vsync_enabled = false;
     }
 
     const auto physical_devices = tools::get_physical_devices(m_instance->instance());
-    if (preferred_graphics_card && *preferred_graphics_card >= physical_devices.size()) {
-        spdlog::critical("GPU index {} is out of range!", *preferred_graphics_card);
-        // TODO: This should not be an exception. Use default gpu selection mechanism instead and print a warning.
-        throw std::runtime_error("Invalid GPU index");
+    if (preferred_gpu && *preferred_gpu >= physical_devices.size()) {
+        spdlog::critical("GPU index {} is out of range!", *preferred_gpu);
+        // The most suitable gpu will be chosen automatically later.
+        preferred_gpu = std::nullopt;
     }
 
     const VkPhysicalDeviceFeatures required_features{
@@ -358,9 +355,9 @@ Application::Application(int argc, char **argv) {
     };
 
     const VkPhysicalDevice physical_device =
-        preferred_graphics_card ? physical_devices[*preferred_graphics_card]
-                                : tools::pick_best_physical_device(*m_instance, m_surface->surface(), required_features,
-                                                                   required_extensions);
+        preferred_gpu ? physical_devices[*preferred_gpu]
+                      : tools::pick_best_physical_device(*m_instance, m_surface->surface(), required_features,
+                                                         required_extensions);
 
     m_device = std::make_unique<wrapper::Device>(*m_instance, m_surface->surface(), physical_device, required_features,
                                                  required_extensions);
