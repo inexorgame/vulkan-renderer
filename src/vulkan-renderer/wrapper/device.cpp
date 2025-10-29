@@ -229,7 +229,7 @@ void Device::execute(const std::string &name, const VulkanQueueType queue_type,
 }
 
 CommandPool &Device::get_thread_command_pool(const VulkanQueueType queue_type) const {
-    // Note that thread_local implies that thread_graphics_pool is implicitely static!
+    // Note that thread_local means that it is implicitely static!
     thread_local CommandPool *thread_graphics_cmd_pool = nullptr;       // NOLINT
     thread_local CommandPool *thread_compute_cmd_pool = nullptr;        // NOLINT
     thread_local CommandPool *thread_transfer_cmd_pool = nullptr;       // NOLINT

@@ -1,5 +1,5 @@
-C++ Features Overview
-=====================
+Used Features of Modern C++
+===========================
 
 .. list-table::
    :header-rows: 1
@@ -124,3 +124,11 @@ C++ Features Overview
    * - `constexpr if <https://en.cppreference.com/w/cpp/language/if.html#Constexpr_if>`__
      - `C++17 <https://en.cppreference.com/w/cpp/17.html>`__
      - Allows compile-time conditional branching, enabling cleaner and more efficient template code.
+
+   * - `structured binding declaration <https://en.cppreference.com/w/cpp/language/structured_binding.html>`__
+     - `C++17 <https://en.cppreference.com/w/cpp/17.html>`__
+     - Declare multiple variables at once by decomposing a returned object, such as an array, tuple, pair, or struct.
+
+   * - `concepts <https://en.cppreference.com/w/cpp/language/constraints.html>`__
+     - `C++20 <https://en.cppreference.com/w/cpp/20.html>`__
+     - Allows template parameters to be constrained with compile-time requirements, making templates safer and easier to read and use.
