@@ -341,8 +341,8 @@ Application::Application(int argc, char **argv) {
     const auto physical_devices = tools::get_physical_devices(m_instance->instance());
     if (preferred_gpu && *preferred_gpu >= physical_devices.size()) {
         spdlog::critical("GPU index {} is out of range!", *preferred_gpu);
-        // TODO: This should not be an exception. Use default gpu selection mechanism instead and print a warning.
-        throw std::runtime_error("Invalid GPU index");
+        // The most suitable gpu will be chosen automatically later.
+        preferred_gpu = std::nullopt;
     }
 
     const VkPhysicalDeviceFeatures required_features{
