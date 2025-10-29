@@ -8,6 +8,7 @@
 #include "inexor/vulkan-renderer/tools/device_info.hpp"
 #include "inexor/vulkan-renderer/tools/enumerate.hpp"
 #include "inexor/vulkan-renderer/tools/exception.hpp"
+#include "inexor/vulkan-renderer/tools/random.hpp"
 #include "inexor/vulkan-renderer/wrapper/cpu_texture.hpp"
 #include "inexor/vulkan-renderer/wrapper/descriptors/descriptor_builder.hpp"
 #include "inexor/vulkan-renderer/wrapper/instance.hpp"
@@ -162,32 +163,15 @@ void Application::load_octree_geometry(bool initialize) {
     m_worlds.push_back(
         octree::create_random_world(2, {10.0f, 0.0f, 0.0f}, initialize ? std::optional(60) : std::nullopt));
 
-    auto generate_random_number = []<typename T>(const T min, const T max)
-        requires std::is_integral_v<std::decay_t<T>> || std::is_floating_point_v<std::decay_t<T>>
-    {
-        // Note that thread_local means that it is implicitely static!
-        thread_local std::mt19937 generator(std::random_device{}());
-        using U = std::decay_t<T>;
-        if constexpr (std::is_integral_v<U>) {
-            std::uniform_int_distribution<U> distribution(min, max);
-            return distribution(generator);
-        } else if constexpr (std::is_floating_point_v<U>) {
-            std::uniform_real_distribution<U> distribution(min, max);
-            return distribution(generator);
-        } else {
-            static_assert(std::is_arithmetic_v<U>, "Error: Type must be numeric (integer or float)!");
-        }
-    };
-
     m_octree_vertices.clear();
     for (const auto &world : m_worlds) {
         for (const auto &polygons : world->polygons(true)) {
             for (const auto &triangle : *polygons) {
                 for (const auto &vertex : triangle) {
                     glm::vec3 color = {
-                        generate_random_number(0.0f, 1.0f),
-                        generate_random_number(0.0f, 1.0f),
-                        generate_random_number(0.0f, 1.0f),
+                        tools::generate_random_number(0.0f, 1.0f),
+                        tools::generate_random_number(0.0f, 1.0f),
+                        tools::generate_random_number(0.0f, 1.0f),
                     };
                     m_octree_vertices.emplace_back(vertex, color);
                 }

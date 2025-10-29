@@ -1,6 +1,7 @@
 #include "inexor/vulkan-renderer/octree/cube.hpp"
 
 #include "inexor/vulkan-renderer/octree/indentation.hpp"
+#include "inexor/vulkan-renderer/tools/random.hpp"
 
 #include <random>
 #include <utility>
@@ -90,13 +91,7 @@ std::size_t Cube::count_geometry_cubes() const noexcept {
 }
 
 std::shared_ptr<Cube> create_random_world(std::uint32_t max_depth, const glm::vec3 &position,
-                                          std::optional<std::uint32_t> seed) {
-    // @TODO Use new abstraction code for random number generation here as well
-    static std::random_device rd;
-    std::mt19937 mt(seed ? *seed : rd());
-    std::uniform_int_distribution<std::uint32_t> indent(0, 44);
-    std::uniform_int_distribution<std::uint32_t> cube_type(0, 100);
-
+                                          const std::optional<std::uint32_t> seed) {
     std::shared_ptr<Cube> cube = std::make_shared<Cube>(4.0f, position);
     cube->set_type(Cube::Type::OCTANT);
     std::function<void(const Cube &, std::uint32_t)> populate_cube = [&](const Cube &parent, std::uint32_t depth) {
@@ -106,7 +101,7 @@ std::shared_ptr<Cube> create_random_world(std::uint32_t max_depth, const glm::ve
                 populate_cube(*child, depth + 1);
                 continue;
             }
-            auto ty = cube_type(mt);
+            const auto ty = tools::generate_random_number(0, 100, seed);
             if (ty < 30) {
                 child->set_type(Cube::Type::EMPTY);
                 continue;
@@ -118,7 +113,8 @@ std::shared_ptr<Cube> create_random_world(std::uint32_t max_depth, const glm::ve
             if (ty < 100) {
                 child->set_type(Cube::Type::NORMAL);
                 for (int i = 0; i < 12; i++) {
-                    child->set_indent(i, Indentation(indent(mt)));
+                    std::uint8_t indent_value = tools::generate_random_number(0, 44, seed);
+                    child->set_indent(i, Indentation(indent_value));
                 }
                 continue;
             }
