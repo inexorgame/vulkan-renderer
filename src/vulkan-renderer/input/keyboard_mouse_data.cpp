@@ -1,8 +1,5 @@
 #include "inexor/vulkan-renderer/input/keyboard_mouse_data.hpp"
 
-#include <GLFW/glfw3.h>
-#include <glm/fwd.hpp>
-
 #include <cassert>
 #include <mutex>
 

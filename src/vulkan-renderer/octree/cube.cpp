@@ -3,7 +3,7 @@
 #include "inexor/vulkan-renderer/octree/indentation.hpp"
 #include "inexor/vulkan-renderer/tools/random.hpp"
 
-#include <random>
+#include <functional>
 #include <utility>
 
 void swap(inexor::vulkan_renderer::octree::Cube &lhs, inexor::vulkan_renderer::octree::Cube &rhs) noexcept {

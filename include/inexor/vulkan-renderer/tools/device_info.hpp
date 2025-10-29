@@ -1,12 +1,16 @@
 #pragma once
 
-#include "inexor/vulkan-renderer/wrapper/instance.hpp"
-
 #include <volk.h>
 
+#include <cstdint>
 #include <span>
 #include <string>
 #include <vector>
+
+namespace inexor::vulkan_renderer::wrapper {
+// Forward declaration
+class Instance;
+} // namespace inexor::vulkan_renderer::wrapper
 
 namespace inexor::vulkan_renderer::tools {
 

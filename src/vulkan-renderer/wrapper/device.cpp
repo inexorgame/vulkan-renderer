@@ -3,7 +3,6 @@
 #include "inexor/vulkan-renderer/tools/device_info.hpp"
 #include "inexor/vulkan-renderer/tools/enumerate.hpp"
 #include "inexor/vulkan-renderer/tools/queue_selection.hpp"
-#include "inexor/vulkan-renderer/tools/representation.hpp"
 #include "inexor/vulkan-renderer/wrapper/instance.hpp"
 #include "inexor/vulkan-renderer/wrapper/make_info.hpp"
 
@@ -14,9 +13,6 @@
 
 #include <spdlog/spdlog.h>
 
-#include <algorithm>
-#include <cassert>
-#include <fstream>
 #include <utility>
 
 namespace inexor::vulkan_renderer::wrapper {

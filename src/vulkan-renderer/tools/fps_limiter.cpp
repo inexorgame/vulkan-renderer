@@ -1,7 +1,5 @@
 ﻿#include "inexor/vulkan-renderer/tools/fps_limiter.hpp"
 
-#include <spdlog/spdlog.h>
-
 #include <algorithm>
 
 namespace inexor::vulkan_renderer::tools {

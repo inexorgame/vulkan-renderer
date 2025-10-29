@@ -1,7 +1,9 @@
 #pragma once
 
-#include <GLFW/glfw3.h>
 #include <volk.h>
+
+// Forward declaration
+struct GLFWwindow;
 
 namespace inexor::vulkan_renderer::wrapper::window {
 

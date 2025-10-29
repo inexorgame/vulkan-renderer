@@ -1,11 +1,8 @@
 #pragma once
 
-#include <spdlog/spdlog.h>
 #include <volk.h>
 
 #include "inexor/vulkan-renderer/wrapper/commands/command_buffer.hpp"
-
-#include <cassert>
 
 namespace inexor::vulkan_renderer::wrapper {
 // Forward declaration

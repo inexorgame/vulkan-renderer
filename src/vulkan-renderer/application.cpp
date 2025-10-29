@@ -2,6 +2,8 @@
 
 #include "inexor/vulkan-renderer/meta/meta.hpp"
 #include "inexor/vulkan-renderer/octree/collision.hpp"
+#include "inexor/vulkan-renderer/octree/collision_query.hpp"
+#include "inexor/vulkan-renderer/octree/cube.hpp"
 #include "inexor/vulkan-renderer/octree_gpu_vertex.hpp"
 #include "inexor/vulkan-renderer/standard_ubo.hpp"
 #include "inexor/vulkan-renderer/tools/camera.hpp"
@@ -21,10 +23,7 @@
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include <spdlog/spdlog.h>
 
-#include <concepts>
-#include <random>
 #include <string_view>
-#include <thread>
 #include <toml++/toml.hpp>
 
 namespace inexor::vulkan_renderer {

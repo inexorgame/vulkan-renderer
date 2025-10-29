@@ -1,14 +1,17 @@
 ﻿#pragma once
 
 #include "inexor/vulkan-renderer/input/input.hpp"
-#include "inexor/vulkan-renderer/octree/collision_query.hpp"
-#include "inexor/vulkan-renderer/octree/cube.hpp"
 #include "inexor/vulkan-renderer/renderer.hpp"
 
-// Forward declarations
 namespace inexor::vulkan_renderer::input {
+// Forward declaration
 class KeyboardMouseInputData;
 } // namespace inexor::vulkan_renderer::input
+
+namespace inexor::vulkan_renderer::octree {
+// Forward declaration
+class Cube;
+} // namespace inexor::vulkan_renderer::octree
 
 namespace inexor::vulkan_renderer {
 

@@ -2,9 +2,6 @@
 
 #include <glm/vec3.hpp>
 
-#include <string>
-#include <tuple>
-
 namespace inexor::vulkan_renderer::octree {
 
 /// @brief A wrapper for collisions between a ray and octree geometry.

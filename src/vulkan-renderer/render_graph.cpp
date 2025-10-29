@@ -12,7 +12,6 @@
 #include <array>
 #include <cassert>
 #include <functional>
-#include <stdexcept>
 #include <utility>
 
 namespace inexor::vulkan_renderer {

@@ -2,10 +2,8 @@
 
 #include "inexor/vulkan-renderer/wrapper/cpu_texture.hpp"
 #include "inexor/vulkan-renderer/wrapper/descriptors/descriptor_builder.hpp"
-#include "inexor/vulkan-renderer/wrapper/make_info.hpp"
-
-#include <cassert>
-#include <stdexcept>
+#include "inexor/vulkan-renderer/wrapper/gpu_texture.hpp"
+#include "inexor/vulkan-renderer/wrapper/shader.hpp"
 
 namespace inexor::vulkan_renderer {
 

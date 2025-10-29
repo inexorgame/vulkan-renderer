@@ -2,11 +2,9 @@
 
 #include "inexor/vulkan-renderer/octree/indentation.hpp"
 
-#include <glm/gtx/vector_angle.hpp>
 #include <glm/vec3.hpp>
 
 #include <array>
-#include <functional>
 #include <memory>
 #include <optional>
 #include <vector>

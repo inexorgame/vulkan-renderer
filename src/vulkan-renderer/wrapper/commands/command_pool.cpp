@@ -6,7 +6,6 @@
 
 #include <spdlog/spdlog.h>
 
-#include <format>
 #include <sstream>
 #include <thread>
 #include <utility>
