@@ -1,27 +1,48 @@
 ﻿#pragma once
 
-#include "inexor/vulkan-renderer/input/input.hpp"
-#include "inexor/vulkan-renderer/renderer.hpp"
+#include "renderer.hpp"
 
-namespace inexor::vulkan_renderer::input {
-// Forward declaration
-class KeyboardMouseInputData;
-} // namespace inexor::vulkan_renderer::input
+#include "inexor/vulkan-renderer/input/input.hpp"
 
 namespace inexor::vulkan_renderer::octree {
 // Forward declaration
 class Cube;
 } // namespace inexor::vulkan_renderer::octree
 
-namespace inexor::vulkan_renderer {
+namespace inexor::vulkan_renderer::wrapper::window {
+// Forward declaration
+class Window;
+} // namespace inexor::vulkan_renderer::wrapper::window
 
-class Application : public VulkanRenderer {
+// Using declarations
+using inexor::vulkan_renderer::input::Input;
+using inexor::vulkan_renderer::octree::Cube;
+using inexor::vulkan_renderer::wrapper::Instance;
+using inexor::vulkan_renderer::wrapper::window::Window;
+using inexor::vulkan_renderer::wrapper::window::WindowSurface;
+
+namespace inexor::example_app {
+
+/// A sample application demonstrating Inexor's vulkan-renderer.
+class ExampleApp : public ExampleAppBase {
+private:
     std::vector<std::string> m_vertex_shader_files;
     std::vector<std::string> m_fragment_shader_files;
     std::vector<std::string> m_texture_files;
     std::vector<std::string> m_gltf_model_files;
 
-    std::unique_ptr<input::Input> m_input;
+    std::vector<VkPipelineShaderStageCreateInfo> m_shader_stages;
+    std::uint32_t m_window_width{0};
+    std::uint32_t m_window_height{0};
+    Mode m_window_mode{Mode::WINDOWED};
+    std::string m_window_title;
+    std::vector<GpuTexture> m_textures;
+
+    /// @TODO The TimeStep class can be removed because we have FPSLimiter which delivers the time_passed.
+    TimeStep m_stopwatch;
+    /// Necessary for taking into account the relative speed of the system's CPU.
+    /// @TODO This can also be removed.
+    float m_time_passed{0.0f};
 
     static VkBool32 validation_layer_debug_messenger_callback(VkDebugUtilsMessageSeverityFlagBitsEXT severity,
                                                               VkDebugUtilsMessageTypeFlagsEXT type,
@@ -29,7 +50,7 @@ class Application : public VulkanRenderer {
                                                               void *user_data);
 
     /// Inexor engine supports a variable number of octrees.
-    std::vector<std::shared_ptr<octree::Cube>> m_worlds;
+    std::vector<std::shared_ptr<Cube>> m_worlds;
 
     /// @brief Load the configuration of the renderer from a TOML configuration file.
     /// @brief file_name The TOML configuration file.
@@ -44,20 +65,22 @@ class Application : public VulkanRenderer {
     /// Use the camera's position and view direction vector to check for ray-octree collisions with all octrees.
     void check_octree_collisions();
     void process_input();
+    void generate_octree_indices();
     void initialize_spdlog();
 
 public:
-    Application(int argc, char **argv);
+    // A wrapper class for mouse, keyboard, and gamepad/joystick input.
+    std::unique_ptr<Input> m_input;
+
+public:
+    ExampleApp(int argc, char **argv);
 
     void run();
 };
 
 // Using declarations
-using input::Input;
-using tools::InexorException;
-using tools::VulkanException;
-using wrapper::Instance;
-using wrapper::window::Window;
-using wrapper::window::WindowSurface;
+using inexor::vulkan_renderer::tools::FPSLimiter;
+using inexor::vulkan_renderer::tools::InexorException;
+using inexor::vulkan_renderer::tools::VulkanException;
 
-} // namespace inexor::vulkan_renderer
+} // namespace inexor::example_app

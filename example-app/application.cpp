@@ -1,11 +1,10 @@
-#include "inexor/vulkan-renderer/application.hpp"
+#include "application.hpp"
 
+#include "inexor/vulkan-renderer/input/input.hpp"
 #include "inexor/vulkan-renderer/meta/meta.hpp"
 #include "inexor/vulkan-renderer/octree/collision.hpp"
 #include "inexor/vulkan-renderer/octree/collision_query.hpp"
 #include "inexor/vulkan-renderer/octree/cube.hpp"
-#include "inexor/vulkan-renderer/octree_gpu_vertex.hpp"
-#include "inexor/vulkan-renderer/standard_ubo.hpp"
 #include "inexor/vulkan-renderer/tools/camera.hpp"
 #include "inexor/vulkan-renderer/tools/device_info.hpp"
 #include "inexor/vulkan-renderer/tools/enumerate.hpp"
@@ -14,6 +13,7 @@
 #include "inexor/vulkan-renderer/wrapper/cpu_texture.hpp"
 #include "inexor/vulkan-renderer/wrapper/descriptors/descriptor_builder.hpp"
 #include "inexor/vulkan-renderer/wrapper/instance.hpp"
+#include "standard_ubo.hpp"
 
 #include <CLI/CLI.hpp>
 #include <GLFW/glfw3.h>
@@ -26,9 +26,11 @@
 #include <string_view>
 #include <toml++/toml.hpp>
 
-namespace inexor::vulkan_renderer {
+namespace inexor::example_app {
 
-void Application::load_toml_configuration_file(const std::string &file_name) {
+using namespace inexor::vulkan_renderer;
+
+void ExampleApp::load_toml_configuration_file(const std::string &file_name) {
     spdlog::trace("Loading TOML configuration file: {}", file_name);
 
     // @TODO Switch to std::filesystem::exists
@@ -47,19 +49,17 @@ void Application::load_toml_configuration_file(const std::string &file_name) {
     const std::string_view project_title = config_file["title"].value_or("");
     spdlog::trace("Title: {}", project_title);
 
-    using WindowMode = wrapper::window::Window::Mode;
-
     const std::string_view wnd_mode = config_file["application"]["window"]["mode"].value_or("windowed");
 
     if (wnd_mode == "windowed") {
-        m_window_mode = WindowMode::WINDOWED;
+        m_window_mode = Mode::WINDOWED;
     } else if (wnd_mode == "windowed_fullscreen") {
-        m_window_mode = WindowMode::WINDOWED_FULLSCREEN;
+        m_window_mode = Mode::WINDOWED_FULLSCREEN;
     } else if (wnd_mode == "fullscreen") {
-        m_window_mode = WindowMode::FULLSCREEN;
+        m_window_mode = Mode::FULLSCREEN;
     } else {
         spdlog::warn("Invalid application window mode: {}", wnd_mode);
-        m_window_mode = WindowMode::WINDOWED;
+        m_window_mode = Mode::WINDOWED;
     }
 
     m_window_width = config_file["application"]["window"]["width"].value_or(1280);
@@ -100,9 +100,7 @@ void Application::load_toml_configuration_file(const std::string &file_name) {
     }
 }
 
-void Application::load_shaders() {
-    assert(m_device->device());
-
+void ExampleApp::load_shaders() {
     spdlog::trace("Loading vertex shaders:");
 
     if (m_vertex_shader_files.empty()) {
@@ -135,10 +133,10 @@ void Application::load_shaders() {
     spdlog::trace("Loading shaders finished");
 }
 
-VkBool32 Application::validation_layer_debug_messenger_callback(const VkDebugUtilsMessageSeverityFlagBitsEXT severity,
-                                                                const VkDebugUtilsMessageTypeFlagsEXT type,
-                                                                const VkDebugUtilsMessengerCallbackDataEXT *data,
-                                                                void *user_data) {
+VkBool32 ExampleApp::validation_layer_debug_messenger_callback(const VkDebugUtilsMessageSeverityFlagBitsEXT severity,
+                                                               const VkDebugUtilsMessageTypeFlagsEXT type,
+                                                               const VkDebugUtilsMessengerCallbackDataEXT *data,
+                                                               void *user_data) {
     // Use different spdlog methods based on the severity of the message
     if (severity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT) {
         spdlog::trace("{}", data->pMessage);
@@ -152,25 +150,25 @@ VkBool32 Application::validation_layer_debug_messenger_callback(const VkDebugUti
     return VK_FALSE;
 }
 
-void Application::load_octree_geometry(bool initialize) {
+void ExampleApp::load_octree_geometry(bool initialize) {
     spdlog::trace("Creating octree geometry");
 
     // 4: 23 012 | 5: 184352 | 6: 1474162 | 7: 11792978 cubes, DO NOT USE 7!
     m_worlds.clear();
-    m_worlds.push_back(
-        octree::create_random_world(2, {0.0f, 0.0f, 0.0f}, initialize ? std::optional(42) : std::nullopt));
-    m_worlds.push_back(
-        octree::create_random_world(2, {10.0f, 0.0f, 0.0f}, initialize ? std::optional(60) : std::nullopt));
+    using octree::create_random_world;
+    m_worlds.push_back(create_random_world(2, {0.0f, 0.0f, 0.0f}, initialize ? std::optional(42) : std::nullopt));
+    m_worlds.push_back(create_random_world(2, {10.0f, 0.0f, 0.0f}, initialize ? std::optional(60) : std::nullopt));
 
+    using tools::generate_random_number;
     m_octree_vertices.clear();
     for (const auto &world : m_worlds) {
         for (const auto &polygons : world->polygons(true)) {
             for (const auto &triangle : *polygons) {
                 for (const auto &vertex : triangle) {
                     glm::vec3 color = {
-                        tools::generate_random_number(0.0f, 1.0f),
-                        tools::generate_random_number(0.0f, 1.0f),
-                        tools::generate_random_number(0.0f, 1.0f),
+                        generate_random_number(0.0f, 1.0f),
+                        generate_random_number(0.0f, 1.0f),
+                        generate_random_number(0.0f, 1.0f),
                     };
                     m_octree_vertices.emplace_back(vertex, color);
                 }
@@ -179,13 +177,32 @@ void Application::load_octree_geometry(bool initialize) {
     }
 }
 
-void Application::setup_window_and_input_callbacks() {
+void ExampleApp::generate_octree_indices() {
+    auto old_vertices = std::move(m_octree_vertices);
+    m_octree_indices.clear();
+    m_octree_vertices.clear();
+    std::unordered_map<OctreeGpuVertex, std::uint32_t> vertex_map;
+    for (auto &vertex : old_vertices) {
+        // TODO: Use std::unordered_map::contains() when we switch to C++ 20.
+        if (vertex_map.count(vertex) == 0) {
+            assert(vertex_map.size() < std::numeric_limits<std::uint32_t>::max() && "Octree too big!");
+            vertex_map.emplace(vertex, static_cast<std::uint32_t>(vertex_map.size()));
+            m_octree_vertices.push_back(vertex);
+        }
+        m_octree_indices.push_back(vertex_map.at(vertex));
+    }
+    spdlog::trace("Reduced octree by {} vertices (from {} to {})", old_vertices.size() - m_octree_vertices.size(),
+                  old_vertices.size(), m_octree_vertices.size());
+    spdlog::trace("Total indices {} ", m_octree_indices.size());
+}
+
+void ExampleApp::setup_window_and_input_callbacks() {
     m_window->set_user_ptr(this);
 
     spdlog::trace("Setting up window callback:");
 
     auto lambda_frame_buffer_resize_callback = [](GLFWwindow *window, int width, int height) {
-        auto *app = static_cast<Application *>(glfwGetWindowUserPointer(window));
+        auto *app = static_cast<ExampleApp *>(glfwGetWindowUserPointer(window));
         spdlog::trace("Frame buffer resize callback called. window width: {}, height: {}", width, height);
         app->m_window_resized = true;
     };
@@ -195,7 +212,7 @@ void Application::setup_window_and_input_callbacks() {
     spdlog::trace("   - keyboard button callback");
 
     auto lambda_key_callback = [](GLFWwindow *window, int key, int scancode, int action, int mods) {
-        auto *app = static_cast<Application *>(glfwGetWindowUserPointer(window));
+        auto *app = static_cast<ExampleApp *>(glfwGetWindowUserPointer(window));
         app->m_input->key_callback(window, key, scancode, action, mods);
     };
 
@@ -204,7 +221,7 @@ void Application::setup_window_and_input_callbacks() {
     spdlog::trace("   - cursor position callback");
 
     auto lambda_cursor_position_callback = [](GLFWwindow *window, double xpos, double ypos) {
-        auto *app = static_cast<Application *>(glfwGetWindowUserPointer(window));
+        auto *app = static_cast<ExampleApp *>(glfwGetWindowUserPointer(window));
         app->m_input->cursor_position_callback(window, xpos, ypos);
     };
 
@@ -213,7 +230,7 @@ void Application::setup_window_and_input_callbacks() {
     spdlog::trace("   - mouse button callback");
 
     auto lambda_mouse_button_callback = [](GLFWwindow *window, int button, int action, int mods) {
-        auto *app = static_cast<Application *>(glfwGetWindowUserPointer(window));
+        auto *app = static_cast<ExampleApp *>(glfwGetWindowUserPointer(window));
         app->m_input->mouse_button_callback(window, button, action, mods);
     };
 
@@ -222,14 +239,14 @@ void Application::setup_window_and_input_callbacks() {
     spdlog::trace("   - mouse wheel scroll callback");
 
     auto lambda_mouse_scroll_callback = [](GLFWwindow *window, double xoffset, double yoffset) {
-        auto *app = static_cast<Application *>(glfwGetWindowUserPointer(window));
+        auto *app = static_cast<ExampleApp *>(glfwGetWindowUserPointer(window));
         app->m_input->mouse_scroll_callback(window, xoffset, yoffset);
     };
 
     m_window->set_mouse_scroll_callback(lambda_mouse_scroll_callback);
 }
 
-void Application::initialize_spdlog() {
+void ExampleApp::initialize_spdlog() {
     // Initialization of spdlog with only one thread should be fine because at no point do we expect many spdlog
     // messages to be written to the console and the logfile.
     spdlog::init_thread_pool(8192, 1);
@@ -251,7 +268,7 @@ void Application::initialize_spdlog() {
     spdlog::trace("Inexor vulkan-renderer, BUILD " + std::string(__DATE__) + ", " + __TIME__);
 }
 
-Application::Application(int argc, char **argv) {
+ExampleApp::ExampleApp(int argc, char **argv) {
     initialize_spdlog();
 
     using namespace vulkan_renderer::meta;
@@ -265,7 +282,7 @@ Application::Application(int argc, char **argv) {
     app.add_flag("--vsync", m_vsync_enabled);
     std::optional<std::uint32_t> preferred_gpu;
     app.add_option("--gpu", preferred_gpu);
-    std::uint32_t max_fps = tools::FPSLimiter::DEFAULT_FPS;
+    std::uint32_t max_fps = FPSLimiter::DEFAULT_FPS;
     app.add_option("--maxfps", max_fps);
     app.parse(argc, argv);
 
@@ -285,7 +302,7 @@ Application::Application(int argc, char **argv) {
     // available!
     spdlog::trace("Initializing volk metaloader");
     if (const auto result = volkInitialize(); result != VK_SUCCESS) {
-        throw tools::InexorException("Error: Vulkan initialization with volk metaloader library failed!");
+        throw InexorException("Error: Vulkan initialization with volk metaloader library failed!");
     }
 
     // If the instance extension "VK_EXT_debug_utils" is available on the system, enable it.
@@ -297,8 +314,7 @@ Application::Application(int argc, char **argv) {
     std::uint32_t glfw_extension_count = 0;
     auto *glfw_extensions = glfwGetRequiredInstanceExtensions(&glfw_extension_count);
     if (glfw_extension_count == 0) {
-        throw tools::InexorException(
-            "Error: glfwGetRequiredInstanceExtensions returned 0 required instance extensions!");
+        throw InexorException("Error: glfwGetRequiredInstanceExtensions returned 0 required instance extensions!");
     }
 
     spdlog::trace("Required GLFW instance extensions:");
@@ -306,8 +322,8 @@ Application::Application(int argc, char **argv) {
         // We must make sure that each instance extension that is required by glfw is available on the system.
         if (!wrapper::is_instance_extension_supported(glfw_extensions[index])) {
             // If any of the instance extensions that is required by glfw is not available, we will fail.
-            throw tools::InexorException("Error: glfw instance extension '" + std::string(glfw_extensions[index]) +
-                                         "' is not available on the system!");
+            throw InexorException("Error: glfw instance extension '" + std::string(glfw_extensions[index]) +
+                                  "' is not available on the system!");
         } else {
             spdlog::trace("   - {}", glfw_extensions[index]);
             instance_extensions.push_back(glfw_extensions[index]);
@@ -322,8 +338,7 @@ Application::Application(int argc, char **argv) {
 
     m_instance = std::make_unique<Instance>(instance_layers, instance_extensions);
 
-    m_dbg_callback =
-        std::make_unique<wrapper::VulkanDebugUtilsCallback>(*m_instance, validation_layer_debug_messenger_callback);
+    m_dbg_callback = std::make_unique<VulkanDebugUtilsCallback>(*m_instance, validation_layer_debug_messenger_callback);
 
     m_input = std::make_unique<Input>();
 
@@ -364,14 +379,13 @@ Application::Application(int argc, char **argv) {
                       : tools::pick_best_physical_device(*m_instance, m_surface->surface(), required_features,
                                                          required_extensions);
 
-    m_device = std::make_unique<wrapper::Device>(*m_instance, m_surface->surface(), physical_device, required_features,
-                                                 required_extensions);
+    m_device = std::make_unique<Device>(*m_instance, m_surface->surface(), physical_device, required_features,
+                                        required_extensions);
 
-    m_swapchain = std::make_unique<wrapper::Swapchain>(*m_device, m_surface->surface(), m_window->width(),
-                                                       m_window->height(), m_vsync_enabled);
+    m_swapchain = std::make_unique<Swapchain>(*m_device, m_surface->surface(), m_window->width(), m_window->height(),
+                                              m_vsync_enabled);
 
-    m_camera =
-        std::make_unique<tools::Camera>(glm::vec3(6.0f, 10.0f, 2.0f), 180.0f, 0.0f,
+    m_camera = std::make_unique<Camera>(glm::vec3(6.0f, 10.0f, 2.0f), 180.0f, 0.0f,
                                         static_cast<float>(m_window->width()), static_cast<float>(m_window->height()));
     m_camera->set_movement_speed(5.0f);
     m_camera->set_rotation_speed(0.5f);
@@ -382,7 +396,7 @@ Application::Application(int argc, char **argv) {
 
     // Create an instance of the resource descriptor builder.
     // This allows us to make resource descriptors with the help of a builder pattern.
-    wrapper::descriptors::DescriptorBuilder descriptor_builder(*m_device);
+    DescriptorBuilder descriptor_builder(*m_device);
 
     // Make use of the builder to create a resource descriptor for the uniform buffer.
     m_descriptors.emplace_back(
@@ -396,7 +410,7 @@ Application::Application(int argc, char **argv) {
     recreate_swapchain();
 }
 
-void Application::update_uniform_buffers() {
+void ExampleApp::update_uniform_buffers() {
     UniformBufferObject ubo{};
 
     ubo.model = glm::mat4(1.0f);
@@ -408,7 +422,7 @@ void Application::update_uniform_buffers() {
     m_uniform_buffers[0].update(&ubo, sizeof(ubo));
 }
 
-void Application::update_imgui_overlay() {
+void ExampleApp::update_imgui_overlay() {
     auto cursor_pos = m_input->kbm_data().get_cursor_pos();
 
     ImGuiIO &io = ImGui::GetIO();
@@ -452,12 +466,10 @@ void Application::update_imgui_overlay() {
     m_imgui_overlay->update();
 }
 
-void Application::process_input() {
+void ExampleApp::process_input() {
     const auto cursor_pos_delta = m_input->kbm_data().calculate_cursor_position_delta();
 
     auto deadzone_lambda = [](const float state) { return (glm::abs(state) < 0.2f) ? 0.0f : state; };
-
-    using namespace tools;
 
     if (m_camera->type() == CameraType::LOOK_AT &&
         m_input->kbm_data().is_mouse_button_pressed(GLFW_MOUSE_BUTTON_LEFT)) {
@@ -483,7 +495,7 @@ void Application::process_input() {
     m_camera->set_movement_state(CameraMovement::RIGHT, m_input->kbm_data().is_key_pressed(GLFW_KEY_D));
 }
 
-void Application::check_octree_collisions() {
+void ExampleApp::check_octree_collisions() {
     // Check for collision between camera ray and every octree
     for (const auto &world : m_worlds) {
         const auto collision = ray_cube_collision_check(*world, m_camera->position(), m_camera->front());
@@ -504,7 +516,7 @@ void Application::check_octree_collisions() {
     }
 }
 
-void Application::run() {
+void ExampleApp::run() {
     spdlog::trace("Running Application");
 
     while (!m_window->should_close()) {
@@ -528,4 +540,4 @@ void Application::run() {
     }
 }
 
-} // namespace inexor::vulkan_renderer
+} // namespace inexor::example_app

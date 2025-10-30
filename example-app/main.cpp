@@ -1,11 +1,10 @@
-﻿#include "inexor/vulkan-renderer/application.hpp"
+﻿#include "application.hpp"
 
 #include <stdexcept>
 
 int main(int argc, char *argv[]) {
     try {
-        using inexor::vulkan_renderer::Application;
-        auto renderer = std::make_unique<Application>(argc, argv);
+        auto renderer = std::make_unique<inexor::example_app::ExampleApp>(argc, argv);
         renderer->run();
     } catch (const std::exception &exception) {
         spdlog::critical(exception.what());
