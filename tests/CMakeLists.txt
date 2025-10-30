@@ -2,6 +2,7 @@ FetchContent_MakeAvailable(gtest)
 
 set(INEXOR_UNIT_TEST_SOURCE_FILES
     unit_tests_main.cpp
+    allocators/pool_allocator_tests.cpp
     gpu-selection/gpu_selection.cpp
     queue-selection/queue_selection.cpp
     swapchain/choose_settings.cpp

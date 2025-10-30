@@ -19,6 +19,8 @@ set(INEXOR_SOURCE_FILES
     vulkan-renderer/tools/representation.cpp
     vulkan-renderer/tools/time_step.cpp
 
+    vulkan-renderer/tools/allocators/pool_allocator.cpp
+
     vulkan-renderer/wrapper/cpu_texture.cpp
     vulkan-renderer/wrapper/debug_callback.cpp
     vulkan-renderer/wrapper/device.cpp
