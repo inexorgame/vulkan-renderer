@@ -271,7 +271,7 @@ Application::Application(int argc, char **argv) {
 
     m_fps_limiter.set_max_fps(max_fps);
 
-    load_toml_configuration_file("configuration/renderer.toml");
+    load_toml_configuration_file("assets/configuration/renderer.toml");
 
     spdlog::trace("Creating Vulkan instance");
 
