@@ -3,11 +3,11 @@ FetchContent_MakeAvailable(gtest)
 set(INEXOR_UNIT_TEST_SOURCE_FILES
     unit_tests_main.cpp
     allocators/pool_allocator_tests.cpp
-    gpu-selection/gpu_selection.cpp
-    queue-selection/queue_selection.cpp
-    swapchain/choose_settings.cpp
-    world/cube_collision.cpp
-    world/cube.cpp
+    gpu-selection/gpu_selection_tests.cpp
+    queue-selection/queue_selection_tests.cpp
+    swapchain/choose_settings_tests.cpp
+    world/cube_collision_tests.cpp
+    world/cube_tests.cpp
 )
 
 if(MSVC)
