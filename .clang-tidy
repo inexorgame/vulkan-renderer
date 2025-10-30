@@ -5,6 +5,7 @@ Checks:
   - '-clang-diagnostic-note'
   - '-clang-diagnostic-error'
   - '-cppcoreguidelines-avoid-do-while'
+  - '-cppcoreguidelines-pro-type-reinterpret-cast'
   - '-cppcoreguidelines-pro-type-union-access'
   - '-cppcoreguidelines-pro-type-vararg'
   - '-fuchsia-default-arguments-calls'
