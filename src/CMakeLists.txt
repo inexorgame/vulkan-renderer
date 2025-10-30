@@ -1,8 +1,6 @@
 set(INEXOR_SOURCE_FILES
-    vulkan-renderer/application.cpp
     vulkan-renderer/imgui.cpp
     vulkan-renderer/render_graph.cpp
-    vulkan-renderer/renderer.cpp
 
     vulkan-renderer/input/gamepad_data.cpp
     vulkan-renderer/input/input.cpp

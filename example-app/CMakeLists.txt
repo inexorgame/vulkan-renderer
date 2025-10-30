@@ -1,5 +1,7 @@
 set(INEXOR_EXAMPLE_SOURCE_FILES
     main.cpp
+    application.cpp
+    renderer.cpp
 )
 
 if(MSVC)

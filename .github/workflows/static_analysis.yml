@@ -113,14 +113,14 @@ jobs:
 
       - name: Check the files found for clang-tidy
         run: |
-          find example src include \
+          find example-app src include \
             -path '*/_deps/*' -prune -o \
             -path '*/build/*' -prune -o \
             \( -name '*.cpp' -o -name '*.hpp' \) -print
 
       - name: Run clang-tidy
         run: |
-          find example src include \
+          find example-app src include \
             -path '*/_deps/*' -prune -o \
             -path '*/build/*' -prune -o \
             \( -name '*.cpp' -o -name '*.hpp' \) -print0 |
@@ -328,7 +328,7 @@ jobs:
       - name: Find source files for cppcheck
         id: find_sources
         run: |
-          find example src include \
+          find example-app src include \
             -path '*/_deps/*' -prune -o \
             -path '*/build/*' -prune -o \
             \( -name '*.cpp' -o -name '*.hpp' \) -print > source_files.txt

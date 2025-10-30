@@ -173,7 +173,6 @@ jobs:
           find ./build -maxdepth 1 -type f -name '*-benchmarks' -exec cp {} artifacts/benchmarks/ \;
           mkdir -p artifacts/benchmarks/benchmark
           find ./build/benchmark -maxdepth 1 -type f -name '*.txt' -exec cp {} artifacts/benchmarks/benchmark/ \;
-          cp -r ./configuration/ artifacts/
           cp -r ./assets/ artifacts/
           mkdir -p artifacts/shaders
           cp ./shaders/*.spv artifacts/shaders/
@@ -334,7 +333,6 @@ jobs:
               Copy-Item -Path $_.FullName -Destination artifacts/benchmark
           }
           # Copy configuration, assets, and shaders
-          Copy-Item -Path ./configuration/. -Destination artifacts -Recurse
           Copy-Item -Path ./assets/. -Destination artifacts -Recurse
           mkdir artifacts/shaders
           Copy-Item -Path ./shaders/*.spv -Destination artifacts/shaders

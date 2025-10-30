@@ -8,11 +8,10 @@
 
 namespace inexor::vulkan_renderer::wrapper::window {
 
+enum class Mode { WINDOWED, FULLSCREEN, WINDOWED_FULLSCREEN };
+
 /// @brief RAII wrapper class for GLFW windows.
 class Window {
-public:
-    enum class Mode { WINDOWED, FULLSCREEN, WINDOWED_FULLSCREEN };
-
 private:
     std::uint32_t m_width;
     std::uint32_t m_height;

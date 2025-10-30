@@ -1,11 +1,11 @@
-﻿#include "inexor/vulkan-renderer/renderer.hpp"
+﻿#include "renderer.hpp"
 
-#include "inexor/vulkan-renderer/standard_ubo.hpp"
-#include "inexor/vulkan-renderer/wrapper/make_info.hpp"
+#include "inexor/vulkan-renderer/wrapper/commands/command_buffer.hpp"
+#include "standard_ubo.hpp"
 
-namespace inexor::vulkan_renderer {
+namespace inexor::example_app {
 
-void VulkanRenderer::setup_render_graph() {
+void ExampleAppBase::setup_render_graph() {
     m_back_buffer = m_render_graph->add<TextureResource>("back buffer", TextureUsage::BACK_BUFFER);
     m_back_buffer->set_format(m_swapchain->image_format());
 
@@ -28,7 +28,7 @@ void VulkanRenderer::setup_render_graph() {
     main_stage->bind_buffer(m_vertex_buffer, 0);
     main_stage->set_clears_screen(true);
     main_stage->set_depth_options(true, true);
-    main_stage->set_on_record([&](const PhysicalStage &physical, const wrapper::commands::CommandBuffer &cmd_buf) {
+    main_stage->set_on_record([&](const PhysicalStage &physical, const CommandBuffer &cmd_buf) {
         cmd_buf.bind_descriptor_sets(m_descriptors[0].descriptor_sets(), physical.pipeline_layout());
         cmd_buf.draw_indexed(static_cast<std::uint32_t>(m_octree_indices.size()));
     });
@@ -40,26 +40,7 @@ void VulkanRenderer::setup_render_graph() {
     main_stage->add_descriptor_layout(m_descriptors[0].descriptor_set_layout());
 }
 
-void VulkanRenderer::generate_octree_indices() {
-    auto old_vertices = std::move(m_octree_vertices);
-    m_octree_indices.clear();
-    m_octree_vertices.clear();
-    std::unordered_map<OctreeGpuVertex, std::uint32_t> vertex_map;
-    for (auto &vertex : old_vertices) {
-        // TODO: Use std::unordered_map::contains() when we switch to C++ 20.
-        if (vertex_map.count(vertex) == 0) {
-            assert(vertex_map.size() < std::numeric_limits<std::uint32_t>::max() && "Octree too big!");
-            vertex_map.emplace(vertex, static_cast<std::uint32_t>(vertex_map.size()));
-            m_octree_vertices.push_back(vertex);
-        }
-        m_octree_indices.push_back(vertex_map.at(vertex));
-    }
-    spdlog::trace("Reduced octree by {} vertices (from {} to {})", old_vertices.size() - m_octree_vertices.size(),
-                  old_vertices.size(), m_octree_vertices.size());
-    spdlog::trace("Total indices {} ", m_octree_indices.size());
-}
-
-void VulkanRenderer::recreate_swapchain() {
+void ExampleAppBase::recreate_swapchain() {
     m_window->wait_for_focus();
     m_device->wait_idle();
 
@@ -83,7 +64,7 @@ void VulkanRenderer::recreate_swapchain() {
     m_render_graph->compile(m_back_buffer);
 }
 
-void VulkanRenderer::render_frame() {
+void ExampleAppBase::render_frame() {
     if (m_window_resized) {
         m_window_resized = false;
         recreate_swapchain();
@@ -91,14 +72,13 @@ void VulkanRenderer::render_frame() {
     }
 
     const auto image_index = m_swapchain->acquire_next_image_index();
-    const auto &cmd_buf =
-        m_device->request_command_buffer(wrapper::VulkanQueueType::QUEUE_TYPE_GRAPHICS, "rendergraph");
+    const auto &cmd_buf = m_device->request_command_buffer(VulkanQueueType::QUEUE_TYPE_GRAPHICS, "rendergraph");
 
     m_render_graph->render(image_index, cmd_buf);
 
     const std::array<VkPipelineStageFlags, 1> stage_mask{VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
 
-    cmd_buf.submit_and_wait(wrapper::make_info<VkSubmitInfo>({
+    cmd_buf.submit_and_wait(inexor::vulkan_renderer::wrapper::make_info<VkSubmitInfo>({
         .waitSemaphoreCount = 1,
         .pWaitSemaphores = m_swapchain->image_available_semaphore(),
         .pWaitDstStageMask = stage_mask.data(),
@@ -113,7 +93,7 @@ void VulkanRenderer::render_frame() {
     }
 }
 
-VulkanRenderer::~VulkanRenderer() {
+ExampleAppBase::~ExampleAppBase() {
     spdlog::trace("Shutting down vulkan renderer");
     if (m_device == nullptr) {
         return;
@@ -121,4 +101,4 @@ VulkanRenderer::~VulkanRenderer() {
     m_device->wait_idle();
 }
 
-} // namespace inexor::vulkan_renderer
+} // namespace inexor::example_app
