@@ -3,6 +3,7 @@
 #include "inexor/vulkan-renderer/octree/cube.hpp"
 
 #include <glm/gtx/intersect.hpp>
+#include <glm/gtx/norm.hpp>
 
 namespace inexor::vulkan_renderer::octree {
 

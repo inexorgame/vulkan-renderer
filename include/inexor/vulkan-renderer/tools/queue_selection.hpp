@@ -2,8 +2,6 @@
 
 #include "inexor/vulkan-renderer/wrapper/device.hpp"
 
-#include <set>
-#include <string>
 #include <vector>
 
 namespace inexor::vulkan_renderer::tools {

@@ -2,19 +2,18 @@
 
 #include "inexor/vulkan-renderer/render_graph.hpp"
 #include "inexor/vulkan-renderer/wrapper/descriptors/descriptor.hpp"
-#include "inexor/vulkan-renderer/wrapper/gpu_texture.hpp"
-#include "inexor/vulkan-renderer/wrapper/shader.hpp"
 
 #include <glm/vec2.hpp>
 #include <imgui.h>
-#include <volk.h>
 
 #include <memory>
 #include <vector>
 
-// Forward declarations
 namespace inexor::vulkan_renderer::wrapper {
+// Forward declarations
 class Device;
+class GpuTexture;
+class Shader;
 class Swapchain;
 } // namespace inexor::vulkan_renderer::wrapper
 

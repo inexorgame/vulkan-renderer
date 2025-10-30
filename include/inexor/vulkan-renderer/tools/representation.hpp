@@ -2,7 +2,7 @@
 
 #include <volk.h>
 
-#include <string>
+#include <string_view>
 #include <type_traits>
 
 namespace inexor::vulkan_renderer::tools {

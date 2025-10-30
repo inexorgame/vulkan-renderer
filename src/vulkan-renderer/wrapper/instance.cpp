@@ -3,14 +3,11 @@
 #include "inexor/vulkan-renderer/meta/meta.hpp"
 #include "inexor/vulkan-renderer/tools/enumerate.hpp"
 #include "inexor/vulkan-renderer/tools/exception.hpp"
-#include "inexor/vulkan-renderer/tools/representation.hpp"
 #include "inexor/vulkan-renderer/wrapper/make_info.hpp"
 
-#include <GLFW/glfw3.h>
 #include <fmt/ranges.h>
 #include <spdlog/spdlog.h>
 
-#include <cassert>
 #include <utility>
 
 namespace inexor::vulkan_renderer::wrapper {

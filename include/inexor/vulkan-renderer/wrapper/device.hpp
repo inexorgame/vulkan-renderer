@@ -5,7 +5,6 @@
 #include "inexor/vulkan-renderer/wrapper/commands/command_pool.hpp"
 #include "inexor/vulkan-renderer/wrapper/make_info.hpp"
 
-#include <array>
 #include <functional>
 #include <optional>
 #include <shared_mutex>
@@ -23,7 +22,7 @@ using tools::VulkanException;
 using wrapper::commands::CommandBuffer;
 using wrapper::commands::CommandPool;
 
-/// An enum for the supported queue type
+/// An enum for the supported queue types
 enum class VulkanQueueType {
     QUEUE_TYPE_GRAPHICS,
     QUEUE_TYPE_COMPUTE,

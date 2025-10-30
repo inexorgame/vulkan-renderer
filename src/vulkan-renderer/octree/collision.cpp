@@ -3,12 +3,10 @@
 #include <inexor/vulkan-renderer/octree/cube.hpp>
 
 #include <glm/geometric.hpp>
-#include <glm/gtx/vector_angle.hpp>
+#include <glm/gtx/norm.hpp>
 
 #include <array>
 #include <limits>
-#include <memory>
-#include <utility>
 
 namespace inexor::vulkan_renderer::octree {
 

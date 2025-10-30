@@ -6,7 +6,6 @@
 
 #include <array>
 #include <utility>
-#include <vector>
 
 namespace inexor::vulkan_renderer::wrapper {
 

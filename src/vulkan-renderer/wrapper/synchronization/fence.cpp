@@ -5,7 +5,6 @@
 #include "inexor/vulkan-renderer/wrapper/make_info.hpp"
 
 #include <cassert>
-#include <stdexcept>
 #include <utility>
 
 namespace inexor::vulkan_renderer::wrapper::synchronization {

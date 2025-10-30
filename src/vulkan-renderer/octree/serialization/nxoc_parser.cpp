@@ -3,9 +3,7 @@
 #include "inexor/vulkan-renderer/octree/cube.hpp"
 #include "inexor/vulkan-renderer/octree/serialization/byte_stream.hpp"
 
-#include <fstream>
 #include <functional>
-#include <utility>
 
 namespace inexor::vulkan_renderer::serialization {
 

@@ -3,7 +3,6 @@
 #include <volk.h>
 
 #include <cstdint>
-#include <memory>
 #include <span>
 #include <string>
 
@@ -30,7 +29,6 @@ namespace inexor::vulkan_renderer::wrapper {
 [[nodiscard]] bool is_instance_layer_supported(const std::string &layer_name);
 
 /// RAII wrapper class for `VkInstance`.
-///
 /// @note **Design decision**: For 2 reasons, it was deliberately decided to avoid checking inside of the `Instance`
 /// constructor which of the requested instance layers and instance extensions are available and only to enable those
 /// which are available. **Reason 1**: This would require a class interface in which the programmer would have to check

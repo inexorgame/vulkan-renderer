@@ -5,7 +5,6 @@
 
 #include <array>
 #include <shared_mutex>
-#include <vector>
 
 namespace inexor::vulkan_renderer::input {
 

@@ -5,7 +5,6 @@
 #include "inexor/vulkan-renderer/wrapper/make_info.hpp"
 #include "inexor/vulkan-renderer/wrapper/swapchain.hpp"
 
-#include <array>
 #include <utility>
 
 namespace inexor::vulkan_renderer::wrapper {

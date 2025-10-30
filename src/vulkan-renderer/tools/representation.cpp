@@ -540,7 +540,7 @@ std::string_view as_string(const VkImageUsageFlagBits img_usage_flag_bits) {
     case VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT:
         return "VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT";
     case VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT:
-        return "VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT ";
+        return "VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT";
     default:
         return "Unknown VkImageUsageFlagBits";
     }

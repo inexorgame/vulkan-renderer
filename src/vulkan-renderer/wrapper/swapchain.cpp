@@ -10,9 +10,7 @@
 #include <spdlog/spdlog.h>
 
 #include <algorithm>
-#include <array>
 #include <cassert>
-#include <string_view>
 #include <utility>
 
 namespace inexor::vulkan_renderer::wrapper {

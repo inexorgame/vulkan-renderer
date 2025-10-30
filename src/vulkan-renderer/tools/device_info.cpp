@@ -3,6 +3,7 @@
 #include "inexor/vulkan-renderer/tools/enumerate.hpp"
 #include "inexor/vulkan-renderer/tools/exception.hpp"
 #include "inexor/vulkan-renderer/tools/representation.hpp"
+#include "inexor/vulkan-renderer/wrapper/instance.hpp"
 
 #include <spdlog/spdlog.h>
 

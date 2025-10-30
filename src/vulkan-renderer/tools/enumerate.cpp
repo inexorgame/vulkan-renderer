@@ -2,7 +2,6 @@
 
 #include "inexor/vulkan-renderer/tools/exception.hpp"
 
-#include <cassert>
 #include <cstdint>
 
 namespace inexor::vulkan_renderer::tools {

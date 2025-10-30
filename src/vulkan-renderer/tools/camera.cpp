@@ -1,5 +1,9 @@
 #include "inexor/vulkan-renderer/tools/camera.hpp"
 
+#include <algorithm>
+#include <glm/common.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+
 namespace inexor::vulkan_renderer::tools {
 
 Camera::Camera(const glm::vec3 &position, const float yaw, const float pitch, const float window_width,

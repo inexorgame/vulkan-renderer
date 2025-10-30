@@ -1,12 +1,10 @@
 #pragma once
 
 #include <GLFW/glfw3.h>
-#include <glm/detail/qualifier.hpp>
 #include <glm/glm.hpp>
 
 #include <array>
 #include <shared_mutex>
-#include <vector>
 
 namespace inexor::vulkan_renderer::input {
 /// @brief A wrapper for gamepad input data
