@@ -132,3 +132,7 @@ Used Features of Modern C++
    * - `concepts <https://en.cppreference.com/w/cpp/language/constraints.html>`__
      - `C++20 <https://en.cppreference.com/w/cpp/20.html>`__
      - Allows template parameters to be constrained with compile-time requirements, making templates safer and easier to read and use.
+
+   * - `std::ranges <https://en.cppreference.com/w/cpp/ranges.html>`__
+     - `C++20 <https://en.cppreference.com/w/cpp/20.html>`__
+     - Generalization of the algorithms and iterator libraries that makes them more powerful by making them composable and less error-prone.
