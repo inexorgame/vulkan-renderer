@@ -6,6 +6,7 @@
 #include <limits>
 #include <memory>
 #include <optional>
+#include <span>
 #include <vector>
 
 namespace inexor::vulkan_renderer::wrapper::synchronization {
@@ -91,8 +92,7 @@ public:
     /// @return The chosen present mode
     /// @note If none of the ``present_mode_priority_list`` are supported, ``VK_PRESENT_MODE_FIFO_KHR`` will be returned
     [[nodiscard]] static VkPresentModeKHR
-    choose_present_mode(const std::vector<VkPresentModeKHR> &available_present_modes,
-                        const std::vector<VkPresentModeKHR> &present_mode_priority_list, bool vsync_enabled);
+    choose_present_mode(std::span<const VkPresentModeKHR> available_present_modes);
 
     /// Choose a surface format
     /// @param available_formats The available surface formats

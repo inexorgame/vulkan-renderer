@@ -102,20 +102,23 @@ VkExtent2D Swapchain::choose_image_extent(const VkExtent2D &requested_extent, co
     };
 }
 
-VkPresentModeKHR Swapchain::choose_present_mode(const std::vector<VkPresentModeKHR> &available_present_modes,
-                                                const std::vector<VkPresentModeKHR> &present_mode_priority_list,
-                                                const bool vsync_enabled) {
-    assert(!available_present_modes.empty());
-    assert(!present_mode_priority_list.empty());
-    if (!vsync_enabled) {
-        for (const auto requested_present_mode : present_mode_priority_list) {
-            const auto present_mode =
-                std::find(available_present_modes.begin(), available_present_modes.end(), requested_present_mode);
-            if (present_mode != available_present_modes.end()) {
-                return *present_mode;
-            }
+VkPresentModeKHR Swapchain::choose_present_mode(const std::span<const VkPresentModeKHR> available_present_modes) {
+    if (available_present_modes.empty()) {
+        throw InexorException("Error: Parameter 'available_present_modes' is empty!");
+    }
+
+    static constexpr std::array<VkPresentModeKHR, 3> present_modes_in_preference_order{
+        VK_PRESENT_MODE_IMMEDIATE_KHR,
+        VK_PRESENT_MODE_MAILBOX_KHR,
+        VK_PRESENT_MODE_FIFO_RELAXED_KHR,
+    };
+
+    for (auto requested_mode : present_modes_in_preference_order) {
+        if (std::ranges::find(available_present_modes, requested_mode) != available_present_modes.end()) {
+            return requested_mode;
         }
     }
+    // If none of the present modes from the prio list are available, vsync must be enabled.
     return VK_PRESENT_MODE_FIFO_KHR;
 }
 
@@ -221,6 +224,10 @@ void Swapchain::setup_swapchain(const std::uint32_t width, const std::uint32_t h
 
     const VkSwapchainKHR old_swapchain = m_swapchain;
 
+    const auto present_mode =
+        vsync_enabled ? VK_PRESENT_MODE_FIFO_KHR
+                      : choose_present_mode(tools::get_surface_present_modes(m_device.physical_device(), m_surface));
+
     const auto swapchain_ci = make_info<VkSwapchainCreateInfoKHR>({
         .surface = m_surface,
         .minImageCount = (caps.maxImageCount != 0) ? std::min(caps.minImageCount + 1, caps.maxImageCount)
@@ -235,8 +242,7 @@ void Swapchain::setup_swapchain(const std::uint32_t width, const std::uint32_t h
                             ? VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR
                             : caps.currentTransform,
         .compositeAlpha = composite_alpha.value(),
-        .presentMode = choose_present_mode(tools::get_surface_present_modes(m_device.physical_device(), m_surface),
-                                           default_present_mode_priorities, vsync_enabled),
+        .presentMode = present_mode,
         .clipped = VK_TRUE,
         .oldSwapchain = old_swapchain,
     });
