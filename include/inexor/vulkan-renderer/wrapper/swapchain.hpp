@@ -68,9 +68,9 @@ public:
     /// Choose the composite alpha
     /// @param request_composite_alpha requested compositing flag
     /// @param supported_composite_alpha Alpha compositing modes supported on a device
-    /// @exception std::runtime_error No compatible composite alpha could be found
-    /// @return The chosen composite alpha flags
-    [[nodiscard]] static std::optional<VkCompositeAlphaFlagBitsKHR>
+    /// @exception std::runtime_error if no compatible composite alpha could be found.
+    /// @return The chosen composite alpha.
+    [[nodiscard]] static VkCompositeAlphaFlagBitsKHR
     choose_composite_alpha(VkCompositeAlphaFlagBitsKHR request_composite_alpha,
                            VkCompositeAlphaFlagsKHR supported_composite_alpha);
 
