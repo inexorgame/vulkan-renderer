@@ -21,10 +21,21 @@ Swapchain::Swapchain(const Device &device, const VkSurfaceKHR surface, const std
                      const std::uint32_t height, const bool vsync_enabled)
     : m_device(device), m_surface(surface), m_vsync_enabled(vsync_enabled) {
     if (vkCreateSwapchainKHR == nullptr) {
-        throw std::runtime_error("Error: vkCreateSwapchainKHR is not available! Did you forget to enable "
-                                 "VK_KHR_swapchain device extension?");
+        throw InexorException("Error: Function pointer 'vkCreateSwapchainKHR' is not available!");
     }
-    m_img_available = std::make_unique<Semaphore>(m_device, "Swapchain image available");
+    if (vkAcquireNextImageKHR == nullptr) {
+        throw InexorException("Error: Function pointer 'vkAcquireNextImageKHR' is not available!");
+    }
+    if (vkGetSwapchainImagesKHR == nullptr) {
+        throw InexorException("Error: Function pointer 'vkGetSwapchainImagesKHR' is not available!");
+    }
+    if (vkQueuePresentKHR == nullptr) {
+        throw InexorException("Error: Function pointer 'vkQueuePresentKHR' is not available!");
+    }
+    if (vkDestroySwapchainKHR == nullptr) {
+        throw InexorException("Error: Function pointer 'vkDestroySwapchainKHR' is not available!");
+    }
+    m_img_available = std::make_unique<Semaphore>(m_device, "m_img_available");
     setup_swapchain(width, height, vsync_enabled);
 }
 
