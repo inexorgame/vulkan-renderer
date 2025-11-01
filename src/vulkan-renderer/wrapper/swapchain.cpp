@@ -65,25 +65,29 @@ std::uint32_t Swapchain::acquire_next_image_index(const std::uint64_t timeout) {
     return img_index;
 }
 
-std::optional<VkCompositeAlphaFlagBitsKHR>
+VkCompositeAlphaFlagBitsKHR
 Swapchain::choose_composite_alpha(const VkCompositeAlphaFlagBitsKHR request_composite_alpha,
                                   const VkCompositeAlphaFlagsKHR supported_composite_alpha) {
+    // Check if the supported composite alpha is equal to the requested one.
     if ((request_composite_alpha & supported_composite_alpha) != 0u) {
         return request_composite_alpha;
     }
 
     static const std::vector<VkCompositeAlphaFlagBitsKHR> composite_alpha_flags{
-        VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR, VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR, VK_COMPOSITE_ALPHA_PRE_MULTIPLIED_BIT_KHR,
-        VK_COMPOSITE_ALPHA_POST_MULTIPLIED_BIT_KHR, VK_COMPOSITE_ALPHA_INHERIT_BIT_KHR};
+        VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR,
+        VK_COMPOSITE_ALPHA_PRE_MULTIPLIED_BIT_KHR,
+        VK_COMPOSITE_ALPHA_POST_MULTIPLIED_BIT_KHR,
+        VK_COMPOSITE_ALPHA_INHERIT_BIT_KHR,
+    };
 
-    for (const auto flag : composite_alpha_flags) {
-        if ((flag & supported_composite_alpha) != 0u) {
-            spdlog::trace("Swapchain composite alpha '{}' is not supported, selecting '{}'",
-                          tools::as_string(request_composite_alpha), tools::as_string(flag));
-            return flag;
+    for (const auto &composite_alpha : composite_alpha_flags) {
+        if (composite_alpha & supported_composite_alpha) {
+            spdlog::trace("Composite alpha '{}' is not supported, selecting '{}'",
+                          tools::as_string(request_composite_alpha), tools::as_string(composite_alpha));
+            return composite_alpha;
         }
     }
-    return std::nullopt;
+    throw InexorException("Error: No compatible composite alpha found!");
 }
 
 VkExtent2D Swapchain::choose_image_extent(const VkExtent2D &requested_extent, const VkExtent2D &min_extent,
@@ -244,7 +248,7 @@ void Swapchain::setup_swapchain(const std::uint32_t width, const std::uint32_t h
         .preTransform = ((VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR & caps.supportedTransforms) != 0u)
                             ? VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR
                             : caps.currentTransform,
-        .compositeAlpha = composite_alpha.value(),
+        .compositeAlpha = composite_alpha,
         .presentMode = present_mode,
         .clipped = VK_TRUE,
         .oldSwapchain = old_swapchain,
