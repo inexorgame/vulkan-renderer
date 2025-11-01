@@ -6,6 +6,7 @@
 #include <limits>
 #include <memory>
 #include <optional>
+#include <span>
 #include <vector>
 
 namespace inexor::vulkan_renderer::wrapper::synchronization {
@@ -24,7 +25,7 @@ using synchronization::Semaphore;
 /// RAII wrapper class for swapchains
 class Swapchain {
 private:
-    Device &m_device;
+    const Device &m_device;
     VkSwapchainKHR m_swapchain{VK_NULL_HANDLE};
     VkSurfaceKHR m_surface{VK_NULL_HANDLE};
     std::optional<VkSurfaceFormatKHR> m_surface_format;
@@ -46,7 +47,8 @@ public:
     /// @param width The swapchain image width
     /// @param height The swapchain image height
     /// @param vsync_enabled ``true`` if vertical synchronization is enabled
-    Swapchain(Device &device, VkSurfaceKHR surface, std::uint32_t width, std::uint32_t height, bool vsync_enabled);
+    Swapchain(const Device &device, VkSurfaceKHR surface, std::uint32_t width, std::uint32_t height,
+              bool vsync_enabled);
 
     Swapchain(const Swapchain &) = delete;
     Swapchain(Swapchain &&) noexcept;
@@ -66,9 +68,9 @@ public:
     /// Choose the composite alpha
     /// @param request_composite_alpha requested compositing flag
     /// @param supported_composite_alpha Alpha compositing modes supported on a device
-    /// @exception std::runtime_error No compatible composite alpha could be found
-    /// @return The chosen composite alpha flags
-    [[nodiscard]] static std::optional<VkCompositeAlphaFlagBitsKHR>
+    /// @exception std::runtime_error if no compatible composite alpha could be found.
+    /// @return The chosen composite alpha.
+    [[nodiscard]] static VkCompositeAlphaFlagBitsKHR
     choose_composite_alpha(VkCompositeAlphaFlagBitsKHR request_composite_alpha,
                            VkCompositeAlphaFlagsKHR supported_composite_alpha);
 
@@ -90,8 +92,7 @@ public:
     /// @return The chosen present mode
     /// @note If none of the ``present_mode_priority_list`` are supported, ``VK_PRESENT_MODE_FIFO_KHR`` will be returned
     [[nodiscard]] static VkPresentModeKHR
-    choose_present_mode(const std::vector<VkPresentModeKHR> &available_present_modes,
-                        const std::vector<VkPresentModeKHR> &present_mode_priority_list, bool vsync_enabled);
+    choose_present_mode(std::span<const VkPresentModeKHR> available_present_modes);
 
     /// Choose a surface format
     /// @param available_formats The available surface formats
