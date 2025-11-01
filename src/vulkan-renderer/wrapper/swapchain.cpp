@@ -17,8 +17,8 @@ namespace inexor::vulkan_renderer::wrapper {
 
 using tools::VulkanException;
 
-Swapchain::Swapchain(Device &device, const VkSurfaceKHR surface, const std::uint32_t width, const std::uint32_t height,
-                     const bool vsync_enabled)
+Swapchain::Swapchain(const Device &device, const VkSurfaceKHR surface, const std::uint32_t width,
+                     const std::uint32_t height, const bool vsync_enabled)
     : m_device(device), m_surface(surface), m_vsync_enabled(vsync_enabled) {
     if (vkCreateSwapchainKHR == nullptr) {
         throw std::runtime_error("Error: vkCreateSwapchainKHR is not available! Did you forget to enable "

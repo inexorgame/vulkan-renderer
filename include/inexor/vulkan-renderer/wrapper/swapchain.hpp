@@ -24,7 +24,7 @@ using synchronization::Semaphore;
 /// RAII wrapper class for swapchains
 class Swapchain {
 private:
-    Device &m_device;
+    const Device &m_device;
     VkSwapchainKHR m_swapchain{VK_NULL_HANDLE};
     VkSurfaceKHR m_surface{VK_NULL_HANDLE};
     std::optional<VkSurfaceFormatKHR> m_surface_format;
@@ -46,7 +46,8 @@ public:
     /// @param width The swapchain image width
     /// @param height The swapchain image height
     /// @param vsync_enabled ``true`` if vertical synchronization is enabled
-    Swapchain(Device &device, VkSurfaceKHR surface, std::uint32_t width, std::uint32_t height, bool vsync_enabled);
+    Swapchain(const Device &device, VkSurfaceKHR surface, std::uint32_t width, std::uint32_t height,
+              bool vsync_enabled);
 
     Swapchain(const Swapchain &) = delete;
     Swapchain(Swapchain &&) noexcept;
