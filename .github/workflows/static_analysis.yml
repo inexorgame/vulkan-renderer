@@ -93,7 +93,6 @@ jobs:
       - name: Configure CMake
         if: steps.cache-cmake.outputs.cache-hit != 'true'
         run: |
-          rm -rf ${{ env.INEXOR_VULKAN_SDK_PATH }}/${{ env.INEXOR_VULKAN_SDK_VERSION }}/x86_64/lib/cmake/volk/
           export CC=${{ matrix.config.cc }}
           export CXX=${{ matrix.config.cxx }}
           export VULKAN_SDK="${{ env.INEXOR_VULKAN_SDK_PATH }}/${{ env.INEXOR_VULKAN_SDK_VERSION }}/x86_64"
@@ -308,7 +307,6 @@ jobs:
       - name: Configure CMake
         if: steps.cache-cmake.outputs.cache-hit != 'true'
         run: |
-          rm -rf ${{ env.INEXOR_VULKAN_SDK_PATH }}/${{ env.INEXOR_VULKAN_SDK_VERSION }}/x86_64/lib/cmake/volk/
           export CC=${{ matrix.config.cc }}
           export CXX=${{ matrix.config.cxx }}
           export VULKAN_SDK="${{ env.INEXOR_VULKAN_SDK_PATH }}/${{ env.INEXOR_VULKAN_SDK_VERSION }}/x86_64"
