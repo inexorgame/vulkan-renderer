@@ -8,8 +8,11 @@ namespace inexor::vulkan_renderer::wrapper {
 
 TEST(Swapchain, choose_composite_alpha) {
     const std::vector<VkCompositeAlphaFlagBitsKHR> composite_alpha_flags{
-        VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR, VK_COMPOSITE_ALPHA_PRE_MULTIPLIED_BIT_KHR,
-        VK_COMPOSITE_ALPHA_POST_MULTIPLIED_BIT_KHR, VK_COMPOSITE_ALPHA_INHERIT_BIT_KHR};
+        VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR,
+        VK_COMPOSITE_ALPHA_PRE_MULTIPLIED_BIT_KHR,
+        VK_COMPOSITE_ALPHA_POST_MULTIPLIED_BIT_KHR,
+        VK_COMPOSITE_ALPHA_INHERIT_BIT_KHR,
+    };
 
     VkCompositeAlphaFlagsKHR supported_flags{};
     for (const auto flag : composite_alpha_flags) {
@@ -18,7 +21,7 @@ TEST(Swapchain, choose_composite_alpha) {
 
     for (const auto flag : composite_alpha_flags) {
         EXPECT_EQ(Swapchain::choose_composite_alpha(flag, supported_flags), flag);
-        EXPECT_EQ(Swapchain::choose_composite_alpha(flag, 0x0), std::nullopt);
+        EXPECT_ANY_THROW(const auto &result = Swapchain::choose_composite_alpha(flag, 0x0));
     }
 }
 
@@ -64,26 +67,18 @@ TEST(Swapchain, choose_image_extent) {
 }
 
 TEST(Swapchain, choose_present_mode) {
-    const std::vector<VkPresentModeKHR> available_present_modes{
-        VK_PRESENT_MODE_IMMEDIATE_KHR, VK_PRESENT_MODE_MAILBOX_KHR, VK_PRESENT_MODE_FIFO_RELAXED_KHR};
+    std::vector<VkPresentModeKHR> available_present_modes{};
 
-    EXPECT_EQ(Swapchain::choose_present_mode(available_present_modes, {VK_PRESENT_MODE_IMMEDIATE_KHR}, false),
-              VK_PRESENT_MODE_IMMEDIATE_KHR);
-    EXPECT_EQ(Swapchain::choose_present_mode(available_present_modes, {VK_PRESENT_MODE_IMMEDIATE_KHR}, true),
-              VK_PRESENT_MODE_FIFO_KHR);
-    EXPECT_EQ(Swapchain::choose_present_mode(available_present_modes, {VK_PRESENT_MODE_MAILBOX_KHR}, false),
-              VK_PRESENT_MODE_MAILBOX_KHR);
-    EXPECT_EQ(Swapchain::choose_present_mode(available_present_modes, {VK_PRESENT_MODE_MAILBOX_KHR}, true),
-              VK_PRESENT_MODE_FIFO_KHR);
-    EXPECT_EQ(Swapchain::choose_present_mode(available_present_modes, {VK_PRESENT_MODE_FIFO_RELAXED_KHR}, false),
-              VK_PRESENT_MODE_FIFO_RELAXED_KHR);
-    EXPECT_EQ(Swapchain::choose_present_mode(available_present_modes, {VK_PRESENT_MODE_FIFO_RELAXED_KHR}, true),
-              VK_PRESENT_MODE_FIFO_KHR);
-    // This one is guaranteed to be available in any case
-    EXPECT_EQ(Swapchain::choose_present_mode(available_present_modes, {VK_PRESENT_MODE_FIFO_KHR}, false),
-              VK_PRESENT_MODE_FIFO_KHR);
-    EXPECT_EQ(Swapchain::choose_present_mode(available_present_modes, {VK_PRESENT_MODE_FIFO_KHR}, true),
-              VK_PRESENT_MODE_FIFO_KHR);
+    EXPECT_ANY_THROW(const auto &result = Swapchain::choose_present_mode(available_present_modes));
+
+    available_present_modes.push_back(VK_PRESENT_MODE_FIFO_RELAXED_KHR);
+    EXPECT_EQ(Swapchain::choose_present_mode(available_present_modes), VK_PRESENT_MODE_FIFO_RELAXED_KHR);
+
+    available_present_modes.push_back(VK_PRESENT_MODE_MAILBOX_KHR);
+    EXPECT_EQ(Swapchain::choose_present_mode(available_present_modes), VK_PRESENT_MODE_MAILBOX_KHR);
+
+    available_present_modes.push_back(VK_PRESENT_MODE_IMMEDIATE_KHR);
+    EXPECT_EQ(Swapchain::choose_present_mode(available_present_modes), VK_PRESENT_MODE_IMMEDIATE_KHR);
 }
 
 TEST(Swapchain, choose_surface_format) {

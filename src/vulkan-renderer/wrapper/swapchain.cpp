@@ -17,14 +17,25 @@ namespace inexor::vulkan_renderer::wrapper {
 
 using tools::VulkanException;
 
-Swapchain::Swapchain(Device &device, const VkSurfaceKHR surface, const std::uint32_t width, const std::uint32_t height,
-                     const bool vsync_enabled)
+Swapchain::Swapchain(const Device &device, const VkSurfaceKHR surface, const std::uint32_t width,
+                     const std::uint32_t height, const bool vsync_enabled)
     : m_device(device), m_surface(surface), m_vsync_enabled(vsync_enabled) {
     if (vkCreateSwapchainKHR == nullptr) {
-        throw std::runtime_error("Error: vkCreateSwapchainKHR is not available! Did you forget to enable "
-                                 "VK_KHR_swapchain device extension?");
+        throw InexorException("Error: Function pointer 'vkCreateSwapchainKHR' is not available!");
     }
-    m_img_available = std::make_unique<Semaphore>(m_device, "Swapchain image available");
+    if (vkAcquireNextImageKHR == nullptr) {
+        throw InexorException("Error: Function pointer 'vkAcquireNextImageKHR' is not available!");
+    }
+    if (vkGetSwapchainImagesKHR == nullptr) {
+        throw InexorException("Error: Function pointer 'vkGetSwapchainImagesKHR' is not available!");
+    }
+    if (vkQueuePresentKHR == nullptr) {
+        throw InexorException("Error: Function pointer 'vkQueuePresentKHR' is not available!");
+    }
+    if (vkDestroySwapchainKHR == nullptr) {
+        throw InexorException("Error: Function pointer 'vkDestroySwapchainKHR' is not available!");
+    }
+    m_img_available = std::make_unique<Semaphore>(m_device, "m_img_available");
     setup_swapchain(width, height, vsync_enabled);
 }
 
@@ -54,57 +65,67 @@ std::uint32_t Swapchain::acquire_next_image_index(const std::uint64_t timeout) {
     return img_index;
 }
 
-std::optional<VkCompositeAlphaFlagBitsKHR>
+VkCompositeAlphaFlagBitsKHR
 Swapchain::choose_composite_alpha(const VkCompositeAlphaFlagBitsKHR request_composite_alpha,
                                   const VkCompositeAlphaFlagsKHR supported_composite_alpha) {
+    // Check if the supported composite alpha is equal to the requested one.
     if ((request_composite_alpha & supported_composite_alpha) != 0u) {
         return request_composite_alpha;
     }
 
     static const std::vector<VkCompositeAlphaFlagBitsKHR> composite_alpha_flags{
-        VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR, VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR, VK_COMPOSITE_ALPHA_PRE_MULTIPLIED_BIT_KHR,
-        VK_COMPOSITE_ALPHA_POST_MULTIPLIED_BIT_KHR, VK_COMPOSITE_ALPHA_INHERIT_BIT_KHR};
+        VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR,
+        VK_COMPOSITE_ALPHA_PRE_MULTIPLIED_BIT_KHR,
+        VK_COMPOSITE_ALPHA_POST_MULTIPLIED_BIT_KHR,
+        VK_COMPOSITE_ALPHA_INHERIT_BIT_KHR,
+    };
 
-    for (const auto flag : composite_alpha_flags) {
-        if ((flag & supported_composite_alpha) != 0u) {
-            spdlog::trace("Swapchain composite alpha '{}' is not supported, selecting '{}'",
-                          tools::as_string(request_composite_alpha), tools::as_string(flag));
-            return flag;
+    for (const auto &composite_alpha : composite_alpha_flags) {
+        if (composite_alpha & supported_composite_alpha) {
+            spdlog::trace("Composite alpha '{}' is not supported, selecting '{}'",
+                          tools::as_string(request_composite_alpha), tools::as_string(composite_alpha));
+            return composite_alpha;
         }
     }
-    return std::nullopt;
+    throw InexorException("Error: No compatible composite alpha found!");
 }
 
 VkExtent2D Swapchain::choose_image_extent(const VkExtent2D &requested_extent, const VkExtent2D &min_extent,
                                           const VkExtent2D &max_extent, const VkExtent2D &current_extent) {
+    // If current_extent.width is UINT32_MAX (0xFFFFFFFF), the surface size is undefined, so the application can choose
+    // the swapchain extent freely. In this case, we return the requested extent provided by the caller.
     if (current_extent.width == std::numeric_limits<std::uint32_t>::max()) {
         return requested_extent;
     }
-    if (requested_extent.width < 1 || requested_extent.height < 1) {
-        spdlog::trace("Swapchain image extent ({}, {}) is not supported! Selecting ({}, {})", requested_extent.width,
-                      requested_extent.height, current_extent.width, current_extent.height);
+    // If the requested extent is invalid (zero width or height), fallback to the current surface extent reported by
+    // Vulkan. This ensures we don't attempt to create a swapchain with invalid dimensions.
+    if (requested_extent.width == 0 || requested_extent.height == 0) {
         return current_extent;
     }
+    // For valid requested extents, clamp the requested width and height according to the surface capabilities.
     return {
         .width = std::clamp(requested_extent.width, min_extent.width, max_extent.width),
         .height = std::clamp(requested_extent.height, min_extent.height, max_extent.height),
     };
 }
 
-VkPresentModeKHR Swapchain::choose_present_mode(const std::vector<VkPresentModeKHR> &available_present_modes,
-                                                const std::vector<VkPresentModeKHR> &present_mode_priority_list,
-                                                const bool vsync_enabled) {
-    assert(!available_present_modes.empty());
-    assert(!present_mode_priority_list.empty());
-    if (!vsync_enabled) {
-        for (const auto requested_present_mode : present_mode_priority_list) {
-            const auto present_mode =
-                std::find(available_present_modes.begin(), available_present_modes.end(), requested_present_mode);
-            if (present_mode != available_present_modes.end()) {
-                return *present_mode;
-            }
+VkPresentModeKHR Swapchain::choose_present_mode(const std::span<const VkPresentModeKHR> available_present_modes) {
+    if (available_present_modes.empty()) {
+        throw InexorException("Error: Parameter 'available_present_modes' is empty!");
+    }
+
+    static constexpr std::array<VkPresentModeKHR, 3> present_modes_in_preference_order{
+        VK_PRESENT_MODE_IMMEDIATE_KHR,
+        VK_PRESENT_MODE_MAILBOX_KHR,
+        VK_PRESENT_MODE_FIFO_RELAXED_KHR,
+    };
+
+    for (auto requested_mode : present_modes_in_preference_order) {
+        if (std::ranges::find(available_present_modes, requested_mode) != available_present_modes.end()) {
+            return requested_mode;
         }
     }
+    // If none of the present modes from the prio list are available, vsync must be enabled.
     return VK_PRESENT_MODE_FIFO_KHR;
 }
 
@@ -154,13 +175,13 @@ Swapchain::choose_surface_format(const std::vector<VkSurfaceFormatKHR> &availabl
 }
 
 std::vector<VkImage> Swapchain::get_swapchain_images() {
-    std::uint32_t count = 0;
-    if (const auto result = vkGetSwapchainImagesKHR(m_device.device(), m_swapchain, &count, nullptr);
+    std::uint32_t img_count = 0;
+    if (const auto result = vkGetSwapchainImagesKHR(m_device.device(), m_swapchain, &img_count, nullptr);
         result != VK_SUCCESS) {
         throw VulkanException("Error: vkGetSwapchainImagesKHR failed!", result);
     }
-    std::vector<VkImage> imgs(count);
-    if (const auto result = vkGetSwapchainImagesKHR(m_device.device(), m_swapchain, &count, imgs.data());
+    std::vector<VkImage> imgs(img_count);
+    if (const auto result = vkGetSwapchainImagesKHR(m_device.device(), m_swapchain, &img_count, imgs.data());
         result != VK_SUCCESS) {
         throw VulkanException("Error: vkGetSwapchainImagesKHR failed!", result);
     }
@@ -210,6 +231,10 @@ void Swapchain::setup_swapchain(const std::uint32_t width, const std::uint32_t h
 
     const VkSwapchainKHR old_swapchain = m_swapchain;
 
+    const auto present_mode =
+        vsync_enabled ? VK_PRESENT_MODE_FIFO_KHR
+                      : choose_present_mode(tools::get_surface_present_modes(m_device.physical_device(), m_surface));
+
     const auto swapchain_ci = make_info<VkSwapchainCreateInfoKHR>({
         .surface = m_surface,
         .minImageCount = (caps.maxImageCount != 0) ? std::min(caps.minImageCount + 1, caps.maxImageCount)
@@ -223,9 +248,8 @@ void Swapchain::setup_swapchain(const std::uint32_t width, const std::uint32_t h
         .preTransform = ((VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR & caps.supportedTransforms) != 0u)
                             ? VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR
                             : caps.currentTransform,
-        .compositeAlpha = composite_alpha.value(),
-        .presentMode = choose_present_mode(tools::get_surface_present_modes(m_device.physical_device(), m_surface),
-                                           default_present_mode_priorities, vsync_enabled),
+        .compositeAlpha = composite_alpha,
+        .presentMode = present_mode,
         .clipped = VK_TRUE,
         .oldSwapchain = old_swapchain,
     });
