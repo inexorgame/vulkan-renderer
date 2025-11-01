@@ -88,14 +88,17 @@ Swapchain::choose_composite_alpha(const VkCompositeAlphaFlagBitsKHR request_comp
 
 VkExtent2D Swapchain::choose_image_extent(const VkExtent2D &requested_extent, const VkExtent2D &min_extent,
                                           const VkExtent2D &max_extent, const VkExtent2D &current_extent) {
+    // If current_extent.width is UINT32_MAX (0xFFFFFFFF), the surface size is undefined, so the application can choose
+    // the swapchain extent freely. In this case, we return the requested extent provided by the caller.
     if (current_extent.width == std::numeric_limits<std::uint32_t>::max()) {
         return requested_extent;
     }
-    if (requested_extent.width < 1 || requested_extent.height < 1) {
-        spdlog::trace("Swapchain image extent ({}, {}) is not supported! Selecting ({}, {})", requested_extent.width,
-                      requested_extent.height, current_extent.width, current_extent.height);
+    // If the requested extent is invalid (zero width or height), fallback to the current surface extent reported by
+    // Vulkan. This ensures we don't attempt to create a swapchain with invalid dimensions.
+    if (requested_extent.width == 0 || requested_extent.height == 0) {
         return current_extent;
     }
+    // For valid requested extents, clamp the requested width and height according to the surface capabilities.
     return {
         .width = std::clamp(requested_extent.width, min_extent.width, max_extent.width),
         .height = std::clamp(requested_extent.height, min_extent.height, max_extent.height),
@@ -168,13 +171,13 @@ Swapchain::choose_surface_format(const std::vector<VkSurfaceFormatKHR> &availabl
 }
 
 std::vector<VkImage> Swapchain::get_swapchain_images() {
-    std::uint32_t count = 0;
-    if (const auto result = vkGetSwapchainImagesKHR(m_device.device(), m_swapchain, &count, nullptr);
+    std::uint32_t img_count = 0;
+    if (const auto result = vkGetSwapchainImagesKHR(m_device.device(), m_swapchain, &img_count, nullptr);
         result != VK_SUCCESS) {
         throw VulkanException("Error: vkGetSwapchainImagesKHR failed!", result);
     }
-    std::vector<VkImage> imgs(count);
-    if (const auto result = vkGetSwapchainImagesKHR(m_device.device(), m_swapchain, &count, imgs.data());
+    std::vector<VkImage> imgs(img_count);
+    if (const auto result = vkGetSwapchainImagesKHR(m_device.device(), m_swapchain, &img_count, imgs.data());
         result != VK_SUCCESS) {
         throw VulkanException("Error: vkGetSwapchainImagesKHR failed!", result);
     }
