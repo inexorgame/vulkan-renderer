@@ -110,7 +110,9 @@ FetchContent_Declare(volk
     GIT_TAG 1.3.270
     GIT_SHALLOW ON
     GIT_PROGRESS ON
-    FIND_PACKAGE_ARGS 1.3.270)
+    # Do not specify FIND_PACKAGE_ARGS here because this will fail Linux build!
+    # What happens is that CMake will try to find volk::volk in Vulkan SDK instead of using the repository.
+)
 
 # The Vulkan API headers
 FetchContent_Declare(Vulkan
