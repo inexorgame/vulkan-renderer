@@ -134,13 +134,13 @@ jobs:
             ${{ matrix.config.cmake_configure_options }}
 
       - name: Build Main Code
-        run: cmake --build build --target inexor-vulkan-renderer-example
+        run: cmake --build build --target inexor-vulkan-renderer-example --parallel
 
       - name: Build Tests
-        run: cmake --build build --target inexor-vulkan-renderer-tests
+        run: cmake --build build --target inexor-vulkan-renderer-tests --parallel
 
       - name: Build Benchmarks
-        run: cmake --build build --target inexor-vulkan-renderer-benchmarks
+        run: cmake --build build --target inexor-vulkan-renderer-benchmarks --parallel
 
       - name: Run Tests
         run: |
@@ -278,13 +278,13 @@ jobs:
             ${{ matrix.config.cmake_configure_options }}
 
       - name: Build Main Code
-        run: cmake --build build --target inexor-vulkan-renderer-example
+        run: cmake --build build --target inexor-vulkan-renderer-example --parallel
 
       - name: Build Tests
-        run: cmake --build build --target inexor-vulkan-renderer-tests
+        run: cmake --build build --target inexor-vulkan-renderer-tests --parallel
 
       - name: Build Benchmarks
-        run: cmake --build build --target inexor-vulkan-renderer-benchmarks
+        run: cmake --build build --target inexor-vulkan-renderer-benchmarks --parallel
 
       - name: Run Tests
         run: |
