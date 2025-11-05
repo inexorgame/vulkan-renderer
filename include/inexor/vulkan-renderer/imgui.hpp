@@ -14,14 +14,22 @@ namespace inexor::vulkan_renderer::wrapper {
 class Device;
 class GpuTexture;
 class Shader;
-class Swapchain;
 } // namespace inexor::vulkan_renderer::wrapper
+
+namespace inexor::vulkan_renderer::wrapper::swapchain {
+// Forward declaration
+class Swapchain;
+} // namespace inexor::vulkan_renderer::wrapper::swapchain
 
 namespace inexor::vulkan_renderer {
 
+// Using declaration
+using wrapper::Device;
+using wrapper::swapchain::Swapchain;
+
 class ImGUIOverlay {
-    const wrapper::Device &m_device;
-    const wrapper::Swapchain &m_swapchain;
+    const Device &m_device;
+    const Swapchain &m_swapchain;
     float m_scale{1.0f};
 
     BufferResource *m_index_buffer{nullptr};
@@ -46,7 +54,7 @@ public:
     /// @param swapchain A reference to the swapchain
     /// @param render_graph A pointer to the render graph
     /// @param back_buffer A pointer to the target of the ImGUI rendering
-    ImGUIOverlay(const wrapper::Device &device, const wrapper::Swapchain &swapchain, RenderGraph *render_graph,
+    ImGUIOverlay(const Device &device, const Swapchain &swapchain, RenderGraph *render_graph,
                  TextureResource *back_buffer);
     ImGUIOverlay(const ImGUIOverlay &) = delete;
     ImGUIOverlay(ImGUIOverlay &&) = delete;

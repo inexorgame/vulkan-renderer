@@ -53,7 +53,9 @@ void ExampleAppBase::recreate_swapchain() {
     // TODO: This is quite naive, we don't need to recompile the whole render graph on swapchain invalidation.
     m_render_graph.reset();
     // Recreate the swapchain
-    m_swapchain->setup_swapchain(window_width, window_height, m_vsync_enabled);
+    m_swapchain->setup_swapchain(
+        VkExtent2D{static_cast<std::uint32_t>(window_width), static_cast<std::uint32_t>(window_height)},
+        m_vsync_enabled);
     m_render_graph = std::make_unique<RenderGraph>(*m_device, *m_swapchain);
     setup_render_graph();
 

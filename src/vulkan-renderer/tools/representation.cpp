@@ -2,10 +2,56 @@
 
 #include <array>
 #include <cassert>
+#include <format>
 
 namespace inexor::vulkan_renderer::tools {
 
 // Please keep the functions in here in alphabetical order (sort by function names, then by parameter types)
+
+/// Convert a VkColorSpaceKHR into the corresponding std::string_view.
+/// @param color_space The color space.
+/// @return A std::string_view which contains the color space.
+template <>
+std::string_view as_string(const VkColorSpaceKHR color_space) {
+    switch (color_space) {
+    case VK_COLOR_SPACE_SRGB_NONLINEAR_KHR:
+        return "VK_COLOR_SPACE_SRGB_NONLINEAR_KHR";
+    case VK_COLOR_SPACE_DISPLAY_P3_NONLINEAR_EXT:
+        return "VK_COLOR_SPACE_DISPLAY_P3_NONLINEAR_EXT";
+    case VK_COLOR_SPACE_EXTENDED_SRGB_LINEAR_EXT:
+        return "VK_COLOR_SPACE_EXTENDED_SRGB_LINEAR_EXT";
+    case VK_COLOR_SPACE_DISPLAY_P3_LINEAR_EXT:
+        return "VK_COLOR_SPACE_DISPLAY_P3_LINEAR_EXT";
+    case VK_COLOR_SPACE_DCI_P3_NONLINEAR_EXT:
+        return "VK_COLOR_SPACE_DCI_P3_NONLINEAR_EXT";
+    case VK_COLOR_SPACE_BT709_LINEAR_EXT:
+        return "VK_COLOR_SPACE_BT709_LINEAR_EXT";
+    case VK_COLOR_SPACE_BT709_NONLINEAR_EXT:
+        return "VK_COLOR_SPACE_BT709_NONLINEAR_EXT";
+    case VK_COLOR_SPACE_BT2020_LINEAR_EXT:
+        return "VK_COLOR_SPACE_BT2020_LINEAR_EXT";
+    case VK_COLOR_SPACE_HDR10_ST2084_EXT:
+        return "VK_COLOR_SPACE_HDR10_ST2084_EXT";
+    case VK_COLOR_SPACE_DOLBYVISION_EXT:
+        return "VK_COLOR_SPACE_DOLBYVISION_EXT";
+    case VK_COLOR_SPACE_HDR10_HLG_EXT:
+        return "VK_COLOR_SPACE_HDR10_HLG_EXT";
+    case VK_COLOR_SPACE_ADOBERGB_LINEAR_EXT:
+        return "VK_COLOR_SPACE_ADOBERGB_LINEAR_EXT";
+    case VK_COLOR_SPACE_ADOBERGB_NONLINEAR_EXT:
+        return "VK_COLOR_SPACE_ADOBERGB_NONLINEAR_EXT";
+    case VK_COLOR_SPACE_PASS_THROUGH_EXT:
+        return "VK_COLOR_SPACE_PASS_THROUGH_EXT";
+    case VK_COLOR_SPACE_EXTENDED_SRGB_NONLINEAR_EXT:
+        return "VK_COLOR_SPACE_EXTENDED_SRGB_NONLINEAR_EXT";
+    case VK_COLOR_SPACE_DISPLAY_NATIVE_AMD:
+        return "VK_COLOR_SPACE_DISPLAY_NATIVE_AMD";
+    case VK_COLOR_SPACE_MAX_ENUM_KHR:
+        return "VK_COLOR_SPACE_MAX_ENUM_KHR";
+    default:
+        return "Unknown VkColorSpaceKHR";
+    }
+}
 
 /// Convert a VkCompositeAlphaFlagBitsKHR into the corresponding std::string_view
 /// @param flag The composite alpha flag bit
@@ -730,14 +776,6 @@ std::string_view as_string(const VkResult result) {
     default:
         return "Unknown VkResult";
     }
-}
-
-/// Convert the format member of a VkSurfaceFormatKHR value into the corresponding std::string_view
-/// @param surface_format The surface format
-/// @return A std::string_view which contains the surface format
-template <>
-std::string_view as_string(const VkSurfaceFormatKHR surface_format) {
-    return as_string(surface_format.format);
 }
 
 /// Convert a VkSurfaceTransformFlagBitsKHR value into the corresponding std::string_view

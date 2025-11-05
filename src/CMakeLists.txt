@@ -29,7 +29,6 @@ set(INEXOR_SOURCE_FILES
     vulkan-renderer/wrapper/instance.cpp
     vulkan-renderer/wrapper/make_info.cpp
     vulkan-renderer/wrapper/shader.cpp
-    vulkan-renderer/wrapper/swapchain.cpp
     vulkan-renderer/wrapper/uniform_buffer.cpp
 
     vulkan-renderer/wrapper/commands/command_buffer.cpp
@@ -40,6 +39,9 @@ set(INEXOR_SOURCE_FILES
 
     vulkan-renderer/wrapper/window/window.cpp
     vulkan-renderer/wrapper/window/surface.cpp
+
+    vulkan-renderer/wrapper/swapchain/swapchain.cpp
+    vulkan-renderer/wrapper/swapchain/swapchain_utils.cpp
 
     vulkan-renderer/wrapper/synchronization/fence.cpp
     vulkan-renderer/wrapper/synchronization/semaphore.cpp
