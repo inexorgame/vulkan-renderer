@@ -9,7 +9,6 @@ option(INEXOR_BUILD_BENCHMARKS "Build benchmarks" OFF)
 option(INEXOR_BUILD_DOC "Build documentation" OFF)
 option(INEXOR_BUILD_EXAMPLE "Build example" ON)
 option(INEXOR_BUILD_TESTS "Build tests" OFF)
-option(INEXOR_FORCE_COLORED_OUTPUT "Always produce ANSI-colored output (GNU/Clang only)" OFF)
 
 message(STATUS "INEXOR_BUILD_BENCHMARKS = ${INEXOR_BUILD_BENCHMARKS}")
 message(STATUS "INEXOR_BUILD_DOC = ${INEXOR_BUILD_DOC}")
@@ -49,15 +48,7 @@ execute_process(
 # Download dependencies through CMake
 include(dependencies.cmake)
 
-# Enable GCC/clang ANSI-colored terminal output using Ninja build tool
-# TODO: Switch to `CMAKE_COLOR_DIAGNOSTICS` with cmake 3.24 in the future
-if (FORCE_COLORED_OUTPUT)
-    if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-        add_compile_options(-fdiagnostics-color=always)
-    elseif (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
-        add_compile_options(-fcolor-diagnostics)
-    endif()
-endif()
+set(CMAKE_COLOR_DIAGNOSTICS ON CACHE BOOL "Enable colored compiler diagnostics" FORCE)
 
 add_subdirectory(shaders)
 
