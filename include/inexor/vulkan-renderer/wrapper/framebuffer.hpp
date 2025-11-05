@@ -5,11 +5,18 @@
 #include <string>
 #include <vector>
 
+namespace inexor::vulkan_renderer::wrapper::swapchain {
+/// Forward declaration
+class Swapchain;
+} // namespace inexor::vulkan_renderer::wrapper::swapchain
+
 namespace inexor::vulkan_renderer::wrapper {
 
 // Forward declarations
 class Device;
-class Swapchain;
+
+// Using declaration
+using wrapper::swapchain::Swapchain;
 
 /// @brief RAII wrapper class for VkFramebuffer.
 class Framebuffer {

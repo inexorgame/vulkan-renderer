@@ -2,6 +2,8 @@
 
 #include <volk.h>
 
+#include <set>
+#include <span>
 #include <string_view>
 #include <type_traits>
 
@@ -134,6 +136,17 @@ template <typename T>
         return VK_DEBUG_REPORT_OBJECT_TYPE_SWAPCHAIN_KHR_EXT;
     else
         return VK_DEBUG_REPORT_OBJECT_TYPE_UNKNOWN_EXT;
+}
+
+template <typename FlagBitsType, typename FlagsType>
+[[nodiscard]] std::set<FlagBitsType> parse_bit_flags(FlagsType flags, std::span<const FlagBitsType> all_bits) {
+    std::set<FlagBitsType> result;
+    for (const auto bit : all_bits) {
+        if (flags & static_cast<FlagsType>(bit)) {
+            result.insert(bit);
+        }
+    }
+    return result;
 }
 
 /// @brief Convert a VkResult value into the corresponding error description as std::string_view

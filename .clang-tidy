@@ -5,6 +5,7 @@ Checks:
   - '-clang-diagnostic-note'
   - '-clang-diagnostic-error'
   - '-cppcoreguidelines-avoid-do-while'
+  - '.cppcoreguidelines-non-private-member-variables-in-classes'
   - '-cppcoreguidelines-pro-type-reinterpret-cast'
   - '-cppcoreguidelines-pro-type-union-access'
   - '-cppcoreguidelines-pro-type-vararg'
@@ -17,6 +18,7 @@ Checks:
   - '-llvmlibc-*'
   - '-llvm-header-guard'
   - '-misc-no-recursion'
+  - '-misc-non-private-member-variables-in-classes'
   - '-modernize-use-trailing-return-type'
   - '-readability-*'
 

@@ -8,7 +8,7 @@ namespace inexor::vulkan_renderer::tools {
 
 std::vector<VkExtensionProperties> get_extension_properties(const VkPhysicalDevice physical_device) {
     if (physical_device == VK_NULL_HANDLE) {
-        throw tools::InexorException("Error: Parameter 'physical_device' is invalid!");
+        throw InexorException("Error: Parameter 'physical_device' is invalid!");
     }
     std::vector<VkExtensionProperties> extension_props;
     std::uint32_t device_extension_count = 0;
@@ -113,7 +113,7 @@ std::vector<VkPhysicalDevice> get_physical_devices(const VkInstance inst) {
 std::vector<VkQueueFamilyProperties> get_queue_family_properties(const VkPhysicalDevice physical_device) {
     std::vector<VkQueueFamilyProperties> queue_families;
     if (physical_device == VK_NULL_HANDLE) {
-        throw tools::InexorException("Error: Parameter 'physical_device' is invalid!");
+        throw InexorException("Error: Parameter 'physical_device' is invalid!");
     }
     std::uint32_t props_count = 0;
     vkGetPhysicalDeviceQueueFamilyProperties(physical_device, &props_count, nullptr);
@@ -128,10 +128,10 @@ std::vector<VkQueueFamilyProperties> get_queue_family_properties(const VkPhysica
 std::vector<VkSurfaceFormatKHR> get_surface_formats(const VkPhysicalDevice physical_device,
                                                     const VkSurfaceKHR surface) {
     if (physical_device == VK_NULL_HANDLE) {
-        throw tools::InexorException("Error: Parameter 'physical_device' is invalid!");
+        throw InexorException("Error: Parameter 'physical_device' is invalid!");
     }
     if (surface == VK_NULL_HANDLE) {
-        throw tools::InexorException("Error: Parameter 'physical_device' is invalid!");
+        throw InexorException("Error: Parameter 'physical_device' is invalid!");
     }
     std::uint32_t count = 0;
     if (const auto result = vkGetPhysicalDeviceSurfaceFormatsKHR(physical_device, surface, &count, nullptr);
@@ -150,10 +150,13 @@ std::vector<VkSurfaceFormatKHR> get_surface_formats(const VkPhysicalDevice physi
 std::vector<VkPresentModeKHR> get_surface_present_modes(const VkPhysicalDevice physical_device,
                                                         const VkSurfaceKHR surface) {
     if (physical_device == VK_NULL_HANDLE) {
-        throw tools::InexorException("Error: Parameter 'physical_device' is invalid!");
+        throw InexorException("Error: Parameter 'physical_device' is invalid!");
     }
     if (surface == VK_NULL_HANDLE) {
-        throw tools::InexorException("Error: Parameter 'surface' is invalid!");
+        throw InexorException("Error: Parameter 'surface' is invalid!");
+    }
+    if (vkGetPhysicalDeviceSurfacePresentModesKHR == nullptr) {
+        throw InexorException("Error: Function pointer 'vkGetPhysicalDeviceSurfacePresentModesKHR' is not available!");
     }
     std::uint32_t count = 0;
     if (const auto result = vkGetPhysicalDeviceSurfacePresentModesKHR(physical_device, surface, &count, nullptr);

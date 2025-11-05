@@ -10,6 +10,7 @@
 #include "inexor/vulkan-renderer/wrapper/instance.hpp"
 #include "inexor/vulkan-renderer/wrapper/make_info.hpp"
 #include "inexor/vulkan-renderer/wrapper/shader.hpp"
+#include "inexor/vulkan-renderer/wrapper/swapchain/swapchain.hpp"
 #include "inexor/vulkan-renderer/wrapper/uniform_buffer.hpp"
 #include "inexor/vulkan-renderer/wrapper/window/surface.hpp"
 #include "inexor/vulkan-renderer/wrapper/window/window.hpp"
@@ -24,7 +25,6 @@ class Device;
 class GpuTexture;
 class Instance;
 class Shader;
-class Swapchain;
 class UniformBuffer;
 } // namespace inexor::vulkan_renderer::wrapper
 
@@ -32,6 +32,11 @@ namespace inexor::vulkan_renderer::wrapper::descriptors {
 // Forward declaration
 class ResourceDescriptor;
 } // namespace inexor::vulkan_renderer::wrapper::descriptors
+
+namespace inexor::vulkan_renderer::wrapper::swapchain {
+// Forward declaration
+class Swapchain;
+} // namespace inexor::vulkan_renderer::wrapper::swapchain
 
 namespace inexor::vulkan_renderer::tools {
 // Forward declarations
@@ -64,13 +69,13 @@ using inexor::vulkan_renderer::wrapper::Device;
 using inexor::vulkan_renderer::wrapper::GpuTexture;
 using inexor::vulkan_renderer::wrapper::Instance;
 using inexor::vulkan_renderer::wrapper::Shader;
-using inexor::vulkan_renderer::wrapper::Swapchain;
 using inexor::vulkan_renderer::wrapper::UniformBuffer;
 using inexor::vulkan_renderer::wrapper::VulkanDebugUtilsCallback;
 using inexor::vulkan_renderer::wrapper::VulkanQueueType;
 using inexor::vulkan_renderer::wrapper::commands::CommandBuffer;
 using inexor::vulkan_renderer::wrapper::descriptors::DescriptorBuilder;
 using inexor::vulkan_renderer::wrapper::descriptors::ResourceDescriptor;
+using inexor::vulkan_renderer::wrapper::swapchain::Swapchain;
 using inexor::vulkan_renderer::wrapper::window::Mode;
 using inexor::vulkan_renderer::wrapper::window::Window;
 using inexor::vulkan_renderer::wrapper::window::WindowSurface;

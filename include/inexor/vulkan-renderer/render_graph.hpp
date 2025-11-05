@@ -2,7 +2,7 @@
 
 #include "inexor/vulkan-renderer/wrapper/device.hpp"
 #include "inexor/vulkan-renderer/wrapper/framebuffer.hpp"
-#include "inexor/vulkan-renderer/wrapper/swapchain.hpp"
+#include "inexor/vulkan-renderer/wrapper/swapchain/swapchain.hpp"
 
 #include <spdlog/spdlog.h>
 
@@ -303,10 +303,10 @@ class PhysicalBackBuffer : public PhysicalResource {
     friend RenderGraph;
 
 private:
-    const wrapper::Swapchain &m_swapchain;
+    const wrapper::swapchain::Swapchain &m_swapchain;
 
 public:
-    PhysicalBackBuffer(const wrapper::Device &device, const wrapper::Swapchain &swapchain)
+    PhysicalBackBuffer(const wrapper::Device &device, const wrapper::swapchain::Swapchain &swapchain)
         : PhysicalResource(device), m_swapchain(swapchain) {}
     ~PhysicalBackBuffer() override = default;
 };
@@ -347,7 +347,7 @@ public:
 class RenderGraph {
 private:
     wrapper::Device &m_device;
-    const wrapper::Swapchain &m_swapchain;
+    const wrapper::swapchain::Swapchain &m_swapchain;
     std::shared_ptr<spdlog::logger> m_log{spdlog::default_logger()->clone("render-graph")};
 
     // Vectors of render resources and stages.
@@ -373,7 +373,7 @@ private:
     void build_graphics_pipeline(const GraphicsStage *, PhysicalGraphicsStage &) const;
 
 public:
-    RenderGraph(wrapper::Device &device, const wrapper::Swapchain &swapchain)
+    RenderGraph(wrapper::Device &device, const wrapper::swapchain::Swapchain &swapchain)
         : m_device(device), m_swapchain(swapchain) {}
 
     /// @brief Adds either a render resource or render stage to the render graph.
