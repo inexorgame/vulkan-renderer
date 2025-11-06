@@ -10,10 +10,10 @@
 #include "inexor/vulkan-renderer/wrapper/instance.hpp"
 #include "inexor/vulkan-renderer/wrapper/make_info.hpp"
 #include "inexor/vulkan-renderer/wrapper/shader.hpp"
-#include "inexor/vulkan-renderer/wrapper/swapchain/swapchain.hpp"
+#include "inexor/vulkan-renderer/wrapper/swapchains/swapchain.hpp"
 #include "inexor/vulkan-renderer/wrapper/uniform_buffer.hpp"
-#include "inexor/vulkan-renderer/wrapper/window/surface.hpp"
-#include "inexor/vulkan-renderer/wrapper/window/window.hpp"
+#include "inexor/vulkan-renderer/wrapper/windows/surface.hpp"
+#include "inexor/vulkan-renderer/wrapper/windows/window.hpp"
 #include "octree_gpu_vertex.hpp"
 
 #include <memory>

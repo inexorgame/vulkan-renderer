@@ -2,7 +2,7 @@
 
 #include "inexor/vulkan-renderer/wrapper/device.hpp"
 #include "inexor/vulkan-renderer/wrapper/framebuffer.hpp"
-#include "inexor/vulkan-renderer/wrapper/swapchain/swapchain.hpp"
+#include "inexor/vulkan-renderer/wrapper/swapchains/swapchain.hpp"
 
 #include <spdlog/spdlog.h>
 

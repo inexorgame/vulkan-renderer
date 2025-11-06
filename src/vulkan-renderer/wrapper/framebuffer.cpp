@@ -3,7 +3,7 @@
 #include "inexor/vulkan-renderer/tools/exception.hpp"
 #include "inexor/vulkan-renderer/wrapper/device.hpp"
 #include "inexor/vulkan-renderer/wrapper/make_info.hpp"
-#include "inexor/vulkan-renderer/wrapper/swapchain/swapchain.hpp"
+#include "inexor/vulkan-renderer/wrapper/swapchains/swapchain.hpp"
 
 #include <utility>
 
