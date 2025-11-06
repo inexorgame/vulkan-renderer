@@ -33,10 +33,10 @@ namespace inexor::vulkan_renderer::wrapper::descriptors {
 class ResourceDescriptor;
 } // namespace inexor::vulkan_renderer::wrapper::descriptors
 
-namespace inexor::vulkan_renderer::wrapper::swapchain {
+namespace inexor::vulkan_renderer::wrapper::swapchains {
 // Forward declaration
 class Swapchain;
-} // namespace inexor::vulkan_renderer::wrapper::swapchain
+} // namespace inexor::vulkan_renderer::wrapper::swapchains
 
 namespace inexor::vulkan_renderer::tools {
 // Forward declarations
@@ -75,10 +75,10 @@ using inexor::vulkan_renderer::wrapper::VulkanQueueType;
 using inexor::vulkan_renderer::wrapper::commands::CommandBuffer;
 using inexor::vulkan_renderer::wrapper::descriptors::DescriptorBuilder;
 using inexor::vulkan_renderer::wrapper::descriptors::ResourceDescriptor;
-using inexor::vulkan_renderer::wrapper::swapchain::Swapchain;
-using inexor::vulkan_renderer::wrapper::window::Mode;
-using inexor::vulkan_renderer::wrapper::window::Window;
-using inexor::vulkan_renderer::wrapper::window::WindowSurface;
+using inexor::vulkan_renderer::wrapper::swapchains::Swapchain;
+using inexor::vulkan_renderer::wrapper::windows::Mode;
+using inexor::vulkan_renderer::wrapper::windows::Window;
+using inexor::vulkan_renderer::wrapper::windows::WindowSurface;
 
 namespace inexor::example_app {
 

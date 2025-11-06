@@ -14,7 +14,7 @@
 #include <cassert>
 #include <utility>
 
-namespace inexor::vulkan_renderer::wrapper::swapchain {
+namespace inexor::vulkan_renderer::wrapper::swapchains {
 
 // Using declaration
 using tools::VulkanException;
@@ -192,4 +192,4 @@ Swapchain::~Swapchain() {
     }
 }
 
-} // namespace inexor::vulkan_renderer::wrapper::swapchain
+} // namespace inexor::vulkan_renderer::wrapper::swapchains

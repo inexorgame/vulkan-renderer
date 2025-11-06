@@ -6,7 +6,7 @@
 #include <cassert>
 #include <stdexcept>
 
-namespace inexor::vulkan_renderer::wrapper::window {
+namespace inexor::vulkan_renderer::wrapper::windows {
 
 Window::Window(const std::string &title, const std::uint32_t width, const std::uint32_t height, const bool visible,
                const bool resizable, const Mode mode)
@@ -99,4 +99,4 @@ void Window::wait_for_focus() {
     m_height = current_height;
 }
 
-} // namespace inexor::vulkan_renderer::wrapper::window
+} // namespace inexor::vulkan_renderer::wrapper::windows

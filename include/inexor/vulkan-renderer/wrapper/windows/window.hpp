@@ -6,7 +6,7 @@
 #include <cstdint>
 #include <string>
 
-namespace inexor::vulkan_renderer::wrapper::window {
+namespace inexor::vulkan_renderer::wrapper::windows {
 
 enum class Mode { WINDOWED, FULLSCREEN, WINDOWED_FULLSCREEN };
 
@@ -96,4 +96,4 @@ public:
     void wait_for_focus();
 };
 
-} // namespace inexor::vulkan_renderer::wrapper::window
+} // namespace inexor::vulkan_renderer::wrapper::windows

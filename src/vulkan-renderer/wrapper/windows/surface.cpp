@@ -8,7 +8,7 @@
 #include <cassert>
 #include <utility>
 
-namespace inexor::vulkan_renderer::wrapper::window {
+namespace inexor::vulkan_renderer::wrapper::windows {
 
 using tools::VulkanException;
 
@@ -32,4 +32,4 @@ WindowSurface::~WindowSurface() {
     vkDestroySurfaceKHR(m_instance, m_surface, nullptr);
 }
 
-} // namespace inexor::vulkan_renderer::wrapper::window
+} // namespace inexor::vulkan_renderer::wrapper::windows

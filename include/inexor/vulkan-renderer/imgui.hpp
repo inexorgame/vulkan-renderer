@@ -16,16 +16,16 @@ class GpuTexture;
 class Shader;
 } // namespace inexor::vulkan_renderer::wrapper
 
-namespace inexor::vulkan_renderer::wrapper::swapchain {
+namespace inexor::vulkan_renderer::wrapper::swapchains {
 // Forward declaration
 class Swapchain;
-} // namespace inexor::vulkan_renderer::wrapper::swapchain
+} // namespace inexor::vulkan_renderer::wrapper::swapchains
 
 namespace inexor::vulkan_renderer {
 
 // Using declaration
 using wrapper::Device;
-using wrapper::swapchain::Swapchain;
+using wrapper::swapchains::Swapchain;
 
 class ImGUIOverlay {
     const Device &m_device;
