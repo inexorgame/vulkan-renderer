@@ -6,7 +6,7 @@
 #include <memory>
 #include <vector>
 
-namespace inexor::vulkan_renderer::wrapper::swapchain {
+namespace inexor::vulkan_renderer::wrapper::swapchains {
 
 void silence_spdlog() {
     auto null_logger = std::make_shared<spdlog::logger>("null", std::make_shared<spdlog::sinks::null_sink_mt>());
@@ -138,4 +138,4 @@ TEST(Swapchain, choose_transform) {
     EXPECT_EQ(choose_transform(caps, VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR), VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR);
 }
 
-} // namespace inexor::vulkan_renderer::wrapper::swapchain
+} // namespace inexor::vulkan_renderer::wrapper::swapchains

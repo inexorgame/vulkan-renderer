@@ -8,7 +8,7 @@
 #include <set>
 #include <span>
 
-namespace inexor::vulkan_renderer::wrapper::swapchain {
+namespace inexor::vulkan_renderer::wrapper::swapchains {
 
 // As a general rule of parameter ordering here: available data first, then requested data.
 // This makes it easier to have default parameters for the requested data.
@@ -91,4 +91,4 @@ choose_surface_format(std::span<const VkSurfaceFormatKHR> available_formats,
 choose_transform(const VkSurfaceCapabilitiesKHR &caps,
                  VkSurfaceTransformFlagsKHR requested_transform = VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR);
 
-} // namespace inexor::vulkan_renderer::wrapper::swapchain
+} // namespace inexor::vulkan_renderer::wrapper::swapchains

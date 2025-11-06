@@ -5,7 +5,7 @@
 // Forward declaration
 struct GLFWwindow;
 
-namespace inexor::vulkan_renderer::wrapper::window {
+namespace inexor::vulkan_renderer::wrapper::windows {
 
 /// @brief RAII wrapper class for VkSurfaceKHR.
 class WindowSurface {
@@ -31,4 +31,4 @@ public:
     }
 };
 
-} // namespace inexor::vulkan_renderer::wrapper::window
+} // namespace inexor::vulkan_renderer::wrapper::windows

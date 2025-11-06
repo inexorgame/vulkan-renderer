@@ -8,7 +8,7 @@
 #include <algorithm>
 #include <ranges>
 
-namespace inexor::vulkan_renderer::wrapper::swapchain {
+namespace inexor::vulkan_renderer::wrapper::swapchains {
 
 // Using declaration
 using tools::InexorException;
@@ -243,4 +243,4 @@ VkSurfaceTransformFlagBitsKHR choose_transform(const VkSurfaceCapabilitiesKHR &c
     return chosen_transform;
 }
 
-} // namespace inexor::vulkan_renderer::wrapper::swapchain
+} // namespace inexor::vulkan_renderer::wrapper::swapchains

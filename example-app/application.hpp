@@ -9,17 +9,17 @@ namespace inexor::vulkan_renderer::octree {
 class Cube;
 } // namespace inexor::vulkan_renderer::octree
 
-namespace inexor::vulkan_renderer::wrapper::window {
+namespace inexor::vulkan_renderer::wrapper::windows {
 // Forward declaration
 class Window;
-} // namespace inexor::vulkan_renderer::wrapper::window
+} // namespace inexor::vulkan_renderer::wrapper::windows
 
 // Using declarations
 using inexor::vulkan_renderer::input::Input;
 using inexor::vulkan_renderer::octree::Cube;
 using inexor::vulkan_renderer::wrapper::Instance;
-using inexor::vulkan_renderer::wrapper::window::Window;
-using inexor::vulkan_renderer::wrapper::window::WindowSurface;
+using inexor::vulkan_renderer::wrapper::windows::Window;
+using inexor::vulkan_renderer::wrapper::windows::WindowSurface;
 
 namespace inexor::example_app {
 
