@@ -13,7 +13,7 @@ namespace inexor::vulkan_renderer::wrapper::swapchain {
 // As a general rule of parameter ordering here: available data first, then requested data.
 // This makes it easier to have default parameters for the requested data.
 
-/// @note **Design decition**: It was decided to move all code which deals with finding optimal values for the
+/// @note **Design decision**: It was decided to move all code which deals with finding optimal values for the
 /// parameters of swapchain creation and recreation to this file called swapchain_utils, because it reduces the mental
 /// complexity of the core swapchain wrapper code, and it helps us to write simple tests for the functions in here.
 
