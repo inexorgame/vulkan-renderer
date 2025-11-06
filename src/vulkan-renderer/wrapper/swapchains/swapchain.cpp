@@ -1,11 +1,11 @@
-#include "inexor/vulkan-renderer/wrapper/swapchain/swapchain.hpp"
+#include "inexor/vulkan-renderer/wrapper/swapchains/swapchain.hpp"
 
 #include "inexor/vulkan-renderer/tools/enumerate.hpp"
 #include "inexor/vulkan-renderer/tools/exception.hpp"
 #include "inexor/vulkan-renderer/tools/representation.hpp"
 #include "inexor/vulkan-renderer/wrapper/device.hpp"
 #include "inexor/vulkan-renderer/wrapper/make_info.hpp"
-#include "inexor/vulkan-renderer/wrapper/swapchain/swapchain_utils.hpp"
+#include "inexor/vulkan-renderer/wrapper/swapchains/swapchain_utils.hpp"
 #include "inexor/vulkan-renderer/wrapper/synchronization/semaphore.hpp"
 
 #include <spdlog/spdlog.h>

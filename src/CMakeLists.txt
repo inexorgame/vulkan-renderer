@@ -37,11 +37,11 @@ set(INEXOR_SOURCE_FILES
     vulkan-renderer/wrapper/descriptors/descriptor.cpp
     vulkan-renderer/wrapper/descriptors/descriptor_builder.cpp
 
-    vulkan-renderer/wrapper/window/window.cpp
-    vulkan-renderer/wrapper/window/surface.cpp
+    vulkan-renderer/wrapper/windows/window.cpp
+    vulkan-renderer/wrapper/windows/surface.cpp
 
-    vulkan-renderer/wrapper/swapchain/swapchain.cpp
-    vulkan-renderer/wrapper/swapchain/swapchain_utils.cpp
+    vulkan-renderer/wrapper/swapchains/swapchain.cpp
+    vulkan-renderer/wrapper/swapchains/swapchain_utils.cpp
 
     vulkan-renderer/wrapper/synchronization/fence.cpp
     vulkan-renderer/wrapper/synchronization/semaphore.cpp

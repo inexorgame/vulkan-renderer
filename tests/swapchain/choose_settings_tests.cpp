@@ -1,4 +1,4 @@
-#include "inexor/vulkan-renderer/wrapper/swapchain/swapchain_utils.hpp"
+#include "inexor/vulkan-renderer/wrapper/swapchains/swapchain_utils.hpp"
 
 #include <gtest/gtest.h>
 #include <spdlog/sinks/null_sink.h>

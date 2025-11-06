@@ -1,4 +1,4 @@
-#include "inexor/vulkan-renderer/wrapper/window/window.hpp"
+#include "inexor/vulkan-renderer/wrapper/windows/window.hpp"
 
 #include <GLFW/glfw3.h>
 #include <spdlog/spdlog.h>

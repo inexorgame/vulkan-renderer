@@ -1,4 +1,4 @@
-#include "inexor/vulkan-renderer/wrapper/window/surface.hpp"
+#include "inexor/vulkan-renderer/wrapper/windows/surface.hpp"
 
 #include "inexor/vulkan-renderer/tools/exception.hpp"
 
