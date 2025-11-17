@@ -37,14 +37,18 @@ set(INEXOR_SOURCE_FILES
     vulkan-renderer/wrapper/descriptors/descriptor.cpp
     vulkan-renderer/wrapper/descriptors/descriptor_builder.cpp
 
-    vulkan-renderer/wrapper/windows/window.cpp
-    vulkan-renderer/wrapper/windows/surface.cpp
+    vulkan-renderer/wrapper/pipelines/graphics_pipeline.cpp
+    vulkan-renderer/wrapper/pipelines/graphics_pipeline_builder.cpp
+    vulkan-renderer/wrapper/pipelines/pipeline_cache.cpp
 
     vulkan-renderer/wrapper/swapchains/swapchain.cpp
     vulkan-renderer/wrapper/swapchains/swapchain_utils.cpp
 
     vulkan-renderer/wrapper/synchronization/fence.cpp
     vulkan-renderer/wrapper/synchronization/semaphore.cpp
+
+    vulkan-renderer/wrapper/windows/window.cpp
+    vulkan-renderer/wrapper/windows/surface.cpp
 
     vulkan-renderer/octree/collision.cpp
     vulkan-renderer/octree/collision_query.cpp
