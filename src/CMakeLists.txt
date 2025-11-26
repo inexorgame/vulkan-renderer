@@ -37,6 +37,10 @@ set(INEXOR_SOURCE_FILES
     vulkan-renderer/wrapper/descriptors/descriptor.cpp
     vulkan-renderer/wrapper/descriptors/descriptor_builder.cpp
 
+    vulkan-renderer/wrapper/pipelines/graphics_pipeline.cpp
+    vulkan-renderer/wrapper/pipelines/graphics_pipeline_builder.cpp
+    vulkan-renderer/wrapper/pipelines/pipeline_cache.cpp
+    vulkan-renderer/wrapper/pipelines/pipeline_layout.cpp
     vulkan-renderer/wrapper/windows/window.cpp
     vulkan-renderer/wrapper/windows/surface.cpp
 

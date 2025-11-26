@@ -3,6 +3,7 @@
 #include "inexor/vulkan-renderer/tools/exception.hpp"
 #include "inexor/vulkan-renderer/wrapper/commands/command_buffer.hpp"
 #include "inexor/vulkan-renderer/wrapper/make_info.hpp"
+#include "inexor/vulkan-renderer/wrapper/pipelines/graphics_pipeline_builder.hpp"
 #include "inexor/vulkan-renderer/wrapper/shader.hpp"
 
 #include <spdlog/spdlog.h>
@@ -17,6 +18,7 @@
 namespace inexor::vulkan_renderer {
 
 using tools::VulkanException;
+using wrapper::pipelines::GraphicsPipelineBuilder;
 
 void BufferResource::add_vertex_attribute(VkFormat format, std::uint32_t offset) {
     m_vertex_attributes.push_back({
@@ -53,11 +55,6 @@ PhysicalBuffer::~PhysicalBuffer() {
 PhysicalImage::~PhysicalImage() {
     vkDestroyImageView(m_device.device(), m_image_view, nullptr);
     vmaDestroyImage(m_device.allocator(), m_image, m_allocation);
-}
-
-PhysicalStage::~PhysicalStage() {
-    vkDestroyPipeline(m_device.device(), m_pipeline, nullptr);
-    vkDestroyPipelineLayout(m_device.device(), m_pipeline_layout, nullptr);
 }
 
 PhysicalGraphicsStage::~PhysicalGraphicsStage() {
@@ -413,12 +410,7 @@ void RenderGraph::build_graphics_pipeline(const GraphicsStage *stage, PhysicalGr
     });
 
     // TODO: Pipeline caching (basically load the render graph from a file)
-    if (const auto result =
-            vkCreateGraphicsPipelines(m_device.device(), nullptr, 1, &pipeline_ci, nullptr, &physical.m_pipeline);
-        result != VK_SUCCESS) {
-        throw VulkanException("Error: vkCreateGraphicsPipelines failed!", result, stage->name());
-    }
-    m_device.set_debug_name(physical.m_pipeline, stage->name());
+    // TODO: Create graphics pipeline here!
 }
 
 void RenderGraph::compile(const RenderResource *target) {

@@ -2,6 +2,7 @@
 
 #include "inexor/vulkan-renderer/wrapper/device.hpp"
 #include "inexor/vulkan-renderer/wrapper/framebuffer.hpp"
+#include "inexor/vulkan-renderer/wrapper/pipelines/graphics_pipeline.hpp"
 #include "inexor/vulkan-renderer/wrapper/swapchains/swapchain.hpp"
 
 #include <spdlog/spdlog.h>
@@ -315,21 +316,13 @@ class PhysicalStage : public RenderGraphObject {
     friend RenderGraph;
 
 private:
-    VkPipeline m_pipeline{VK_NULL_HANDLE};
-    VkPipelineLayout m_pipeline_layout{VK_NULL_HANDLE};
+    std::unique_ptr<wrapper::pipelines::GraphicsPipeline> m_pipeline;
 
 protected:
     const wrapper::Device &m_device;
 
 public:
     explicit PhysicalStage(const wrapper::Device &device) : m_device(device) {}
-    ~PhysicalStage() override;
-
-    /// @brief Retrieve the pipeline layout of this physical stage.
-    // TODO: This can be removed once descriptors are properly implemented in the render graph.
-    [[nodiscard]] VkPipelineLayout pipeline_layout() const {
-        return m_pipeline_layout;
-    }
 };
 
 class PhysicalGraphicsStage : public PhysicalStage {
@@ -347,6 +340,7 @@ public:
 class RenderGraph {
 private:
     wrapper::Device &m_device;
+    GraphicsPipelineBuilder m_pipeline_builder;
     const wrapper::swapchains::Swapchain &m_swapchain;
     std::shared_ptr<spdlog::logger> m_log{spdlog::default_logger()->clone("render-graph")};
 
