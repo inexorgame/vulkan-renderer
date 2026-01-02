@@ -127,9 +127,10 @@ ImGUIOverlay::ImGUIOverlay(const wrapper::Device &device, const wrapper::Swapcha
         const ImGuiIO &io = ImGui::GetIO();
         m_push_const_block.scale = glm::vec2(2.0f / io.DisplaySize.x, 2.0f / io.DisplaySize.y);
         m_push_const_block.translate = glm::vec2(-1.0f);
-        cmd_buf.bind_descriptor_sets(m_descriptor->descriptor_sets(), physical.pipeline_layout());
-        cmd_buf.push_constants(physical.pipeline_layout(), VK_SHADER_STAGE_VERTEX_BIT, sizeof(PushConstBlock),
-                               &m_push_const_block);
+        // TODO: Omg this is horrible, fix this immediately...
+        cmd_buf.bind_descriptor_sets(m_descriptor->descriptor_sets(), physical.m_pipeline->pipeline_layout());
+        cmd_buf.push_constants(physical.m_pipeline->pipeline_layout(), VK_SHADER_STAGE_VERTEX_BIT,
+                               sizeof(PushConstBlock), &m_push_const_block);
 
         std::uint32_t index_offset = 0;
         std::int32_t vertex_offset = 0;
