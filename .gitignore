@@ -54,5 +54,8 @@ documentation/doxygen-output/
 documentation/source/auto-generated/
 documentation/source/exhale-generated/
 
-# logfiles
+# Logfiles
 *.log
+
+# Vulkan pipeline cache
+*.bin
