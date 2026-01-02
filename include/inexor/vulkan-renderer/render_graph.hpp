@@ -2,6 +2,9 @@
 
 #include "inexor/vulkan-renderer/wrapper/device.hpp"
 #include "inexor/vulkan-renderer/wrapper/framebuffer.hpp"
+#include "inexor/vulkan-renderer/wrapper/pipelines/graphics_pipeline.hpp"
+#include "inexor/vulkan-renderer/wrapper/pipelines/graphics_pipeline_builder.hpp"
+#include "inexor/vulkan-renderer/wrapper/pipelines/pipeline_cache.hpp"
 #include "inexor/vulkan-renderer/wrapper/swapchains/swapchain.hpp"
 
 #include <spdlog/spdlog.h>
@@ -26,6 +29,13 @@ namespace inexor::vulkan_renderer::wrapper::commands {
 class CommandBuffer;
 } // namespace inexor::vulkan_renderer::wrapper::commands
 
+namespace inexor::vulkan_renderer::wrapper::pipelines {
+// Forward declarations
+class GraphicsPipeline;
+class GraphicsPipelineBuilder;
+class PipelineCache;
+} // namespace inexor::vulkan_renderer::wrapper::pipelines
+
 namespace inexor::vulkan_renderer {
 
 // Forward declarations
@@ -33,8 +43,11 @@ class PhysicalResource;
 class PhysicalStage;
 class RenderGraph;
 
-// Using declaration
+// Using declarations
 using wrapper::commands::CommandBuffer;
+using wrapper::pipelines::GraphicsPipeline;
+using wrapper::pipelines::GraphicsPipelineBuilder;
+using wrapper::pipelines::PipelineCache;
 
 /// @brief Base class of all render graph objects (resources and stages).
 /// @note This is just for internal use.
@@ -315,21 +328,14 @@ class PhysicalStage : public RenderGraphObject {
     friend RenderGraph;
 
 private:
-    VkPipeline m_pipeline{VK_NULL_HANDLE};
-    VkPipelineLayout m_pipeline_layout{VK_NULL_HANDLE};
-
 protected:
     const wrapper::Device &m_device;
 
 public:
     explicit PhysicalStage(const wrapper::Device &device) : m_device(device) {}
-    ~PhysicalStage() override;
 
-    /// @brief Retrieve the pipeline layout of this physical stage.
-    // TODO: This can be removed once descriptors are properly implemented in the render graph.
-    [[nodiscard]] VkPipelineLayout pipeline_layout() const {
-        return m_pipeline_layout;
-    }
+    // TODO: MAKE PRIVATE AGAIN IMMEDIATELY!
+    std::shared_ptr<GraphicsPipeline> m_pipeline;
 };
 
 class PhysicalGraphicsStage : public PhysicalStage {
@@ -350,6 +356,9 @@ private:
     const wrapper::swapchains::Swapchain &m_swapchain;
     std::shared_ptr<spdlog::logger> m_log{spdlog::default_logger()->clone("render-graph")};
 
+    std::unique_ptr<GraphicsPipelineBuilder> m_graphics_pipeline_builder;
+    std::unique_ptr<PipelineCache> m_pipeline_cache;
+
     // Vectors of render resources and stages.
     std::vector<std::unique_ptr<BufferResource>> m_buffer_resources;
     std::vector<std::unique_ptr<TextureResource>> m_texture_resources;
@@ -364,7 +373,6 @@ private:
     void build_image_view(const TextureResource &, PhysicalImage &) const;
 
     // Functions for building stage related vulkan objects.
-    void build_pipeline_layout(const RenderStage *, PhysicalStage &) const;
     void record_command_buffer(const RenderStage *, const wrapper::commands::CommandBuffer &cmd_buf,
                                std::uint32_t image_index) const;
 
@@ -374,7 +382,10 @@ private:
 
 public:
     RenderGraph(wrapper::Device &device, const wrapper::swapchains::Swapchain &swapchain)
-        : m_device(device), m_swapchain(swapchain) {}
+        : m_device(device), m_swapchain(swapchain) {
+        m_pipeline_cache = std::make_unique<PipelineCache>(m_device);
+        m_graphics_pipeline_builder = std::make_unique<GraphicsPipelineBuilder>(m_device, *m_pipeline_cache);
+    }
 
     /// @brief Adds either a render resource or render stage to the render graph.
     /// @return A mutable reference to the just-added resource or stage

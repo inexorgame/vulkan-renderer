@@ -149,6 +149,12 @@ VkMemoryBarrier make_info(VkMemoryBarrier info) {
 }
 
 template <>
+VkPipelineCacheCreateInfo make_info(VkPipelineCacheCreateInfo info) {
+    info.sType = VK_STRUCTURE_TYPE_PIPELINE_CACHE_CREATE_INFO;
+    return info;
+}
+
+template <>
 VkPipelineColorBlendStateCreateInfo make_info(VkPipelineColorBlendStateCreateInfo info) {
     info.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
     return info;
@@ -157,6 +163,12 @@ VkPipelineColorBlendStateCreateInfo make_info(VkPipelineColorBlendStateCreateInf
 template <>
 VkPipelineDepthStencilStateCreateInfo make_info(VkPipelineDepthStencilStateCreateInfo info) {
     info.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
+    return info;
+}
+
+template <>
+VkPipelineDynamicStateCreateInfo make_info(VkPipelineDynamicStateCreateInfo info) {
+    info.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
     return info;
 }
 
@@ -185,8 +197,20 @@ VkPipelineRasterizationStateCreateInfo make_info(VkPipelineRasterizationStateCre
 }
 
 template <>
+VkPipelineRenderingCreateInfo make_info(VkPipelineRenderingCreateInfo info) {
+    info.sType = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO;
+    return info;
+}
+
+template <>
 VkPipelineShaderStageCreateInfo make_info(VkPipelineShaderStageCreateInfo info) {
     info.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+    return info;
+}
+
+template <>
+VkPipelineTessellationStateCreateInfo make_info(VkPipelineTessellationStateCreateInfo info) {
+    info.sType = VK_STRUCTURE_TYPE_PIPELINE_TESSELLATION_STATE_CREATE_INFO;
     return info;
 }
 
