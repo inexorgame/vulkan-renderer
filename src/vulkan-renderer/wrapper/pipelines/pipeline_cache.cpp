@@ -8,14 +8,54 @@
 
 #include <filesystem>
 #include <fstream>
+#include <iomanip>
+#include <sstream>
 #include <utility>
 
 namespace inexor::vulkan_renderer::wrapper::pipelines {
 
 PipelineCache::PipelineCache(const Device &device) : m_device(device) {
+    // Sanitize GPU name to only contain alphanumeric characters and underscores
+    const auto &gpu_name = m_device.gpu_name();
+    std::string sanitized_gpu_name;
+    sanitized_gpu_name.reserve(gpu_name.size());
+    for (const char c : gpu_name) {
+        if (std::isalnum(static_cast<unsigned char>(c))) {
+            sanitized_gpu_name.push_back(static_cast<char>(std::tolower(static_cast<unsigned char>(c))));
+        } else if (c == ' ' || c == '-') {
+            // Replace spaces and hyphens with underscores
+            sanitized_gpu_name.push_back('_');
+        }
+        // Skip any other special characters
+    }
 
-    // TODO: We need one pipeline cache for each graphics card! Use driver info for hash!
-    m_cache_file_name = "vk_pipeline_cache.bin";
+    // Avoid consecutive underscores
+    sanitized_gpu_name.erase(std::unique(sanitized_gpu_name.begin(), sanitized_gpu_name.end(),
+                                         [](char a, char b) { return a == '_' && b == '_'; }),
+                             sanitized_gpu_name.end());
+
+    // Remove leading/trailing underscores
+    if (!sanitized_gpu_name.empty() && sanitized_gpu_name.front() == '_') {
+        sanitized_gpu_name.erase(0, 1);
+    }
+    if (!sanitized_gpu_name.empty() && sanitized_gpu_name.back() == '_') {
+        sanitized_gpu_name.pop_back();
+    }
+
+    // Fallback if sanitization resulted in empty string
+    if (sanitized_gpu_name.empty()) {
+        sanitized_gpu_name = "unknown_gpu";
+    }
+
+    // Generate a unique cache filename based on the sanitized GPU name and pipeline cache UUID
+    const auto uuid = m_device.pipeline_cache_uuid();
+    std::stringstream cache_name;
+    cache_name << sanitized_gpu_name << "_";
+    for (const auto byte : uuid) {
+        cache_name << std::hex << std::setfill('0') << std::setw(2) << static_cast<int>(byte);
+    }
+    cache_name << ".cache";
+    m_cache_file_name = cache_name.str();
 
     const auto pipeline_cache_data = read_cache_data_from_disk();
 
@@ -33,7 +73,6 @@ PipelineCache::PipelineCache(const Device &device) : m_device(device) {
 }
 
 PipelineCache::~PipelineCache() {
-    // @TODO Maybe we should not put this in the destructor?
     save_cache_data_to_disk();
     vkDestroyPipelineCache(m_device.device(), m_pipeline_cache, nullptr);
 }
@@ -73,15 +112,7 @@ std::vector<uint8_t> PipelineCache::read_cache_data_from_disk() {
     } else {
         // This is not an error at all, just likely the first the the user starts the application
         spdlog::trace("Vulkan pipeline cache file '{}' does not exist yet.", m_cache_file_name);
-        // If the file does not exist, is the file path and file name valid at least?
-        // We need to construct a filesystem path handle from the std::string!
-        std::filesystem::path pipeline_cache_path(m_cache_file_name);
-        if (std::filesystem::exists(pipeline_cache_path.parent_path())) {
-            spdlog::trace("A new pipeline cache will be created while running the application and saved to disk.");
-        } else {
-            spdlog::error("Error: Directory for Vulkan pipeline cache '{}' does not exist!",
-                          pipeline_cache_path.parent_path().string());
-        }
+        spdlog::trace("A new Vulkan pipeline cache will written to disk at shutdown.");
     }
     return pipeline_cache_data;
 }

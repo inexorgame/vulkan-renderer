@@ -58,4 +58,4 @@ documentation/source/exhale-generated/
 *.log
 
 # Vulkan pipeline cache
-*.bin
+*.cache

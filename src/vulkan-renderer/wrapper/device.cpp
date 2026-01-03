@@ -43,6 +43,11 @@ Device::Device(const Instance &inst, const VkSurfaceKHR surface, const VkPhysica
         m_gpu_name = gpu_info.name;
     }
 
+    // Get the device properties
+    VkPhysicalDeviceProperties device_properties{};
+    vkGetPhysicalDeviceProperties(m_physical_device, &device_properties);
+    std::memcpy(m_pipeline_cache_uuid.data(), device_properties.pipelineCacheUUID, VK_UUID_SIZE);
+
     spdlog::trace("Creating Vulkan queues");
 
     const auto props = tools::get_queue_family_properties(m_physical_device);

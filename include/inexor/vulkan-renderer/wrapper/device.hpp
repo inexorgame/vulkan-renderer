@@ -5,6 +5,7 @@
 #include "inexor/vulkan-renderer/wrapper/commands/command_pool.hpp"
 #include "inexor/vulkan-renderer/wrapper/make_info.hpp"
 
+#include <array>
 #include <functional>
 #include <optional>
 #include <shared_mutex>
@@ -39,6 +40,7 @@ private:
     VmaAllocator m_allocator{VK_NULL_HANDLE};
     std::string m_gpu_name;
     VkPhysicalDeviceFeatures m_enabled_features{};
+    std::array<std::uint8_t, VK_UUID_SIZE> m_pipeline_cache_uuid{};
 
     VkQueue m_graphics_queue{VK_NULL_HANDLE};
     VkQueue m_transfer_queue{VK_NULL_HANDLE};
@@ -130,6 +132,12 @@ public:
 
     [[nodiscard]] const std::string &gpu_name() const {
         return m_gpu_name;
+    }
+
+    /// Get the pipeline cache UUID for the physical device
+    /// @return A span view of the pipeline cache UUID bytes
+    [[nodiscard]] std::span<const std::uint8_t, VK_UUID_SIZE> pipeline_cache_uuid() const {
+        return m_pipeline_cache_uuid;
     }
 
     [[nodiscard]] bool has_any_compute_queue() const {
