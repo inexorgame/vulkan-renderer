@@ -62,11 +62,8 @@ std::uint32_t choose_image_count(const VkSurfaceCapabilitiesKHR &caps, const std
 VkExtent2D choose_image_extent(const VkExtent2D &requested_extent, const VkSurfaceCapabilitiesKHR &caps,
                                const VkExtent2D &current_extent) {
     VkExtent2D result{};
-    // If the surface specifies the extent (most common case), just use it.
-    if (current_extent.width != std::numeric_limits<std::uint32_t>::max() && current_extent.width != 0 &&
-        current_extent.height != 0) {
-        result = current_extent;
-    } else {
+    // If the surface size is determined by the extent of the swapchain (special value indicates this).
+    if (caps.currentExtent.width == std::numeric_limits<std::uint32_t>::max()) {
         // Otherwise, choose requested or fallback dimensions, clamped to supported range.
         result = {
             std::clamp(requested_extent.width ? requested_extent.width : caps.minImageExtent.width,
@@ -74,6 +71,9 @@ VkExtent2D choose_image_extent(const VkExtent2D &requested_extent, const VkSurfa
             std::clamp(requested_extent.height ? requested_extent.height : caps.minImageExtent.height,
                        caps.minImageExtent.height, caps.maxImageExtent.height),
         };
+    } else {
+        // If the surface specifies the extent (most common case), just use it.
+        result = caps.currentExtent;
     }
     spdlog::trace("Selecting swapchain image extent {} x {}", result.width, result.height);
     return result;
