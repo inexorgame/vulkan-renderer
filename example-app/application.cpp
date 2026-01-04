@@ -407,6 +407,10 @@ ExampleApp::ExampleApp(int argc, char **argv) {
     generate_octree_indices();
 
     m_window->show();
+
+    // RENDERGRAPH2
+    m_render_graph2 = std::make_unique<vulkan_renderer::render_graph::RenderGraph>(*m_device);
+
     recreate_swapchain();
 }
 

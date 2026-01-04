@@ -96,6 +96,8 @@ protected:
 
     // RENDERGRAPH2
     std::unique_ptr<vulkan_renderer::render_graph::RenderGraph> m_render_graph2;
+    std::weak_ptr<vulkan_renderer::render_graph::Buffer> m_vertex_buffer2;
+    std::weak_ptr<vulkan_renderer::render_graph::Buffer> m_index_buffer2;
 
     void setup_render_graph();
     void recreate_swapchain();

@@ -20,6 +20,19 @@ void ExampleAppBase::setup_render_graph() {
     m_vertex_buffer->add_vertex_attribute(VK_FORMAT_R32G32B32_SFLOAT, offsetof(OctreeGpuVertex, color));    // NOLINT
     m_vertex_buffer->upload_data(m_octree_vertices);
 
+    // RENDERGRAPH2
+    m_render_graph2->reset();
+    // RENDERGRAPH2
+    m_vertex_buffer2 =
+        m_render_graph2->add_buffer("vertex buffer", vulkan_renderer::render_graph::BufferType::VERTEX_BUFFER, [&]() {
+            // @TODO RENDERGRAPH2 Update the vertex buffer here
+        });
+    // RENDERGRAPH2
+    m_index_buffer2 =
+        m_render_graph2->add_buffer("index buffer", vulkan_renderer::render_graph::BufferType::INDEX_BUFFER, [&]() {
+            // @TODO RENDERGRAPH2 Update the index buffer here
+        });
+
     auto *main_stage = m_render_graph->add<GraphicsStage>("main stage");
     main_stage->writes_to(m_back_buffer);
     main_stage->writes_to(depth_buffer);
@@ -57,9 +70,6 @@ void ExampleAppBase::recreate_swapchain() {
         VkExtent2D{static_cast<std::uint32_t>(window_width), static_cast<std::uint32_t>(window_height)},
         m_vsync_enabled);
     m_render_graph = std::make_unique<RenderGraph>(*m_device, *m_swapchain);
-
-    // RENDERGRAPH2
-    m_render_graph2 = std::make_unique<vulkan_renderer::render_graph::RenderGraph>(*m_device);
 
     setup_render_graph();
 
