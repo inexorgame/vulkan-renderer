@@ -56,11 +56,11 @@ void GpuTexture::create_texture(void *texture_data, const std::size_t texture_si
 
     m_device.execute(m_name, VulkanQueueType::QUEUE_TYPE_GRAPHICS, [&](const CommandBuffer &cmd_buf) {
         cmd_buf
-            .change_image_layout(m_texture_image->get(), VK_IMAGE_LAYOUT_UNDEFINED,
+            .change_image_layout(m_texture_image->image(), VK_IMAGE_LAYOUT_UNDEFINED,
                                  VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL)
-            .copy_buffer_to_image(texture_data, static_cast<VkDeviceSize>(texture_size), m_texture_image->get(),
+            .copy_buffer_to_image(texture_data, static_cast<VkDeviceSize>(texture_size), m_texture_image->image(),
                                   copy_region, m_name)
-            .change_image_layout(m_texture_image->get(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+            .change_image_layout(m_texture_image->image(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
                                  VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
     });
 

@@ -29,9 +29,6 @@ using wrapper::CommandBuffer;
 using wrapper::descriptors::DescriptorSetLayout;
 using wrapper::swapchains::Swapchain;
 
-/// Using declaration
-using OnRecordCommandBufferForPass = std::function<void(const CommandBuffer &)>;
-
 /// A wrapper for graphics passes inside of rendergraph
 class GraphicsPass {
     friend class RenderGraph;
@@ -40,7 +37,7 @@ private:
     /// The name of the graphics pass
     std::string m_name;
     /// The command buffer recording function of the graphics pass
-    OnRecordCommandBufferForPass m_on_record_cmd_buffer{[](auto &) {}};
+    std::function<void(const CommandBuffer &)> m_on_record_cmd_buffer{[](auto &) {}};
     /// The descriptor set layout of the pass (this will be created by rendergraph)
     std::unique_ptr<DescriptorSetLayout> m_descriptor_set_layout;
     /// The descriptor set of the pass (this will be created by rendergraph)
@@ -89,7 +86,7 @@ public:
     /// @param write_attachments The attachment this graphics pass writes to
     /// @param write_swapchains The swapchains this graphics pass writes to
     /// @param pass_debug_label_color The debug label of the pass (visible in graphics debuggers like RenderDoc)
-    GraphicsPass(std::string name, OnRecordCommandBufferForPass on_record_cmd_buffer,
+    GraphicsPass(std::string name, std::function<void(const CommandBuffer &)> on_record_cmd_buffer,
                  std::vector<std::weak_ptr<GraphicsPass>> graphics_pass_reads,
                  std::vector<std::pair<std::weak_ptr<Texture>, std::optional<VkClearValue>>> write_attachments,
                  std::vector<std::pair<std::weak_ptr<Swapchain>, std::optional<VkClearValue>>> write_swapchains,

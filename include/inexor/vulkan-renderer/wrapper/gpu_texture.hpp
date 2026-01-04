@@ -71,7 +71,7 @@ public:
     }
 
     [[nodiscard]] VkImage image() const {
-        return m_texture_image->get();
+        return m_texture_image->image();
     }
 
     [[nodiscard]] VkImageView image_view() const {

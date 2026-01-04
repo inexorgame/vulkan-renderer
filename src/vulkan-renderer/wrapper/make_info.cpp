@@ -233,6 +233,18 @@ VkPresentInfoKHR make_info(VkPresentInfoKHR info) {
 }
 
 template <>
+VkRenderingAttachmentInfo make_info(VkRenderingAttachmentInfo info) {
+    info.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
+    return info;
+}
+
+template <>
+VkRenderingInfo make_info(VkRenderingInfo info) {
+    info.sType = VK_STRUCTURE_TYPE_RENDERING_INFO;
+    return info;
+}
+
+template <>
 VkRenderPassBeginInfo make_info(VkRenderPassBeginInfo info) {
     info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
     return info;

@@ -11,7 +11,7 @@ namespace inexor::vulkan_renderer::render_graph {
 using wrapper::InexorException;
 
 GraphicsPass::GraphicsPass(
-    std::string name, OnRecordCommandBufferForPass on_record_cmd_buffer,
+    std::string name, std::function<void(const CommandBuffer &)> on_record_cmd_buffer,
     std::vector<std::weak_ptr<GraphicsPass>> graphics_pass_reads,
     std::vector<std::pair<std::weak_ptr<Texture>, std::optional<VkClearValue>>> write_attachments,
     std::vector<std::pair<std::weak_ptr<Swapchain>, std::optional<VkClearValue>>> write_swapchains,
@@ -96,7 +96,6 @@ GraphicsPass::GraphicsPass(GraphicsPass &&other) noexcept {
     m_debug_label_color = other.m_debug_label_color;
 }
 
-/// Reset the rendering info
 void GraphicsPass::reset_rendering_info() {
     m_rendering_info = wrapper::make_info<VkRenderingInfo>();
     m_color_attachments.clear();

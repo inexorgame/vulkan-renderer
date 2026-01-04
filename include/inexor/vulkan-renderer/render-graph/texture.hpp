@@ -1,6 +1,6 @@
 #pragma once
 
-#include "inexor/vulkan-renderer/wrapper/image.hpp"
+#include "inexor/vulkan-renderer/render-graph/image.hpp"
 #include "inexor/vulkan-renderer/wrapper/sampler.hpp"
 
 #include <functional>
@@ -11,7 +11,6 @@
 namespace inexor::vulkan_renderer::wrapper {
 // Forward declaration
 class Device;
-class Image;
 class Sampler;
 } // namespace inexor::vulkan_renderer::wrapper
 
@@ -19,11 +18,10 @@ namespace inexor::vulkan_renderer::render_graph {
 
 // Using declaration
 using wrapper::Device;
-using wrapper::Image;
 using wrapper::Sampler;
 
 /// Specifies the use of the texture
-enum class TextureType {
+enum class TextureUsage {
     COLOR_ATTACHMENT,
     DEPTH_ATTACHMENT,
     STENCIL_ATTACHMENT,
@@ -37,7 +35,7 @@ private:
     // The texture name
     std::string m_name;
     // The texture type
-    const TextureType m_type;
+    const TextureUsage m_type;
     // The texture update function
     std::optional<std::function<void()>> m_on_update;
 
@@ -56,7 +54,7 @@ private:
     std::unique_ptr<Sampler> m_default_sampler;
 
     /// The image of the texture
-    std::shared_ptr<Image> m_image;
+    std::shared_ptr<render_graph::Image> m_image;
 
     // TODO: MSAA support?
 
@@ -80,34 +78,21 @@ private:
     // @TODO: create(), destroy() destroy_staging_buffer(), update()
 
 public:
+    // TODO: Think about overloading the constructor here
+
     /// Default constructor
     /// @param device The device wrapper
     /// @param name The texture name
-    /// @param type The texture type
+    /// @param usage The texture usage
+    /// @param format The image format
+    /// @param width The texture width
+    /// @param height The texture height
+    /// @param channels The number of channels
+    /// @param samples The number of samples
     /// @param on_update The texture update function
-    Texture(const Device &device, std::string name, TextureType type, std::optional<std::function<void()>> on_update);
-
-    /*
-    /// Default constructor
-    /// @param device The device wrapper
-    /// @param name The internal debug name of the texture
-    /// @param usage The usage of the texture inside of rendergraph
-    /// @param format The format of the texture
-    /// @param width The width of the texture
-    /// @param height The height of the texture
-    /// @param channels The channel count of the texture
-    /// @param samples The sample count of the texture
-    /// @param on_check_for_updates The update function of the texture
-    Texture(const Device &device,
-            std::string name,
-            TextureUsage usage,
-            VkFormat format,
-            std::uint32_t width,
-            std::uint32_t height,
-            std::uint32_t channels,
-            VkSampleCountFlagBits samples,
-            std::function<void()> on_check_for_updates);
-    */
+    Texture(const Device &device, std::string name, TextureUsage usage, VkFormat format, std::uint32_t width,
+            std::uint32_t height, std::uint32_t channels, VkSampleCountFlagBits samples,
+            std::function<void()> on_update);
 
     Texture(const Texture &) = delete;
     Texture(Texture &&) noexcept;

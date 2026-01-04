@@ -8,6 +8,8 @@ set(INEXOR_SOURCE_FILES
 
     vulkan-renderer/render-graph/buffer.cpp
     vulkan-renderer/render-graph/graphics_pass.cpp
+    vulkan-renderer/render-graph/graphics_pass_builder.cpp
+    vulkan-renderer/render-graph/image.cpp
     vulkan-renderer/render-graph/render_graph.cpp
     vulkan-renderer/render-graph/texture.cpp
 

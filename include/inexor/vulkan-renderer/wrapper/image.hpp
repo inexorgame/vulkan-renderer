@@ -39,7 +39,7 @@ public:
     Image &operator=(const Image &) = delete;
     Image &operator=(Image &&) = delete;
 
-    [[nodiscard]] VkImage get() const {
+    [[nodiscard]] VkImage image() const {
         return m_image;
     }
 
