@@ -8,6 +8,7 @@ set(INEXOR_SOURCE_FILES
 
     vulkan-renderer/render-graph/buffer.cpp
     vulkan-renderer/render-graph/render_graph.cpp
+    vulkan-renderer/render-graph/texture.cpp
 
     vulkan-renderer/tools/camera.cpp
     vulkan-renderer/tools/device_info.cpp

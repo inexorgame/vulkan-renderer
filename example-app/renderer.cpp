@@ -32,6 +32,12 @@ void ExampleAppBase::setup_render_graph() {
         m_render_graph2->add_buffer("index buffer", vulkan_renderer::render_graph::BufferType::INDEX_BUFFER, [&]() {
             // @TODO RENDERGRAPH2 Update the index buffer here
         });
+    // RENDERGRAPH2
+    m_back_buffer2 =
+        m_render_graph2->add_texture("back buffer", vulkan_renderer::render_graph::TextureType::COLOR_ATTACHMENT);
+    // RENDERGRAPH2
+    m_depth_buffer2 =
+        m_render_graph2->add_texture("depth buffer", vulkan_renderer::render_graph::TextureType::DEPTH_ATTACHMENT);
 
     auto *main_stage = m_render_graph->add<GraphicsStage>("main stage");
     main_stage->writes_to(m_back_buffer);
