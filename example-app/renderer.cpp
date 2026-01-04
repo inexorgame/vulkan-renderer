@@ -49,6 +49,26 @@ void ExampleAppBase::setup_render_graph() {
                                // @TODO: draw indexed
                            })
                            .build("Test", vulkan_renderer::wrapper::DebugLabelColor::GREEN);
+    // RENDERGRAPH2
+    // Descriptor management for the model/view/projection uniform buffer
+    m_render_graph2->add_resource_descriptor(
+        [&](vulkan_renderer::wrapper::descriptors::DescriptorSetLayoutBuilder &builder) {
+            m_descriptor_set_layout = builder
+                                          .add(vulkan_renderer::wrapper::descriptors::DescriptorType::UNIFORM_BUFFER,
+                                               VK_SHADER_STAGE_VERTEX_BIT)
+                                          .build("model/view/proj");
+        },
+        [&](vulkan_renderer::wrapper::descriptors::DescriptorSetAllocator &allocator) {
+            m_descriptor_set = allocator.allocate("model/view/proj", m_descriptor_set_layout);
+        },
+        [&](vulkan_renderer::wrapper::descriptors::WriteDescriptorSetBuilder &builder) {
+            // TODO: Modify to create several descriptor sets (an array?) for each octree
+            // TODO: Specify camera matrix as push constant
+            // TODO: Multiply view and perspective matrix on cpu and pass as one matrix!
+            // TODO: Use one big descriptor (array?) and pass view*perspective and array index as push constant!
+            // This will require changes to DescriptorSetLayoutBuilder and more!
+            return builder.add(m_descriptor_set, m_mvp_matrix2).build();
+        });
 
     auto *main_stage = m_render_graph->add<GraphicsStage>("main stage");
     main_stage->writes_to(m_back_buffer);

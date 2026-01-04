@@ -101,6 +101,9 @@ protected:
     std::weak_ptr<vulkan_renderer::render_graph::Texture> m_back_buffer2;
     std::weak_ptr<vulkan_renderer::render_graph::Texture> m_depth_buffer2;
     std::weak_ptr<vulkan_renderer::render_graph::GraphicsPass> m_graphics_pass2;
+    std::weak_ptr<vulkan_renderer::render_graph::Buffer> m_mvp_matrix2;
+    VkDescriptorSetLayout m_descriptor_set_layout{VK_NULL_HANDLE};
+    VkDescriptorSet m_descriptor_set{VK_NULL_HANDLE};
 
     void setup_render_graph();
     void recreate_swapchain();

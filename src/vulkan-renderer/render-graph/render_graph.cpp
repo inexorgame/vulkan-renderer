@@ -2,7 +2,8 @@
 
 namespace inexor::vulkan_renderer::render_graph {
 
-RenderGraph::RenderGraph(const Device &device) : m_device(device) {}
+RenderGraph::RenderGraph(const Device &device)
+    : m_device(device), m_descriptor_set_allocator(device), m_write_descriptor_set_builder(device) {}
 
 std::weak_ptr<Buffer> RenderGraph::add_buffer(std::string name, const BufferType type,
                                               std::function<void()> on_update) {
@@ -11,6 +12,13 @@ std::weak_ptr<Buffer> RenderGraph::add_buffer(std::string name, const BufferType
 
 std::weak_ptr<GraphicsPass> RenderGraph::add_graphics_pass(std::shared_ptr<GraphicsPass> graphics_pass) {
     return m_graphics_passes.emplace_back(std::move(graphics_pass));
+}
+
+void RenderGraph::add_resource_descriptor(OnBuildDescriptorSetLayout on_build_descriptor_set_layout,
+                                          OnAllocateDescriptorSet on_allocate_descriptor_set,
+                                          OnBuildWriteDescriptorSets on_update_descriptor_set) {
+    m_resource_descriptors.emplace_back(std::move(on_build_descriptor_set_layout),
+                                        std::move(on_allocate_descriptor_set), std::move(on_update_descriptor_set));
 }
 
 std::weak_ptr<Texture> RenderGraph::add_texture(std::string name, const TextureUsage usage, const VkFormat format,

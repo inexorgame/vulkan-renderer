@@ -5,6 +5,9 @@
 #include "inexor/vulkan-renderer/render-graph/graphics_pass_builder.hpp"
 #include "inexor/vulkan-renderer/render-graph/texture.hpp"
 #include "inexor/vulkan-renderer/wrapper/commands/command_buffer.hpp"
+#include "inexor/vulkan-renderer/wrapper/descriptors/descriptor_set_allocator.hpp"
+#include "inexor/vulkan-renderer/wrapper/descriptors/descriptor_set_layout_builder.hpp"
+#include "inexor/vulkan-renderer/wrapper/descriptors/write_descriptor_set_builder.hpp"
 #include "inexor/vulkan-renderer/wrapper/device.hpp"
 
 #include <functional>
@@ -23,6 +26,9 @@ namespace inexor::vulkan_renderer::render_graph {
 
 /// Using declaration
 using wrapper::DebugLabelColor;
+using wrapper::descriptors::DescriptorSetAllocator;
+using wrapper::descriptors::DescriptorSetLayoutBuilder;
+using wrapper::descriptors::WriteDescriptorSetBuilder;
 
 class RenderGraph {
 private:
@@ -36,6 +42,27 @@ private:
     std::vector<std::shared_ptr<GraphicsPass>> m_graphics_passes;
     /// An instance of the graphics pass builder
     GraphicsPassBuilder m_graphics_pass_builder{};
+    /// An instance of the descriptor set allocator
+    DescriptorSetAllocator m_descriptor_set_allocator;
+    /// An instance of the write descriptor set builder
+    WriteDescriptorSetBuilder m_write_descriptor_set_builder;
+
+    /// A user-defined function which creates the descriptor set layout
+    using OnBuildDescriptorSetLayout = std::function<void(DescriptorSetLayoutBuilder &)>;
+    /// A user-defined function which allocates a descriptor set
+    using OnAllocateDescriptorSet = std::function<void(DescriptorSetAllocator &)>;
+    /// A user-defined function which builds the descriptor set write for the pass
+    using OnBuildWriteDescriptorSets = std::function<std::vector<VkWriteDescriptorSet>(WriteDescriptorSetBuilder &)>;
+
+    /// Resource descriptors are managed by specifying those three functions to the rendergraph
+    /// Rendergraph will then call those function in the correct order during rendergraph compilation
+    using ResourceDescriptor =
+        std::tuple<OnBuildDescriptorSetLayout, OnAllocateDescriptorSet, OnBuildWriteDescriptorSets>;
+
+    /// The resource descriptors of the rendergraph
+    std::vector<ResourceDescriptor> m_resource_descriptors;
+    /// All write descriptor sets will be stored in here so we can have one batched call to vkUpdateDescriptorSets
+    std::vector<VkWriteDescriptorSet> m_write_descriptor_sets;
 
 public:
     /// Default constructor
@@ -53,6 +80,14 @@ public:
     /// @param graphics_pass The graphics pass which was created
     /// @return A weak pointer to the graphics pass which was created
     [[nodiscard]] std::weak_ptr<GraphicsPass> add_graphics_pass(std::shared_ptr<GraphicsPass> graphics_pass);
+
+    /// Add a resource descriptor to the rendergraph
+    /// @param on_build_descriptor_set_layout
+    /// @param on_allocate_descriptor_set
+    /// @param on_update_descriptor_set
+    [[nodiscard]] void add_resource_descriptor(OnBuildDescriptorSetLayout on_build_descriptor_set_layout,
+                                               OnAllocateDescriptorSet on_allocate_descriptor_set,
+                                               OnBuildWriteDescriptorSets on_update_descriptor_set);
 
     // @TODO How to handle optional texture update depending on texture type?
 
