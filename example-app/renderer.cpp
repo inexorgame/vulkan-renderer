@@ -57,6 +57,10 @@ void ExampleAppBase::recreate_swapchain() {
         VkExtent2D{static_cast<std::uint32_t>(window_width), static_cast<std::uint32_t>(window_height)},
         m_vsync_enabled);
     m_render_graph = std::make_unique<RenderGraph>(*m_device, *m_swapchain);
+
+    // RENDERGRAPH2
+    m_render_graph2 = std::make_unique<vulkan_renderer::render_graph::RenderGraph>(*m_device);
+
     setup_render_graph();
 
     m_camera->set_aspect_ratio(window_width, window_height);

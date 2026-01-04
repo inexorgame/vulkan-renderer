@@ -1,6 +1,7 @@
 ﻿#pragma once
 
 #include "inexor/vulkan-renderer/imgui.hpp"
+#include "inexor/vulkan-renderer/render-graph/render_graph.hpp"
 #include "inexor/vulkan-renderer/tools/camera.hpp"
 #include "inexor/vulkan-renderer/tools/fps_limiter.hpp"
 #include "inexor/vulkan-renderer/tools/time_step.hpp"
@@ -93,14 +94,19 @@ protected:
     std::unique_ptr<Device> m_device;
     std::unique_ptr<RenderGraph> m_render_graph;
 
+    // RENDERGRAPH2
+    std::unique_ptr<vulkan_renderer::render_graph::RenderGraph> m_render_graph2;
+
     void setup_render_graph();
     void recreate_swapchain();
     void render_frame();
 
-    // TODO Everything below needs to be abstracted further so that it's no longer
+    // @TODO Everything below needs to be abstracted further so that it's no longer
     // part of ExampleAppBase, meaning the rendergraph requires further abstraction.
+
     // @TODO Swapchains will be decoupled from rendergraph again in the future
     // The rendergraph will be able to handle an arbitrary number of windows and swapchains.
+
     std::unique_ptr<Swapchain> m_swapchain;
     std::unique_ptr<Window> m_window;
     TextureResource *m_back_buffer{nullptr};

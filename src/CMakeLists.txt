@@ -6,6 +6,8 @@ set(INEXOR_SOURCE_FILES
     vulkan-renderer/input/input.cpp
     vulkan-renderer/input/keyboard_mouse_data.cpp
 
+    vulkan-renderer/render-graph/render_graph.cpp
+
     vulkan-renderer/tools/camera.cpp
     vulkan-renderer/tools/device_info.cpp
     vulkan-renderer/tools/enumerate.cpp
