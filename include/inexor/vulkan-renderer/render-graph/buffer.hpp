@@ -44,6 +44,9 @@ private:
 
     // TODO: Add methods create(), destroy_buffer(), destroy_staging_buffer(), destroy_all()
 
+    /// The descriptor buffer info (required for uniform buffers)
+    VkDescriptorBufferInfo m_descriptor_buffer_info;
+
 public:
     /// Default constructor
     /// @param device The device wrapper
@@ -57,6 +60,10 @@ public:
 
     Buffer &operator=(const Buffer &) = delete;
     Buffer &operator=(Buffer &&) = delete;
+
+    [[nodiscard]] const auto *descriptor_buffer_info() const {
+        return &m_descriptor_buffer_info;
+    }
 };
 
 } // namespace inexor::vulkan_renderer::render_graph

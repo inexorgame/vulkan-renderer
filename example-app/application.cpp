@@ -382,8 +382,8 @@ ExampleApp::ExampleApp(int argc, char **argv) {
     m_device = std::make_unique<Device>(*m_instance, m_surface->surface(), physical_device, required_features,
                                         required_extensions);
 
-    m_swapchain = std::make_unique<Swapchain>(*m_device, m_surface->surface(), m_window->width(), m_window->height(),
-                                              m_vsync_enabled);
+    m_swapchain = std::make_unique<Swapchain>(*m_device, "Default Swapchain", m_surface->surface(), m_window->width(),
+                                              m_window->height(), m_vsync_enabled);
 
     m_camera = std::make_unique<Camera>(glm::vec3(6.0f, 10.0f, 2.0f), 180.0f, 0.0f,
                                         static_cast<float>(m_window->width()), static_cast<float>(m_window->height()));

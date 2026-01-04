@@ -36,6 +36,7 @@ private:
     std::vector<VkImageView> m_img_views;
     VkExtent2D m_current_extent{};
     std::unique_ptr<Semaphore> m_img_available;
+    std::string m_name;
     bool m_vsync_enabled{false};
 
     /// Call vkGetSwapchainImagesKHR
@@ -46,11 +47,12 @@ private:
 public:
     /// Default constructor
     /// @param device The device wrapper
+    /// @param name The name of the swapchain
     /// @param surface The surface
     /// @param width The swapchain image width
     /// @param height The swapchain image height
     /// @param vsync_enabled ``true`` if vertical synchronization is enabled
-    Swapchain(const Device &device, VkSurfaceKHR surface, std::uint32_t width, std::uint32_t height,
+    Swapchain(const Device &device, std::string name, VkSurfaceKHR surface, std::uint32_t width, std::uint32_t height,
               bool vsync_enabled);
 
     Swapchain(const Swapchain &) = delete;
@@ -86,6 +88,10 @@ public:
 
     [[nodiscard]] const std::vector<VkImageView> &image_views() const {
         return m_img_views;
+    }
+
+    [[nodiscard]] const auto &name() const {
+        return m_name;
     }
 
     /// Call vkQueuePresentKHR

@@ -55,7 +55,7 @@ class RenderGraph;
 // Using declarations
 using inexor::vulkan_renderer::BufferResource;
 using inexor::vulkan_renderer::BufferUsage;
-using inexor::vulkan_renderer ::GraphicsStage;
+using inexor::vulkan_renderer::GraphicsStage;
 using inexor::vulkan_renderer::ImGUIOverlay;
 using inexor::vulkan_renderer::PhysicalStage;
 using inexor::vulkan_renderer::RenderGraph;
@@ -100,6 +100,7 @@ protected:
     std::weak_ptr<vulkan_renderer::render_graph::Buffer> m_index_buffer2;
     std::weak_ptr<vulkan_renderer::render_graph::Texture> m_back_buffer2;
     std::weak_ptr<vulkan_renderer::render_graph::Texture> m_depth_buffer2;
+    std::weak_ptr<vulkan_renderer::render_graph::GraphicsPass> m_graphics_pass2;
 
     void setup_render_graph();
     void recreate_swapchain();

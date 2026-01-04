@@ -1,11 +1,16 @@
 #pragma once
 
 #include "inexor/vulkan-renderer/render-graph/buffer.hpp"
+#include "inexor/vulkan-renderer/render-graph/graphics_pass.hpp"
 #include "inexor/vulkan-renderer/render-graph/texture.hpp"
+#include "inexor/vulkan-renderer/wrapper/commands/command_buffer.hpp"
+#include "inexor/vulkan-renderer/wrapper/device.hpp"
 
+#include <functional>
 #include <memory>
 #include <optional>
 #include <string>
+#include <utility>
 #include <vector>
 
 namespace inexor::vulkan_renderer::wrapper {
@@ -15,8 +20,8 @@ class Device;
 
 namespace inexor::vulkan_renderer::render_graph {
 
-// Using declaration
-using wrapper::Device;
+/// Using declaration
+using wrapper::DebugLabelColor;
 
 class RenderGraph {
 private:
@@ -24,9 +29,11 @@ private:
     const Device &m_device;
 
     /// The buffers (vertex buffers, index buffers, uniform buffers...)
-    std::vector<std::shared_ptr<render_graph::Buffer>> m_buffers;
+    std::vector<std::shared_ptr<Buffer>> m_buffers;
     /// The textures (back buffers, depth buffers, textures...)
-    std::vector<std::shared_ptr<render_graph::Texture>> m_textures;
+    std::vector<std::shared_ptr<Texture>> m_textures;
+    /// The graphics passes
+    std::vector<std::shared_ptr<GraphicsPass>> m_graphics_passes;
 
 public:
     /// Default constructor
@@ -40,6 +47,11 @@ public:
     /// @return A weak pointer to the buffer resource which was created
     std::weak_ptr<Buffer> add_buffer(std::string name, BufferType type, std::function<void()> on_update);
 
+    /// Add a graphics pass to the rendergraph
+    /// @param graphics_pass The graphics pass which was created
+    /// @return A weak pointer to the graphics pass which was created
+    std::weak_ptr<GraphicsPass> add_graphics_pass(std::shared_ptr<GraphicsPass> graphics_pass);
+
     // @TODO How to handle optional texture update depending on texture type?
 
     /// Add a texture to the rendergraph
@@ -49,6 +61,12 @@ public:
     /// @return A weak pointer to the texture resource which was created
     std::weak_ptr<Texture> add_texture(std::string name, TextureType type,
                                        std::optional<std::function<void()>> on_update = std::nullopt);
+
+    /// Compile the rendergraph
+    void compile();
+
+    /// Render the rendergraph
+    void render();
 
     /// Reset the entire rendergraph
     void reset();

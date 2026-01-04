@@ -31,6 +31,32 @@ enum class VulkanQueueType {
     QUEUE_TYPE_SPARSE_BINDING,
 };
 
+/// Debug label colors
+enum class DebugLabelColor {
+    RED,
+    BLUE,
+    GREEN,
+    YELLOW,
+    PURPLE,
+    ORANGE,
+    MAGENTA,
+    CYAN,
+    BROWN,
+    PINK,
+    LIME,
+    TURQUOISE,
+    BEIGE,
+    MAROON,
+    OLIVE,
+    NAVY,
+    TEAL,
+};
+
+/// Convert a DebugLabelColor to a rgba value
+/// @param color The debug label color
+/// @return The converted rgba values
+[[nodiscard]] std::array<float, 4> get_debug_label_color(const DebugLabelColor color);
+
 /// RAII wrapper class for `VkDevice`, `VkPhysicalDevice` and `VkQueue`.
 /// @note There is no method ``is_layer_supported`` in this wrapper class because device layers are deprecated.
 class Device {

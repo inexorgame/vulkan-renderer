@@ -19,9 +19,9 @@ namespace inexor::vulkan_renderer::wrapper::swapchains {
 // Using declaration
 using tools::VulkanException;
 
-Swapchain::Swapchain(const Device &device, const VkSurfaceKHR surface, const std::uint32_t width,
+Swapchain::Swapchain(const Device &device, std::string name, const VkSurfaceKHR surface, const std::uint32_t width,
                      const std::uint32_t height, const bool vsync_enabled)
-    : m_device(device), m_surface(surface), m_vsync_enabled(vsync_enabled) {
+    : m_device(device), m_surface(surface), m_name(std::move(name)), m_vsync_enabled(vsync_enabled) {
     if (vkCreateSwapchainKHR == nullptr) {
         throw InexorException("Error: Function pointer 'vkCreateSwapchainKHR' is not available!");
     }
@@ -37,6 +37,9 @@ Swapchain::Swapchain(const Device &device, const VkSurfaceKHR surface, const std
     if (vkDestroySwapchainKHR == nullptr) {
         throw InexorException("Error: Function pointer 'vkDestroySwapchainKHR' is not available!");
     }
+    if (m_name.empty()) {
+        throw InexorException("Error: Swapchain name invalid!");
+    }
     m_img_available = std::make_unique<Semaphore>(m_device, "m_img_available");
     setup_swapchain({width, height}, vsync_enabled);
 }
@@ -50,6 +53,7 @@ Swapchain::Swapchain(Swapchain &&other) noexcept : m_device(other.m_device) {
     m_current_extent = other.m_current_extent;
     m_img_available = std::exchange(other.m_img_available, nullptr);
     m_vsync_enabled = other.m_vsync_enabled;
+    m_name = std::move(other.m_name);
 }
 
 std::uint32_t Swapchain::acquire_next_image_index(const std::uint64_t timeout) {

@@ -17,6 +17,50 @@
 
 namespace inexor::vulkan_renderer::wrapper {
 
+/// Convert a DebugLabelColor to a rgba value
+/// @param color The debug label color
+/// @return The converted rgba values
+std::array<float, 4> get_debug_label_color(const DebugLabelColor color) {
+    switch (color) {
+    case DebugLabelColor::RED:
+        return {0.98f, 0.60f, 0.60f, 1.0f};
+    case DebugLabelColor::BLUE:
+        return {0.68f, 0.85f, 0.90f, 1.0f};
+    case DebugLabelColor::GREEN:
+        return {0.73f, 0.88f, 0.73f, 1.0f};
+    case DebugLabelColor::YELLOW:
+        return {0.98f, 0.98f, 0.70f, 1.0f};
+    case DebugLabelColor::PURPLE:
+        return {0.80f, 0.70f, 0.90f, 1.0f};
+    case DebugLabelColor::ORANGE:
+        return {0.98f, 0.75f, 0.53f, 1.0f};
+    case DebugLabelColor::MAGENTA:
+        return {0.96f, 0.60f, 0.76f, 1.0f};
+    case DebugLabelColor::CYAN:
+        return {0.70f, 0.98f, 0.98f, 1.0f};
+    case DebugLabelColor::BROWN:
+        return {0.82f, 0.70f, 0.55f, 1.0f};
+    case DebugLabelColor::PINK:
+        return {0.98f, 0.75f, 0.85f, 1.0f};
+    case DebugLabelColor::LIME:
+        return {0.80f, 0.98f, 0.60f, 1.0f};
+    case DebugLabelColor::TURQUOISE:
+        return {0.70f, 0.93f, 0.93f, 1.0f};
+    case DebugLabelColor::BEIGE:
+        return {0.96f, 0.96f, 0.86f, 1.0f};
+    case DebugLabelColor::MAROON:
+        return {0.76f, 0.50f, 0.50f, 1.0f};
+    case DebugLabelColor::OLIVE:
+        return {0.74f, 0.75f, 0.50f, 1.0f};
+    case DebugLabelColor::NAVY:
+        return {0.53f, 0.70f, 0.82f, 1.0f};
+    case DebugLabelColor::TEAL:
+        return {0.53f, 0.80f, 0.75f, 1.0f};
+    default:
+        return {0.0f, 0.0f, 0.0f, 1.0f}; // Default to opaque black if the color is not recognized
+    }
+}
+
 Device::Device(const Instance &inst, const VkSurfaceKHR surface, const VkPhysicalDevice desired_gpu,
                const VkPhysicalDeviceFeatures &required_features, const std::span<const char *> required_extensions)
     : m_enabled_features(required_features) {
