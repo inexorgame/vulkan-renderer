@@ -33,10 +33,6 @@ GpuTexture::GpuTexture(GpuTexture &&other) noexcept
     m_sampler = std::exchange(other.m_sampler, nullptr);
 }
 
-GpuTexture::~GpuTexture() {
-    vkDestroySampler(m_device.device(), m_sampler, nullptr);
-}
-
 void GpuTexture::create_texture(void *texture_data, const std::size_t texture_size) {
     const VkExtent2D extent{
         // Because stb_image stored the texture's width and height as a normal int, we need a cast here
@@ -96,12 +92,7 @@ void GpuTexture::create_texture_sampler() {
         .unnormalizedCoordinates = VK_FALSE,
     });
 
-    if (const auto result = vkCreateSampler(m_device.device(), &sampler_ci, nullptr, &m_sampler);
-        result != VK_SUCCESS) {
-        throw tools::VulkanException("Error: vkCreateSampler failed!", result, m_name);
-    }
-
-    m_device.set_debug_name(m_sampler, m_name);
+    m_sampler = std::make_unique<Sampler>(m_device, m_name, sampler_ci);
 }
 
 } // namespace inexor::vulkan_renderer::wrapper
