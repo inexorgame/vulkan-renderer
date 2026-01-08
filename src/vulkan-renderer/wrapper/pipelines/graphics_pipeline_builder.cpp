@@ -244,6 +244,13 @@ GraphicsPipelineBuilder &GraphicsPipelineBuilder::set_stencil_attachment_format(
 }
 
 GraphicsPipelineBuilder &
+GraphicsPipelineBuilder::set_descriptor_set_layout(const VkDescriptorSetLayout descriptor_set_layout) {
+    assert(descriptor_set_layout);
+    m_descriptor_set_layouts = {descriptor_set_layout};
+    return *this;
+}
+
+GraphicsPipelineBuilder &
 GraphicsPipelineBuilder::set_descriptor_set_layouts(std::vector<VkDescriptorSetLayout> descriptor_set_layouts) {
     assert(!descriptor_set_layouts.empty());
     m_descriptor_set_layouts = std::move(descriptor_set_layouts);

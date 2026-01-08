@@ -36,9 +36,9 @@ ImGUIOverlay::ImGUIOverlay(const wrapper::Device &device, const wrapper::Swapcha
     io.FontGlobalScale = m_scale;
 
     spdlog::trace("Loading ImGUI shaders");
-    m_vertex_shader = std::make_unique<wrapper::Shader>(m_device, VK_SHADER_STAGE_VERTEX_BIT, "ImGUI vertex shader",
+    m_vertex_shader = std::make_shared<wrapper::Shader>(m_device, VK_SHADER_STAGE_VERTEX_BIT, "ImGUI vertex shader",
                                                         "shaders/ui.vert.spv");
-    m_fragment_shader = std::make_unique<wrapper::Shader>(m_device, VK_SHADER_STAGE_FRAGMENT_BIT,
+    m_fragment_shader = std::make_shared<wrapper::Shader>(m_device, VK_SHADER_STAGE_FRAGMENT_BIT,
                                                           "ImGUI fragment shader", "shaders/ui.frag.spv");
 
     // Load font texture
@@ -117,6 +117,49 @@ ImGUIOverlay::ImGUIOverlay(const wrapper::Device &device, const wrapper::Swapcha
     // RENDERGRAPH2
     m_index_buffer2 = render_graph2->add_buffer("imgui indices", render_graph::BufferType::INDEX_BUFFER, [&]() {
         // @TODO: Update vertex buffer!
+    });
+
+    // RENDERGRAPH2
+    render_graph2->add_graphics_pipeline([&](GraphicsPipelineBuilder &builder) {
+        m_imgui_pipeline2 = builder
+                                .set_vertex_input_bindings({
+                                    {
+                                        .binding = 0,
+                                        .stride = sizeof(ImDrawVert),
+                                        .inputRate = VK_VERTEX_INPUT_RATE_VERTEX,
+                                    },
+                                })
+                                .set_vertex_input_attributes({
+                                    {
+                                        .location = 0,
+                                        .format = VK_FORMAT_R32G32_SFLOAT,
+                                        .offset = offsetof(ImDrawVert, pos),
+                                    },
+                                    {
+                                        .location = 1,
+                                        .format = VK_FORMAT_R32G32_SFLOAT,
+                                        .offset = offsetof(ImDrawVert, uv),
+                                    },
+                                    {
+                                        .location = 2,
+                                        .format = VK_FORMAT_R8G8B8A8_UNORM,
+                                        .offset = offsetof(ImDrawVert, col),
+                                    },
+                                })
+                                .add_default_color_blend_attachment()
+                                .add_color_attachment_format(m_swapchain.image_format())
+                                .set_dynamic_states({
+                                    VK_DYNAMIC_STATE_VIEWPORT,
+                                    VK_DYNAMIC_STATE_SCISSOR,
+                                })
+                                .set_scissor(m_swapchain.extent())
+                                .set_viewport(m_swapchain.extent())
+                                .add_shader(m_vertex_shader)
+                                .add_shader(m_fragment_shader)
+                                .set_descriptor_set_layout(m_descriptor_set_layout2)
+                                .add_push_constant_range(VK_SHADER_STAGE_VERTEX_BIT, sizeof(m_push_const_block))
+                                .build("ImGui");
+        return m_imgui_pipeline2;
     });
 
     m_index_buffer = render_graph->add<BufferResource>("imgui index buffer", BufferUsage::INDEX_BUFFER);

@@ -56,8 +56,8 @@ class ImGUIOverlay {
     GraphicsStage *m_stage{nullptr};
 
     std::unique_ptr<wrapper::GpuTexture> m_imgui_texture;
-    std::unique_ptr<wrapper::Shader> m_vertex_shader;
-    std::unique_ptr<wrapper::Shader> m_fragment_shader;
+    std::shared_ptr<wrapper::Shader> m_vertex_shader;
+    std::shared_ptr<wrapper::Shader> m_fragment_shader;
     std::unique_ptr<wrapper::descriptors::ResourceDescriptor> m_descriptor;
     std::vector<std::uint32_t> m_index_data;
     std::vector<ImDrawVert> m_vertex_data;

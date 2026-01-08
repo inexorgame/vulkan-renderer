@@ -109,7 +109,12 @@ void ExampleAppBase::setup_render_graph() {
                                          .offset = offsetof(OctreeVertex, color),
                                      },
                                  })
-                                 .build("Octree Pipeline");
+                                 .set_multisampling(VK_SAMPLE_COUNT_1_BIT)
+                                 .add_default_color_blend_attachment()
+                                 .add_color_attachment_format(m_back_buffer2.lock()->format())
+                                 .set_viewport(m_back_buffer2.lock()->extent())
+                                 .set_descriptor_set_layout(m_descriptor_set_layout2)
+                                 .build("Octree");
     });
 
     // RENDERGRAPH2
