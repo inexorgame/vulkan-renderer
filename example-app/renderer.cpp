@@ -4,6 +4,8 @@
 #include "inexor/vulkan-renderer/wrapper/pipelines/graphics_pipeline_builder.hpp"
 #include "standard_ubo.hpp"
 
+#include <cstddef>
+
 namespace inexor::example_app {
 
 // Using declaration
@@ -80,9 +82,34 @@ void ExampleAppBase::setup_render_graph() {
         });
 
     // RENDERGRAPH2
+    m_vertex_shader2 =
+        std::make_shared<Shader>(*m_device, VK_SHADER_STAGE_VERTEX_BIT, "Octree", "shaders/main.vert.spv");
+    m_fragment_shader2 =
+        std::make_shared<Shader>(*m_device, VK_SHADER_STAGE_FRAGMENT_BIT, "Octree", "shaders/main.frag.spv");
+
+    // RENDERGRAPH2
     m_render_graph2->add_graphics_pipeline([&](GraphicsPipelineBuilder &builder) {
         // RENDERGRAPH2
-        m_octree_pipeline2 = builder.build("Octree Pipeline");
+        m_octree_pipeline2 = builder.add_shader(m_vertex_shader2)
+                                 .add_shader(m_fragment_shader2)
+                                 .set_vertex_input_bindings({{
+                                     .binding = 0,
+                                     .stride = sizeof(OctreeVertex),
+                                     .inputRate = VK_VERTEX_INPUT_RATE_VERTEX,
+                                 }})
+                                 .set_vertex_input_attributes({
+                                     {
+                                         .location = 0,
+                                         .format = VK_FORMAT_R32G32B32_SFLOAT,
+                                         .offset = offsetof(OctreeVertex, position),
+                                     },
+                                     {
+                                         .location = 1,
+                                         .format = VK_FORMAT_R32G32B32_SFLOAT,
+                                         .offset = offsetof(OctreeVertex, color),
+                                     },
+                                 })
+                                 .build("Octree Pipeline");
     });
 
     // RENDERGRAPH2

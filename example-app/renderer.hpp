@@ -87,6 +87,12 @@ using inexor::vulkan_renderer::wrapper::windows::WindowSurface;
 
 namespace inexor::example_app {
 
+/// Octree vertex struct
+struct OctreeVertex {
+    glm::vec3 position;
+    glm::vec3 color;
+};
+
 /// The base class of the Inexor vulkan-renderer example app.
 class ExampleAppBase {
 protected:
@@ -110,6 +116,8 @@ protected:
     VkDescriptorSet m_descriptor_set2{VK_NULL_HANDLE};
     std::weak_ptr<GraphicsPipeline> m_octree_pipeline2;
     std::shared_ptr<PipelineCache> m_pipeline_cache2;
+    std::shared_ptr<Shader> m_vertex_shader2;
+    std::shared_ptr<Shader> m_fragment_shader2;
 
     void setup_render_graph();
     void recreate_swapchain();

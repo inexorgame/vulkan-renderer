@@ -198,6 +198,15 @@ GraphicsPipelineBuilder &GraphicsPipelineBuilder::add_push_constant_range(const 
     return *this;
 }
 
+GraphicsPipelineBuilder &GraphicsPipelineBuilder::add_shader(std::weak_ptr<Shader> shader) {
+    m_shader_stages.emplace_back(wrapper::make_info<VkPipelineShaderStageCreateInfo>({
+        .stage = shader.lock()->shader_stage(),
+        .module = shader.lock()->shader_module(),
+        .pName = shader.lock()->name().c_str(),
+    }));
+    return *this;
+}
+
 GraphicsPipelineBuilder &
 GraphicsPipelineBuilder::set_color_blend(const VkPipelineColorBlendStateCreateInfo &color_blend) {
     m_color_blend_sci = color_blend;

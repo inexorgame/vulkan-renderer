@@ -133,7 +133,6 @@ ImGUIOverlay::ImGUIOverlay(const wrapper::Device &device, const wrapper::Swapcha
     m_stage->bind_buffer(m_vertex_buffer, 0);
     m_stage->uses_shader(*m_vertex_shader);
     m_stage->uses_shader(*m_fragment_shader);
-
     m_stage->add_descriptor_layout(m_descriptor->descriptor_set_layout());
 
     // Setup push constant range for global translation and scale.

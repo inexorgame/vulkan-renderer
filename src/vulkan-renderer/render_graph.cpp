@@ -40,7 +40,7 @@ void GraphicsStage::bind_buffer(const BufferResource *buffer, const std::uint32_
 
 void GraphicsStage::uses_shader(const wrapper::Shader &shader) {
     m_shaders.push_back(wrapper::make_info<VkPipelineShaderStageCreateInfo>({
-        .stage = shader.type(),
+        .stage = shader.shader_stage(),
         .module = shader.shader_module(),
         .pName = shader.entry_point().c_str(),
     }));

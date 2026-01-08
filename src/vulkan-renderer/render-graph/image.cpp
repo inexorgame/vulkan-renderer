@@ -4,6 +4,8 @@
 #include "inexor/vulkan-renderer/wrapper/device.hpp"
 #include "inexor/vulkan-renderer/wrapper/sampler.hpp"
 
+#include <utility>
+
 using inexor::vulkan_renderer::tools::VulkanException;
 
 namespace inexor::vulkan_renderer::render_graph {

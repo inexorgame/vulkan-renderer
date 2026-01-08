@@ -151,6 +151,11 @@ public:
     [[nodiscard]] GraphicsPipelineBuilder &add_push_constant_range(VkShaderStageFlags shader_stage, std::uint32_t size,
                                                                    std::uint32_t offset = 0);
 
+    ///
+    /// @param shader
+    /// @return
+    [[nodiscard]] GraphicsPipelineBuilder &add_shader(std::weak_ptr<Shader> shader);
+
     /// Build the graphics pipeline with specified pipeline create flags
     /// @param name The debug name of the graphics pipeline
     /// @return The unique pointer instance of ``GraphicsPipeline`` that was created
