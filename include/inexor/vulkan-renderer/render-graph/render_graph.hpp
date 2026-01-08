@@ -9,12 +9,13 @@
 #include "inexor/vulkan-renderer/wrapper/descriptors/descriptor_set_layout_builder.hpp"
 #include "inexor/vulkan-renderer/wrapper/descriptors/write_descriptor_set_builder.hpp"
 #include "inexor/vulkan-renderer/wrapper/device.hpp"
+#include "inexor/vulkan-renderer/wrapper/pipelines/graphics_pipeline_builder.hpp"
+#include "inexor/vulkan-renderer/wrapper/pipelines/pipeline_cache.hpp"
 
 #include <functional>
 #include <memory>
 #include <optional>
 #include <string>
-#include <utility>
 #include <vector>
 
 namespace inexor::vulkan_renderer::wrapper {
@@ -25,6 +26,8 @@ class Device;
 namespace inexor::vulkan_renderer::render_graph {
 
 /// Using declaration
+using inexor::vulkan_renderer::wrapper::pipelines::GraphicsPipelineBuilder;
+using inexor::vulkan_renderer::wrapper::pipelines::PipelineCache;
 using wrapper::DebugLabelColor;
 using wrapper::descriptors::DescriptorSetAllocator;
 using wrapper::descriptors::DescriptorSetLayoutBuilder;
@@ -42,6 +45,8 @@ private:
     std::vector<std::shared_ptr<GraphicsPass>> m_graphics_passes;
     /// An instance of the graphics pass builder
     GraphicsPassBuilder m_graphics_pass_builder{};
+    /// An instance of the graphics pipeline builder
+    GraphicsPipelineBuilder m_graphics_pipeline_builder;
     /// An instance of the descriptor set allocator
     DescriptorSetAllocator m_descriptor_set_allocator;
     /// An instance of the write descriptor set builder
@@ -64,10 +69,16 @@ private:
     /// All write descriptor sets will be stored in here so we can have one batched call to vkUpdateDescriptorSets
     std::vector<VkWriteDescriptorSet> m_write_descriptor_sets;
 
+    ///
+    using OnCreateGraphicsPipeline = std::function<void(GraphicsPipelineBuilder &)>;
+    ///
+    std::vector<OnCreateGraphicsPipeline> m_graphics_pipeline_create_functions;
+
 public:
     /// Default constructor
     /// @param device The device wrapper
-    RenderGraph(const Device &device);
+    /// @param pipeline_cache The Vulkan pipeline cache
+    RenderGraph(const Device &device, const PipelineCache &pipeline_cache);
 
     /// Add a buffer to the rendergraph
     /// @param name The buffer name
@@ -80,6 +91,10 @@ public:
     /// @param graphics_pass The graphics pass which was created
     /// @return A weak pointer to the graphics pass which was created
     [[nodiscard]] std::weak_ptr<GraphicsPass> add_graphics_pass(std::shared_ptr<GraphicsPass> graphics_pass);
+
+    /// Add a graphics pipeline to rendergraph
+    /// @param on_create_graphics_pipeline The graphics pipe
+    void add_graphics_pipeline(OnCreateGraphicsPipeline on_create_graphics_pipeline);
 
     /// Add a resource descriptor to the rendergraph
     /// @param on_build_descriptor_set_layout
@@ -110,8 +125,14 @@ public:
     /// Compile the rendergraph
     void compile();
 
+    /// @NOTE This get method cannot be const because a builder modifies its data when being used!
     [[nodiscard]] GraphicsPassBuilder &get_graphics_pass_builder() {
         return m_graphics_pass_builder;
+    }
+
+    /// @NOTE This get method cannot be const because a builder modifies its data when being used!
+    [[nodiscard]] GraphicsPipelineBuilder &get_graphics_pipeline_builder() {
+        return m_graphics_pipeline_builder;
     }
 
     /// Render the rendergraph

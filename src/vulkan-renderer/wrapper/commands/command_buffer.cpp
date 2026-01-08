@@ -89,6 +89,11 @@ const CommandBuffer &CommandBuffer::bind_index_buffer(const VkBuffer buf, const 
     return *this;
 }
 
+const CommandBuffer &CommandBuffer::bind_pipeline(
+    std::weak_ptr<inexor::vulkan_renderer::wrapper::pipelines::GraphicsPipeline> pipeline) const {
+    return bind_pipeline(pipeline.lock()->pipeline());
+}
+
 const CommandBuffer &CommandBuffer::bind_pipeline(const VkPipeline pipeline,
                                                   const VkPipelineBindPoint bind_point) const {
     assert(pipeline);

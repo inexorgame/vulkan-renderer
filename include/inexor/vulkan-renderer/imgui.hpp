@@ -41,14 +41,15 @@ class ImGUIOverlay {
     std::weak_ptr<inexor::vulkan_renderer::render_graph::Buffer> m_vertex_buffer2;
     std::weak_ptr<inexor::vulkan_renderer::render_graph::Buffer> m_index_buffer2;
     std::weak_ptr<inexor::vulkan_renderer::render_graph::GraphicsPass> m_imgui_pass2;
-    VkDescriptorSetLayout m_descriptor_set_layout2;
-    VkDescriptorSet m_descriptor_set2;
+    VkDescriptorSetLayout m_descriptor_set_layout2{VK_NULL_HANDLE};
+    VkDescriptorSet m_descriptor_set2{VK_NULL_HANDLE};
     std::weak_ptr<inexor::vulkan_renderer::render_graph::Texture> m_imgui_texture2;
     bool m_imgui_font_texture_initialized2{false};
     VkDeviceSize m_upload_size{0};
     unsigned char *m_font_texture_data{};
     int m_font_texture_width{0};
     int m_font_texture_height{0};
+    std::shared_ptr<GraphicsPipeline> m_imgui_pipeline2;
 
     BufferResource *m_index_buffer{nullptr};
     BufferResource *m_vertex_buffer{nullptr};

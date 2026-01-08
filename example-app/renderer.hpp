@@ -11,6 +11,7 @@
 #include "inexor/vulkan-renderer/wrapper/instance.hpp"
 #include "inexor/vulkan-renderer/wrapper/make_info.hpp"
 #include "inexor/vulkan-renderer/wrapper/pipelines/graphics_pipeline.hpp"
+#include "inexor/vulkan-renderer/wrapper/pipelines/pipeline_cache.hpp"
 #include "inexor/vulkan-renderer/wrapper/shader.hpp"
 #include "inexor/vulkan-renderer/wrapper/swapchains/swapchain.hpp"
 #include "inexor/vulkan-renderer/wrapper/uniform_buffer.hpp"
@@ -78,6 +79,7 @@ using inexor::vulkan_renderer::wrapper::commands::CommandBuffer;
 using inexor::vulkan_renderer::wrapper::descriptors::DescriptorBuilder;
 using inexor::vulkan_renderer::wrapper::descriptors::ResourceDescriptor;
 using inexor::vulkan_renderer::wrapper::pipelines::GraphicsPipeline;
+using inexor::vulkan_renderer::wrapper::pipelines::PipelineCache;
 using inexor::vulkan_renderer::wrapper::swapchains::Swapchain;
 using inexor::vulkan_renderer::wrapper::windows::Mode;
 using inexor::vulkan_renderer::wrapper::windows::Window;
@@ -107,6 +109,7 @@ protected:
     VkDescriptorSetLayout m_descriptor_set_layout2{VK_NULL_HANDLE};
     VkDescriptorSet m_descriptor_set2{VK_NULL_HANDLE};
     std::weak_ptr<GraphicsPipeline> m_octree_pipeline2;
+    std::shared_ptr<PipelineCache> m_pipeline_cache2;
 
     void setup_render_graph();
     void recreate_swapchain();

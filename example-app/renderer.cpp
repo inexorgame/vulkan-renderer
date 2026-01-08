@@ -1,9 +1,13 @@
 ﻿#include "renderer.hpp"
 
 #include "inexor/vulkan-renderer/wrapper/commands/command_buffer.hpp"
+#include "inexor/vulkan-renderer/wrapper/pipelines/graphics_pipeline_builder.hpp"
 #include "standard_ubo.hpp"
 
 namespace inexor::example_app {
+
+// Using declaration
+using inexor::vulkan_renderer::wrapper::pipelines::GraphicsPipelineBuilder;
 
 void ExampleAppBase::setup_render_graph() {
     m_back_buffer = m_render_graph->add<TextureResource>("back buffer", TextureUsage::BACK_BUFFER);
@@ -76,13 +80,21 @@ void ExampleAppBase::setup_render_graph() {
         });
 
     // RENDERGRAPH2
+    m_render_graph2->add_graphics_pipeline([&](GraphicsPipelineBuilder &builder) {
+        // RENDERGRAPH2
+        m_octree_pipeline2 = builder.build("Octree Pipeline");
+    });
+
+    // RENDERGRAPH2
     m_graphics_pass2 = m_render_graph2->add_graphics_pass(
+        // @TODO bind pipeline!
         m_render_graph2->get_graphics_pass_builder()
             .writes_to(m_back_buffer2)
             .writes_to(m_depth_buffer2)
             .set_on_record([&](const CommandBuffer &cmd_buf) {
-                cmd_buf.bind_descriptor_set(m_descriptor_set2, m_octree_pipeline2);
-                cmd_buf.draw_indexed(static_cast<std::uint32_t>(m_octree_indices.size()));
+                cmd_buf.bind_pipeline(m_octree_pipeline2)
+                    .bind_descriptor_set(m_descriptor_set2, m_octree_pipeline2)
+                    .draw_indexed(static_cast<std::uint32_t>(m_octree_indices.size()));
             })
             .build("Octree Pass", vulkan_renderer::render_graph::DebugLabelColor::GREEN));
 
@@ -124,7 +136,8 @@ void ExampleAppBase::recreate_swapchain() {
         m_vsync_enabled);
     m_render_graph = std::make_unique<RenderGraph>(*m_device, *m_swapchain);
     // RENDERGRAPH2
-    m_render_graph2 = std::make_unique<inexor::vulkan_renderer::render_graph::RenderGraph>(*m_device);
+    m_render_graph2 =
+        std::make_unique<inexor::vulkan_renderer::render_graph::RenderGraph>(*m_device, *m_pipeline_cache2);
 
     setup_render_graph();
 

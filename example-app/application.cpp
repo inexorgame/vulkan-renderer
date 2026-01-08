@@ -408,8 +408,10 @@ ExampleApp::ExampleApp(int argc, char **argv) {
 
     m_window->show();
 
+    m_pipeline_cache2 = std::make_unique<PipelineCache>(*m_device);
+
     // RENDERGRAPH2
-    m_render_graph2 = std::make_unique<vulkan_renderer::render_graph::RenderGraph>(*m_device);
+    m_render_graph2 = std::make_unique<vulkan_renderer::render_graph::RenderGraph>(*m_device, *m_pipeline_cache2);
 
     recreate_swapchain();
 }

@@ -1,9 +1,12 @@
 #include "inexor/vulkan-renderer/render-graph/render_graph.hpp"
 
+#include <utility>
+
 namespace inexor::vulkan_renderer::render_graph {
 
-RenderGraph::RenderGraph(const Device &device)
-    : m_device(device), m_descriptor_set_allocator(device), m_write_descriptor_set_builder(device) {}
+RenderGraph::RenderGraph(const Device &device, const PipelineCache &pipeline_cache)
+    : m_device(device), m_descriptor_set_allocator(device), m_write_descriptor_set_builder(device),
+      m_graphics_pipeline_builder(device, pipeline_cache) {}
 
 std::weak_ptr<Buffer> RenderGraph::add_buffer(std::string name, const BufferType type,
                                               std::function<void()> on_update) {
@@ -12,6 +15,10 @@ std::weak_ptr<Buffer> RenderGraph::add_buffer(std::string name, const BufferType
 
 std::weak_ptr<GraphicsPass> RenderGraph::add_graphics_pass(std::shared_ptr<GraphicsPass> graphics_pass) {
     return m_graphics_passes.emplace_back(std::move(graphics_pass));
+}
+
+void RenderGraph::add_graphics_pipeline(OnCreateGraphicsPipeline on_create_graphics_pipeline) {
+    m_graphics_pipeline_create_functions.emplace_back(std::move(on_create_graphics_pipeline));
 }
 
 void RenderGraph::add_resource_descriptor(OnBuildDescriptorSetLayout on_build_descriptor_set_layout,
