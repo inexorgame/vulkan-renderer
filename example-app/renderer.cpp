@@ -12,45 +12,46 @@ namespace inexor::example_app {
 using inexor::vulkan_renderer::wrapper::pipelines::GraphicsPipelineBuilder;
 
 void ExampleAppBase::setup_render_graph() {
-    m_back_buffer = m_render_graph->add<TextureResource>("back buffer", TextureUsage::BACK_BUFFER);
-    m_back_buffer->set_format(m_swapchain->image_format());
-
-    auto *depth_buffer = m_render_graph->add<TextureResource>("depth buffer", TextureUsage::DEPTH_STENCIL_BUFFER);
-    depth_buffer->set_format(VK_FORMAT_D32_SFLOAT_S8_UINT);
-
-    m_index_buffer = m_render_graph->add<BufferResource>("index buffer", BufferUsage::INDEX_BUFFER);
-    m_index_buffer->upload_data(m_octree_indices);
-
-    m_vertex_buffer = m_render_graph->add<BufferResource>("vertex buffer", BufferUsage::VERTEX_BUFFER);
-    m_vertex_buffer->add_vertex_attribute(VK_FORMAT_R32G32B32_SFLOAT, offsetof(OctreeGpuVertex, position)); // NOLINT
-    m_vertex_buffer->add_vertex_attribute(VK_FORMAT_R32G32B32_SFLOAT, offsetof(OctreeGpuVertex, color));    // NOLINT
-    m_vertex_buffer->upload_data(m_octree_vertices);
-
     // RENDERGRAPH2
     // @TODO Where to place this? DO we need this here?
     m_render_graph2->reset();
-    // RENDERGRAPH2
-    m_vertex_buffer2 =
-        m_render_graph2->add_buffer("vertex buffer", vulkan_renderer::render_graph::BufferType::VERTEX_BUFFER, [&]() {
-            // @TODO RENDERGRAPH2 Update the vertex buffer here
-        });
-    // RENDERGRAPH2
-    m_index_buffer2 =
-        m_render_graph2->add_buffer("index buffer", vulkan_renderer::render_graph::BufferType::INDEX_BUFFER, [&]() {
-            // @TODO RENDERGRAPH2 Update the index buffer here
-        });
+
+    m_back_buffer = m_render_graph->add<TextureResource>("back buffer", TextureUsage::BACK_BUFFER);
+    m_back_buffer->set_format(m_swapchain->image_format());
     // RENDERGRAPH2
     m_back_buffer2 = m_render_graph2->add_texture(
         "back buffer", vulkan_renderer::render_graph::TextureUsage::COLOR_ATTACHMENT, m_swapchain->image_format(),
         m_swapchain->extent().width, m_swapchain->extent().height, 1, VK_SAMPLE_COUNT_1_BIT, [&]() {
             //
         });
+
+    auto *depth_buffer = m_render_graph->add<TextureResource>("depth buffer", TextureUsage::DEPTH_STENCIL_BUFFER);
+    depth_buffer->set_format(VK_FORMAT_D32_SFLOAT_S8_UINT);
     // RENDERGRAPH2
     m_depth_buffer2 = m_render_graph2->add_texture(
         "depth buffer", vulkan_renderer::render_graph::TextureUsage::DEPTH_ATTACHMENT, VK_FORMAT_D32_SFLOAT_S8_UINT,
         m_swapchain->extent().width, m_swapchain->extent().height, 1, VK_SAMPLE_COUNT_1_BIT, [&]() {
             //
         });
+
+    m_index_buffer = m_render_graph->add<BufferResource>("index buffer", BufferUsage::INDEX_BUFFER);
+    m_index_buffer->upload_data(m_octree_indices);
+    // RENDERGRAPH2
+    m_index_buffer2 =
+        m_render_graph2->add_buffer("index buffer", vulkan_renderer::render_graph::BufferType::INDEX_BUFFER, [&]() {
+            // @TODO RENDERGRAPH2 Update the index buffer here
+        });
+
+    m_vertex_buffer = m_render_graph->add<BufferResource>("vertex buffer", BufferUsage::VERTEX_BUFFER);
+    m_vertex_buffer->add_vertex_attribute(VK_FORMAT_R32G32B32_SFLOAT, offsetof(OctreeGpuVertex, position)); // NOLINT
+    m_vertex_buffer->add_vertex_attribute(VK_FORMAT_R32G32B32_SFLOAT, offsetof(OctreeGpuVertex, color));    // NOLINT
+    m_vertex_buffer->upload_data(m_octree_vertices);
+    // RENDERGRAPH2
+    m_vertex_buffer2 =
+        m_render_graph2->add_buffer("vertex buffer", vulkan_renderer::render_graph::BufferType::VERTEX_BUFFER, [&]() {
+            // @TODO RENDERGRAPH2 Update the vertex buffer here
+        });
+
     // RENDERGRAPH2
     m_graphics_pass2 = m_render_graph2->get_graphics_pass_builder()
                            .writes_to(m_back_buffer2)
@@ -81,6 +82,7 @@ void ExampleAppBase::setup_render_graph() {
             return builder.add(m_descriptor_set2, m_mvp_matrix2).build();
         });
 
+    // @TODO We don't need to re-load the shaders when recreating swapchain!
     // RENDERGRAPH2
     m_vertex_shader2 =
         std::make_shared<Shader>(*m_device, VK_SHADER_STAGE_VERTEX_BIT, "Octree", "shaders/main.vert.spv");
@@ -184,13 +186,6 @@ void ExampleAppBase::recreate_swapchain() {
 
     m_imgui_overlay.reset();
 
-    /*
-        ImGUIOverlay(const Device &device, const Swapchain &swapchain, std::weak_ptr<Swapchain> swapchain2,
-                 RenderGraph *render_graph, TextureResource *back_buffer, std::weak_ptr<GraphicsPass> previous_pass,
-                 std::shared_ptr<render_graph::RenderGraph> render_graph2,
-                 std::function<void()> on_update_user_imgui_data);
-    */
-
     // RENDERGRAPH2
     m_imgui_overlay = std::make_unique<ImGUIOverlay>(*m_device, *m_swapchain, m_swapchain2, m_render_graph.get(),
                                                      m_back_buffer, m_graphics_pass2, m_render_graph2, []() {
@@ -198,6 +193,8 @@ void ExampleAppBase::recreate_swapchain() {
                                                          // TODO: Implement me!
                                                      });
     m_render_graph->compile(m_back_buffer);
+
+    // RENDERGRAPH2
     m_render_graph2->compile();
 }
 
@@ -232,9 +229,6 @@ void ExampleAppBase::render_frame() {
 
 ExampleAppBase::~ExampleAppBase() {
     spdlog::trace("Shutting down vulkan renderer");
-    if (m_device == nullptr) {
-        return;
-    }
     m_device->wait_idle();
 }
 

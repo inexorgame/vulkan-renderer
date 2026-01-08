@@ -7,7 +7,10 @@
 
 namespace inexor::vulkan_renderer::input {
 
-Input::Input() = default;
+Input::Input() {
+    m_gamepad_data = std::make_unique<GamepadInputData>();
+    m_kbm_data = std::make_unique<KeyboardMouseInputData>();
+}
 
 Input ::~Input() = default;
 

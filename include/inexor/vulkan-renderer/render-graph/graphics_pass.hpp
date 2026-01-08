@@ -2,7 +2,6 @@
 
 #include <volk.h>
 
-#include "inexor/vulkan-renderer/render-graph/buffer.hpp"
 #include "inexor/vulkan-renderer/render-graph/texture.hpp"
 #include "inexor/vulkan-renderer/wrapper/descriptors/descriptor_set_layout.hpp"
 #include "inexor/vulkan-renderer/wrapper/device.hpp"

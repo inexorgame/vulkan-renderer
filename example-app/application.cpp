@@ -413,6 +413,7 @@ ExampleApp::ExampleApp(int argc, char **argv) {
 
     m_window->show();
 
+    // RENDERGRAPH2
     m_pipeline_cache2 = std::make_unique<PipelineCache>(*m_device);
 
     // RENDERGRAPH2
