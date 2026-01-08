@@ -25,8 +25,9 @@ namespace inexor::vulkan_renderer::wrapper::commands {
 using wrapper::Device;
 using wrapper::synchronization::Fence;
 
-/// @brief RAII wrapper class for VkCommandBuffer.
-/// @todo Make trivially copyable (this class doesn't really "own" the command buffer, more just an OOP wrapper).
+/// RAII wrapper class for VkCommandBuffer.
+/// @TODO Switch to taking in OOP wrappers when we have them (e.g. bind_vertex_buffers takes in a VertexBuffer)
+/// @TODO Make trivially copyable (this class doesn't really "own" the command buffer, more just an OOP wrapper).
 class CommandBuffer {
     VkCommandBuffer m_command_buffer{VK_NULL_HANDLE};
     const Device &m_device;
@@ -356,9 +357,6 @@ public:
         return push_constants(layout, stage, sizeof(data), &data, offset);
     }
 
-    // Graphics commands
-    // TODO(): Switch to taking in OOP wrappers when we have them (e.g. bind_vertex_buffers takes in a VertexBuffer)
-
     [[nodiscard]] auto cmd_buffer() const {
         return m_command_buffer;
     }
@@ -369,6 +367,9 @@ public:
 
     /// Call the reset method of the Fence member
     const CommandBuffer &reset_fence() const;
+
+    /// Call vkCmdSetScissor
+    const CommandBuffer &set_scissor(const VkRect2D scissor) const;
 
     /// Call vkQueueSubmit
     /// @param submit_infos The submit infos

@@ -8,7 +8,7 @@
 namespace inexor::vulkan_renderer {
 
 ImGUIOverlay::ImGUIOverlay(const wrapper::Device &device, const wrapper::Swapchain &swapchain,
-                           RenderGraph *render_graph, TextureResource *back_buffer,
+                           std::weak_ptr<Swapchain> swapchain2, RenderGraph *render_graph, TextureResource *back_buffer,
                            std::shared_ptr<render_graph::RenderGraph> render_graph2)
     : m_device(device), m_swapchain(swapchain) {
     spdlog::trace("Creating ImGUI context");
@@ -159,8 +159,59 @@ ImGUIOverlay::ImGUIOverlay(const wrapper::Device &device, const wrapper::Swapcha
                                 .set_descriptor_set_layout(m_descriptor_set_layout2)
                                 .add_push_constant_range(VK_SHADER_STAGE_VERTEX_BIT, sizeof(m_push_const_block))
                                 .build("ImGui");
+        // Return the pipeline which was just created
         return m_imgui_pipeline2;
     });
+
+    // RENDERGRAPH2
+    m_imgui_pass2 = render_graph2->add_graphics_pass(
+        render_graph2->get_graphics_pass_builder()
+            .writes_to(swapchain2)
+            .conditionally_reads_from(m_previous_pass, !m_previous_pass.expired())
+            .set_on_record([&](const wrapper::commands::CommandBuffer &cmd_buf) {
+                ImDrawData *draw_data = ImGui::GetDrawData();
+                if (draw_data == nullptr || draw_data->TotalIdxCount == 0 || draw_data->TotalVtxCount == 0) {
+                    m_on_update_user_imgui_data();
+                    return;
+                }
+                const ImGuiIO &io = ImGui::GetIO();
+                m_push_const_block.scale = glm::vec2(2.0f / io.DisplaySize.x, 2.0f / io.DisplaySize.y);
+
+                cmd_buf.bind_pipeline(m_imgui_pipeline2)
+                    .bind_descriptor_set(m_descriptor_set2, m_imgui_pipeline2)
+                    .push_constant(m_imgui_pipeline2, m_push_const_block, VK_SHADER_STAGE_VERTEX_BIT)
+                    .bind_vertex_buffer(m_vertex_buffer)
+                    .bind_index_buffer(m_index_buffer)
+                    .set_viewport({
+                        .width = ImGui::GetIO().DisplaySize.x,
+                        .height = ImGui::GetIO().DisplaySize.y,
+                        .minDepth = 0.0f,
+                        .maxDepth = 1.0f,
+                    });
+
+                std::uint32_t index_offset = 0;
+                std::int32_t vertex_offset = 0;
+                for (std::size_t i = 0; i < draw_data->CmdListsCount; i++) {
+                    const ImDrawList *cmd_list = draw_data->CmdLists[i];
+                    for (std::int32_t j = 0; j < cmd_list->CmdBuffer.Size; j++) {
+                        const ImDrawCmd &draw_cmd = cmd_list->CmdBuffer[j];
+                        cmd_buf.set_scissor({
+                            .offset{
+                                .x = std::max(static_cast<int32_t>(draw_cmd.ClipRect.x), 0),
+                                .y = std::max(static_cast<int32_t>(draw_cmd.ClipRect.y), 0),
+                            },
+                            .extent{
+                                .width = static_cast<uint32_t>(draw_cmd.ClipRect.z - draw_cmd.ClipRect.x),
+                                .height = static_cast<uint32_t>(draw_cmd.ClipRect.w - draw_cmd.ClipRect.y),
+                            },
+                        });
+                        cmd_buf.draw_indexed(draw_cmd.ElemCount, 1, index_offset, vertex_offset);
+                        index_offset += draw_cmd.ElemCount;
+                    }
+                    vertex_offset += cmd_list->VtxBuffer.Size;
+                }
+            })
+            .build("ImGui", render_graph::DebugLabelColor::BLUE));
 
     m_index_buffer = render_graph->add<BufferResource>("imgui index buffer", BufferUsage::INDEX_BUFFER);
     m_vertex_buffer = render_graph->add<BufferResource>("imgui vertex buffer", BufferUsage::VERTEX_BUFFER);

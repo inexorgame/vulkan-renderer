@@ -71,11 +71,13 @@ public:
     /// @brief Construct a new ImGUI overlay.
     /// @param device A reference to the device wrapper
     /// @param swapchain A reference to the swapchain
+    ///
     /// @param render_graph A pointer to the render graph
     /// @param back_buffer A pointer to the target of the ImGUI rendering
     /// @param render_graph2
-    ImGUIOverlay(const Device &device, const Swapchain &swapchain, RenderGraph *render_graph,
-                 TextureResource *back_buffer, std::shared_ptr<render_graph::RenderGraph> render_graph2);
+    ImGUIOverlay(const Device &device, const Swapchain &swapchain, std::weak_ptr<Swapchain> swapchain2,
+                 RenderGraph *render_graph, TextureResource *back_buffer,
+                 std::shared_ptr<render_graph::RenderGraph> render_graph2);
     ImGUIOverlay(const ImGUIOverlay &) = delete;
     ImGUIOverlay(ImGUIOverlay &&) = delete;
     ~ImGUIOverlay();

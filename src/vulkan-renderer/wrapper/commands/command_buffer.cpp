@@ -310,6 +310,11 @@ const CommandBuffer &CommandBuffer::reset_fence() const {
     return *this;
 }
 
+const CommandBuffer &CommandBuffer::set_scissor(const VkRect2D scissor) const {
+    vkCmdSetScissor(m_command_buffer, 0, 1, &scissor);
+    return *this;
+}
+
 const CommandBuffer &CommandBuffer::submit(const std::span<const VkSubmitInfo> submit_infos) const {
     assert(!submit_infos.empty());
     end_command_buffer();
