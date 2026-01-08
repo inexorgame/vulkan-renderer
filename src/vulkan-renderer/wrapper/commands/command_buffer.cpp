@@ -82,6 +82,20 @@ const CommandBuffer &CommandBuffer::bind_descriptor_sets(const std::span<const V
     return *this;
 }
 
+const CommandBuffer &
+CommandBuffer::bind_index_buffer(const std::weak_ptr<inexor::vulkan_renderer::render_graph::Buffer> buffer,
+                                 const VkIndexType index_type, const VkDeviceSize offset) const {
+    if (buffer.expired()) {
+        throw InexorException("Error: Parameter 'buffer' is an invalid pointer!");
+    }
+    if (buffer.lock()->type() != inexor::vulkan_renderer::render_graph::BufferType::INDEX_BUFFER) {
+        throw InexorException("Error: Rendergraph buffer resource " + buffer.lock()->name() +
+                              " is not an index buffer!");
+    }
+    vkCmdBindIndexBuffer(m_command_buffer, buffer.lock()->buffer(), offset, index_type);
+    return *this;
+}
+
 const CommandBuffer &CommandBuffer::bind_index_buffer(const VkBuffer buf, const VkIndexType index_type,
                                                       const VkDeviceSize offset) const {
     assert(buf);
@@ -335,6 +349,11 @@ const CommandBuffer &CommandBuffer::submit() const {
         .commandBufferCount = 1,
         .pCommandBuffers = &m_command_buffer,
     }));
+}
+
+const CommandBuffer &CommandBuffer::set_viewport(const VkViewport viewport) const {
+    vkCmdSetViewport(m_command_buffer, 0, 1, &viewport);
+    return *this;
 }
 
 const CommandBuffer &CommandBuffer::submit_and_wait(const std::span<const VkSubmitInfo> submit_infos) const {

@@ -61,8 +61,24 @@ public:
     Buffer &operator=(const Buffer &) = delete;
     Buffer &operator=(Buffer &&) = delete;
 
+    [[nodiscard]] auto buffer() const {
+        return m_buffer;
+    }
+
+    [[nodiscard]] const auto *buffer_address() const {
+        return &m_buffer;
+    }
+
     [[nodiscard]] const auto *descriptor_buffer_info() const {
         return &m_descriptor_buffer_info;
+    }
+
+    [[nodiscard]] auto name() const {
+        return m_name;
+    }
+
+    [[nodiscard]] auto type() const {
+        return m_type;
     }
 };
 

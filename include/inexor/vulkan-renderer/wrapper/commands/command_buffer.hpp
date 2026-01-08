@@ -1,5 +1,7 @@
 #pragma once
 
+#include "inexor/vulkan-renderer/render-graph/buffer.hpp"
+#include "inexor/vulkan-renderer/tools/exception.hpp"
 #include "inexor/vulkan-renderer/wrapper/gpu_memory_buffer.hpp"
 #include "inexor/vulkan-renderer/wrapper/pipelines/graphics_pipeline.hpp"
 #include "inexor/vulkan-renderer/wrapper/synchronization/fence.hpp"
@@ -22,6 +24,7 @@ class Fence;
 namespace inexor::vulkan_renderer::wrapper::commands {
 
 // Using declarations
+using tools::InexorException;
 using wrapper::Device;
 using wrapper::synchronization::Fence;
 
@@ -134,6 +137,15 @@ public:
                                               std::span<const std::uint32_t> dyn_offsets = {}) const;
 
     /// Call vkCmdBindIndexBuffer
+    /// @param buffer The index buffer to bind
+    /// @param index_type The index type to use (``VK_INDEX_TYPE_UINT32`` by default)
+    /// @param offset The offset (``0`` by default)
+    /// @return A const reference to the this pointer (allowing method calls to be chained)
+    const CommandBuffer &bind_index_buffer(std::weak_ptr<inexor::vulkan_renderer::render_graph::Buffer> buffer,
+                                           VkIndexType index_type = VK_INDEX_TYPE_UINT32, // NOLINT
+                                           VkDeviceSize offset = 0) const;
+
+    /// Call vkCmdBindIndexBuffer
     /// @param buf The index buffer to bind
     /// @param index_type The index type to use (``VK_INDEX_TYPE_UINT32`` by default)
     /// @param offset The offset (``0`` by default)
@@ -153,6 +165,20 @@ public:
     /// @return A const reference to the this pointer (allowing method calls to be chained)
     const CommandBuffer &bind_pipeline(VkPipeline pipeline, // NOLINT
                                        VkPipelineBindPoint bind_point = VK_PIPELINE_BIND_POINT_GRAPHICS) const;
+
+    const CommandBuffer &
+    bind_vertex_buffer(const std::weak_ptr<inexor::vulkan_renderer::render_graph::Buffer> buffer) const {
+        if (buffer.expired()) {
+            throw InexorException("Error: Parameter 'buffer' is an invalid pointer!");
+        }
+        if (buffer.lock()->type() != inexor::vulkan_renderer::render_graph::BufferType::VERTEX_BUFFER) {
+            throw InexorException("Error: Rendergraph buffer resource " + buffer.lock()->name() +
+                                  " is not a vertex buffer!");
+        }
+        vkCmdBindVertexBuffers(m_command_buffer, 0, 1, buffer.lock()->buffer_address(),
+                               std::vector<VkDeviceSize>(1, 0).data());
+        return *this;
+    }
 
     /// Call vkCmdBindVertexBuffers
     /// @param bufs The vertex buffers to bind
@@ -357,6 +383,20 @@ public:
         return push_constants(layout, stage, sizeof(data), &data, offset);
     }
 
+    /// Call vkCmdPushConstants
+    /// @tparam T the data type of the push constant
+    /// @param pipeline The graphics pipeline
+    /// @param data A const reference to the data
+    /// @param stage The shader stage that will be accepting the push constants
+    /// @param offset The offset value (``0`` by default)
+    /// @return A const reference to the this pointer (allowing method calls to be chained)
+    template <typename T>
+    const CommandBuffer &push_constant(const std::weak_ptr<wrapper::pipelines::GraphicsPipeline> pipeline,
+                                       const T &data, // NOLINT
+                                       const VkShaderStageFlags stage, const VkDeviceSize offset = 0) const {
+        return push_constants(pipeline.lock()->pipeline_layout(), stage, sizeof(data), &data, offset);
+    }
+
     [[nodiscard]] auto cmd_buffer() const {
         return m_command_buffer;
     }
@@ -381,6 +421,11 @@ public:
 
     /// Call vkQueueSubmit
     const CommandBuffer &submit() const; // NOLINT
+
+    /// Set the viewport
+    /// @param viewport The viewport
+    /// @return A const reference to the this pointer (allowing method calls to be chained)
+    const CommandBuffer &set_viewport(VkViewport viewport) const;
 
     /// Call vkQueueSubmit and use a fence to wait for command buffer submission and execution to complete
     /// @param submit_infos The submit infos

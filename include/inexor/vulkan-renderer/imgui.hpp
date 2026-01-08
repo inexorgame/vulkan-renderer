@@ -29,6 +29,7 @@ class Swapchain;
 namespace inexor::vulkan_renderer {
 
 // Using declaration
+using render_graph::GraphicsPass;
 using wrapper::Device;
 using wrapper::swapchains::Swapchain;
 
@@ -50,6 +51,9 @@ class ImGUIOverlay {
     int m_font_texture_width{0};
     int m_font_texture_height{0};
     std::shared_ptr<GraphicsPipeline> m_imgui_pipeline2;
+    std::weak_ptr<GraphicsPass> m_previous_pass;
+    // The user-defined update of ImGui data
+    std::function<void()> m_on_update_user_imgui_data;
 
     BufferResource *m_index_buffer{nullptr};
     BufferResource *m_vertex_buffer{nullptr};
@@ -75,9 +79,11 @@ public:
     /// @param render_graph A pointer to the render graph
     /// @param back_buffer A pointer to the target of the ImGUI rendering
     /// @param render_graph2
+    /// @param
     ImGUIOverlay(const Device &device, const Swapchain &swapchain, std::weak_ptr<Swapchain> swapchain2,
-                 RenderGraph *render_graph, TextureResource *back_buffer,
-                 std::shared_ptr<render_graph::RenderGraph> render_graph2);
+                 RenderGraph *render_graph, TextureResource *back_buffer, std::weak_ptr<GraphicsPass> previous_pass,
+                 std::shared_ptr<render_graph::RenderGraph> render_graph2,
+                 std::function<void()> on_update_user_imgui_data);
     ImGUIOverlay(const ImGUIOverlay &) = delete;
     ImGUIOverlay(ImGUIOverlay &&) = delete;
     ~ImGUIOverlay();

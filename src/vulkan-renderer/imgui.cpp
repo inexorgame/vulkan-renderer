@@ -9,8 +9,11 @@ namespace inexor::vulkan_renderer {
 
 ImGUIOverlay::ImGUIOverlay(const wrapper::Device &device, const wrapper::Swapchain &swapchain,
                            std::weak_ptr<Swapchain> swapchain2, RenderGraph *render_graph, TextureResource *back_buffer,
-                           std::shared_ptr<render_graph::RenderGraph> render_graph2)
-    : m_device(device), m_swapchain(swapchain) {
+                           std::weak_ptr<GraphicsPass> previous_pass,
+                           std::shared_ptr<render_graph::RenderGraph> render_graph2,
+                           std::function<void()> on_update_user_imgui_data)
+    : m_device(device), m_swapchain(swapchain), m_previous_pass(previous_pass),
+      m_on_update_user_imgui_data(std::move(on_update_user_imgui_data)) {
     spdlog::trace("Creating ImGUI context");
     ImGui::CreateContext();
 
@@ -180,8 +183,8 @@ ImGUIOverlay::ImGUIOverlay(const wrapper::Device &device, const wrapper::Swapcha
                 cmd_buf.bind_pipeline(m_imgui_pipeline2)
                     .bind_descriptor_set(m_descriptor_set2, m_imgui_pipeline2)
                     .push_constant(m_imgui_pipeline2, m_push_const_block, VK_SHADER_STAGE_VERTEX_BIT)
-                    .bind_vertex_buffer(m_vertex_buffer)
-                    .bind_index_buffer(m_index_buffer)
+                    .bind_vertex_buffer(m_vertex_buffer2)
+                    .bind_index_buffer(m_index_buffer2)
                     .set_viewport({
                         .width = ImGui::GetIO().DisplaySize.x,
                         .height = ImGui::GetIO().DisplaySize.y,
@@ -195,17 +198,18 @@ ImGUIOverlay::ImGUIOverlay(const wrapper::Device &device, const wrapper::Swapcha
                     const ImDrawList *cmd_list = draw_data->CmdLists[i];
                     for (std::int32_t j = 0; j < cmd_list->CmdBuffer.Size; j++) {
                         const ImDrawCmd &draw_cmd = cmd_list->CmdBuffer[j];
-                        cmd_buf.set_scissor({
-                            .offset{
-                                .x = std::max(static_cast<int32_t>(draw_cmd.ClipRect.x), 0),
-                                .y = std::max(static_cast<int32_t>(draw_cmd.ClipRect.y), 0),
-                            },
-                            .extent{
-                                .width = static_cast<uint32_t>(draw_cmd.ClipRect.z - draw_cmd.ClipRect.x),
-                                .height = static_cast<uint32_t>(draw_cmd.ClipRect.w - draw_cmd.ClipRect.y),
-                            },
-                        });
-                        cmd_buf.draw_indexed(draw_cmd.ElemCount, 1, index_offset, vertex_offset);
+                        cmd_buf
+                            .set_scissor({
+                                .offset{
+                                    .x = std::max(static_cast<int32_t>(draw_cmd.ClipRect.x), 0),
+                                    .y = std::max(static_cast<int32_t>(draw_cmd.ClipRect.y), 0),
+                                },
+                                .extent{
+                                    .width = static_cast<uint32_t>(draw_cmd.ClipRect.z - draw_cmd.ClipRect.x),
+                                    .height = static_cast<uint32_t>(draw_cmd.ClipRect.w - draw_cmd.ClipRect.y),
+                                },
+                            })
+                            .draw_indexed(draw_cmd.ElemCount, 1, index_offset, vertex_offset);
                         index_offset += draw_cmd.ElemCount;
                     }
                     vertex_offset += cmd_list->VtxBuffer.Size;

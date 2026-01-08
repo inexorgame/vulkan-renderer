@@ -385,6 +385,9 @@ ExampleApp::ExampleApp(int argc, char **argv) {
     m_swapchain = std::make_unique<Swapchain>(*m_device, "Default Swapchain", m_surface->surface(), m_window->width(),
                                               m_window->height(), m_vsync_enabled);
 
+    m_swapchain2 = std::make_shared<Swapchain>(*m_device, "Default Swapchain", m_surface->surface(), m_window->width(),
+                                               m_window->height(), m_vsync_enabled);
+
     m_camera = std::make_unique<Camera>(glm::vec3(6.0f, 10.0f, 2.0f), 180.0f, 0.0f,
                                         static_cast<float>(m_window->width()), static_cast<float>(m_window->height()));
     m_camera->set_movement_speed(5.0f);

@@ -166,6 +166,13 @@ void ExampleAppBase::recreate_swapchain() {
     m_swapchain->setup_swapchain(
         VkExtent2D{static_cast<std::uint32_t>(window_width), static_cast<std::uint32_t>(window_height)},
         m_vsync_enabled);
+
+    // RENDERGRAPH2
+    // Recreate the swapchain
+    m_swapchain2->setup_swapchain(
+        VkExtent2D{static_cast<std::uint32_t>(window_width), static_cast<std::uint32_t>(window_height)},
+        m_vsync_enabled);
+
     m_render_graph = std::make_unique<RenderGraph>(*m_device, *m_swapchain);
     // RENDERGRAPH2
     m_render_graph2 =
@@ -176,9 +183,20 @@ void ExampleAppBase::recreate_swapchain() {
     m_camera->set_aspect_ratio(window_width, window_height);
 
     m_imgui_overlay.reset();
+
+    /*
+        ImGUIOverlay(const Device &device, const Swapchain &swapchain, std::weak_ptr<Swapchain> swapchain2,
+                 RenderGraph *render_graph, TextureResource *back_buffer, std::weak_ptr<GraphicsPass> previous_pass,
+                 std::shared_ptr<render_graph::RenderGraph> render_graph2,
+                 std::function<void()> on_update_user_imgui_data);
+    */
+
     // RENDERGRAPH2
-    m_imgui_overlay =
-        std::make_unique<ImGUIOverlay>(*m_device, *m_swapchain, m_render_graph.get(), m_back_buffer, m_render_graph2);
+    m_imgui_overlay = std::make_unique<ImGUIOverlay>(*m_device, *m_swapchain, m_swapchain2, m_render_graph.get(),
+                                                     m_back_buffer, m_graphics_pass2, m_render_graph2, []() {
+                                                         // RENDERGRAPH2
+                                                         // TODO: Implement me!
+                                                     });
     m_render_graph->compile(m_back_buffer);
     m_render_graph2->compile();
 }
