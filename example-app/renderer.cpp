@@ -206,6 +206,7 @@ void ExampleAppBase::render_frame() {
     }
 
     const auto image_index = m_swapchain->acquire_next_image_index();
+
     const auto &cmd_buf = m_device->request_command_buffer(VulkanQueueType::QUEUE_TYPE_GRAPHICS, "rendergraph");
 
     m_render_graph->render(image_index, cmd_buf);
@@ -220,6 +221,19 @@ void ExampleAppBase::render_frame() {
     }));
 
     m_swapchain->present(image_index);
+
+    // RENDERGRAPH2
+    // @TODO Abstract this into rendergraph!
+    const auto img_index2 = m_swapchain2->acquire_next_image_index();
+    const auto &cmd_buf2 = m_device->request_command_buffer(VulkanQueueType::QUEUE_TYPE_GRAPHICS, "rendergraph2");
+    m_render_graph2->render();
+    cmd_buf.submit_and_wait(inexor::vulkan_renderer::wrapper::make_info<VkSubmitInfo>({
+        .waitSemaphoreCount = 1,
+        .pWaitSemaphores = m_swapchain2->image_available_semaphore(),
+        .pWaitDstStageMask = stage_mask.data(),
+        .commandBufferCount = 1,
+    }));
+    m_swapchain2->present(img_index2);
 
     if (auto fps_value = m_fps_limiter.get_fps()) {
         m_window->set_title("Inexor Vulkan API renderer demo - " + std::to_string(*fps_value) + " FPS");

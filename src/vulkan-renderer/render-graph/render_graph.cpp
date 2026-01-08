@@ -40,6 +40,10 @@ void RenderGraph::compile() {
     //
 }
 
+void RenderGraph::render() {
+    //
+}
+
 void RenderGraph::reset() {
     m_buffers.clear();
     m_textures.clear();
