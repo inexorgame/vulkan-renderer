@@ -1,6 +1,8 @@
 #include "application.hpp"
 
+#include "inexor/vulkan-renderer/input/gamepad_data.hpp"
 #include "inexor/vulkan-renderer/input/input.hpp"
+#include "inexor/vulkan-renderer/input/keyboard_mouse_data.hpp"
 #include "inexor/vulkan-renderer/meta/meta.hpp"
 #include "inexor/vulkan-renderer/octree/collision.hpp"
 #include "inexor/vulkan-renderer/octree/collision_query.hpp"

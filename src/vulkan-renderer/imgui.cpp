@@ -109,7 +109,6 @@ ImGUIOverlay::ImGUIOverlay(const wrapper::Device &device, const wrapper::Swapcha
             m_descriptor_set2 = allocator.allocate("ImGui|Texture", m_descriptor_set_layout2);
         },
         [&](vulkan_renderer::wrapper::descriptors::WriteDescriptorSetBuilder &builder) {
-            // RENDERGRAPH2
             return builder.add(m_descriptor_set2, m_imgui_texture2).build();
         });
 
