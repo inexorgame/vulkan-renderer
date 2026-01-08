@@ -10,6 +10,7 @@
 #include "inexor/vulkan-renderer/wrapper/gpu_texture.hpp"
 #include "inexor/vulkan-renderer/wrapper/instance.hpp"
 #include "inexor/vulkan-renderer/wrapper/make_info.hpp"
+#include "inexor/vulkan-renderer/wrapper/pipelines/graphics_pipeline.hpp"
 #include "inexor/vulkan-renderer/wrapper/shader.hpp"
 #include "inexor/vulkan-renderer/wrapper/swapchains/swapchain.hpp"
 #include "inexor/vulkan-renderer/wrapper/uniform_buffer.hpp"
@@ -76,6 +77,7 @@ using inexor::vulkan_renderer::wrapper::VulkanQueueType;
 using inexor::vulkan_renderer::wrapper::commands::CommandBuffer;
 using inexor::vulkan_renderer::wrapper::descriptors::DescriptorBuilder;
 using inexor::vulkan_renderer::wrapper::descriptors::ResourceDescriptor;
+using inexor::vulkan_renderer::wrapper::pipelines::GraphicsPipeline;
 using inexor::vulkan_renderer::wrapper::swapchains::Swapchain;
 using inexor::vulkan_renderer::wrapper::windows::Mode;
 using inexor::vulkan_renderer::wrapper::windows::Window;
@@ -95,15 +97,16 @@ protected:
     std::unique_ptr<RenderGraph> m_render_graph;
 
     // RENDERGRAPH2
-    std::unique_ptr<vulkan_renderer::render_graph::RenderGraph> m_render_graph2;
+    std::shared_ptr<vulkan_renderer::render_graph::RenderGraph> m_render_graph2;
     std::weak_ptr<vulkan_renderer::render_graph::Buffer> m_vertex_buffer2;
     std::weak_ptr<vulkan_renderer::render_graph::Buffer> m_index_buffer2;
     std::weak_ptr<vulkan_renderer::render_graph::Texture> m_back_buffer2;
     std::weak_ptr<vulkan_renderer::render_graph::Texture> m_depth_buffer2;
     std::weak_ptr<vulkan_renderer::render_graph::GraphicsPass> m_graphics_pass2;
     std::weak_ptr<vulkan_renderer::render_graph::Buffer> m_mvp_matrix2;
-    VkDescriptorSetLayout m_descriptor_set_layout{VK_NULL_HANDLE};
-    VkDescriptorSet m_descriptor_set{VK_NULL_HANDLE};
+    VkDescriptorSetLayout m_descriptor_set_layout2{VK_NULL_HANDLE};
+    VkDescriptorSet m_descriptor_set2{VK_NULL_HANDLE};
+    std::weak_ptr<GraphicsPipeline> m_octree_pipeline2;
 
     void setup_render_graph();
     void recreate_swapchain();

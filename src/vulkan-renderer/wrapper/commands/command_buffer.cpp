@@ -3,6 +3,7 @@
 #include "inexor/vulkan-renderer/tools/exception.hpp"
 #include "inexor/vulkan-renderer/wrapper/device.hpp"
 #include "inexor/vulkan-renderer/wrapper/make_info.hpp"
+#include "inexor/vulkan-renderer/wrapper/pipelines/graphics_pipeline.hpp"
 
 #include <cassert>
 #include <memory>
@@ -51,6 +52,20 @@ const CommandBuffer &CommandBuffer::begin_command_buffer(const VkCommandBufferUs
 const CommandBuffer &CommandBuffer::begin_render_pass(const VkRenderPassBeginInfo &render_pass_bi,
                                                       const VkSubpassContents subpass_contents) const {
     vkCmdBeginRenderPass(m_command_buffer, &render_pass_bi, subpass_contents);
+    return *this;
+}
+
+const CommandBuffer &CommandBuffer::bind_descriptor_set(
+    const VkDescriptorSet descriptor_set,
+    const std::weak_ptr<inexor::vulkan_renderer::wrapper::pipelines::GraphicsPipeline> pipeline) const {
+    if (!descriptor_set) {
+        throw InexorException("Error: Parameter 'descriptor_set' is invalid!");
+    }
+    if (pipeline.expired()) {
+        throw InexorException("Error: Parameter 'pipeline' is an invalid pointer!");
+    }
+    vkCmdBindDescriptorSets(m_command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.lock()->pipeline_layout(), 0, 1,
+                            &descriptor_set, 0, nullptr);
     return *this;
 }
 

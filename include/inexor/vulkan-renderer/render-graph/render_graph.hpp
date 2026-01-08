@@ -90,6 +90,7 @@ public:
                                                OnBuildWriteDescriptorSets on_update_descriptor_set);
 
     // @TODO How to handle optional texture update depending on texture type?
+    // @TODO By implementing textures which are not updated, but only initliazed, we could save memory!
 
     /// Add a texture to the rendergraph
     /// @param name The texture name
@@ -101,10 +102,10 @@ public:
     /// @param sample_count The number of samples
     /// @param on_update The texture update function
     /// @return A weak pointer to the texture which was created
-    [[nodiscard]] std::weak_ptr<Texture> add_texture(
-        std::string name, TextureUsage usage, VkFormat format, std::uint32_t width, std::uint32_t height,
-        std::uint32_t channels, VkSampleCountFlagBits sample_count = VK_SAMPLE_COUNT_1_BIT,
-        std::function<void()> m_on_check_for_updates = []() {});
+    [[nodiscard]] std::weak_ptr<Texture> add_texture(std::string name, TextureUsage usage, VkFormat format,
+                                                     std::uint32_t width, std::uint32_t height, std::uint32_t channels,
+                                                     VkSampleCountFlagBits sample_count,
+                                                     std::function<void()> on_update);
 
     /// Compile the rendergraph
     void compile();

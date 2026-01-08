@@ -29,10 +29,15 @@ std::weak_ptr<Texture> RenderGraph::add_texture(std::string name, const TextureU
                                                              channels, sample_count, std::move(on_update)));
 }
 
+void RenderGraph::compile() {
+    //
+}
+
 void RenderGraph::reset() {
     m_buffers.clear();
     m_textures.clear();
     m_graphics_passes.clear();
+    m_resource_descriptors.clear();
 }
 
 } // namespace inexor::vulkan_renderer::render_graph

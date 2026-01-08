@@ -21,4 +21,13 @@ Texture::Texture(const Device &device, std::string name, const TextureUsage usag
     m_default_sampler = std::make_unique<Sampler>(m_device, "Default Sampler");
 }
 
+void Texture::request_update(void *src_texture_data, const std::size_t src_texture_data_size) {
+    if (src_texture_data == nullptr || src_texture_data_size == 0) {
+        return;
+    }
+    m_src_texture_data = src_texture_data;
+    m_src_texture_data_size = src_texture_data_size;
+    m_update_requested = true;
+}
+
 } // namespace inexor::vulkan_renderer::render_graph

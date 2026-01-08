@@ -1,9 +1,9 @@
 #pragma once
 
-#include "inexor/vulkan-renderer/wrapper/pipelines/pipeline_layout.hpp"
-
 #include <volk.h>
 
+#include <memory>
+#include <span>
 #include <string>
 #include <vector>
 
@@ -19,12 +19,16 @@ class CommandBuffer;
 
 namespace inexor::vulkan_renderer::wrapper::pipelines {
 class PipelineCache;
+class PipelineLayout;
 } // namespace inexor::vulkan_renderer::wrapper::pipelines
 
 namespace inexor::vulkan_renderer::render_graph {
 // Forward declaration
 class RenderGraph;
 } // namespace inexor::vulkan_renderer::render_graph
+
+// Forward declaration
+using inexor::vulkan_renderer::wrapper::pipelines::PipelineLayout;
 
 namespace inexor::vulkan_renderer::wrapper::pipelines {
 
@@ -64,13 +68,11 @@ public:
     GraphicsPipeline &operator=(const GraphicsPipeline &) = delete;
     GraphicsPipeline &operator=(GraphicsPipeline &&) = delete;
 
-    [[nodicsard]] auto pipeline() const {
+    [[nodiscard]] auto pipeline() const {
         return m_pipeline;
     }
 
-    [[nodicsard]] auto pipeline_layout() const {
-        return m_pipeline_layout->m_pipeline_layout;
-    }
+    [[nodiscard]] VkPipelineLayout pipeline_layout() const;
 };
 
 } // namespace inexor::vulkan_renderer::wrapper::pipelines

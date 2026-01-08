@@ -8,7 +8,8 @@
 namespace inexor::vulkan_renderer {
 
 ImGUIOverlay::ImGUIOverlay(const wrapper::Device &device, const wrapper::Swapchain &swapchain,
-                           RenderGraph *render_graph, TextureResource *back_buffer)
+                           RenderGraph *render_graph, TextureResource *back_buffer,
+                           std::shared_ptr<render_graph::RenderGraph> render_graph2)
     : m_device(device), m_swapchain(swapchain) {
     spdlog::trace("Creating ImGUI context");
     ImGui::CreateContext();
@@ -50,14 +51,14 @@ ImGUIOverlay::ImGUIOverlay(const wrapper::Device &device, const wrapper::Swapcha
 
     ImFont *font = io.Fonts->AddFontFromFileTTF(FONT_FILE_PATH, FONT_SIZE);
 
-    unsigned char *font_texture_data{};
-    int font_texture_width{0};
-    int font_texture_height{0};
-    io.Fonts->GetTexDataAsRGBA32(&font_texture_data, &font_texture_width, &font_texture_height);
+    io.Fonts->GetTexDataAsRGBA32(&m_font_texture_data, &m_font_texture_width, &m_font_texture_height);
 
-    if (font == nullptr || font_texture_data == nullptr) {
-        spdlog::error("Unable to load font {}.  Falling back to error texture", FONT_FILE_PATH);
+    if (font == nullptr || m_font_texture_data == nullptr) {
+        spdlog::error("Unable to load font {}. Falling back to error texture", FONT_FILE_PATH);
         m_imgui_texture = std::make_unique<wrapper::GpuTexture>(m_device, wrapper::CpuTexture());
+
+        // RENDERGRAPH2
+        // @TODO: generate error Texture!
     } else {
         spdlog::trace("Creating ImGUI font texture");
 
@@ -65,13 +66,24 @@ ImGUIOverlay::ImGUIOverlay(const wrapper::Device &device, const wrapper::Swapcha
         constexpr int FONT_TEXTURE_CHANNELS{4};
         constexpr int FONT_MIP_LEVELS{1};
 
-        VkDeviceSize upload_size = static_cast<VkDeviceSize>(font_texture_width) *
-                                   static_cast<VkDeviceSize>(font_texture_height) *
-                                   static_cast<VkDeviceSize>(FONT_TEXTURE_CHANNELS);
+        m_upload_size = static_cast<VkDeviceSize>(m_font_texture_width) *
+                        static_cast<VkDeviceSize>(m_font_texture_height) *
+                        static_cast<VkDeviceSize>(FONT_TEXTURE_CHANNELS);
 
         m_imgui_texture = std::make_unique<wrapper::GpuTexture>(
-            m_device, font_texture_data, upload_size, font_texture_width, font_texture_height, FONT_TEXTURE_CHANNELS,
-            FONT_MIP_LEVELS, "ImGUI font texture");
+            m_device, m_font_texture_data, m_upload_size, m_font_texture_width, m_font_texture_height,
+            FONT_TEXTURE_CHANNELS, FONT_MIP_LEVELS, "ImGUI font texture");
+
+        m_imgui_texture2 = render_graph2->add_texture(
+            "ImGui|Texture", render_graph::TextureUsage::COLOR_ATTACHMENT, VK_FORMAT_R8G8B8A8_UNORM,
+            m_font_texture_width, m_font_texture_height, FONT_TEXTURE_CHANNELS, VK_SAMPLE_COUNT_1_BIT, [&]() {
+                // RENDERGRAPH2
+                // Make sure the ImGui font texture is only updated once!
+                if (!m_imgui_font_texture_initialized2) {
+                    m_imgui_texture2.lock()->request_update(m_font_texture_data, m_upload_size);
+                    m_imgui_font_texture_initialized2 = true;
+                }
+            });
     }
 
     // Create an instance of the resource descriptor builder.
@@ -82,6 +94,30 @@ ImGUIOverlay::ImGUIOverlay(const wrapper::Device &device, const wrapper::Swapcha
     m_descriptor = std::make_unique<wrapper::descriptors::ResourceDescriptor>(
         descriptor_builder.add_combined_image_sampler(m_imgui_texture->sampler(), m_imgui_texture->image_view(), 0)
             .build("ImGUI"));
+
+    // RENDERGRAPH2
+    render_graph2->add_resource_descriptor(
+        [&](vulkan_renderer::wrapper::descriptors::DescriptorSetLayoutBuilder &builder) {
+            m_descriptor_set_layout2 =
+                builder.add(wrapper::descriptors::DescriptorType::COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT)
+                    .build("ImGui|Texture");
+        },
+        [&](vulkan_renderer::wrapper::descriptors::DescriptorSetAllocator &allocator) {
+            m_descriptor_set2 = allocator.allocate("ImGui|Texture", m_descriptor_set_layout2);
+        },
+        [&](vulkan_renderer::wrapper::descriptors::WriteDescriptorSetBuilder &builder) {
+            // RENDERGRAPH2
+            return builder.add(m_descriptor_set2, m_imgui_texture2).build();
+        });
+
+    // RENDERGRAPH2
+    m_vertex_buffer2 = render_graph2->add_buffer("imgui vertices", render_graph::BufferType::VERTEX_BUFFER, [&]() {
+        // @TODO: Update vertex buffer!
+    });
+    // RENDERGRAPH2
+    m_index_buffer2 = render_graph2->add_buffer("imgui indices", render_graph::BufferType::INDEX_BUFFER, [&]() {
+        // @TODO: Update vertex buffer!
+    });
 
     m_index_buffer = render_graph->add<BufferResource>("imgui index buffer", BufferUsage::INDEX_BUFFER);
     m_vertex_buffer = render_graph->add<BufferResource>("imgui vertex buffer", BufferUsage::VERTEX_BUFFER);

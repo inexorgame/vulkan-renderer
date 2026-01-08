@@ -55,6 +55,10 @@ public:
     PipelineLayout &operator=(const PipelineLayout &) = delete;
     PipelineLayout &operator=(PipelineLayout &&other) noexcept;
 
+    [[nodiscard]] auto pipeline_layout() const {
+        return m_pipeline_layout;
+    }
+
     /// Call vkDestroyPipelineLayout
     ~PipelineLayout();
 };

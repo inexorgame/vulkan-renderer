@@ -1,5 +1,10 @@
 ﻿#pragma once
 
+#include "inexor/vulkan-renderer/imgui.hpp"
+#include "inexor/vulkan-renderer/render-graph/buffer.hpp"
+#include "inexor/vulkan-renderer/render-graph/graphics_pass.hpp"
+#include "inexor/vulkan-renderer/render-graph/render_graph.hpp"
+#include "inexor/vulkan-renderer/render-graph/texture.hpp"
 #include "inexor/vulkan-renderer/render_graph.hpp"
 #include "inexor/vulkan-renderer/wrapper/descriptors/descriptor.hpp"
 
@@ -32,6 +37,19 @@ class ImGUIOverlay {
     const Swapchain &m_swapchain;
     float m_scale{1.0f};
 
+    // RENDERGRAPH2
+    std::weak_ptr<inexor::vulkan_renderer::render_graph::Buffer> m_vertex_buffer2;
+    std::weak_ptr<inexor::vulkan_renderer::render_graph::Buffer> m_index_buffer2;
+    std::weak_ptr<inexor::vulkan_renderer::render_graph::GraphicsPass> m_imgui_pass2;
+    VkDescriptorSetLayout m_descriptor_set_layout2;
+    VkDescriptorSet m_descriptor_set2;
+    std::weak_ptr<inexor::vulkan_renderer::render_graph::Texture> m_imgui_texture2;
+    bool m_imgui_font_texture_initialized2{false};
+    VkDeviceSize m_upload_size{0};
+    unsigned char *m_font_texture_data{};
+    int m_font_texture_width{0};
+    int m_font_texture_height{0};
+
     BufferResource *m_index_buffer{nullptr};
     BufferResource *m_vertex_buffer{nullptr};
     GraphicsStage *m_stage{nullptr};
@@ -54,8 +72,9 @@ public:
     /// @param swapchain A reference to the swapchain
     /// @param render_graph A pointer to the render graph
     /// @param back_buffer A pointer to the target of the ImGUI rendering
+    /// @param render_graph2
     ImGUIOverlay(const Device &device, const Swapchain &swapchain, RenderGraph *render_graph,
-                 TextureResource *back_buffer);
+                 TextureResource *back_buffer, std::shared_ptr<render_graph::RenderGraph> render_graph2);
     ImGUIOverlay(const ImGUIOverlay &) = delete;
     ImGUIOverlay(ImGUIOverlay &&) = delete;
     ~ImGUIOverlay();

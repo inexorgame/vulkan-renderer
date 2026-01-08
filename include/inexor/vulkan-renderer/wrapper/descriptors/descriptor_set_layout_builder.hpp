@@ -59,6 +59,11 @@ public:
     /// @param type The type of the descriptor
     /// @param stage The shader stage
     /// @param count The number of descriptors
+    /// @note It was deliberately decided not to guess the shader stage based on DescriptorType, simply because one
+    /// descriptor type could be used in various shader stages. Another approach would have been to make the shader
+    /// stage an std::optional, and if it's specified as std::nullopt, decide which shader stage is most likely based on
+    /// the DescriptorType. However, this approach is not clearly defined, because one descriptor could be used in a
+    /// variety of shader stages.
     [[nodiscard]] auto &add(DescriptorType type, VkShaderStageFlags stage, std::uint32_t count = 1) {
         m_bindings.emplace_back(VkDescriptorSetLayoutBinding{
             .binding = m_binding++, // Use current binding, then increment

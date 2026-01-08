@@ -1,6 +1,7 @@
 #pragma once
 
 #include "inexor/vulkan-renderer/wrapper/gpu_memory_buffer.hpp"
+#include "inexor/vulkan-renderer/wrapper/pipelines/graphics_pipeline.hpp"
 #include "inexor/vulkan-renderer/wrapper/synchronization/fence.hpp"
 
 #include <cassert>
@@ -106,6 +107,17 @@ public:
     /// @return A const reference to the this pointer (allowing method calls to be chained)
     const CommandBuffer &begin_render_pass(const VkRenderPassBeginInfo &render_pass_bi, // NOLINT
                                            VkSubpassContents subpass_contents = VK_SUBPASS_CONTENTS_INLINE) const;
+
+    /// Call vkCmdBindDescriptorSets to bind one single descriptor set
+    /// @note Binding multiple descriptor sets would require implementing bind_descriptor_sets, which is not required
+    /// for now.
+    /// @return A const reference to the this pointer (allowing method calls to be chained)
+    /// @param descriptor_set The descriptor set to bind
+    /// @param pipeline The graphics pipeline whose pipeline layout will be used
+    /// @return A const reference to the this pointer (allowing method calls to be chained)
+    const CommandBuffer &
+    bind_descriptor_set(VkDescriptorSet desc_set,
+                        std::weak_ptr<inexor::vulkan_renderer::wrapper::pipelines::GraphicsPipeline> pipeline) const;
 
     /// Call vkCmdBindDescriptorSets
     /// @param desc_sets The descriptor sets to bind

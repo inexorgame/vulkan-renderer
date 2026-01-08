@@ -5,6 +5,7 @@
 #include "inexor/vulkan-renderer/wrapper/device.hpp"
 #include "inexor/vulkan-renderer/wrapper/make_info.hpp"
 #include "inexor/vulkan-renderer/wrapper/pipelines/pipeline_cache.hpp"
+#include "inexor/vulkan-renderer/wrapper/pipelines/pipeline_layout.hpp"
 
 #include <utility>
 
@@ -42,6 +43,10 @@ GraphicsPipeline::GraphicsPipeline(GraphicsPipeline &&other) noexcept : m_device
 
 GraphicsPipeline::~GraphicsPipeline() {
     vkDestroyPipeline(m_device.device(), m_pipeline, nullptr);
+}
+
+VkPipelineLayout GraphicsPipeline::pipeline_layout() const {
+    return m_pipeline_layout->pipeline_layout();
 }
 
 } // namespace inexor::vulkan_renderer::wrapper::pipelines

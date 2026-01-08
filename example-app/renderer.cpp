@@ -21,6 +21,7 @@ void ExampleAppBase::setup_render_graph() {
     m_vertex_buffer->upload_data(m_octree_vertices);
 
     // RENDERGRAPH2
+    // @TODO Where to place this? DO we need this here?
     m_render_graph2->reset();
     // RENDERGRAPH2
     m_vertex_buffer2 =
@@ -35,11 +36,15 @@ void ExampleAppBase::setup_render_graph() {
     // RENDERGRAPH2
     m_back_buffer2 = m_render_graph2->add_texture(
         "back buffer", vulkan_renderer::render_graph::TextureUsage::COLOR_ATTACHMENT, m_swapchain->image_format(),
-        m_swapchain->extent().width, m_swapchain->extent().height, 1, VK_SAMPLE_COUNT_1_BIT);
+        m_swapchain->extent().width, m_swapchain->extent().height, 1, VK_SAMPLE_COUNT_1_BIT, [&]() {
+            //
+        });
     // RENDERGRAPH2
     m_depth_buffer2 = m_render_graph2->add_texture(
         "depth buffer", vulkan_renderer::render_graph::TextureUsage::DEPTH_ATTACHMENT, VK_FORMAT_D32_SFLOAT_S8_UINT,
-        m_swapchain->extent().width, m_swapchain->extent().height, 1, VK_SAMPLE_COUNT_1_BIT);
+        m_swapchain->extent().width, m_swapchain->extent().height, 1, VK_SAMPLE_COUNT_1_BIT, [&]() {
+            //
+        });
     // RENDERGRAPH2
     m_graphics_pass2 = m_render_graph2->get_graphics_pass_builder()
                            .writes_to(m_back_buffer2)
@@ -53,13 +58,13 @@ void ExampleAppBase::setup_render_graph() {
     // Descriptor management for the model/view/projection uniform buffer
     m_render_graph2->add_resource_descriptor(
         [&](vulkan_renderer::wrapper::descriptors::DescriptorSetLayoutBuilder &builder) {
-            m_descriptor_set_layout = builder
-                                          .add(vulkan_renderer::wrapper::descriptors::DescriptorType::UNIFORM_BUFFER,
-                                               VK_SHADER_STAGE_VERTEX_BIT)
-                                          .build("model/view/proj");
+            m_descriptor_set_layout2 = builder
+                                           .add(vulkan_renderer::wrapper::descriptors::DescriptorType::UNIFORM_BUFFER,
+                                                VK_SHADER_STAGE_VERTEX_BIT)
+                                           .build("model/view/proj");
         },
         [&](vulkan_renderer::wrapper::descriptors::DescriptorSetAllocator &allocator) {
-            m_descriptor_set = allocator.allocate("model/view/proj", m_descriptor_set_layout);
+            m_descriptor_set2 = allocator.allocate("model/view/proj", m_descriptor_set_layout2);
         },
         [&](vulkan_renderer::wrapper::descriptors::WriteDescriptorSetBuilder &builder) {
             // TODO: Modify to create several descriptor sets (an array?) for each octree
@@ -67,8 +72,19 @@ void ExampleAppBase::setup_render_graph() {
             // TODO: Multiply view and perspective matrix on cpu and pass as one matrix!
             // TODO: Use one big descriptor (array?) and pass view*perspective and array index as push constant!
             // This will require changes to DescriptorSetLayoutBuilder and more!
-            return builder.add(m_descriptor_set, m_mvp_matrix2).build();
+            return builder.add(m_descriptor_set2, m_mvp_matrix2).build();
         });
+
+    // RENDERGRAPH2
+    m_graphics_pass2 = m_render_graph2->add_graphics_pass(
+        m_render_graph2->get_graphics_pass_builder()
+            .writes_to(m_back_buffer2)
+            .writes_to(m_depth_buffer2)
+            .set_on_record([&](const CommandBuffer &cmd_buf) {
+                cmd_buf.bind_descriptor_set(m_descriptor_set2, m_octree_pipeline2);
+                cmd_buf.draw_indexed(static_cast<std::uint32_t>(m_octree_indices.size()));
+            })
+            .build("Octree Pass", vulkan_renderer::render_graph::DebugLabelColor::GREEN));
 
     auto *main_stage = m_render_graph->add<GraphicsStage>("main stage");
     main_stage->writes_to(m_back_buffer);
@@ -107,14 +123,19 @@ void ExampleAppBase::recreate_swapchain() {
         VkExtent2D{static_cast<std::uint32_t>(window_width), static_cast<std::uint32_t>(window_height)},
         m_vsync_enabled);
     m_render_graph = std::make_unique<RenderGraph>(*m_device, *m_swapchain);
+    // RENDERGRAPH2
+    m_render_graph2 = std::make_unique<inexor::vulkan_renderer::render_graph::RenderGraph>(*m_device);
 
     setup_render_graph();
 
     m_camera->set_aspect_ratio(window_width, window_height);
 
     m_imgui_overlay.reset();
-    m_imgui_overlay = std::make_unique<ImGUIOverlay>(*m_device, *m_swapchain, m_render_graph.get(), m_back_buffer);
+    // RENDERGRAPH2
+    m_imgui_overlay =
+        std::make_unique<ImGUIOverlay>(*m_device, *m_swapchain, m_render_graph.get(), m_back_buffer, m_render_graph2);
     m_render_graph->compile(m_back_buffer);
+    m_render_graph2->compile();
 }
 
 void ExampleAppBase::render_frame() {

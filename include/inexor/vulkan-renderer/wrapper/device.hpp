@@ -2,6 +2,7 @@
 
 #include "inexor/vulkan-renderer/tools/exception.hpp"
 #include "inexor/vulkan-renderer/tools/representation.hpp"
+#include "inexor/vulkan-renderer/wrapper/commands/command_buffer.hpp"
 #include "inexor/vulkan-renderer/wrapper/commands/command_pool.hpp"
 #include "inexor/vulkan-renderer/wrapper/make_info.hpp"
 

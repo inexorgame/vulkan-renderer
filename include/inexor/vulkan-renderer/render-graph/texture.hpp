@@ -119,7 +119,7 @@ public:
         return m_name;
     }
 
-    // TODO: Request update method!
+    void request_update(void *src_texture_data, std::size_t src_texture_data_size);
 };
 
 } // namespace inexor::vulkan_renderer::render_graph
