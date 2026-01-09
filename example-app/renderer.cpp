@@ -115,8 +115,9 @@ void ExampleAppBase::setup_render_graph() {
                                  .add_default_color_blend_attachment()
                                  .add_color_attachment_format(m_back_buffer2.lock()->format())
                                  .set_viewport(m_back_buffer2.lock()->extent())
+                                 .set_scissor(m_back_buffer2.lock()->extent())
                                  .set_descriptor_set_layout(m_descriptor_set_layout2)
-                                 .build("Octree");
+                                 .build("Octree", true);
     });
 
     // RENDERGRAPH2
@@ -188,7 +189,7 @@ void ExampleAppBase::recreate_swapchain() {
 
     // RENDERGRAPH2
     m_imgui_overlay = std::make_unique<ImGUIOverlay>(*m_device, *m_swapchain, m_swapchain2, m_render_graph.get(),
-                                                     m_back_buffer, m_graphics_pass2, m_render_graph2, []() {
+                                                     m_back_buffer, m_graphics_pass2, m_render_graph2, [&]() {
                                                          // RENDERGRAPH2
                                                          // TODO: Implement me!
                                                      });
@@ -207,7 +208,7 @@ void ExampleAppBase::render_frame() {
 
     const auto image_index = m_swapchain->acquire_next_image_index();
 
-    const auto &cmd_buf = m_device->request_command_buffer(VulkanQueueType::QUEUE_TYPE_GRAPHICS, "rendergraph");
+    const auto &cmd_buf = m_device->request_command_buffer(VK_QUEUE_GRAPHICS_BIT, "rendergraph");
 
     m_render_graph->render(image_index, cmd_buf);
 
@@ -215,7 +216,7 @@ void ExampleAppBase::render_frame() {
 
     cmd_buf.submit_and_wait(inexor::vulkan_renderer::wrapper::make_info<VkSubmitInfo>({
         .waitSemaphoreCount = 1,
-        .pWaitSemaphores = m_swapchain->image_available_semaphore(),
+        .pWaitSemaphores = m_swapchain->image_available_semaphore_pointer(),
         .pWaitDstStageMask = stage_mask.data(),
         .commandBufferCount = 1,
     }));
@@ -225,11 +226,11 @@ void ExampleAppBase::render_frame() {
     // RENDERGRAPH2
     // @TODO Abstract this into rendergraph!
     const auto img_index2 = m_swapchain2->acquire_next_image_index();
-    const auto &cmd_buf2 = m_device->request_command_buffer(VulkanQueueType::QUEUE_TYPE_GRAPHICS, "rendergraph2");
+    const auto &cmd_buf2 = m_device->request_command_buffer(VK_QUEUE_GRAPHICS_BIT, "rendergraph2");
     m_render_graph2->render();
     cmd_buf.submit_and_wait(inexor::vulkan_renderer::wrapper::make_info<VkSubmitInfo>({
         .waitSemaphoreCount = 1,
-        .pWaitSemaphores = m_swapchain2->image_available_semaphore(),
+        .pWaitSemaphores = m_swapchain2->image_available_semaphore_pointer(),
         .pWaitDstStageMask = stage_mask.data(),
         .commandBufferCount = 1,
     }));

@@ -35,7 +35,7 @@ private:
     // The texture name
     std::string m_name;
     // The texture type
-    const TextureUsage m_type;
+    const TextureUsage m_usage;
     // The texture update function
     std::optional<std::function<void()>> m_on_update;
 
@@ -115,11 +115,19 @@ public:
         return m_format;
     }
 
+    [[nodiscard]] auto image_view() const {
+        return m_image->image_view();
+    }
+
     [[nodiscard]] const auto &name() const {
         return m_name;
     }
 
     void request_update(void *src_texture_data, std::size_t src_texture_data_size);
+
+    [[nodiscard]] auto usage() const {
+        return m_usage;
+    }
 };
 
 } // namespace inexor::vulkan_renderer::render_graph

@@ -31,8 +31,12 @@ public:
     Semaphore &operator=(const Semaphore &) = delete;
     Semaphore &operator=(Semaphore &&) = delete;
 
-    [[nodiscard]] auto semaphore() const {
+    [[nodiscard]] auto semaphore_pointer() const {
         return &m_semaphore;
+    }
+
+    [[nodiscard]] auto semaphore() const {
+        return m_semaphore;
     }
 };
 

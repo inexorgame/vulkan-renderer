@@ -350,7 +350,7 @@ void RenderGraph::build_graphics_pipeline(const GraphicsStage *stage, PhysicalGr
                                   .height = static_cast<float>(m_swapchain.extent().height),
                                   .maxDepth = 1.0f,
                               })
-                              .build(stage->name());
+                              .build(stage->name(), false);
 }
 
 void RenderGraph::compile(const RenderResource *target) {

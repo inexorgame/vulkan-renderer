@@ -10,10 +10,16 @@ namespace inexor::vulkan_renderer::wrapper {
 class Device;
 } // namespace inexor::vulkan_renderer::wrapper
 
+namespace inexor::vulkan_renderer::wrapper::commands {
+/// Forward declaration
+class CommandBuffer;
+} // namespace inexor::vulkan_renderer::wrapper::commands
+
 namespace inexor::vulkan_renderer::render_graph {
 
 // Using declaration
 using wrapper::Device;
+using wrapper::commands::CommandBuffer;
 
 /// The supported buffer types
 /// Based on the buffer type, the rendergraph will use Vulkan Memory Allocator to create the buffers
@@ -26,26 +32,68 @@ enum class BufferType {
 
 class Buffer {
 private:
-    // The device wrapper
+    /// The device wrapper
     const Device &m_device;
-    // The buffer name
+    /// The internal debug name of the buffer resource
     std::string m_name;
-    // The buffer type
-    const BufferType m_type;
-    // The buffer update function
-    std::function<void()> m_on_update;
 
-    // The Vulkan handle for the buffer
+    /// The buffer type will be set depending on which constructor of the Buffer wrapper is called by rendergraph. The
+    /// engine currently supports three different types of buffers in the Buffer wrapper class: vertex buffers, index
+    /// buffers, and uniform buffers. The instances of the Buffer wrapper class are managed by rendergraph only. One
+    /// solution to deal with the different buffer types would be to use a BufferBase class and to make three distinct
+    /// classes VertexBuffer, IndexBuffer, and UniformBuffer. However, we aimed for simplicity and wanted to avoid
+    /// polymorphism in the rendergraph for performance reasons. We also refrained from using templates for this use
+    /// case. Therefore, we have chosen to use only one Buffer wrapper class which contains members for all three
+    /// different buffer types. The type of the buffer will be set depending on which Buffer constructor is called by
+    /// rendergraph. The actual memory management for the buffers is done by Vulkan Memory Allocator (VMA) internally.
+    BufferType m_buffer_type;
+
+    /// The buffer update function which is called by rendergraph to update the buffer's data. This update function is
+    /// called, no matter what the type of the buffer is. With the currently supported buffer types (vertex-, index-,
+    /// and uniform buffers) there is always a discussion about whether some update lambdas can be made std::optional.
+    /// For example we could have one vertex buffer with an index buffer and the index buffer is updated together with
+    /// the vertex buffer in the update function of the vertex buffer. From the design of the engine there is no
+    /// limitation which buffer is updated in which update function, as long as the handle to that buffer has been
+    /// created in rendergraph. In our example, the update function of the index buffer could be std::nullopt. In this
+    /// case, rendergraph could separate all buffers into those which require an update and those who do not. For
+    /// simplicity however, we made the update function not std::optional.
+
+    // TODO: Rewrite description
+    std::function<void()> m_on_check_for_update;
+
+    /// TODO: Is this is relevant for uniform buffers only?
+    /// TODO: Maybe buffer updates should be done immediately, and no m_src_data should be stored!
+    /// It's the responsibility of the programmer to make sure the data m_src_data points to is still valid when
+    /// update_buffer() is called!
+    void *m_src_data{nullptr};
+    std::size_t m_src_data_size{0};
+    bool m_update_requested{false};
+
+    /// The resources for actual memory management of the buffer
     VkBuffer m_buffer{VK_NULL_HANDLE};
-    // The VMA (Vulkan Memory Allocator) allocation
     VmaAllocation m_alloc{VK_NULL_HANDLE};
-    // The VMA (Vulkan Memory Allocator) allocation info
     VmaAllocationInfo m_alloc_info{};
 
-    // TODO: Add methods create(), destroy_buffer(), destroy_staging_buffer(), destroy_all()
-
     /// The descriptor buffer info (required for uniform buffers)
-    VkDescriptorBufferInfo m_descriptor_buffer_info;
+    VkDescriptorBufferInfo m_descriptor_buffer_info{};
+
+    /// The staging buffer (if required)
+    VkBuffer m_staging_buffer{VK_NULL_HANDLE};
+    VmaAllocation m_staging_buffer_alloc{VK_NULL_HANDLE};
+    VmaAllocationInfo m_staging_buffer_alloc_info{};
+
+    /// Create the buffer using Vulkan Memory Allocator (VMA) library
+    /// @param cmd_buf The command buffer
+    void create(const CommandBuffer &cmd_buf);
+
+    /// Call destroy_buffer and destroy_staging_buffer
+    void destroy_all();
+
+    /// Call vmaDestroyBuffer for the actual buffer
+    void destroy_buffer();
+
+    /// Call vmaDestroyBuffer for the staging bufffer
+    void destroy_staging_buffer();
 
 public:
     /// Default constructor
@@ -54,6 +102,9 @@ public:
     /// @param type The buffer type
     /// @param on_update The buffer update function
     Buffer(const Device &device, std::string name, BufferType type, std::function<void()> on_update);
+
+    /// Call destroy_buffer
+    ~Buffer();
 
     Buffer(const Buffer &) = delete;
     Buffer(Buffer &&other) noexcept;
@@ -77,8 +128,31 @@ public:
         return m_name;
     }
 
+    /// Request a buffer update
+    /// @param src_data A pointer to the data to copy the updated data from
+    /// @warning It is the responsibility of the programmer to make sure src_data still points to valid memory when
+    /// update_buffer() is called!
+    /// @param src_data_size The size of the data to copy
+    void request_update(void *src_data, std::size_t src_data_size);
+
+    /// Request a buffer update
+    /// @tparam BufferDataType
+    /// @param data
+    template <typename BufferDataType>
+    void request_update(BufferDataType &data) {
+        return request_update(std::addressof(data), sizeof(data));
+    }
+
+    /// Request a buffer update
+    /// @tparam BufferDataType
+    /// @param data
+    template <typename BufferDataType>
+    void request_update(std::vector<BufferDataType> &data) {
+        return request_update(data.data(), sizeof(BufferDataType) * data.size());
+    }
+
     [[nodiscard]] auto type() const {
-        return m_type;
+        return m_buffer_type;
     }
 };
 

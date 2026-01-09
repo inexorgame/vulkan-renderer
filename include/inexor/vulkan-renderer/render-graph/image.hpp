@@ -78,6 +78,10 @@ public:
 
     Image &operator=(const Image &other) = delete;
     Image &operator=(Image &&other) = delete;
+
+    [[nodiscard]] auto image_view() const {
+        return m_img_view;
+    }
 };
 
 } // namespace inexor::vulkan_renderer::render_graph

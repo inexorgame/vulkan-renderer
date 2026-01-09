@@ -41,7 +41,7 @@ GraphicsPipelineBuilder::GraphicsPipelineBuilder(GraphicsPipelineBuilder &&other
     m_color_blend_attachment_states = std::move(other.m_color_blend_attachment_states);
 }
 
-std::shared_ptr<GraphicsPipeline> GraphicsPipelineBuilder::build(std::string name) {
+std::shared_ptr<GraphicsPipeline> GraphicsPipelineBuilder::build(std::string name, bool use_dynamic_rendering) {
     if (name.empty()) {
         throw InexorException("Error: Parameter 'name' is an empty string!");
     }
@@ -49,13 +49,15 @@ std::shared_ptr<GraphicsPipeline> GraphicsPipelineBuilder::build(std::string nam
     // build the graphics pipeline. This is because validation of this data is job of the validation layers, and not the
     // job of GraphicsPipelineBuilder. We should not mimic the behavious of validation layers here.
 
-    m_pipeline_rendering_ci = make_info<VkPipelineRenderingCreateInfo>({
-        // TODO: Support multiview rendering and expose viewMask parameter
-        .colorAttachmentCount = static_cast<std::uint32_t>(m_color_attachments.size()),
-        .pColorAttachmentFormats = m_color_attachments.data(),
-        .depthAttachmentFormat = m_depth_attachment_format,
-        .stencilAttachmentFormat = m_stencil_attachment_format,
-    });
+    if (use_dynamic_rendering) {
+        m_pipeline_rendering_ci = make_info<VkPipelineRenderingCreateInfo>({
+            // TODO: Support multiview rendering and expose viewMask parameter
+            .colorAttachmentCount = static_cast<std::uint32_t>(m_color_attachments.size()),
+            .pColorAttachmentFormats = m_color_attachments.data(),
+            .depthAttachmentFormat = m_depth_attachment_format,
+            .stencilAttachmentFormat = m_stencil_attachment_format,
+        });
+    }
 
     m_vertex_input_sci = make_info<VkPipelineVertexInputStateCreateInfo>({
         .vertexBindingDescriptionCount = static_cast<std::uint32_t>(m_vertex_input_binding_descriptions.size()),
@@ -82,9 +84,10 @@ std::shared_ptr<GraphicsPipeline> GraphicsPipelineBuilder::build(std::string nam
         .pDynamicStates = m_dynamic_states.data(),
     });
 
+    // @TODO Fix this once we move away from renderpasses!
     auto pipeline_ci = make_info<VkGraphicsPipelineCreateInfo>({
         // NOTE: This is one of those rare cases where pNext is actually not nullptr!
-        //.pNext = &m_pipeline_rendering_ci,
+        .pNext = (use_dynamic_rendering) ? &m_pipeline_rendering_ci : nullptr,
         .stageCount = static_cast<std::uint32_t>(m_shader_stages.size()),
         .pStages = m_shader_stages.data(),
         .pVertexInputState = &m_vertex_input_sci,
@@ -98,8 +101,10 @@ std::shared_ptr<GraphicsPipeline> GraphicsPipelineBuilder::build(std::string nam
         .pDynamicState = &m_dynamic_states_sci,
         .layout = m_pipeline_layout,
         // @TODO Make this VK_NULL_HANDLE and use dynamic rendering!
-        .renderPass = m_render_pass,
+        .renderPass = (use_dynamic_rendering) ? VK_NULL_HANDLE : m_render_pass,
     });
+
+    Sleep(2000);
 
     auto graphics_pipeline =
         std::make_shared<GraphicsPipeline>(m_device, m_pipeline_cache, m_descriptor_set_layouts, m_push_constant_ranges,
@@ -202,7 +207,7 @@ GraphicsPipelineBuilder &GraphicsPipelineBuilder::add_shader(std::weak_ptr<Shade
     m_shader_stages.emplace_back(wrapper::make_info<VkPipelineShaderStageCreateInfo>({
         .stage = shader.lock()->shader_stage(),
         .module = shader.lock()->shader_module(),
-        .pName = shader.lock()->name().c_str(),
+        .pName = shader.lock()->entry_point().c_str(),
     }));
     return *this;
 }

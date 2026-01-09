@@ -158,8 +158,10 @@ public:
 
     /// Build the graphics pipeline with specified pipeline create flags
     /// @param name The debug name of the graphics pipeline
+    /// @TODO Remove this and use only dynamic rendering!
+    /// @param use_dynamic_rendering
     /// @return The unique pointer instance of ``GraphicsPipeline`` that was created
-    [[nodiscard]] std::shared_ptr<GraphicsPipeline> build(std::string name);
+    [[nodiscard]] std::shared_ptr<GraphicsPipeline> build(std::string name, bool use_dynamic_rendering);
 
     /// Set the color blend manually
     /// @param color_blend The color blend

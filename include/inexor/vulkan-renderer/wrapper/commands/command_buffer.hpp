@@ -32,13 +32,16 @@ using wrapper::synchronization::Fence;
 /// @TODO Switch to taking in OOP wrappers when we have them (e.g. bind_vertex_buffers takes in a VertexBuffer)
 /// @TODO Make trivially copyable (this class doesn't really "own" the command buffer, more just an OOP wrapper).
 class CommandBuffer {
+    // The Device wrapper must be able to call begin_command_buffer and end_command_buffer
+    friend class Device;
+    friend class CommandPool;
+
+private:
     VkCommandBuffer m_command_buffer{VK_NULL_HANDLE};
     const Device &m_device;
     std::string m_name;
     std::unique_ptr<Fence> m_wait_fence;
-
-    // The Device wrapper must be able to call begin_command_buffer and end_command_buffer
-    friend class Device;
+    std::unique_ptr<Fence> m_cmd_buf_execution_completed;
 
     /// The staging buffers which are maybe used in the command buffer
     /// This vector of staging buffers will be cleared every time ``begin_command_buffer`` is called
@@ -46,8 +49,6 @@ class CommandBuffer {
     /// of its lifetime, the staging bufers will be cleared. We trust Vulkan Memory Allocator (VMA) in managing the
     /// memory for staging buffers.
     mutable std::vector<GPUMemoryBuffer> m_staging_bufs;
-
-    friend class CommandPool;
 
     /// Call vkBeginCommandBuffer
     /// @param flags The command buffer usage flags, ``VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT`` by default
@@ -90,6 +91,13 @@ class CommandBuffer {
     /// @param name The name of the command buffer.
     void set_debug_name(const std::string &name);
 
+    /// Call vkQueueSubmit
+    /// @param queue_type The queue type to submit the command buffer to
+    /// @param wait_semaphores The semaphores to wait for
+    /// @param signal_semaphores The semaphores to signal
+    void submit_and_wait(VkQueueFlagBits queue_type, std::span<const VkSemaphore> wait_semaphores = {},
+                         std::span<const VkSemaphore> signal_semaphores = {}) const;
+
 public:
     /// Default constructor
     /// @param device A const reference to the device wrapper class
@@ -104,6 +112,12 @@ public:
 
     CommandBuffer &operator=(const CommandBuffer &) = delete;
     CommandBuffer &operator=(CommandBuffer &&) = delete;
+
+    /// Call vkCmdBeginDebugUtilsLabelEXT
+    /// @param name The name of the debug label
+    /// @param color The color of the debug label
+    /// @return A const reference to the this pointer (allowing method calls to be chained)
+    const CommandBuffer &begin_debug_label_region(std::string name, std::array<float, 4> color) const;
 
     /// Call vkCmdBeginRenderPass
     /// @param render_pass_bi The renderpass begin info
@@ -314,9 +328,28 @@ public:
                                       std::uint32_t first_index = 0, std::int32_t vert_offset = 0,
                                       std::uint32_t first_inst = 0) const;
 
+    /// Call vkCmdBeginRendering
+    /// @note We don't need to call it ``vkCmdBeginRenderingKHR`` anymore since it's part of Vulkan 1.3's core
+    /// @note ``begin_render_pass`` has been deprecated because of dynamic rendering (``VK_KHR_dynamic_rendering``)
+    /// @param rendering_info The info for dynamic rendering
+    /// @return A const reference to the this pointer (allowing method calls to be chained)
+    const CommandBuffer &begin_rendering(const VkRenderingInfo &rendering_info) const;
+
     /// Call vkCmdEndRenderPass
     /// @return A const reference to the this pointer (allowing method calls to be chained)
-    const CommandBuffer &end_render_pass() const; // NOLINT
+    const CommandBuffer &end_render_pass() const;
+
+    /// Call vkCmdEndDebugUtilsLabelEXT
+    /// @return A const reference to the this pointer (allowing method calls to be chained)
+    const CommandBuffer &end_debug_label_region() const;
+
+    // TODO: Make begin_rendering and end_rendering private and allow only rendergraph to access it!
+
+    /// Call vkCmdEndRendering
+    /// @note We don't need to call it ``vkCmdEndRenderingKHR`` anymore since it's part of Vulkan 1.3's core
+    /// @note ``end_render_pass`` has been deprecated because of dynamic rendering (``VK_KHR_dynamic_rendering``)
+    /// @return A const reference to the this pointer (allowing method calls to be chained)
+    const CommandBuffer &end_rendering() const;
 
     [[nodiscard]] VkResult fence_status() const {
         return m_wait_fence->status();
@@ -339,6 +372,49 @@ public:
                                           VkDependencyFlags dep_flags = 0) const;
 
     /// Call vkCmdPipelineBarrier
+    /// @param src_stage_flags The source stage flags
+    /// @param dst_stage_flags The destination stage flags
+    /// @param buffer_mem_barrier The buffer memory barrier
+    /// @return A const reference to the dereferenced ``this`` pointer (allowing for method calls to be chained)
+    const CommandBuffer &pipeline_buffer_memory_barrier(VkPipelineStageFlags src_stage_flags,
+                                                        VkPipelineStageFlags dst_stage_flags,
+                                                        const VkBufferMemoryBarrier &buffer_mem_barrier) const;
+
+    /// Call vkCmdPipelineBarrier
+    /// @param src_stage_flags The source stage flags
+    /// @param dst_stage_flags The destination stage flags
+    /// @param src_access_flags The source access flags
+    /// @param dst_access_flags The destination access flags
+    /// @param buffer
+    /// @param size
+    /// @param offset
+    /// @return A const reference to the dereferenced ``this`` pointer (allowing for method calls to be chained)
+    const CommandBuffer &pipeline_buffer_memory_barrier(VkPipelineStageFlags src_stage_flags,
+                                                        VkPipelineStageFlags dst_stage_flags,
+                                                        VkAccessFlags src_access_flags, VkAccessFlags dst_access_flags,
+                                                        VkBuffer buffer, VkDeviceSize size = VK_WHOLE_SIZE,
+                                                        VkDeviceSize offset = 0) const;
+
+    /// Call vkCmdPipelineBarrier
+    /// @param src_stage_flags The the source stage flags
+    /// @param dst_stage_flags The destination stage flags
+    /// @param buffer_mem_barriers The buffer memory barriers
+    /// @return A const reference to the dereferenced ``this`` pointer (allowing for method calls to be chained)
+    const CommandBuffer &
+    pipeline_buffer_memory_barriers(VkPipelineStageFlags src_stage_flags, VkPipelineStageFlags dst_stage_flags,
+                                    std::span<const VkBufferMemoryBarrier> buffer_mem_barriers) const;
+
+    /// Place a buffer memory pipeline barrier before a vkCmdCopyBuffer command
+    /// @param buffer The affected buffer
+    /// @return A const reference to the dereferenced ``this`` pointer (allowing for method calls to be chained)
+    const CommandBuffer &pipeline_buffer_memory_barrier_before_copy_buffer(VkBuffer buffer) const;
+
+    /// Place a buffer memory pipeline barrier after a vkCmdCopyBuffer command
+    /// @param buffer The affected buffer
+    /// @return A const reference to the dereferenced ``this`` pointer (allowing for method calls to be chained)
+    const CommandBuffer &pipeline_buffer_memory_barrier_after_copy_buffer(VkBuffer buffer) const;
+
+    /// Call vkCmdPipelineBarrier
     /// @param src_stage_flags The the source stage flags
     /// @param dst_stage_flags The destination stage flags
     /// @param barrier The image memory barrier
@@ -346,6 +422,39 @@ public:
     const CommandBuffer &pipeline_image_memory_barrier(VkPipelineStageFlags src_stage_flags, // NOLINT
                                                        VkPipelineStageFlags dst_stage_flags,
                                                        const VkImageMemoryBarrier &barrier) const;
+
+    /// Call vkCmdPipelineBarrier
+    /// @param src_stage_flags
+    /// @param dst_stage_flags
+    /// @param src_access_flags
+    /// @param dst_access_flags
+    /// @param old_img_layout
+    /// @param new_img_layout
+    /// @param img
+    /// @return A const reference to the dereferenced ``this`` pointer (allowing for method calls to be chained)
+    const CommandBuffer &pipeline_image_memory_barrier(VkPipelineStageFlags src_stage_flags,
+                                                       VkPipelineStageFlags dst_stage_flags,
+                                                       VkAccessFlags src_access_flags, VkAccessFlags dst_access_flags,
+                                                       VkImageLayout old_img_layout, VkImageLayout new_img_layout,
+                                                       VkImage img) const;
+    /// Call vkCmdPipelineBarrier
+    /// @param src_stage_flags The the source stage flags
+    /// @param dst_stage_flags The destination stage flags
+    /// @param barriers The image memory barriers
+    /// @return A const reference to the dereferenced ``this`` pointer (allowing for method calls to be chained)
+    const CommandBuffer &pipeline_image_memory_barriers(VkPipelineStageFlags src_stage_flags, // NOLINT
+                                                        VkPipelineStageFlags dst_stage_flags,
+                                                        std::span<const VkImageMemoryBarrier> barriers) const;
+
+    ///
+    /// @param img
+    /// @return
+    const CommandBuffer &pipeline_image_memory_barrier_after_copy_buffer_to_image(VkImage img) const;
+
+    ///
+    /// @param img
+    /// @return
+    const CommandBuffer &pipeline_image_memory_barrier_before_copy_buffer_to_image(VkImage img) const;
 
     /// Call vkCmdPipelineBarrier
     /// @param src_stage_flags The the source stage flags
@@ -356,9 +465,23 @@ public:
                                                  VkPipelineStageFlags dst_stage_flags,
                                                  const VkMemoryBarrier &barrier) const;
 
+    /// Call vkCmdPipelineBarrier
+    /// @param src_stage_flags The the source stage flags
+    /// @param dst_stage_flags The destination stage flags
+    /// @param barriers The memory barriers
+    /// @return A const reference to the dereferenced ``this`` pointer (allowing for method calls to be chained)
+    const CommandBuffer &pipeline_memory_barriers(VkPipelineStageFlags src_stage_flags, // NOLINT
+                                                  VkPipelineStageFlags dst_stage_flags,
+                                                  const std::span<const VkMemoryBarrier> barriers) const;
+
     /// Call vkCmdPipelineBarrier to place a full memory barrier
     /// @warning You should avoid full barriers since they are not the most performant solution in most cases
     const CommandBuffer &full_barrier() const;
+
+    /// Call vkCmdInsertDebugUtilsLabelEXT
+    /// @param name The name of the debug label to insert
+    /// @return A const reference to the dereferenced ``this`` pointer (allowing for method calls to be chained)
+    const CommandBuffer &insert_debug_label(std::string name, std::array<float, 4> color) const;
 
     /// Call vkCmdPushConstants
     /// @param layout The pipeline layout
@@ -426,6 +549,11 @@ public:
     /// @param viewport The viewport
     /// @return A const reference to the this pointer (allowing method calls to be chained)
     const CommandBuffer &set_viewport(VkViewport viewport) const;
+
+    /// Set the name of a command buffer during recording of a specific command in the current command buffer
+    /// @param name The name of the suboperation
+    /// @return A const reference to the this pointer (allowing method calls to be chained)
+    const CommandBuffer &set_suboperation_debug_name(std::string name) const;
 
     /// Call vkQueueSubmit and use a fence to wait for command buffer submission and execution to complete
     /// @param submit_infos The submit infos

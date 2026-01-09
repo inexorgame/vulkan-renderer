@@ -160,7 +160,7 @@ ImGUIOverlay::ImGUIOverlay(const wrapper::Device &device, const wrapper::Swapcha
                                 .add_shader(m_fragment_shader)
                                 .set_descriptor_set_layout(m_descriptor_set_layout2)
                                 .add_push_constant_range(VK_SHADER_STAGE_VERTEX_BIT, sizeof(m_push_const_block))
-                                .build("ImGui");
+                                .build("ImGui", true);
         // Return the pipeline which was just created
         return m_imgui_pipeline2;
     });

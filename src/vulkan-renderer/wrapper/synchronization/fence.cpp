@@ -33,10 +33,6 @@ Fence::~Fence() {
     vkDestroyFence(m_device.device(), m_fence, nullptr);
 }
 
-void Fence::block(std::uint64_t timeout_limit) const {
-    vkWaitForFences(m_device.device(), 1, &m_fence, VK_TRUE, timeout_limit);
-}
-
 void Fence::reset() const {
     vkResetFences(m_device.device(), 1, &m_fence);
 }
@@ -45,4 +41,10 @@ VkResult Fence::status() const {
     return vkGetFenceStatus(m_device.device(), m_fence);
 }
 
+void Fence::wait(const std::uint64_t timeout_limit) const {
+    if (const auto result = vkWaitForFences(m_device.device(), 1, &m_fence, VK_TRUE, timeout_limit);
+        result != VK_SUCCESS) {
+        throw VulkanException("Error: vkWaitForFences failed!", result, m_name);
+    }
+}
 } // namespace inexor::vulkan_renderer::wrapper::synchronization

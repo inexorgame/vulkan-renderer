@@ -29,6 +29,7 @@ CommandBuffer::CommandBuffer(const Device &device, const VkCommandPool cmd_pool,
     m_device.set_debug_name(m_command_buffer, m_name);
 
     m_wait_fence = std::make_unique<Fence>(m_device, m_name, false);
+    m_cmd_buf_execution_completed = std::make_unique<Fence>(m_device, m_name, false);
 }
 
 CommandBuffer::CommandBuffer(CommandBuffer &&other) noexcept : m_device(other.m_device) {
@@ -46,6 +47,19 @@ const CommandBuffer &CommandBuffer::begin_command_buffer(const VkCommandBufferUs
 
     // We must clear the staging buffers which could be left over from previous use of this command buffer
     m_staging_bufs.clear();
+    return *this;
+}
+
+const CommandBuffer &CommandBuffer::begin_debug_label_region(std::string name, std::array<float, 4> color) const {
+    if (name.empty()) {
+        // NOTE: Despite Vulkan spec allowing name to be empty, we strictly enforce this rule in our code base!
+        throw InexorException("Error: Parameter 'name' is empty!");
+    }
+    auto label = make_info<VkDebugUtilsLabelEXT>({
+        .pLabelName = name.c_str(),
+        .color = {color[0], color[1], color[2], color[3]},
+    });
+    vkCmdBeginDebugUtilsLabelEXT(m_command_buffer, &label);
     return *this;
 }
 
@@ -268,8 +282,23 @@ const CommandBuffer &CommandBuffer::end_command_buffer() const {
     return *this;
 }
 
+const CommandBuffer &CommandBuffer::begin_rendering(const VkRenderingInfo &rendering_info) const {
+    vkCmdBeginRendering(m_command_buffer, &rendering_info);
+    return *this;
+};
+
 const CommandBuffer &CommandBuffer::end_render_pass() const {
     vkCmdEndRenderPass(m_command_buffer);
+    return *this;
+}
+
+const CommandBuffer &CommandBuffer::end_debug_label_region() const {
+    vkCmdEndDebugUtilsLabelEXT(m_command_buffer);
+    return *this;
+}
+
+const CommandBuffer &CommandBuffer::end_rendering() const {
+    vkCmdEndRendering(m_command_buffer);
     return *this;
 }
 
@@ -279,14 +308,53 @@ const CommandBuffer &CommandBuffer::pipeline_barrier(const VkPipelineStageFlags 
                                                      const std::span<const VkMemoryBarrier> mem_barriers,
                                                      const std::span<const VkBufferMemoryBarrier> buf_mem_barriers,
                                                      const VkDependencyFlags dep_flags) const {
-    // One barrier must be set at least
-    assert(!(img_mem_barriers.empty() && mem_barriers.empty()) && buf_mem_barriers.empty());
-
     vkCmdPipelineBarrier(m_command_buffer, src_stage_flags, dst_stage_flags, dep_flags,
                          static_cast<std::uint32_t>(mem_barriers.size()), mem_barriers.data(),
                          static_cast<std::uint32_t>(buf_mem_barriers.size()), buf_mem_barriers.data(),
                          static_cast<std::uint32_t>(img_mem_barriers.size()), img_mem_barriers.data());
     return *this;
+}
+
+const CommandBuffer &
+CommandBuffer::pipeline_buffer_memory_barrier(const VkPipelineStageFlags src_stage_flags,
+                                              const VkPipelineStageFlags dst_stage_flags,
+                                              const VkBufferMemoryBarrier &buffer_mem_barrier) const {
+    return pipeline_barrier(src_stage_flags, dst_stage_flags, {}, {}, {&buffer_mem_barrier, 1});
+}
+
+const CommandBuffer &CommandBuffer::pipeline_buffer_memory_barrier(VkPipelineStageFlags src_stage_flags,
+                                                                   VkPipelineStageFlags dst_stage_flags,
+                                                                   VkAccessFlags src_access_flags,
+                                                                   VkAccessFlags dst_access_flags, VkBuffer buffer,
+                                                                   VkDeviceSize size, VkDeviceSize offset) const {
+    return pipeline_buffer_memory_barrier(src_stage_flags, dst_stage_flags,
+                                          wrapper::make_info<VkBufferMemoryBarrier>({
+                                              .srcAccessMask = src_access_flags,
+                                              .dstAccessMask = dst_access_flags,
+                                              .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+                                              .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+                                              .buffer = buffer,
+                                              .offset = offset,
+                                              .size = size,
+                                          }));
+}
+
+const CommandBuffer &
+CommandBuffer::pipeline_buffer_memory_barriers(const VkPipelineStageFlags src_stage_flags,
+                                               const VkPipelineStageFlags dst_stage_flags,
+                                               const std::span<const VkBufferMemoryBarrier> buffer_mem_barriers) const {
+    return pipeline_barrier(src_stage_flags, dst_stage_flags, {}, {}, buffer_mem_barriers);
+}
+
+const CommandBuffer &CommandBuffer::pipeline_buffer_memory_barrier_before_copy_buffer(const VkBuffer buffer) const {
+    return pipeline_buffer_memory_barrier(VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT,
+                                          VK_ACCESS_MEMORY_WRITE_BIT, VK_ACCESS_TRANSFER_READ_BIT, buffer);
+}
+
+const CommandBuffer &CommandBuffer::pipeline_buffer_memory_barrier_after_copy_buffer(const VkBuffer buffer) const {
+    return pipeline_buffer_memory_barrier(VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
+                                          VK_ACCESS_TRANSFER_WRITE_BIT,
+                                          VK_ACCESS_MEMORY_READ_BIT | VK_ACCESS_MEMORY_WRITE_BIT, buffer);
 }
 
 const CommandBuffer &CommandBuffer::pipeline_image_memory_barrier(const VkPipelineStageFlags src_stage_flags,
@@ -295,10 +363,77 @@ const CommandBuffer &CommandBuffer::pipeline_image_memory_barrier(const VkPipeli
     return pipeline_barrier(src_stage_flags, dst_stage_flags, {&img_barrier, 1});
 }
 
-const CommandBuffer &CommandBuffer::pipeline_memory_barrier(VkPipelineStageFlags src_stage_flags,
-                                                            VkPipelineStageFlags dst_stage_flags,
+const CommandBuffer &CommandBuffer::pipeline_image_memory_barrier(
+    const VkPipelineStageFlags src_stage_flags, const VkPipelineStageFlags dst_stage_flags,
+    const VkAccessFlags src_access_flags, const VkAccessFlags dst_access_flags, const VkImageLayout old_img_layout,
+    const VkImageLayout new_img_layout, const VkImage img) const {
+    if (!img) {
+        throw InexorException("Error: Parameter 'img' is invalid!");
+    }
+    return pipeline_image_memory_barrier(src_stage_flags, dst_stage_flags,
+                                         make_info<VkImageMemoryBarrier>({
+                                             .srcAccessMask = src_access_flags,
+                                             .dstAccessMask = dst_access_flags,
+                                             .oldLayout = old_img_layout,
+                                             .newLayout = new_img_layout,
+                                             .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+                                             .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+                                             .image = img,
+                                             .subresourceRange =
+                                                 {
+                                                     .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+                                                     .baseMipLevel = 0,
+                                                     .levelCount = 1,
+                                                     .baseArrayLayer = 0,
+                                                     .layerCount = 1,
+                                                 },
+                                         }));
+}
+
+const CommandBuffer &CommandBuffer::pipeline_image_memory_barrier_after_copy_buffer_to_image(const VkImage img) const {
+    if (!img) {
+        throw InexorException("Error: Parameter 'img' is invalid!");
+    }
+    return pipeline_image_memory_barrier(VK_PIPELINE_STAGE_TRANSFER_BIT,           // src_stage_flags
+                                         VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,    // dst_stage_flags
+                                         VK_ACCESS_TRANSFER_WRITE_BIT,             // src_access_flags
+                                         VK_ACCESS_SHADER_READ_BIT,                // dst_access_flags
+                                         VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,     // old_img_layout
+                                         VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, // new_img_layout
+                                         img);
+}
+
+const CommandBuffer &CommandBuffer::pipeline_image_memory_barrier_before_copy_buffer_to_image(const VkImage img) const {
+    if (!img) {
+        throw InexorException("Error: Parameter 'img' is invalid!");
+    }
+    return pipeline_image_memory_barrier(VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,    // src_stage_flags
+                                         VK_PIPELINE_STAGE_TRANSFER_BIT,       // dst_stage_flags
+                                         0,                                    // src_access_flags
+                                         VK_ACCESS_TRANSFER_WRITE_BIT,         // dst_access_flags
+                                         VK_IMAGE_LAYOUT_UNDEFINED,            // old_img_layout
+                                         VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, // new_img_layout
+                                         img);
+}
+
+const CommandBuffer &
+CommandBuffer::pipeline_image_memory_barriers(const VkPipelineStageFlags src_stage_flags,
+                                              const VkPipelineStageFlags dst_stage_flags,
+                                              const std::span<const VkImageMemoryBarrier> img_barrier) const {
+    return pipeline_barrier(src_stage_flags, dst_stage_flags, img_barrier);
+}
+
+const CommandBuffer &CommandBuffer::pipeline_memory_barrier(const VkPipelineStageFlags src_stage_flags,
+                                                            const VkPipelineStageFlags dst_stage_flags,
                                                             const VkMemoryBarrier &mem_barrier) const {
     return pipeline_barrier(src_stage_flags, dst_stage_flags, {}, {&mem_barrier, 1});
+}
+
+const CommandBuffer &
+CommandBuffer::pipeline_memory_barriers(const VkPipelineStageFlags src_stage_flags,
+                                        const VkPipelineStageFlags dst_stage_flags,
+                                        const std::span<const VkMemoryBarrier> mem_barriers) const {
+    return pipeline_barrier(src_stage_flags, dst_stage_flags, {}, mem_barriers);
 }
 
 const CommandBuffer &CommandBuffer::full_barrier() const {
@@ -307,6 +442,18 @@ const CommandBuffer &CommandBuffer::full_barrier() const {
                                        .srcAccessMask = VK_ACCESS_MEMORY_WRITE_BIT,
                                        .dstAccessMask = VK_ACCESS_MEMORY_READ_BIT,
                                    }));
+}
+
+const CommandBuffer &CommandBuffer::insert_debug_label(std::string name, std::array<float, 4> color) const {
+    if (name.empty()) {
+        throw InexorException("Error: Parameter 'name' is an empty string!");
+    }
+    auto label = make_info<VkDebugUtilsLabelEXT>({
+        .pLabelName = name.c_str(),
+        .color = {color[0], color[1], color[2], color[3]},
+    });
+    vkCmdInsertDebugUtilsLabelEXT(m_command_buffer, &label);
+    return *this;
 }
 
 const CommandBuffer &CommandBuffer::push_constants(const VkPipelineLayout layout, const VkShaderStageFlags stage,
@@ -356,9 +503,14 @@ const CommandBuffer &CommandBuffer::set_viewport(const VkViewport viewport) cons
     return *this;
 }
 
+const CommandBuffer &CommandBuffer::set_suboperation_debug_name(std::string name) const {
+    m_device.set_debug_name(m_command_buffer, m_name + name);
+    return *this;
+}
+
 const CommandBuffer &CommandBuffer::submit_and_wait(const std::span<const VkSubmitInfo> submit_infos) const {
     submit(submit_infos);
-    m_wait_fence->block();
+    m_wait_fence->wait();
     return *this;
 }
 
@@ -372,6 +524,49 @@ const CommandBuffer &CommandBuffer::submit_and_wait() const {
         .commandBufferCount = 1,
         .pCommandBuffers = &m_command_buffer,
     }));
+}
+
+void CommandBuffer::submit_and_wait(const VkQueueFlagBits queue_type,
+                                    const std::span<const VkSemaphore> wait_semaphores,
+                                    const std::span<const VkSemaphore> signal_semaphores) const {
+    end_command_buffer();
+
+    // TODO: What to do here with graphics queue?
+
+    // NOTE: We must specify as many pipeline stage flags as there are wait semaphores!
+    std::vector<VkPipelineStageFlags> wait_stages(wait_semaphores.size(),
+                                                  VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
+
+    const auto submit_info = make_info<VkSubmitInfo>({
+        .waitSemaphoreCount = static_cast<std::uint32_t>(wait_semaphores.size()),
+        .pWaitSemaphores = wait_semaphores.data(),
+        .pWaitDstStageMask = wait_stages.data(),
+        .commandBufferCount = 1,
+        .pCommandBuffers = &m_command_buffer,
+        .signalSemaphoreCount = static_cast<std::uint32_t>(signal_semaphores.size()),
+        .pSignalSemaphores = signal_semaphores.data(),
+    });
+
+    // TODO: Support VK_QUEUE_SPARSE_BINDING_BIT if required
+    auto get_queue = [&]() {
+        switch (queue_type) {
+        case VK_QUEUE_TRANSFER_BIT: {
+            return m_device.m_transfer_queue;
+        }
+        case VK_QUEUE_COMPUTE_BIT: {
+            return m_device.m_compute_queue;
+        }
+        default: {
+            // VK_QUEUE_GRAPHICS_BIT and rest
+            return m_device.m_graphics_queue;
+        }
+        }
+    };
+
+    if (const auto result = vkQueueSubmit(get_queue(), 1, &submit_info, m_cmd_buf_execution_completed->fence())) {
+        throw VulkanException("Error: vkQueueSubmit failed!", result, m_name);
+    }
+    m_cmd_buf_execution_completed->wait();
 }
 
 void CommandBuffer::set_debug_name(const std::string &name) {

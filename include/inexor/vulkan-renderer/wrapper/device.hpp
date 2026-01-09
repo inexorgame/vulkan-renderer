@@ -19,18 +19,12 @@ namespace inexor::vulkan_renderer::wrapper {
 class Instance;
 
 // Using declarations
+using commands::CommandBuffer;
+using commands::CommandPool;
 using tools::InexorException;
 using tools::VulkanException;
 using wrapper::commands::CommandBuffer;
 using wrapper::commands::CommandPool;
-
-/// An enum for the supported queue types
-enum class VulkanQueueType {
-    QUEUE_TYPE_GRAPHICS,
-    QUEUE_TYPE_COMPUTE,
-    QUEUE_TYPE_TRANSFER,
-    QUEUE_TYPE_SPARSE_BINDING,
-};
 
 /// Debug label colors
 enum class DebugLabelColor {
@@ -61,6 +55,9 @@ enum class DebugLabelColor {
 /// RAII wrapper class for `VkDevice`, `VkPhysicalDevice` and `VkQueue`.
 /// @note There is no method ``is_layer_supported`` in this wrapper class because device layers are deprecated.
 class Device {
+    friend class CommandBuffer;
+    friend class CommandPool;
+
 private:
     VkDevice m_device{VK_NULL_HANDLE};
     VkPhysicalDevice m_physical_device{VK_NULL_HANDLE};
@@ -89,7 +86,7 @@ private:
     /// Get the thread_local command pool.
     /// @param queue_type The Vulkan queue type
     /// @note This method will create a command pool for the thread if it doesn't already exist.
-    CommandPool &get_thread_command_pool(VulkanQueueType queue_type) const;
+    CommandPool &get_thread_command_pool(VkQueueFlagBits queue_type) const;
 
     // @TODO Implement get_thread_command_pool with "transfer if available, graphics otherwise" for copy operations.
 
@@ -137,13 +134,34 @@ public:
     [[nodiscard]] bool is_presentation_supported(VkSurfaceKHR surface, std::uint32_t queue_family_index) const;
 
     /// A wrapper method for beginning, ending and submitting command buffers. This method calls the request method for
-    /// the given command pool, begins the command buffer, executes the lambda, ends recording the command buffer,
-    /// submits it and waits for it.
-    /// @param name The internal debug name of the command buffer (must not be empty).
-    /// @param queue_type The queue type which determines which command pool is used.
-    /// @param cmd_lambda The command lambda to execute.
-    void execute(const std::string &name, const VulkanQueueType queue_type,
-                 const std::function<void(const CommandBuffer &cmd_buf)> &cmd_lambda) const;
+    /// the given command pool, begins the command buffer, invokes the recording function, ends recording the command
+    /// buffer, submits it on the specified queue and waits for it. Using this execute method is the preferred way of
+    /// using command buffers in the engine. There is no need to request a command buffer manually, which is why this
+    /// method in CommandPool is not public.
+    ///
+    /// @code{.cpp}
+    /// m_device.execute("Upload Data", VK_QUEUE_TRANSFER_BIT, DebugLabelColor::RED,
+    ///     [](const CommandBuffer &cmd_buf) { /*Do you vkCmd calls in here*/ }
+    ///     /*Both could be a std::vector, an std::array, or std::span of VkSemaphore
+    ///       It's also possible to submit one VkSemaphore as a std::span using {&wait_semaphore, 1}*/
+    ///     wait_semaphores, signal_semaphores)
+    /// @endcode
+    ///
+    /// @param name The internal debug name of the command buffer (must not be empty)
+    /// @param queue_type The queue type to submit the command buffer to
+    /// @param dbg_label_color The color of the debug label when calling ``begin_debug_label_region``
+    /// @note Debug label colors are only visible in graphics debuggers such as RenderDoc
+    /// @param cmd_buf_recording_func The command buffer recording function to invoke after starting recording
+    /// @note It's technically allowed that the command buffer recording function is empty or a function which does not
+    /// do any vkCmd command calls, but this makes no real sense because an empty command buffer will be submitted. It
+    /// will not be checked if any commands have been recorded into the command buffer, although this could be
+    /// implemented using CommandBuffer wrapper. However, this would be a case for validation layers though.
+    /// @param wait_semaphores The semaphores to wait on before starting command buffer execution (empty by default)
+    /// @param signal_semaphores The semaphores to signal once command buffer execution will finish (empty by default)
+    void execute(const std::string &name, VkQueueFlagBits queue_type, DebugLabelColor dbg_label_color,
+                 const std::function<void(const CommandBuffer &cmd_buf)> &cmd_buf_recording_func,
+                 std::span<const VkSemaphore> wait_semaphores = {},
+                 std::span<const VkSemaphore> signal_semaphores = {}) const;
 
     [[nodiscard]] VkPhysicalDevice physical_device() const {
         return m_physical_device;
@@ -204,7 +222,7 @@ public:
     /// index associated with it.
     /// @param name The name which will be assigned to the command buffer.
     /// @return A command buffer from the thread_local command pool.
-    [[nodiscard]] const CommandBuffer &request_command_buffer(VulkanQueueType queue_type, const std::string &name);
+    [[nodiscard]] const CommandBuffer &request_command_buffer(VkQueueFlagBits queue_type, const std::string &name);
 
     /// Check if a surface supports a certain image usage.
     /// @param surface The window surface.
@@ -235,6 +253,10 @@ public:
             throw VulkanException("Error: vkSetDebugUtilsObjectNameEXT failed!", result);
         }
     }
+
+    /// Call vkUpdateDescriptorSets
+    /// @param write_descriptor_sets The write descriptor sets
+    void update_descriptor_sets(std::span<VkWriteDescriptorSet> write_descriptor_sets);
 
     /// Call `vkDeviceWaitIdle` or `vkQueueWaitIdle` depending on whether `queue` is specified.
     /// @warning Avoid using those methods because they result in bad gpu performance due to global stalls!

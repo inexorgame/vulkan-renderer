@@ -74,7 +74,6 @@ using inexor::vulkan_renderer::wrapper::Instance;
 using inexor::vulkan_renderer::wrapper::Shader;
 using inexor::vulkan_renderer::wrapper::UniformBuffer;
 using inexor::vulkan_renderer::wrapper::VulkanDebugUtilsCallback;
-using inexor::vulkan_renderer::wrapper::VulkanQueueType;
 using inexor::vulkan_renderer::wrapper::commands::CommandBuffer;
 using inexor::vulkan_renderer::wrapper::descriptors::DescriptorBuilder;
 using inexor::vulkan_renderer::wrapper::descriptors::ResourceDescriptor;
