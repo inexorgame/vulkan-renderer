@@ -104,8 +104,6 @@ std::shared_ptr<GraphicsPipeline> GraphicsPipelineBuilder::build(std::string nam
         .renderPass = (use_dynamic_rendering) ? VK_NULL_HANDLE : m_render_pass,
     });
 
-    Sleep(2000);
-
     auto graphics_pipeline =
         std::make_shared<GraphicsPipeline>(m_device, m_pipeline_cache, m_descriptor_set_layouts, m_push_constant_ranges,
                                            std::move(pipeline_ci), std::move(name));

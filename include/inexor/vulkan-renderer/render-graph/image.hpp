@@ -79,8 +79,20 @@ public:
     Image &operator=(const Image &other) = delete;
     Image &operator=(Image &&other) = delete;
 
+    [[nodiscard]] auto height() const {
+        return m_img_ci.extent.height;
+    }
+
+    [[nodiscard]] auto image() const {
+        return m_img;
+    }
+
     [[nodiscard]] auto image_view() const {
         return m_img_view;
+    }
+
+    [[nodiscard]] auto width() const {
+        return m_img_ci.extent.width;
     }
 };
 

@@ -251,10 +251,33 @@ const CommandBuffer &CommandBuffer::copy_buffer_to_image(const VkBuffer src_buf,
 
 const CommandBuffer &CommandBuffer::copy_buffer_to_image(const VkBuffer src_buf, const VkImage dst_img,
                                                          const VkBufferImageCopy &copy_region) const {
-    assert(src_buf);
-    assert(dst_img);
+    if (!src_buf) {
+        throw InexorException("Error: Parameter 'src_buf' is invalid!");
+    }
+    if (!dst_img) {
+        throw InexorException("Error: Parameter 'dst_img' is invalid!");
+    }
     vkCmdCopyBufferToImage(m_command_buffer, src_buf, dst_img, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &copy_region);
     return *this;
+}
+
+const CommandBuffer &CommandBuffer::copy_buffer_to_image(const VkBuffer buffer, const VkImage img,
+                                                         const VkExtent3D extent) const {
+    // NOTE: We delegate error checks to the other function overload
+    return copy_buffer_to_image(buffer, img,
+                                {
+                                    .imageSubresource =
+                                        {
+                                            .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+                                            .layerCount = 1,
+                                        },
+                                    .imageExtent =
+                                        {
+                                            .width = extent.width,
+                                            .height = extent.height,
+                                            .depth = 1,
+                                        },
+                                });
 }
 
 const CommandBuffer &CommandBuffer::copy_buffer_to_image(const void *data,
@@ -262,6 +285,19 @@ const CommandBuffer &CommandBuffer::copy_buffer_to_image(const void *data,
                                                          const VkImage dst_img, const VkBufferImageCopy &copy_region,
                                                          const std::string &name) const {
     return copy_buffer_to_image(create_staging_buffer(data, data_size, name), dst_img, copy_region);
+}
+
+const CommandBuffer &
+CommandBuffer::copy_buffer_to_image(const VkBuffer src_buf,
+                                    const std::weak_ptr<inexor::vulkan_renderer::render_graph::Image> img) const {
+    // NOTE: We delegate error checks to the other function overload
+    const auto &image = img.lock();
+    return copy_buffer_to_image(src_buf, image->image(),
+                                {
+                                    .width = image->width(),
+                                    .height = image->height(),
+                                    .depth = 1,
+                                });
 }
 
 const CommandBuffer &CommandBuffer::draw(const std::uint32_t vert_count, const std::uint32_t inst_count,

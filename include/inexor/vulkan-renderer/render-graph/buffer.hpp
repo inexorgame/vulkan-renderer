@@ -17,6 +17,9 @@ class CommandBuffer;
 
 namespace inexor::vulkan_renderer::render_graph {
 
+// Forward declaration
+class RenderGraph;
+
 // Using declaration
 using wrapper::Device;
 using wrapper::commands::CommandBuffer;
@@ -31,6 +34,8 @@ enum class BufferType {
 };
 
 class Buffer {
+    friend render_graph::RenderGraph;
+
 private:
     /// The device wrapper
     const Device &m_device;

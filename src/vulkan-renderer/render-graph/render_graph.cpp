@@ -281,11 +281,66 @@ void RenderGraph::sort_graphics_passes_by_order() {
 }
 
 void RenderGraph::update_buffers() {
-    // @TODO Implement!
+    // Check if there is any update required
+    bool any_update_required = false;
+    for (const auto &buffer : m_buffers) {
+        std::invoke(buffer->m_on_check_for_update);
+        // TODO: A command buffer copy command is only required if the memory is not updated through std::memcpy!
+        if (buffer->m_update_requested) {
+            any_update_required = true;
+        }
+    }
+
+    // Only start recording and submitting a command buffer on transfer queue if any update is required
+    // TODO: Use dedicated transfer queue instead of transfer queue for buffer updates!
+    if (any_update_required) {
+        m_device.execute("[RenderGraph::update_buffers]", VK_QUEUE_GRAPHICS_BIT, DebugLabelColor::MAGENTA,
+                         [&](const CommandBuffer &cmd_buf) {
+                             for (const auto &buffer : m_buffers) {
+                                 if (buffer->m_update_requested) {
+                                     cmd_buf.set_suboperation_debug_name("[Buffer|Destroy:" + buffer->name() + "]");
+                                     buffer->destroy_all();
+                                     cmd_buf.set_suboperation_debug_name("[Buffer|Update:" + buffer->name() + "]");
+                                     buffer->create(cmd_buf);
+                                 }
+                             }
+                         });
+    }
+    // NOTE: For the "else" case: We can't insert a debug label here telling us that there are no buffer updates
+    // required because that command itself would require a command buffer to be in recording state
 }
 
 void RenderGraph::update_textures() {
-    // @TODO Implement!
+    // Check if there is any update required
+    bool any_update_required = false;
+    for (const auto &texture : m_textures) {
+        // Check if this texture needs an update
+        if (texture->usage() == TextureUsage::COLOR_ATTACHMENT) {
+            texture->m_on_check_for_updates();
+        }
+        if (texture->m_update_requested) {
+            any_update_required = true;
+        }
+    }
+    // Only start recording and submitting a command buffer if any update is required
+    // TODO: Use dedicated transfer queue instead of graphics queue for texture updates!
+    if (any_update_required) {
+        m_device.execute("[RenderGraph::update_textures]", VK_QUEUE_GRAPHICS_BIT, DebugLabelColor::LIME,
+                         [&](const CommandBuffer &cmd_buf) {
+                             for (const auto &texture : m_textures) {
+                                 if (texture->m_update_requested) {
+                                     // TODO: Remove set_suboperation_debug_name entirely and use debug label?
+                                     cmd_buf.set_suboperation_debug_name("[Texture|Destroy:" + texture->name() + "]");
+                                     texture->destroy();
+                                     cmd_buf.set_suboperation_debug_name("[Texture|Create:" + texture->name() + "]");
+                                     texture->create();
+                                     texture->update(cmd_buf);
+                                 }
+                             }
+                         });
+    }
+    // NOTE: For the "else" case: We can't insert a debug label here telling us that there are no buffer updates
+    // required because that command itself would require a command buffer to be in recording state
 }
 
 void RenderGraph::update_write_descriptor_sets() {

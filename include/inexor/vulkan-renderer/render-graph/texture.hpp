@@ -16,12 +16,16 @@ class Sampler;
 
 namespace inexor::vulkan_renderer::render_graph {
 
+// Forward declaration
+class RenderGraph;
+
 // Using declaration
 using wrapper::Device;
 using wrapper::Sampler;
 
 /// Specifies the use of the texture
 enum class TextureUsage {
+    DEFAULT,
     COLOR_ATTACHMENT,
     DEPTH_ATTACHMENT,
     STENCIL_ATTACHMENT,
@@ -29,6 +33,8 @@ enum class TextureUsage {
 };
 
 class Texture {
+    friend class RenderGraph;
+
 private:
     // The device wrapper
     const Device &m_device;
@@ -56,7 +62,10 @@ private:
     /// The image of the texture
     std::shared_ptr<render_graph::Image> m_image;
 
-    // TODO: MSAA support?
+    // @TODO MSAA support
+    /// This is only used internally inside of rendergraph in case this texture used as a back buffer, depth buffer, or
+    /// stencil buffer and MSAA is enabled.
+    std::shared_ptr<Image> m_msaa_image;
 
     // This is used for initializing textures and for updating dynamic textures
     bool m_update_requested{true};
@@ -75,7 +84,18 @@ private:
     /// The descriptor image info required for descriptor updates
     VkDescriptorImageInfo m_descriptor_img_info{};
 
-    // @TODO: create(), destroy() destroy_staging_buffer(), update()
+    /// Create the texture (and the MSAA texture if specified)
+    void create();
+
+    /// Destroy the texture (and the MSAA texture if specified)
+    void destroy();
+
+    /// Destroy the staging buffer used for texture updates
+    void destroy_staging_buffer();
+
+    /// Upload the data into the texture
+    /// @param cmd_buf The command buffer to record the commands into
+    void update(const CommandBuffer &cmd_buf);
 
 public:
     // TODO: Think about overloading the constructor here

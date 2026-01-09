@@ -1,6 +1,7 @@
 #pragma once
 
 #include "inexor/vulkan-renderer/render-graph/buffer.hpp"
+#include "inexor/vulkan-renderer/render-graph/image.hpp"
 #include "inexor/vulkan-renderer/tools/exception.hpp"
 #include "inexor/vulkan-renderer/wrapper/gpu_memory_buffer.hpp"
 #include "inexor/vulkan-renderer/wrapper/pipelines/graphics_pipeline.hpp"
@@ -279,6 +280,13 @@ public:
     const CommandBuffer &copy_buffer_to_image(VkBuffer src_buf, VkImage dst_img, // NOLINT
                                               const VkBufferImageCopy &copy_region) const;
 
+    ///
+    /// @param buffer
+    /// @param img
+    /// @param extent
+    /// @return
+    const CommandBuffer &copy_buffer_to_image(VkBuffer buffer, VkImage img, VkExtent3D extent) const;
+
     /// Call vkCmdCopyBuffer
     /// @param data A raw pointer to the data to copy
     /// @param data_size The size of the data to copy
@@ -306,6 +314,13 @@ public:
         return copy_buffer_to_image(create_staging_buffer<DataType>(data, name), dst_img,
                                     static_cast<VkDeviceSize>(sizeof(data) * data.size()), copy_region, name);
     }
+
+    /// Call vkCmdCopyBufferToImage
+    /// @param src_buffer The source buffer
+    /// @param img The image to copy the buffer into
+    /// @return A const reference to the dereferenced ``this`` pointer (allowing for method calls to be chained)
+    const CommandBuffer &copy_buffer_to_image(VkBuffer src_buffer,
+                                              std::weak_ptr<inexor::vulkan_renderer::render_graph::Image> img) const;
 
     /// Call vkCmdDraw
     /// @param vert_count The number of vertices to draw
