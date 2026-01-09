@@ -74,7 +74,7 @@ public:
                         write_descriptor_set.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
                         write_descriptor_set.pImageInfo = texture->descriptor_image_info();
                     } else {
-                        throw InexorException("Error: Texture is expired!");
+                        throw InexorException("Error: Texture is invalid!");
                     }
                 } else if constexpr (std::is_same_v<T, std::weak_ptr<Buffer>>) {
                     if (auto buffer = descriptor.lock(); buffer) {
@@ -82,7 +82,7 @@ public:
                         write_descriptor_set.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
                         write_descriptor_set.pBufferInfo = buffer->descriptor_buffer_info();
                     } else {
-                        throw InexorException("Error: Buffer is expired!");
+                        throw InexorException("Error: Buffer is invalid!");
                     }
                 } else {
                     // TODO: Support more descriptor types

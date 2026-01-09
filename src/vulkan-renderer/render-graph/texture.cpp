@@ -82,6 +82,13 @@ void Texture::create() {
     // Create the texture
     m_image->create(img_ci, img_view_ci);
 
+    // Initialize the descriptor image info after the image is created
+    m_descriptor_img_info = {
+        .sampler = m_default_sampler->sampler(),
+        .imageView = m_image->m_img_view,
+        .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+    };
+
     // If MSAA is enabled, create the MSAA texture as well
     if (m_samples > VK_SAMPLE_COUNT_1_BIT) {
         // Just overwrite the sample count and re-use the image create info
@@ -138,6 +145,8 @@ void Texture::update(const CommandBuffer &cmd_buf) {
         result != VK_SUCCESS) {
         throw VulkanException("Error: vmaCreateBuffer failed!", result, m_name);
     }
+
+    // @TODO Update this so it uses vmaCopyMemoryToAllocation!
 
     // Copy the texture data into the staging buffer
     std::memcpy(m_staging_buffer_alloc_info.pMappedData, m_src_texture_data, m_src_texture_data_size);

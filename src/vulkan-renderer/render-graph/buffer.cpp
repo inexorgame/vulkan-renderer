@@ -99,6 +99,8 @@ void Buffer::create(const CommandBuffer &cmd_buf) {
         // This means we can simply use std::memcpy to copy the data from the source into it
         std::memcpy(m_alloc_info.pMappedData, m_src_data, m_src_data_size);
 
+        // @TODO Update this so it uses vmaCopyMemoryToAllocation!
+
         // After copying the data, we need to flush caches
         // NOTE: vmaFlushAllocation checks internally if the memory is host coherent, in which case it don't flush
         if (const auto result = vmaFlushAllocation(m_device.allocator(), m_alloc, 0, VK_WHOLE_SIZE);

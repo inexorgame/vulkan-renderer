@@ -81,6 +81,11 @@ void ExampleAppBase::setup_render_graph() {
             // This will require changes to DescriptorSetLayoutBuilder and more!
             return builder.add(m_descriptor_set2, m_mvp_matrix2).build();
         });
+    // RENDERGRAPH2
+    m_mvp_matrix2 = m_render_graph2->add_buffer("model/view/proj",
+                                                vulkan_renderer::render_graph::BufferType::UNIFORM_BUFFER, [&]() {
+                                                    // @TODO Implement!
+                                                });
 
     // @TODO We don't need to re-load the shaders when recreating swapchain!
     // RENDERGRAPH2

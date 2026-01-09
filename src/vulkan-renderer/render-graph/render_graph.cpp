@@ -97,7 +97,8 @@ void RenderGraph::fill_graphics_pass_rendering_info(GraphicsPass &pass) {
         const auto attachment = write_attachment.lock();
         auto get_image_layout = [&]() {
             switch (attachment->usage()) {
-            case TextureUsage::COLOR_ATTACHMENT: {
+            case TextureUsage::COLOR_ATTACHMENT:
+            case TextureUsage::DEFAULT: {
                 return VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
             }
             case TextureUsage::DEPTH_ATTACHMENT:
@@ -315,7 +316,7 @@ void RenderGraph::update_textures() {
     bool any_update_required = false;
     for (const auto &texture : m_textures) {
         // Check if this texture needs an update
-        if (texture->usage() == TextureUsage::COLOR_ATTACHMENT) {
+        if (texture->usage() == TextureUsage::DEFAULT) {
             texture->m_on_check_for_updates();
         }
         if (texture->m_update_requested) {
