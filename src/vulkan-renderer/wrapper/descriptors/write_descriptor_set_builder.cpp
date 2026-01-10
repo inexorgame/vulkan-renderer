@@ -6,20 +6,15 @@
 
 namespace inexor::vulkan_renderer::wrapper::descriptors {
 
-// Using declaration
-using wrapper::InexorException;
-
 WriteDescriptorSetBuilder::WriteDescriptorSetBuilder(const Device &device) : m_device(device) {}
 
 std::vector<VkWriteDescriptorSet> WriteDescriptorSetBuilder::build() {
     auto write_descriptor_sets = std::move(m_write_descriptor_sets);
-    reset();
-    return write_descriptor_sets;
-}
-
-void WriteDescriptorSetBuilder::reset() {
+    // The C++ standard guarantees that the memory which has been moved from is in a valid but unspecified state.
+    // By invoking clear() on the vector, we bring the memory back into a specified state.
     m_write_descriptor_sets.clear();
     m_binding = 0;
+    return write_descriptor_sets;
 }
 
 } // namespace inexor::vulkan_renderer::wrapper::descriptors

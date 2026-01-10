@@ -119,10 +119,6 @@ protected:
     std::shared_ptr<Shader> m_fragment_shader2;
     std::shared_ptr<Swapchain> m_swapchain2;
 
-    void setup_render_graph();
-    void recreate_swapchain();
-    void render_frame();
-
     // @TODO Everything below needs to be abstracted further so that it's no longer
     // part of ExampleAppBase, meaning the rendergraph requires further abstraction.
 

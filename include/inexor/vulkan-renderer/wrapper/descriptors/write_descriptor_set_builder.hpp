@@ -38,9 +38,6 @@ private:
     std::vector<VkWriteDescriptorSet> m_write_descriptor_sets;
     std::uint32_t m_binding{0};
 
-    /// Reset the data of the builder so it can be re-used
-    void reset();
-
 public:
     /// Default constructor
     /// @param device The device wrapper
@@ -58,6 +55,7 @@ public:
         }
 
         // @TODO How would descriptor_count greater than 1 be implemented here?
+        // @TODO Does the automatic increase of binding make sense here?
 
         auto write_descriptor_set = wrapper::make_info<VkWriteDescriptorSet>({
             .dstSet = descriptor_set,

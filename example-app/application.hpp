@@ -67,6 +67,9 @@ private:
     void process_input();
     void generate_octree_indices();
     void initialize_spdlog();
+    void recreate_swapchain();
+    void render_frame();
+    void setup_render_graph();
 
 public:
     // A wrapper class for mouse, keyboard, and gamepad/joystick input.
