@@ -15,7 +15,6 @@
 #include "inexor/vulkan-renderer/wrapper/cpu_texture.hpp"
 #include "inexor/vulkan-renderer/wrapper/descriptors/descriptor_builder.hpp"
 #include "inexor/vulkan-renderer/wrapper/instance.hpp"
-#include "standard_ubo.hpp"
 
 #include <CLI/CLI.hpp>
 #include <GLFW/glfw3.h>
@@ -584,7 +583,14 @@ void ExampleApp::setup_render_graph() {
     // RENDERGRAPH2
     m_mvp_matrix2 = m_render_graph2->add_buffer("model/view/proj",
                                                 vulkan_renderer::render_graph::BufferType::UNIFORM_BUFFER, [&]() {
-                                                    // @TODO Implement!
+                                                    // TODO: Is there a way to avoid external code to call
+                                                    // request_update? Should we restrict this to the lambda?
+                                                    m_ubo.model = glm::mat4(1.0f);
+                                                    m_ubo.view = m_camera->view_matrix();
+                                                    m_ubo.proj = m_camera->perspective_matrix();
+                                                    m_ubo.proj[1][1] *= -1;
+                                                    // Request rendergraph to do an update of the uniform buffer
+                                                    m_mvp_matrix2.lock()->request_update(m_ubo);
                                                 });
 
     // @TODO We don't need to re-load the shaders when recreating swapchain!
@@ -659,15 +665,13 @@ void ExampleApp::setup_render_graph() {
 }
 
 void ExampleApp::update_uniform_buffers() {
-    UniformBufferObject ubo{};
-
-    ubo.model = glm::mat4(1.0f);
-    ubo.view = m_camera->view_matrix();
-    ubo.proj = m_camera->perspective_matrix();
-    ubo.proj[1][1] *= -1;
+    m_ubo.model = glm::mat4(1.0f);
+    m_ubo.view = m_camera->view_matrix();
+    m_ubo.proj = m_camera->perspective_matrix();
+    m_ubo.proj[1][1] *= -1;
 
     // TODO: Embed this into the render graph.
-    m_uniform_buffers[0].update(&ubo, sizeof(ubo));
+    m_uniform_buffers[0].update(&m_ubo, sizeof(m_ubo));
 }
 
 void ExampleApp::update_imgui_overlay() {
