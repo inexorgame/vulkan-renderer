@@ -17,6 +17,12 @@ VkBufferCreateInfo make_info(VkBufferCreateInfo info) {
 }
 
 template <>
+VkBufferMemoryBarrier make_info(VkBufferMemoryBarrier info) {
+    info.sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER;
+    return info;
+}
+
+template <>
 VkCommandBufferAllocateInfo make_info(VkCommandBufferAllocateInfo info) {
     info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
     return info;
@@ -31,6 +37,18 @@ VkCommandBufferBeginInfo make_info(VkCommandBufferBeginInfo info) {
 template <>
 VkCommandPoolCreateInfo make_info(VkCommandPoolCreateInfo info) {
     info.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+    return info;
+}
+
+template <>
+VkPhysicalDeviceDynamicRenderingFeaturesKHR make_info(VkPhysicalDeviceDynamicRenderingFeaturesKHR info) {
+    info.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DYNAMIC_RENDERING_FEATURES;
+    return info;
+}
+
+template <>
+VkDebugUtilsLabelEXT make_info(VkDebugUtilsLabelEXT info) {
+    info.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_LABEL_EXT;
     return info;
 }
 
@@ -229,6 +247,18 @@ VkPipelineViewportStateCreateInfo make_info(VkPipelineViewportStateCreateInfo in
 template <>
 VkPresentInfoKHR make_info(VkPresentInfoKHR info) {
     info.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+    return info;
+}
+
+template <>
+VkRenderingAttachmentInfo make_info(VkRenderingAttachmentInfo info) {
+    info.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
+    return info;
+}
+
+template <>
+VkRenderingInfo make_info(VkRenderingInfo info) {
+    info.sType = VK_STRUCTURE_TYPE_RENDERING_INFO;
     return info;
 }
 

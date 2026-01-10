@@ -1,5 +1,6 @@
 #pragma once
 
+#include "inexor/vulkan-renderer/wrapper/commands/command_buffer.hpp"
 #include "inexor/vulkan-renderer/wrapper/synchronization/semaphore.hpp"
 
 #include <cstdint>
@@ -19,11 +20,17 @@ namespace inexor::vulkan_renderer::wrapper {
 class Device;
 } // namespace inexor::vulkan_renderer::wrapper
 
+namespace inexor::vulkan_renderer::wrapper::commands {
+// Forward declaration
+class CommandBuffer;
+} // namespace inexor::vulkan_renderer::wrapper::commands
+
 namespace inexor::vulkan_renderer::wrapper::swapchains {
 
 // Using declaration
 using synchronization::Semaphore;
 using wrapper::Device;
+using wrapper::commands::CommandBuffer;
 
 /// RAII wrapper class for swapchains
 class Swapchain {
@@ -36,7 +43,11 @@ private:
     std::vector<VkImageView> m_img_views;
     VkExtent2D m_current_extent{};
     std::unique_ptr<Semaphore> m_img_available;
+    std::string m_name;
     bool m_vsync_enabled{false};
+    VkImage m_current_swapchain_img{VK_NULL_HANDLE};
+    VkImageView m_current_swapchain_img_view{VK_NULL_HANDLE};
+    bool m_prepared_for_rendering{false};
 
     /// Call vkGetSwapchainImagesKHR
     /// @exception inexor::vulkan_renderer::VulkanException vkGetSwapchainImagesKHR call failed
@@ -46,11 +57,12 @@ private:
 public:
     /// Default constructor
     /// @param device The device wrapper
+    /// @param name The name of the swapchain
     /// @param surface The surface
     /// @param width The swapchain image width
     /// @param height The swapchain image height
     /// @param vsync_enabled ``true`` if vertical synchronization is enabled
-    Swapchain(const Device &device, VkSurfaceKHR surface, std::uint32_t width, std::uint32_t height,
+    Swapchain(const Device &device, std::string name, VkSurfaceKHR surface, std::uint32_t width, std::uint32_t height,
               bool vsync_enabled);
 
     Swapchain(const Swapchain &) = delete;
@@ -68,12 +80,28 @@ public:
     [[nodiscard]] std::uint32_t
     acquire_next_image_index(std::uint64_t timeout = std::numeric_limits<std::uint64_t>::max());
 
+    /// Change the image layout with a pipeline barrier to prepare for rendering
+    /// @param cmd_buf The command buffer used for recording
+    void change_image_layout_to_prepare_for_rendering(const CommandBuffer &cmd_buf);
+
+    /// Change the image layout with a pipeline barrier to prepare to call vkQueuePresentKHR
+    /// @param cmd_buf The command buffer used for recording
+    void change_image_layout_to_prepare_for_presenting(const CommandBuffer &cmd_buf);
+
+    [[nodiscard]] auto current_swapchain_image_view() const {
+        return m_current_swapchain_img_view;
+    }
+
     [[nodiscard]] VkExtent2D extent() const {
         return m_current_extent;
     }
 
-    [[nodiscard]] const VkSemaphore *image_available_semaphore() const {
+    [[nodiscard]] const VkSemaphore image_available_semaphore() const {
         return m_img_available->semaphore();
+    }
+
+    [[nodiscard]] auto *image_available_semaphore_pointer() const {
+        return m_img_available->semaphore_pointer();
     }
 
     [[nodiscard]] std::uint32_t image_count() const {
@@ -86,6 +114,10 @@ public:
 
     [[nodiscard]] const std::vector<VkImageView> &image_views() const {
         return m_img_views;
+    }
+
+    [[nodiscard]] const auto &name() const {
+        return m_name;
     }
 
     /// Call vkQueuePresentKHR

@@ -33,10 +33,6 @@ GpuTexture::GpuTexture(GpuTexture &&other) noexcept
     m_sampler = std::exchange(other.m_sampler, nullptr);
 }
 
-GpuTexture::~GpuTexture() {
-    vkDestroySampler(m_device.device(), m_sampler, nullptr);
-}
-
 void GpuTexture::create_texture(void *texture_data, const std::size_t texture_size) {
     const VkExtent2D extent{
         // Because stb_image stored the texture's width and height as a normal int, we need a cast here
@@ -58,13 +54,13 @@ void GpuTexture::create_texture(void *texture_data, const std::size_t texture_si
         .imageExtent = {static_cast<uint32_t>(m_texture_width), static_cast<uint32_t>(m_texture_height), 1},
     };
 
-    m_device.execute(m_name, VulkanQueueType::QUEUE_TYPE_GRAPHICS, [&](const CommandBuffer &cmd_buf) {
+    m_device.execute(m_name, VK_QUEUE_GRAPHICS_BIT, DebugLabelColor::RED, [&](const CommandBuffer &cmd_buf) {
         cmd_buf
-            .change_image_layout(m_texture_image->get(), VK_IMAGE_LAYOUT_UNDEFINED,
+            .change_image_layout(m_texture_image->image(), VK_IMAGE_LAYOUT_UNDEFINED,
                                  VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL)
-            .copy_buffer_to_image(texture_data, static_cast<VkDeviceSize>(texture_size), m_texture_image->get(),
+            .copy_buffer_to_image(texture_data, static_cast<VkDeviceSize>(texture_size), m_texture_image->image(),
                                   copy_region, m_name)
-            .change_image_layout(m_texture_image->get(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+            .change_image_layout(m_texture_image->image(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
                                  VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
     });
 
@@ -96,12 +92,7 @@ void GpuTexture::create_texture_sampler() {
         .unnormalizedCoordinates = VK_FALSE,
     });
 
-    if (const auto result = vkCreateSampler(m_device.device(), &sampler_ci, nullptr, &m_sampler);
-        result != VK_SUCCESS) {
-        throw tools::VulkanException("Error: vkCreateSampler failed!", result, m_name);
-    }
-
-    m_device.set_debug_name(m_sampler, m_name);
+    m_sampler = std::make_unique<Sampler>(m_device, m_name, sampler_ci);
 }
 
 } // namespace inexor::vulkan_renderer::wrapper

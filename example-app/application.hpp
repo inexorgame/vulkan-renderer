@@ -3,6 +3,7 @@
 #include "renderer.hpp"
 
 #include "inexor/vulkan-renderer/input/input.hpp"
+#include "standard_ubo.hpp"
 
 namespace inexor::vulkan_renderer::octree {
 // Forward declaration
@@ -15,6 +16,7 @@ class Window;
 } // namespace inexor::vulkan_renderer::wrapper::windows
 
 // Using declarations
+using inexor::vulkan_renderer::UniformBufferObject;
 using inexor::vulkan_renderer::input::Input;
 using inexor::vulkan_renderer::octree::Cube;
 using inexor::vulkan_renderer::wrapper::Instance;
@@ -37,6 +39,7 @@ private:
     Mode m_window_mode{Mode::WINDOWED};
     std::string m_window_title;
     std::vector<GpuTexture> m_textures;
+    UniformBufferObject m_ubo;
 
     /// @TODO The TimeStep class can be removed because we have FPSLimiter which delivers the time_passed.
     TimeStep m_stopwatch;
@@ -67,6 +70,9 @@ private:
     void process_input();
     void generate_octree_indices();
     void initialize_spdlog();
+    void recreate_swapchain();
+    void render_frame();
+    void setup_render_graph();
 
 public:
     // A wrapper class for mouse, keyboard, and gamepad/joystick input.

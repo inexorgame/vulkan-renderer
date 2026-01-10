@@ -19,9 +19,9 @@ namespace inexor::vulkan_renderer::wrapper::swapchains {
 // Using declaration
 using tools::VulkanException;
 
-Swapchain::Swapchain(const Device &device, const VkSurfaceKHR surface, const std::uint32_t width,
+Swapchain::Swapchain(const Device &device, std::string name, const VkSurfaceKHR surface, const std::uint32_t width,
                      const std::uint32_t height, const bool vsync_enabled)
-    : m_device(device), m_surface(surface), m_vsync_enabled(vsync_enabled) {
+    : m_device(device), m_surface(surface), m_name(std::move(name)), m_vsync_enabled(vsync_enabled) {
     if (vkCreateSwapchainKHR == nullptr) {
         throw InexorException("Error: Function pointer 'vkCreateSwapchainKHR' is not available!");
     }
@@ -37,6 +37,9 @@ Swapchain::Swapchain(const Device &device, const VkSurfaceKHR surface, const std
     if (vkDestroySwapchainKHR == nullptr) {
         throw InexorException("Error: Function pointer 'vkDestroySwapchainKHR' is not available!");
     }
+    if (m_name.empty()) {
+        throw InexorException("Error: Swapchain name invalid!");
+    }
     m_img_available = std::make_unique<Semaphore>(m_device, "m_img_available");
     setup_swapchain({width, height}, vsync_enabled);
 }
@@ -50,12 +53,13 @@ Swapchain::Swapchain(Swapchain &&other) noexcept : m_device(other.m_device) {
     m_current_extent = other.m_current_extent;
     m_img_available = std::exchange(other.m_img_available, nullptr);
     m_vsync_enabled = other.m_vsync_enabled;
+    m_name = std::move(other.m_name);
 }
 
 std::uint32_t Swapchain::acquire_next_image_index(const std::uint64_t timeout) {
     std::uint32_t img_index = 0;
-    if (const auto result = vkAcquireNextImageKHR(m_device.device(), m_swapchain, timeout,
-                                                  *m_img_available->semaphore(), VK_NULL_HANDLE, &img_index);
+    if (const auto result = vkAcquireNextImageKHR(m_device.device(), m_swapchain, timeout, m_img_available->semaphore(),
+                                                  VK_NULL_HANDLE, &img_index);
         result != VK_SUCCESS) {
         if (result == VK_SUBOPTIMAL_KHR) {
             // We need to recreate the swapchain.
@@ -65,6 +69,35 @@ std::uint32_t Swapchain::acquire_next_image_index(const std::uint64_t timeout) {
         }
     }
     return img_index;
+}
+
+void Swapchain::change_image_layout_to_prepare_for_rendering(const CommandBuffer &cmd_buf) {
+    if (m_prepared_for_rendering) {
+        // The image layout has already been changed
+        return;
+    }
+    cmd_buf.insert_debug_label("Swapchain: VK_IMAGE_LAYOUT_UNDEFINED -> VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL",
+                               get_debug_label_color(DebugLabelColor::GREEN));
+    // Prepare the swapchain image for rendering by changing the image layout from undefined layout (which is the layout
+    // it has after presenting) to color attachment optimal.
+    cmd_buf.change_image_layout(m_current_swapchain_img, VK_IMAGE_LAYOUT_UNDEFINED,
+                                VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+    m_prepared_for_rendering = true;
+}
+
+void Swapchain::change_image_layout_to_prepare_for_presenting(const CommandBuffer &cmd_buf) {
+    if (!m_prepared_for_rendering) {
+        spdlog::warn("[Swapchain::change_image_layout_to_prepare_for_present] Warning: Swapchain image was not "
+                     "prepared for rendering. Did you call this function without calling "
+                     "change_image_layout_to_prepare_for_rendering?");
+        return;
+    }
+    cmd_buf.insert_debug_label("Swapchain: VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL -> VK_IMAGE_LAYOUT_PRESENT_SRC_KHR",
+                               get_debug_label_color(DebugLabelColor::GREEN));
+    // Prepare the swapchain image for presenting
+    cmd_buf.change_image_layout(m_current_swapchain_img, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+                                VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
+    m_prepared_for_rendering = false;
 }
 
 std::vector<VkImage> Swapchain::get_swapchain_images() {

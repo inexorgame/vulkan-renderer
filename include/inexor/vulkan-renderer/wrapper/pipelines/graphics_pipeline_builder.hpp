@@ -36,80 +36,18 @@ class PipelineCache;
 /// @note This builder pattern does not perform any checks which are already covered by validation layers.
 /// This means if you forget to specify viewport for example, creation of the graphics pipeline will fail.
 /// It is the reponsibility of the programmer to use validation layers to check for problems.
+/// @TODO Although we initially did not want to implement checks which mimic the validation layers, it might be worth it
+/// to implement checks in case required fields are not set in this builder.
 class GraphicsPipelineBuilder {
 private:
-    /// The device wrapper reference
+    /// The device wrapper
     const Device &m_device;
-
     /// The Vulkan pipeline cache
     const PipelineCache &m_pipeline_cache;
-
-    // We are not using member initializers here:
-    // Note that all members are initialized in the reset() method
-    // This method is also called after the graphics pipeline has been created,
-    // allowing one instance of GraphicsPipelineBuilder to be reused
-
-    // With the builder we can either call add_shader or set_shaders
-    std::vector<VkPipelineShaderStageCreateInfo> m_shader_stages;
-
-    std::vector<VkVertexInputBindingDescription> m_vertex_input_binding_descriptions;
-    std::vector<VkVertexInputAttributeDescription> m_vertex_input_attribute_descriptions;
-    // With the builder we can fill vertex binding descriptions and vertex attribute descriptions in here
-    VkPipelineVertexInputStateCreateInfo m_vertex_input_sci;
-
-    // With the builder we can set topology in here
-    VkPipelineInputAssemblyStateCreateInfo m_input_assembly_sci;
-
-    // With the builder we can set the patch control point count in here
-    VkPipelineTessellationStateCreateInfo m_tesselation_sci;
-
-    std::vector<VkViewport> m_viewports;
-    std::vector<VkRect2D> m_scissors;
-    // With the builder we can set viewport(s) and scissor(s) in here
-    VkPipelineViewportStateCreateInfo m_viewport_sci;
-
-    // With the builder we can set polygon mode, cull mode, front face, and line width
-    // TODO: Implement methods to enable depth bias and for setting the depth bias parameters
-    VkPipelineRasterizationStateCreateInfo m_rasterization_sci;
-
-    // With the builder we can't set individial fields of this struct,
-    // since it's easier to specify an entire VkPipelineDepthStencilStateCreateInfo struct to the builder instead
-    VkPipelineDepthStencilStateCreateInfo m_depth_stencil_sci;
-
-    VkRenderPass m_render_pass;
-
-    /// This is used for dynamic rendering
-    VkFormat m_depth_attachment_format;
-    VkFormat m_stencil_attachment_format;
-    std::vector<VkFormat> m_color_attachments;
-
-    VkPipelineRenderingCreateInfo m_pipeline_rendering_ci;
-
-    // With the builder we can set rasterization samples and min sample shading
-    // TODO: Expose more multisampling parameters if desired
-    VkPipelineMultisampleStateCreateInfo m_multisample_sci;
-
-    // With the builder we can't set individial fields of this struct,
-    // since it's easier to specify an entire VkPipelineColorBlendStateCreateInfo struct to the builder instead
-    VkPipelineColorBlendStateCreateInfo m_color_blend_sci;
-
-    std::vector<VkDynamicState> m_dynamic_states;
-    // This will be filled in the build() method
-    VkPipelineDynamicStateCreateInfo m_dynamic_states_sci;
-
-    /// The layout of the graphics pipeline
-    VkPipelineLayout m_pipeline_layout;
-
-    // With the builder we can either call add_color_blend_attachment or set_color_blend_attachments
-    std::vector<VkPipelineColorBlendAttachmentState> m_color_blend_attachment_states;
-
-    /// The push constant ranges of the graphics pass
-    std::vector<VkPushConstantRange> m_push_constant_ranges;
-
-    std::vector<VkDescriptorSetLayout> m_descriptor_set_layouts;
+    /// The graphics pipeline setup data which will be std::moved into GraphicsPipeline wrapper
+    GraphicsPipelineSetupData m_graphics_pipeline_setup_data;
 
     /// Reset all data in this class so the builder can be re-used
-    /// @note This is called by the constructor
     void reset();
 
 public:
@@ -151,10 +89,17 @@ public:
     [[nodiscard]] GraphicsPipelineBuilder &add_push_constant_range(VkShaderStageFlags shader_stage, std::uint32_t size,
                                                                    std::uint32_t offset = 0);
 
+    ///
+    /// @param shader
+    /// @return
+    [[nodiscard]] GraphicsPipelineBuilder &add_shader(std::weak_ptr<Shader> shader);
+
     /// Build the graphics pipeline with specified pipeline create flags
     /// @param name The debug name of the graphics pipeline
+    /// @TODO Remove this and use only dynamic rendering!
+    /// @param use_dynamic_rendering
     /// @return The unique pointer instance of ``GraphicsPipeline`` that was created
-    [[nodiscard]] std::shared_ptr<GraphicsPipeline> build(std::string name);
+    [[nodiscard]] std::shared_ptr<GraphicsPipeline> build(std::string name, bool use_dynamic_rendering);
 
     /// Set the color blend manually
     /// @param color_blend The color blend
@@ -180,6 +125,11 @@ public:
     [[nodiscard]] GraphicsPipelineBuilder &set_depth_attachment_format(VkFormat format);
 
     /// Set the descriptor set layout
+    /// @param descriptor_set_layouts The descriptor set layout
+    /// @return A reference to the dereferenced this pointer (allows method calls to be chained)
+    [[nodiscard]] GraphicsPipelineBuilder &set_descriptor_set_layout(VkDescriptorSetLayout descriptor_set_layout);
+
+    /// Set the descriptor set layouts
     /// @param descriptor_set_layouts The descriptor set layout
     /// @return A reference to the dereferenced this pointer (allows method calls to be chained)
     [[nodiscard]] GraphicsPipelineBuilder &

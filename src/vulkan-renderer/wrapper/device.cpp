@@ -13,9 +13,54 @@
 
 #include <spdlog/spdlog.h>
 
+#include <functional>
 #include <utility>
 
 namespace inexor::vulkan_renderer::wrapper {
+
+/// Convert a DebugLabelColor to a rgba value
+/// @param color The debug label color
+/// @return The converted rgba values
+std::array<float, 4> get_debug_label_color(const DebugLabelColor color) {
+    switch (color) {
+    case DebugLabelColor::RED:
+        return {0.98f, 0.60f, 0.60f, 1.0f};
+    case DebugLabelColor::BLUE:
+        return {0.68f, 0.85f, 0.90f, 1.0f};
+    case DebugLabelColor::GREEN:
+        return {0.73f, 0.88f, 0.73f, 1.0f};
+    case DebugLabelColor::YELLOW:
+        return {0.98f, 0.98f, 0.70f, 1.0f};
+    case DebugLabelColor::PURPLE:
+        return {0.80f, 0.70f, 0.90f, 1.0f};
+    case DebugLabelColor::ORANGE:
+        return {0.98f, 0.75f, 0.53f, 1.0f};
+    case DebugLabelColor::MAGENTA:
+        return {0.96f, 0.60f, 0.76f, 1.0f};
+    case DebugLabelColor::CYAN:
+        return {0.70f, 0.98f, 0.98f, 1.0f};
+    case DebugLabelColor::BROWN:
+        return {0.82f, 0.70f, 0.55f, 1.0f};
+    case DebugLabelColor::PINK:
+        return {0.98f, 0.75f, 0.85f, 1.0f};
+    case DebugLabelColor::LIME:
+        return {0.80f, 0.98f, 0.60f, 1.0f};
+    case DebugLabelColor::TURQUOISE:
+        return {0.70f, 0.93f, 0.93f, 1.0f};
+    case DebugLabelColor::BEIGE:
+        return {0.96f, 0.96f, 0.86f, 1.0f};
+    case DebugLabelColor::MAROON:
+        return {0.76f, 0.50f, 0.50f, 1.0f};
+    case DebugLabelColor::OLIVE:
+        return {0.74f, 0.75f, 0.50f, 1.0f};
+    case DebugLabelColor::NAVY:
+        return {0.53f, 0.70f, 0.82f, 1.0f};
+    case DebugLabelColor::TEAL:
+        return {0.53f, 0.80f, 0.75f, 1.0f};
+    default:
+        return {0.0f, 0.0f, 0.0f, 1.0f}; // Default to opaque black if the color is not recognized
+    }
+}
 
 Device::Device(const Instance &inst, const VkSurfaceKHR surface, const VkPhysicalDevice desired_gpu,
                const VkPhysicalDeviceFeatures &required_features, const std::span<const char *> required_extensions)
@@ -69,7 +114,15 @@ Device::Device(const Instance &inst, const VkSurfaceKHR surface, const VkPhysica
     // Store the enabled features.
     m_enabled_features = required_features;
 
+    // We want to use dynamic rendering (VK_KHR_dynamic_rendering)
+    const auto dyn_rendering_feature = make_info<VkPhysicalDeviceDynamicRenderingFeaturesKHR>({
+        .pNext = nullptr,
+        .dynamicRendering = VK_TRUE,
+    });
+
     const auto device_ci = make_info<VkDeviceCreateInfo>({
+        // This is one of those rare cases where pNext is actually not nullptr!
+        .pNext = &dyn_rendering_feature, // We use dynamic rendering
         .queueCreateInfoCount = static_cast<std::uint32_t>(optimal_queues.queues_to_create.size()),
         .pQueueCreateInfos = optimal_queues.queues_to_create.data(),
         .enabledExtensionCount = static_cast<std::uint32_t>(required_extensions.size()),
@@ -222,14 +275,25 @@ bool Device::surface_supports_usage(const VkSurfaceKHR surface, const VkImageUsa
     return (capabilities.supportedUsageFlags & usage) != 0u;
 }
 
-void Device::execute(const std::string &name, const VulkanQueueType queue_type,
-                     const std::function<void(const CommandBuffer &cmd_buf)> &cmd_lambda) const {
-    const auto &cmd_buf = get_thread_command_pool(queue_type).request_command_buffer(name);
-    cmd_lambda(cmd_buf);
-    cmd_buf.submit_and_wait();
+void Device::execute(const std::string &name, const VkQueueFlagBits queue_type, const DebugLabelColor dbg_label_color,
+                     const std::function<void(const CommandBuffer &cmd_buf)> &cmd_buf_recording_func,
+                     const std::span<const VkSemaphore> wait_semaphores,
+                     const std::span<const VkSemaphore> signal_semaphores) const {
+    // Request the thread_local command pool for this queue type
+    auto &cmd_pool = get_thread_command_pool(queue_type);
+    // Start recording the command buffer
+    const auto &cmd_buf = cmd_pool.request_command_buffer(name);
+    // Begin a debug label region (visible in graphics debuggers like RenderDoc)
+    cmd_buf.begin_debug_label_region(name, get_debug_label_color(dbg_label_color));
+    // Call the external code
+    std::invoke(cmd_buf_recording_func, cmd_buf);
+    // End the debug label region
+    cmd_buf.end_debug_label_region();
+    // Submit the command buffer and do necessary synchronization
+    cmd_buf.submit_and_wait(queue_type, wait_semaphores, signal_semaphores);
 }
 
-CommandPool &Device::get_thread_command_pool(const VulkanQueueType queue_type) const {
+CommandPool &Device::get_thread_command_pool(const VkQueueFlagBits queue_type) const {
     // Note that thread_local means that it is implicitely static!
     thread_local CommandPool *thread_graphics_cmd_pool = nullptr;       // NOLINT
     thread_local CommandPool *thread_compute_cmd_pool = nullptr;        // NOLINT
@@ -237,7 +301,7 @@ CommandPool &Device::get_thread_command_pool(const VulkanQueueType queue_type) c
     thread_local CommandPool *thread_sparse_binding_cmd_pool = nullptr; // NOLINT
 
     switch (queue_type) {
-    case VulkanQueueType::QUEUE_TYPE_GRAPHICS: {
+    case VK_QUEUE_GRAPHICS_BIT: {
         if (thread_graphics_cmd_pool == nullptr) {
             // Note that we checked during construction that there is a valid queue family index for graphics.
             // There is no need for additional error checking here.
@@ -249,7 +313,7 @@ CommandPool &Device::get_thread_command_pool(const VulkanQueueType queue_type) c
         std::shared_lock lock(m_mutex);
         return *thread_graphics_cmd_pool;
     }
-    case VulkanQueueType::QUEUE_TYPE_COMPUTE: {
+    case VK_QUEUE_COMPUTE_BIT: {
         if (thread_compute_cmd_pool == nullptr) {
             if (!has_any_compute_queue()) {
                 throw std::runtime_error("Error: GPU '" + m_gpu_name + "' has no compute queue!");
@@ -262,7 +326,7 @@ CommandPool &Device::get_thread_command_pool(const VulkanQueueType queue_type) c
         std::shared_lock lock(m_mutex);
         return *thread_compute_cmd_pool;
     }
-    case VulkanQueueType::QUEUE_TYPE_TRANSFER: {
+    case VK_QUEUE_TRANSFER_BIT: {
         if (thread_transfer_cmd_pool == nullptr) {
             if (!has_any_transfer_queue()) {
                 throw std::runtime_error("Error: GPU '" + m_gpu_name + "' has no transfer queue!");
@@ -275,7 +339,7 @@ CommandPool &Device::get_thread_command_pool(const VulkanQueueType queue_type) c
         std::shared_lock lock(m_mutex);
         return *thread_transfer_cmd_pool;
     }
-    case VulkanQueueType::QUEUE_TYPE_SPARSE_BINDING: {
+    case VK_QUEUE_SPARSE_BINDING_BIT: {
         if (thread_transfer_cmd_pool == nullptr) {
             if (!has_any_sparse_binding_queue()) {
                 throw std::runtime_error("Error: GPU '" + m_gpu_name + "' has no sparse binding queue!");
@@ -292,8 +356,14 @@ CommandPool &Device::get_thread_command_pool(const VulkanQueueType queue_type) c
     throw std::runtime_error("Error: Unknown VuklkanQueueType!");
 }
 
-const CommandBuffer &Device::request_command_buffer(const VulkanQueueType queue_type, const std::string &name) {
+const CommandBuffer &Device::request_command_buffer(const VkQueueFlagBits queue_type, const std::string &name) {
     return get_thread_command_pool(queue_type).request_command_buffer(name);
+}
+
+void Device::update_descriptor_sets(const std::span<VkWriteDescriptorSet> write_descriptor_sets) {
+    // NOTE: No error checks are required here because this function is of type void
+    vkUpdateDescriptorSets(m_device, static_cast<std::uint32_t>(write_descriptor_sets.size()),
+                           write_descriptor_sets.data(), 0, nullptr);
 }
 
 void Device::wait_idle(const VkQueue queue) const {

@@ -40,7 +40,7 @@ void GraphicsStage::bind_buffer(const BufferResource *buffer, const std::uint32_
 
 void GraphicsStage::uses_shader(const wrapper::Shader &shader) {
     m_shaders.push_back(wrapper::make_info<VkPipelineShaderStageCreateInfo>({
-        .stage = shader.type(),
+        .stage = shader.shader_stage(),
         .module = shader.shader_module(),
         .pName = shader.entry_point().c_str(),
     }));
@@ -350,7 +350,7 @@ void RenderGraph::build_graphics_pipeline(const GraphicsStage *stage, PhysicalGr
                                   .height = static_cast<float>(m_swapchain.extent().height),
                                   .maxDepth = 1.0f,
                               })
-                              .build(stage->name());
+                              .build(stage->name(), false);
 }
 
 void RenderGraph::compile(const RenderResource *target) {

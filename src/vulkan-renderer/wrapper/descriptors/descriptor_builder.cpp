@@ -7,9 +7,7 @@
 
 namespace inexor::vulkan_renderer::wrapper::descriptors {
 
-DescriptorBuilder::DescriptorBuilder(const Device &device) : m_device(device) {
-    assert(m_device.device());
-}
+DescriptorBuilder::DescriptorBuilder(const Device &device) : m_device(device) {}
 
 DescriptorBuilder &DescriptorBuilder::add_combined_image_sampler(const VkSampler image_sampler,
                                                                  const VkImageView image_view,
@@ -19,7 +17,7 @@ DescriptorBuilder &DescriptorBuilder::add_combined_image_sampler(const VkSampler
     assert(image_view);
 
     m_layout_bindings.push_back({
-        .binding = 0,
+        .binding = binding,
         .descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
         .descriptorCount = 1,
         .stageFlags = static_cast<VkShaderStageFlags>(shader_stage),
@@ -55,6 +53,6 @@ ResourceDescriptor DescriptorBuilder::build(std::string name) {
     m_descriptor_buffer_infos.clear();
     m_descriptor_image_infos.clear();
 
-    return std::move(generated_descriptor);
+    return generated_descriptor;
 }
 } // namespace inexor::vulkan_renderer::wrapper::descriptors

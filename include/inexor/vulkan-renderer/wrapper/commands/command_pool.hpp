@@ -4,6 +4,9 @@
 
 #include "inexor/vulkan-renderer/wrapper/commands/command_buffer.hpp"
 
+#include <memory>
+#include <vector>
+
 namespace inexor::vulkan_renderer::wrapper {
 // Forward declaration
 class Device;

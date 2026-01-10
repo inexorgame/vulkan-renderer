@@ -17,31 +17,11 @@ GraphicsPipelineBuilder::GraphicsPipelineBuilder(const Device &device, const Pip
 
 GraphicsPipelineBuilder::GraphicsPipelineBuilder(GraphicsPipelineBuilder &&other) noexcept
     : m_device(other.m_device), m_pipeline_cache(other.m_pipeline_cache) {
-    // TODO: Check me!
-    m_pipeline_rendering_ci = std::move(other.m_pipeline_rendering_ci);
-    m_color_attachments = std::move(other.m_color_attachments);
-    m_depth_attachment_format = other.m_depth_attachment_format;
-    m_stencil_attachment_format = other.m_stencil_attachment_format;
-    m_shader_stages = std::move(other.m_shader_stages);
-    m_vertex_input_binding_descriptions = std::move(other.m_vertex_input_binding_descriptions);
-    m_vertex_input_attribute_descriptions = std::move(other.m_vertex_input_attribute_descriptions);
-    m_vertex_input_sci = std::move(other.m_vertex_input_sci);
-    m_input_assembly_sci = std::move(other.m_input_assembly_sci);
-    m_tesselation_sci = std::move(other.m_tesselation_sci);
-    m_viewport_sci = std::move(other.m_viewport_sci);
-    m_viewports = std::move(other.m_viewports);
-    m_scissors = std::move(other.m_scissors);
-    m_rasterization_sci = std::move(m_rasterization_sci);
-    m_multisample_sci = std::move(other.m_multisample_sci);
-    m_depth_stencil_sci = std::move(other.m_depth_stencil_sci);
-    m_color_blend_sci = std::move(other.m_color_blend_sci);
-    m_dynamic_states = std::move(other.m_dynamic_states);
-    m_dynamic_states_sci = std::move(other.m_dynamic_states_sci);
-    m_pipeline_layout = std::exchange(other.m_pipeline_layout, VK_NULL_HANDLE);
-    m_color_blend_attachment_states = std::move(other.m_color_blend_attachment_states);
+    // @TODO: Implement move constructor for GraphicsPipelineSetupData?
+    m_graphics_pipeline_setup_data = other.m_graphics_pipeline_setup_data;
 }
 
-std::shared_ptr<GraphicsPipeline> GraphicsPipelineBuilder::build(std::string name) {
+std::shared_ptr<GraphicsPipeline> GraphicsPipelineBuilder::build(std::string name, bool use_dynamic_rendering) {
     if (name.empty()) {
         throw InexorException("Error: Parameter 'name' is an empty string!");
     }
@@ -49,13 +29,15 @@ std::shared_ptr<GraphicsPipeline> GraphicsPipelineBuilder::build(std::string nam
     // build the graphics pipeline. This is because validation of this data is job of the validation layers, and not the
     // job of GraphicsPipelineBuilder. We should not mimic the behavious of validation layers here.
 
-    m_pipeline_rendering_ci = make_info<VkPipelineRenderingCreateInfo>({
-        // TODO: Support multiview rendering and expose viewMask parameter
-        .colorAttachmentCount = static_cast<std::uint32_t>(m_color_attachments.size()),
-        .pColorAttachmentFormats = m_color_attachments.data(),
-        .depthAttachmentFormat = m_depth_attachment_format,
-        .stencilAttachmentFormat = m_stencil_attachment_format,
-    });
+    if (use_dynamic_rendering) {
+        m_pipeline_rendering_ci = make_info<VkPipelineRenderingCreateInfo>({
+            // TODO: Support multiview rendering and expose viewMask parameter
+            .colorAttachmentCount = static_cast<std::uint32_t>(m_color_attachments.size()),
+            .pColorAttachmentFormats = m_color_attachments.data(),
+            .depthAttachmentFormat = m_depth_attachment_format,
+            .stencilAttachmentFormat = m_stencil_attachment_format,
+        });
+    }
 
     m_vertex_input_sci = make_info<VkPipelineVertexInputStateCreateInfo>({
         .vertexBindingDescriptionCount = static_cast<std::uint32_t>(m_vertex_input_binding_descriptions.size()),
@@ -82,9 +64,10 @@ std::shared_ptr<GraphicsPipeline> GraphicsPipelineBuilder::build(std::string nam
         .pDynamicStates = m_dynamic_states.data(),
     });
 
+    // @TODO Fix this once we move away from renderpasses!
     auto pipeline_ci = make_info<VkGraphicsPipelineCreateInfo>({
         // NOTE: This is one of those rare cases where pNext is actually not nullptr!
-        //.pNext = &m_pipeline_rendering_ci,
+        .pNext = (use_dynamic_rendering) ? &m_pipeline_rendering_ci : nullptr,
         .stageCount = static_cast<std::uint32_t>(m_shader_stages.size()),
         .pStages = m_shader_stages.data(),
         .pVertexInputState = &m_vertex_input_sci,
@@ -98,7 +81,7 @@ std::shared_ptr<GraphicsPipeline> GraphicsPipelineBuilder::build(std::string nam
         .pDynamicState = &m_dynamic_states_sci,
         .layout = m_pipeline_layout,
         // @TODO Make this VK_NULL_HANDLE and use dynamic rendering!
-        .renderPass = m_render_pass,
+        .renderPass = (use_dynamic_rendering) ? VK_NULL_HANDLE : m_render_pass,
     });
 
     auto graphics_pipeline =
@@ -198,6 +181,15 @@ GraphicsPipelineBuilder &GraphicsPipelineBuilder::add_push_constant_range(const 
     return *this;
 }
 
+GraphicsPipelineBuilder &GraphicsPipelineBuilder::add_shader(std::weak_ptr<Shader> shader) {
+    m_shader_stages.emplace_back(wrapper::make_info<VkPipelineShaderStageCreateInfo>({
+        .stage = shader.lock()->shader_stage(),
+        .module = shader.lock()->shader_module(),
+        .pName = shader.lock()->entry_point().c_str(),
+    }));
+    return *this;
+}
+
 GraphicsPipelineBuilder &
 GraphicsPipelineBuilder::set_color_blend(const VkPipelineColorBlendStateCreateInfo &color_blend) {
     m_color_blend_sci = color_blend;
@@ -231,6 +223,13 @@ GraphicsPipelineBuilder::set_depth_stencil(const VkPipelineDepthStencilStateCrea
 
 GraphicsPipelineBuilder &GraphicsPipelineBuilder::set_stencil_attachment_format(const VkFormat format) {
     m_stencil_attachment_format = format;
+    return *this;
+}
+
+GraphicsPipelineBuilder &
+GraphicsPipelineBuilder::set_descriptor_set_layout(const VkDescriptorSetLayout descriptor_set_layout) {
+    assert(descriptor_set_layout);
+    m_descriptor_set_layouts = {descriptor_set_layout};
     return *this;
 }
 

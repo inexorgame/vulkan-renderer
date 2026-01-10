@@ -6,6 +6,13 @@ set(INEXOR_SOURCE_FILES
     vulkan-renderer/input/input.cpp
     vulkan-renderer/input/keyboard_mouse_data.cpp
 
+    vulkan-renderer/render-graph/buffer.cpp
+    vulkan-renderer/render-graph/graphics_pass.cpp
+    vulkan-renderer/render-graph/graphics_pass_builder.cpp
+    vulkan-renderer/render-graph/image.cpp
+    vulkan-renderer/render-graph/render_graph.cpp
+    vulkan-renderer/render-graph/texture.cpp
+
     vulkan-renderer/tools/camera.cpp
     vulkan-renderer/tools/device_info.cpp
     vulkan-renderer/tools/enumerate.cpp
@@ -28,6 +35,7 @@ set(INEXOR_SOURCE_FILES
     vulkan-renderer/wrapper/image.cpp
     vulkan-renderer/wrapper/instance.cpp
     vulkan-renderer/wrapper/make_info.cpp
+    vulkan-renderer/wrapper/sampler.cpp
     vulkan-renderer/wrapper/shader.cpp
     vulkan-renderer/wrapper/uniform_buffer.cpp
 
@@ -36,6 +44,14 @@ set(INEXOR_SOURCE_FILES
 
     vulkan-renderer/wrapper/descriptors/descriptor.cpp
     vulkan-renderer/wrapper/descriptors/descriptor_builder.cpp
+
+    vulkan-renderer/wrapper/descriptors/descriptor_pool.cpp
+    vulkan-renderer/wrapper/descriptors/descriptor_pool_allocator.cpp
+    vulkan-renderer/wrapper/descriptors/descriptor_set_allocator.cpp
+    vulkan-renderer/wrapper/descriptors/descriptor_set_layout.cpp
+    vulkan-renderer/wrapper/descriptors/descriptor_set_layout_builder.cpp
+    vulkan-renderer/wrapper/descriptors/descriptor_set_layout_cache.cpp
+    vulkan-renderer/wrapper/descriptors/write_descriptor_set_builder.cpp
 
     vulkan-renderer/wrapper/pipelines/graphics_pipeline.cpp
     vulkan-renderer/wrapper/pipelines/graphics_pipeline_builder.cpp
