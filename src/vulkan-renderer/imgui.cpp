@@ -113,12 +113,14 @@ ImGUIOverlay::ImGUIOverlay(const wrapper::Device &device, const wrapper::Swapcha
         });
 
     // RENDERGRAPH2
-    m_vertex_buffer2 = render_graph2->add_buffer("imgui vertices", render_graph::BufferType::VERTEX_BUFFER, [&]() {
-        // @TODO: Update vertex buffer!
+    m_vertex_buffer2 = render_graph2->add_buffer("imgui", render_graph::BufferType::VERTEX_BUFFER, [&]() {
+        update();
+        m_vertex_buffer2.lock()->request_update(m_vertex_data);
     });
     // RENDERGRAPH2
-    m_index_buffer2 = render_graph2->add_buffer("imgui indices", render_graph::BufferType::INDEX_BUFFER, [&]() {
-        // @TODO: Update vertex buffer!
+    m_index_buffer2 = render_graph2->add_buffer("imgui", render_graph::BufferType::INDEX_BUFFER, [&]() {
+        update();
+        m_vertex_buffer2.lock()->request_update(m_index_data);
     });
 
     // RENDERGRAPH2
