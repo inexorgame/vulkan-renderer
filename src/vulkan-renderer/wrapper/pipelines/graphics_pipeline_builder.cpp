@@ -17,28 +17,8 @@ GraphicsPipelineBuilder::GraphicsPipelineBuilder(const Device &device, const Pip
 
 GraphicsPipelineBuilder::GraphicsPipelineBuilder(GraphicsPipelineBuilder &&other) noexcept
     : m_device(other.m_device), m_pipeline_cache(other.m_pipeline_cache) {
-    // TODO: Check me!
-    m_pipeline_rendering_ci = std::move(other.m_pipeline_rendering_ci);
-    m_color_attachments = std::move(other.m_color_attachments);
-    m_depth_attachment_format = other.m_depth_attachment_format;
-    m_stencil_attachment_format = other.m_stencil_attachment_format;
-    m_shader_stages = std::move(other.m_shader_stages);
-    m_vertex_input_binding_descriptions = std::move(other.m_vertex_input_binding_descriptions);
-    m_vertex_input_attribute_descriptions = std::move(other.m_vertex_input_attribute_descriptions);
-    m_vertex_input_sci = std::move(other.m_vertex_input_sci);
-    m_input_assembly_sci = std::move(other.m_input_assembly_sci);
-    m_tesselation_sci = std::move(other.m_tesselation_sci);
-    m_viewport_sci = std::move(other.m_viewport_sci);
-    m_viewports = std::move(other.m_viewports);
-    m_scissors = std::move(other.m_scissors);
-    m_rasterization_sci = std::move(m_rasterization_sci);
-    m_multisample_sci = std::move(other.m_multisample_sci);
-    m_depth_stencil_sci = std::move(other.m_depth_stencil_sci);
-    m_color_blend_sci = std::move(other.m_color_blend_sci);
-    m_dynamic_states = std::move(other.m_dynamic_states);
-    m_dynamic_states_sci = std::move(other.m_dynamic_states_sci);
-    m_pipeline_layout = std::exchange(other.m_pipeline_layout, VK_NULL_HANDLE);
-    m_color_blend_attachment_states = std::move(other.m_color_blend_attachment_states);
+    // @TODO: Implement move constructor for GraphicsPipelineSetupData?
+    m_graphics_pipeline_setup_data = other.m_graphics_pipeline_setup_data;
 }
 
 std::shared_ptr<GraphicsPipeline> GraphicsPipelineBuilder::build(std::string name, bool use_dynamic_rendering) {
