@@ -36,6 +36,8 @@ class PipelineCache;
 /// @note This builder pattern does not perform any checks which are already covered by validation layers.
 /// This means if you forget to specify viewport for example, creation of the graphics pipeline will fail.
 /// It is the reponsibility of the programmer to use validation layers to check for problems.
+/// @TODO Although we initially did not want to implement checks which mimic the validation layers, it might be worth it
+/// to implement checks in case required fields are not set in this builder.
 class GraphicsPipelineBuilder {
 private:
     /// The device wrapper reference

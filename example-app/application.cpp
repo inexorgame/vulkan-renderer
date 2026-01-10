@@ -502,7 +502,7 @@ void ExampleApp::recreate_swapchain() {
     m_imgui_overlay = std::make_unique<ImGUIOverlay>(*m_device, *m_swapchain, m_swapchain2, m_render_graph.get(),
                                                      m_back_buffer, m_graphics_pass2, m_render_graph2, [&]() {
                                                          // RENDERGRAPH2
-                                                         // TODO: Implement me!
+                                                         update_imgui_overlay();
                                                      });
     m_render_graph->compile(m_back_buffer);
 
@@ -563,7 +563,7 @@ void ExampleApp::setup_render_graph() {
                                    .bind_index_buffer(m_index_buffer2)
                                    .draw_indexed(static_cast<std::uint32_t>(m_octree_indices.size()));
                            })
-                           .build("Test", vulkan_renderer::wrapper::DebugLabelColor::GREEN);
+                           .build("Octree", vulkan_renderer::wrapper::DebugLabelColor::GREEN);
     // RENDERGRAPH2
     // Descriptor management for the model/view/projection uniform buffer
     m_render_graph2->add_resource_descriptor(
@@ -649,7 +649,7 @@ void ExampleApp::setup_render_graph() {
                     .bind_descriptor_set(m_descriptor_set2, m_octree_pipeline2)
                     .draw_indexed(static_cast<std::uint32_t>(m_octree_indices.size()));
             })
-            .build("Octree Pass", vulkan_renderer::render_graph::DebugLabelColor::GREEN));
+            .build("Octree", vulkan_renderer::render_graph::DebugLabelColor::GREEN));
 
     auto *main_stage = m_render_graph->add<GraphicsStage>("main stage");
     main_stage->writes_to(m_back_buffer);
