@@ -30,6 +30,7 @@ using wrapper::Device;
 using wrapper::synchronization::Fence;
 
 /// RAII wrapper class for VkCommandBuffer.
+/// @TODO Restrict access to commands which only RenderGraph should have access to (use private and friend class).
 /// @TODO Switch to taking in OOP wrappers when we have them (e.g. bind_vertex_buffers takes in a VertexBuffer)
 /// @TODO Make trivially copyable (this class doesn't really "own" the command buffer, more just an OOP wrapper).
 class CommandBuffer {

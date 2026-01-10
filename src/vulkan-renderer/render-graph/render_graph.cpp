@@ -94,6 +94,7 @@ void RenderGraph::fill_graphics_pass_rendering_info(GraphicsPass &pass) {
     /// @param clear_value The clear value
     auto fill_rendering_info_for_attachment = [&](const std::weak_ptr<Texture> &write_attachment,
                                                   const std::optional<VkClearValue> &clear_value) {
+        // @TODO Layout must depend on format + usage!
         const auto attachment = write_attachment.lock();
         auto get_image_layout = [&]() {
             switch (attachment->usage()) {
@@ -117,6 +118,7 @@ void RenderGraph::fill_graphics_pass_rendering_info(GraphicsPass &pass) {
             .imageLayout = get_image_layout(),
             .resolveMode = VK_RESOLVE_MODE_NONE,
             .resolveImageView = nullptr,
+            // @TODO Is it safer to do loadOp = clear_value ? CLEAR : DONT_CARE
             .loadOp = clear_value ? VK_ATTACHMENT_LOAD_OP_CLEAR : VK_ATTACHMENT_LOAD_OP_LOAD,
             .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
             .clearValue = clear_value.value_or(VkClearValue{}),
@@ -175,13 +177,16 @@ void RenderGraph::fill_graphics_pass_rendering_info(GraphicsPass &pass) {
         pass.m_color_attachments.push_back(fill_write_info_for_swapchain(swapchain, clear_value));
     }
 
-    // TODO: If a pass has multiple color attachments those are multiple swapchains, does that mean we must group
+    // @TODO If a pass has multiple color attachments those are multiple swapchains, does that mean we must group
     // rendering by swapchains because there is no guarantee that they all have the same swapchain extent?
+    // @TODO You cannot legally render to multiple swapchains in a single vkCmdBeginRendering(?)
 
     // Step 3: Fill the rendering info
     pass.m_rendering_info = wrapper::make_info<VkRenderingInfo>({
         .renderArea =
             {
+                // @TODO Expose offset as parameter
+                .offset = {0, 0},
                 .extent = pass.m_extent,
             },
         .layerCount = 1,

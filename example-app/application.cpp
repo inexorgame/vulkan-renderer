@@ -538,7 +538,8 @@ void ExampleApp::setup_render_graph() {
     // RENDERGRAPH2
     m_index_buffer2 =
         m_render_graph2->add_buffer("index buffer", vulkan_renderer::render_graph::BufferType::INDEX_BUFFER, [&]() {
-            // @TODO RENDERGRAPH2 Update the index buffer here
+            // Request rendergraph to update the index buffer
+            m_index_buffer2.lock()->request_update(m_octree_indices);
         });
 
     m_vertex_buffer = m_render_graph->add<BufferResource>("vertex buffer", BufferUsage::VERTEX_BUFFER);
@@ -548,7 +549,8 @@ void ExampleApp::setup_render_graph() {
     // RENDERGRAPH2
     m_vertex_buffer2 =
         m_render_graph2->add_buffer("vertex buffer", vulkan_renderer::render_graph::BufferType::VERTEX_BUFFER, [&]() {
-            // @TODO RENDERGRAPH2 Update the vertex buffer here
+            // Request rendergraph to update the vertex buffer
+            m_vertex_buffer2.lock()->request_update(m_octree_vertices);
         });
 
     // RENDERGRAPH2
@@ -556,8 +558,10 @@ void ExampleApp::setup_render_graph() {
                            .writes_to(m_back_buffer2)
                            .writes_to(m_depth_buffer2)
                            .set_on_record([&](const CommandBuffer &cmd_buf) {
-                               cmd_buf.bind_descriptor_set(m_descriptor_set2, m_octree_pipeline2);
-                               // @TODO: draw indexed
+                               cmd_buf.bind_descriptor_set(m_descriptor_set2, m_octree_pipeline2)
+                                   .bind_vertex_buffer(m_vertex_buffer2)
+                                   .bind_index_buffer(m_index_buffer2)
+                                   .draw_indexed(static_cast<std::uint32_t>(m_octree_indices.size()));
                            })
                            .build("Test", vulkan_renderer::wrapper::DebugLabelColor::GREEN);
     // RENDERGRAPH2
@@ -578,7 +582,7 @@ void ExampleApp::setup_render_graph() {
             // TODO: Multiply view and perspective matrix on cpu and pass as one matrix!
             // TODO: Use one big descriptor (array?) and pass view*perspective and array index as push constant!
             // This will require changes to DescriptorSetLayoutBuilder and more!
-            return builder.add(m_descriptor_set2, m_mvp_matrix2).build();
+            return builder.add(m_descriptor_set2, m_mvp_matrix2, 0).build();
         });
     // RENDERGRAPH2
     m_mvp_matrix2 = m_render_graph2->add_buffer("model/view/proj",
@@ -624,6 +628,7 @@ void ExampleApp::setup_render_graph() {
                                  })
                                  .set_multisampling(VK_SAMPLE_COUNT_1_BIT)
                                  .add_default_color_blend_attachment()
+                                 .set_depth_attachment_format(m_depth_buffer2.lock()->format())
                                  .add_color_attachment_format(m_back_buffer2.lock()->format())
                                  .set_viewport(m_back_buffer2.lock()->extent())
                                  .set_scissor(m_back_buffer2.lock()->extent())
@@ -638,7 +643,9 @@ void ExampleApp::setup_render_graph() {
             .writes_to(m_back_buffer2)
             .writes_to(m_depth_buffer2)
             .set_on_record([&](const CommandBuffer &cmd_buf) {
-                cmd_buf.bind_pipeline(m_octree_pipeline2)
+                cmd_buf
+                    .bind_pipeline(m_octree_pipeline2)
+                    // @TODO Associate descriptor set with a pipeline layout?
                     .bind_descriptor_set(m_descriptor_set2, m_octree_pipeline2)
                     .draw_indexed(static_cast<std::uint32_t>(m_octree_indices.size()));
             })

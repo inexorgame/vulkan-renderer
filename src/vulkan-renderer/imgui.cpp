@@ -109,7 +109,7 @@ ImGUIOverlay::ImGUIOverlay(const wrapper::Device &device, const wrapper::Swapcha
             m_descriptor_set2 = allocator.allocate("ImGui|Texture", m_descriptor_set_layout2);
         },
         [&](vulkan_renderer::wrapper::descriptors::WriteDescriptorSetBuilder &builder) {
-            return builder.add(m_descriptor_set2, m_imgui_texture2).build();
+            return builder.add(m_descriptor_set2, m_imgui_texture2, 0).build();
         });
 
     // RENDERGRAPH2
@@ -161,8 +161,6 @@ ImGUIOverlay::ImGUIOverlay(const wrapper::Device &device, const wrapper::Swapcha
                                 .set_descriptor_set_layout(m_descriptor_set_layout2)
                                 .add_push_constant_range(VK_SHADER_STAGE_VERTEX_BIT, sizeof(m_push_const_block))
                                 .build("ImGui", true);
-        // Return the pipeline which was just created
-        return m_imgui_pipeline2;
     });
 
     // RENDERGRAPH2

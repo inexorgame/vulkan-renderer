@@ -102,6 +102,9 @@ public:
         return *this;
     }
 
+    // @TODO Enforce a return type for the build() method so the rendergraph only accepts fully built descriptor set
+    // layouts, avoiding the descriptor set layout builder to be in incomplete, invalid state!
+
     /// Build the descriptor set layout
     /// @param name The name of the descriptor set layout
     /// @return The descriptor set layout that was created

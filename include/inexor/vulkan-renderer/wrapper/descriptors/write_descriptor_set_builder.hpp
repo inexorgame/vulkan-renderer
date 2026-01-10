@@ -36,7 +36,6 @@ class WriteDescriptorSetBuilder {
 private:
     const Device &m_device;
     std::vector<VkWriteDescriptorSet> m_write_descriptor_sets;
-    std::uint32_t m_binding{0};
 
 public:
     /// Default constructor
@@ -49,7 +48,7 @@ public:
     /// @param descriptor_count The descriptor count (``1`` by default)
     [[nodiscard]] auto add(const VkDescriptorSet descriptor_set,
                            std::variant<std::weak_ptr<Texture>, std::weak_ptr<Buffer>> descriptor_data,
-                           std::uint32_t descriptor_count = 1) {
+                           std::uint32_t dst_binding, std::uint32_t descriptor_count = 1) {
         if (!descriptor_set) {
             throw InexorException("Error: Parameter 'descriptor_set' is invalid!");
         }
@@ -59,7 +58,7 @@ public:
 
         auto write_descriptor_set = wrapper::make_info<VkWriteDescriptorSet>({
             .dstSet = descriptor_set,
-            .dstBinding = m_binding,
+            .dstBinding = dst_binding,
             .dstArrayElement = 0,
             .descriptorCount = descriptor_count,
         });
@@ -92,7 +91,6 @@ public:
             descriptor_data);
 
         m_write_descriptor_sets.push_back(write_descriptor_set);
-        m_binding++;
         return *this;
     }
 

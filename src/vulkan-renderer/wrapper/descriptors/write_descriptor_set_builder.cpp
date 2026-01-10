@@ -13,7 +13,6 @@ std::vector<VkWriteDescriptorSet> WriteDescriptorSetBuilder::build() {
     // The C++ standard guarantees that the memory which has been moved from is in a valid but unspecified state.
     // By invoking clear() on the vector, we bring the memory back into a specified state.
     m_write_descriptor_sets.clear();
-    m_binding = 0;
     return write_descriptor_sets;
 }
 

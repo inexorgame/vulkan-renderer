@@ -44,7 +44,7 @@ void Texture::create() {
                 return VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
             }
             case TextureUsage::COLOR_ATTACHMENT: {
-                return VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+                return VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
             }
             default: {
                 // TextureUsage::DEPTH_STENCIL_BUFFER

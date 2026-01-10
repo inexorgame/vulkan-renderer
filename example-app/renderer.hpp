@@ -113,7 +113,7 @@ protected:
     std::weak_ptr<vulkan_renderer::render_graph::Buffer> m_mvp_matrix2;
     VkDescriptorSetLayout m_descriptor_set_layout2{VK_NULL_HANDLE};
     VkDescriptorSet m_descriptor_set2{VK_NULL_HANDLE};
-    std::weak_ptr<GraphicsPipeline> m_octree_pipeline2;
+    std::shared_ptr<GraphicsPipeline> m_octree_pipeline2;
     std::shared_ptr<PipelineCache> m_pipeline_cache2;
     std::shared_ptr<Shader> m_vertex_shader2;
     std::shared_ptr<Shader> m_fragment_shader2;
