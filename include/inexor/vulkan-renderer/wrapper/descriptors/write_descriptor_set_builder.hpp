@@ -57,6 +57,8 @@ public:
             throw InexorException("Error: Parameter 'descriptor_set' is invalid!");
         }
 
+        // @TODO How would descriptor_count greater than 1 be implemented here?
+
         auto write_descriptor_set = wrapper::make_info<VkWriteDescriptorSet>({
             .dstSet = descriptor_set,
             .dstBinding = m_binding,
@@ -78,8 +80,8 @@ public:
                     }
                 } else if constexpr (std::is_same_v<T, std::weak_ptr<Buffer>>) {
                     if (auto buffer = descriptor.lock(); buffer) {
-                        // TODO: Distinguish type by buffer->type! (uniform ? storage? ..)
-                        write_descriptor_set.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+                        // TODO: Distinguish type by buffer->type()! (uniform ? storage? ..)
+                        write_descriptor_set.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
                         write_descriptor_set.pBufferInfo = buffer->descriptor_buffer_info();
                     } else {
                         throw InexorException("Error: Buffer is invalid!");

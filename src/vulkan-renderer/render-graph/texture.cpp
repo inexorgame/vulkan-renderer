@@ -3,6 +3,7 @@
 #include "inexor/vulkan-renderer/tools/exception.hpp"
 #include "inexor/vulkan-renderer/wrapper/device.hpp"
 
+#include <cstring>
 #include <utility>
 
 namespace inexor::vulkan_renderer::render_graph {

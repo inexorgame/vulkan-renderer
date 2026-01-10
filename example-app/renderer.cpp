@@ -57,7 +57,7 @@ void ExampleAppBase::setup_render_graph() {
                            .writes_to(m_back_buffer2)
                            .writes_to(m_depth_buffer2)
                            .set_on_record([&](const CommandBuffer &cmd_buf) {
-                               // @TODO: bind descriptor set
+                               cmd_buf.bind_descriptor_set(m_descriptor_set2, m_octree_pipeline2);
                                // @TODO: draw indexed
                            })
                            .build("Test", vulkan_renderer::wrapper::DebugLabelColor::GREEN);

@@ -55,17 +55,20 @@ void Buffer::create(const CommandBuffer &cmd_buf) {
         {BufferType::VERTEX_BUFFER, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT},
         {BufferType::INDEX_BUFFER, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT},
     };
+
     const auto buffer_ci = wrapper::make_info<VkBufferCreateInfo>({
         .size = m_src_data_size,
         .usage = BUFFER_USAGE.at(m_buffer_type),
         .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
     });
+
     // This helps us to find the correct VmaMemoryUsage depending on the BufferType
     const std::unordered_map<BufferType, VmaMemoryUsage> MEMORY_USAGE{
         {BufferType::UNIFORM_BUFFER, VMA_MEMORY_USAGE_AUTO_PREFER_HOST},
         {BufferType::VERTEX_BUFFER, VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE},
         {BufferType::INDEX_BUFFER, VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE},
     };
+
     const VmaAllocationCreateInfo alloc_ci{
         .flags = (m_buffer_type == BufferType::UNIFORM_BUFFER)
                      ? static_cast<VmaAllocationCreateFlags>(VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT |
@@ -169,7 +172,7 @@ void Buffer::create(const CommandBuffer &cmd_buf) {
     m_src_data_size = 0;
 
     // NOTE: The staging buffer needs to stay valid until command buffer finished executing!
-    // It will be destroyed either in the destructor or the next time create is called.
+    // It will be destroyed either in the destructor or the next time create() is called.
 
     // NOTE: Another option would have been to wrap each call to create() into its own single time command buffer, which
     // would increase the total number of command buffer submissions though.

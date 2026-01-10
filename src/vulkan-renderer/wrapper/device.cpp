@@ -361,6 +361,7 @@ const CommandBuffer &Device::request_command_buffer(const VkQueueFlagBits queue_
 }
 
 void Device::update_descriptor_sets(const std::span<VkWriteDescriptorSet> write_descriptor_sets) {
+    // NOTE: No error checks are required here because this function is of type void
     vkUpdateDescriptorSets(m_device, static_cast<std::uint32_t>(write_descriptor_sets.size()),
                            write_descriptor_sets.data(), 0, nullptr);
 }

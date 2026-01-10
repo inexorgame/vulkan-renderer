@@ -108,9 +108,9 @@ public:
     /// @param on_build_descriptor_set_layout
     /// @param on_allocate_descriptor_set
     /// @param on_update_descriptor_set
-    [[nodiscard]] void add_resource_descriptor(OnBuildDescriptorSetLayout on_build_descriptor_set_layout,
-                                               OnAllocateDescriptorSet on_allocate_descriptor_set,
-                                               OnBuildWriteDescriptorSets on_update_descriptor_set);
+    void add_resource_descriptor(OnBuildDescriptorSetLayout on_build_descriptor_set_layout,
+                                 OnAllocateDescriptorSet on_allocate_descriptor_set,
+                                 OnBuildWriteDescriptorSets on_update_descriptor_set);
 
     // @TODO How to handle optional texture update depending on texture type?
     // @TODO By implementing textures which are not updated, but only initliazed, we could save memory!
