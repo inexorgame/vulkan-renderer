@@ -85,12 +85,14 @@ namespace inexor::example_app {
 /// The base class of the Inexor vulkan-renderer example app.
 class ExampleAppBase {
 protected:
-    // Make sure to declare the instance before the debug utils messenger callback
-    // to ensure the correct order of destruction.
+    // Make sure to declare members in dependency order to ensure correct destruction order.
+    // Dependencies must be declared before dependents (destroyed in reverse order).
     std::unique_ptr<Instance> m_instance;
     std::unique_ptr<VulkanDebugUtilsCallback> m_dbg_callback;
     std::unique_ptr<WindowSurface> m_surface;
     std::unique_ptr<Device> m_device;
+    std::unique_ptr<Window> m_window;
+    std::unique_ptr<Swapchain> m_swapchain;
     std::unique_ptr<RenderGraph> m_render_graph;
 
     void setup_render_graph();
@@ -99,10 +101,6 @@ protected:
 
     // TODO Everything below needs to be abstracted further so that it's no longer
     // part of ExampleAppBase, meaning the rendergraph requires further abstraction.
-    // @TODO Swapchains will be decoupled from rendergraph again in the future
-    // The rendergraph will be able to handle an arbitrary number of windows and swapchains.
-    std::unique_ptr<Swapchain> m_swapchain;
-    std::unique_ptr<Window> m_window;
     TextureResource *m_back_buffer{nullptr};
     BufferResource *m_index_buffer{nullptr};
     BufferResource *m_vertex_buffer{nullptr};
