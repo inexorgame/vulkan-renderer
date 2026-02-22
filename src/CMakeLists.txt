@@ -77,18 +77,13 @@ add_library(inexor-vulkan-renderer-core-lib ${INEXOR_SOURCE_FILES})
 
 add_dependencies(inexor-vulkan-renderer-core-lib inexor-shaders)
 
-set_target_properties(
-    inexor-vulkan-renderer-core-lib PROPERTIES
-
+set_target_properties(inexor-vulkan-renderer-core-lib PROPERTIES
     CXX_EXTENSIONS OFF
     CXX_STANDARD 20
     CXX_STANDARD_REQUIRED ON
 )
 
-target_compile_definitions(
-    inexor-vulkan-renderer-core-lib
-
-    PUBLIC
+target_compile_definitions(inexor-vulkan-renderer-core-lib PUBLIC
     GLFW_INCLUDE_VULKAN
     GLM_ENABLE_EXPERIMENTAL
     GLM_FORCE_DEPTH_ZERO_TO_ONE
@@ -114,22 +109,19 @@ if(MSVC)
     target_compile_options(inexor-vulkan-renderer-core-lib PRIVATE "/Zc:__cplusplus")
 endif()
 
-# Replace variables in header file with CMake values
+# replace variables in header file with CMake values
 configure_file(
     ${PROJECT_SOURCE_DIR}/include/inexor/vulkan-renderer/meta/meta.hpp.in
     ${CMAKE_CURRENT_BINARY_DIR}/include/inexor/vulkan-renderer/meta/meta.hpp
 )
 
-target_include_directories(
-    inexor-vulkan-renderer-core-lib
-
-    PUBLIC
+target_include_directories(inexor-vulkan-renderer-core-lib PUBLIC
     ${PROJECT_SOURCE_DIR}/include
-    # Include configured header file which contains engine metadata
+    # include configured header file which contains engine metadata
     ${CMAKE_CURRENT_BINARY_DIR}/include/
 )
 
-# Declare use of dependencies
+# declare use of dependencies
 FetchContent_MakeAvailable(CLI11)
 FetchContent_MakeAvailable(fmt)
 FetchContent_MakeAvailable(spdlog)
@@ -146,11 +138,11 @@ add_library(imgui
     ${imgui_SOURCE_DIR}/imgui.cpp
     ${imgui_SOURCE_DIR}/imgui_draw.cpp
     ${imgui_SOURCE_DIR}/imgui_tables.cpp
-    ${imgui_SOURCE_DIR}/imgui_widgets.cpp)
+    ${imgui_SOURCE_DIR}/imgui_widgets.cpp
+)
 target_include_directories(imgui SYSTEM PUBLIC ${imgui_SOURCE_DIR})
 
-target_link_libraries(inexor-vulkan-renderer-core-lib
-    PUBLIC
+target_link_libraries(inexor-vulkan-renderer-core-lib PUBLIC
     CLI11::CLI11
     fmt::fmt
     glfw
@@ -161,7 +153,8 @@ target_link_libraries(inexor-vulkan-renderer-core-lib
     tomlplusplus::tomlplusplus
     volk::volk
     Vulkan::Headers
-    VulkanMemoryAllocator)
+    VulkanMemoryAllocator
+)
 
 # suppress all compiler warnings for third-party dependencies
 foreach(_dep glfw glm imgui tinygltf)
@@ -172,7 +165,7 @@ foreach(_dep glfw glm imgui tinygltf)
 endforeach()
 
 if(MSVC)
-    # Group dependencies in Visual Studio
+    # group dependencies in Visual Studio
     set(THIRD_PARTY_TARGETS
         CLI11
         fmt
@@ -183,15 +176,14 @@ if(MSVC)
         tinygltf
         volk
         VulkanMemoryAllocator
-        # Also those extra ones
+        # also those extra ones
         loader_example
         uninstall
         update_mappings
     )
-    # Move all dependencies into a subfolder
-    set_target_properties(${THIRD_PARTY_TARGETS}
-        PROPERTIES
-            EXCLUDE_FROM_ALL TRUE
-            FOLDER "Dependencies"
+    # move all dependencies into a subfolder
+    set_target_properties(${THIRD_PARTY_TARGETS} PROPERTIES
+        EXCLUDE_FROM_ALL TRUE
+        FOLDER "Dependencies"
     )
 endif()

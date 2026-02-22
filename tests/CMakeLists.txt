@@ -35,10 +35,7 @@ target_compile_options(inexor-vulkan-renderer-tests PRIVATE
     $<$<CXX_COMPILER_ID:MSVC>:/W4>
 )
 
-target_link_libraries(
-    inexor-vulkan-renderer-tests
-
-    PRIVATE
+target_link_libraries(inexor-vulkan-renderer-tests PRIVATE
     inexor-vulkan-renderer-core-lib
 
     PUBLIC
@@ -62,9 +59,8 @@ if(MSVC)
         gtest_main
     )
     # Move all dependencies into a subfolder
-    set_target_properties(${THIRD_PARTY_TARGETS}
-        PROPERTIES
-            EXCLUDE_FROM_ALL TRUE
-            FOLDER "Dependencies"
+    set_target_properties(${THIRD_PARTY_TARGETS} PROPERTIES
+        EXCLUDE_FROM_ALL TRUE
+        FOLDER "Dependencies"
     )
 endif()

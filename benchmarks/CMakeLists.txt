@@ -17,16 +17,12 @@ else()
     )
 endif()
 
-set_target_properties(
-    inexor-vulkan-renderer-benchmarks PROPERTIES
-
+set_target_properties(inexor-vulkan-renderer-benchmarks PROPERTIES
     CXX_EXTENSIONS OFF
     CXX_STANDARD 20
     CXX_STANDARD_REQUIRED ON
 )
 
-target_link_libraries(
-    inexor-vulkan-renderer-benchmarks
 # enable warnings for our own code
 target_compile_options(inexor-vulkan-renderer-benchmarks PRIVATE
     $<$<CXX_COMPILER_ID:GNU,Clang,AppleClang>:-Wall -Wextra -Wpedantic>
@@ -60,9 +56,8 @@ if(MSVC)
         gtest_main
     )
     # Move all dependencies into a subfolder
-    set_target_properties(${THIRD_PARTY_TARGETS}
-        PROPERTIES
-            EXCLUDE_FROM_ALL TRUE
-            FOLDER "Dependencies"
+    set_target_properties(${THIRD_PARTY_TARGETS} PROPERTIES
+        EXCLUDE_FROM_ALL TRUE
+        FOLDER "Dependencies"
     )
 endif()
