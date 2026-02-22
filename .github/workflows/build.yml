@@ -126,7 +126,6 @@ jobs:
           cmake . \
             -Bbuild \
             -DCMAKE_BUILD_TYPE=${{ matrix.config.build_type }} \
-            -DVULKAN_SDK=$VULKAN_SDK \
             -DINEXOR_BUILD_BENCHMARKS=ON \
             -DINEXOR_BUILD_TESTS=ON \
             -GNinja \
