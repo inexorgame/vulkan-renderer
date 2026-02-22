@@ -27,13 +27,26 @@ set_target_properties(
 
 target_link_libraries(
     inexor-vulkan-renderer-benchmarks
+# enable warnings for our own code
+target_compile_options(inexor-vulkan-renderer-benchmarks PRIVATE
+    $<$<CXX_COMPILER_ID:GNU,Clang,AppleClang>:-Wall -Wextra -Wpedantic>
+    $<$<CXX_COMPILER_ID:MSVC>:/W4>
+)
 
-    PRIVATE
+target_link_libraries(inexor-vulkan-renderer-benchmarks PRIVATE
     inexor-vulkan-renderer-core-lib
 
     PUBLIC
     benchmark::benchmark
 )
+
+# suppress all compiler warnings for third-party dependencies
+foreach(_dep gtest benchmark)
+    target_compile_options(${_dep} PRIVATE
+        $<$<CXX_COMPILER_ID:GNU,Clang,AppleClang>:-w>
+        $<$<CXX_COMPILER_ID:MSVC>:/W0>
+    )
+endforeach()
 
 if(MSVC)
     # Group dependencies in Visual Studio

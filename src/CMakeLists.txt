@@ -96,6 +96,12 @@ target_compile_definitions(
     VK_NO_PROTOTYPES # Required by volk metaloader
 )
 
+# enable warnings for our own code
+target_compile_options(inexor-vulkan-renderer-core-lib PRIVATE
+    $<$<CXX_COMPILER_ID:GNU,Clang,AppleClang>:-Wall -Wextra -Wpedantic>
+    $<$<CXX_COMPILER_ID:MSVC>:/W4>
+)
+
 # enable multi processor building if VS project
 if(${CMAKE_GENERATOR} MATCHES "Visual Studio.*")
     target_compile_options(inexor-vulkan-renderer-core-lib PRIVATE "/MP")
@@ -141,7 +147,7 @@ add_library(imgui
     ${imgui_SOURCE_DIR}/imgui_draw.cpp
     ${imgui_SOURCE_DIR}/imgui_tables.cpp
     ${imgui_SOURCE_DIR}/imgui_widgets.cpp)
-target_include_directories(imgui PUBLIC ${imgui_SOURCE_DIR})
+target_include_directories(imgui SYSTEM PUBLIC ${imgui_SOURCE_DIR})
 
 target_link_libraries(inexor-vulkan-renderer-core-lib
     PUBLIC
@@ -156,6 +162,14 @@ target_link_libraries(inexor-vulkan-renderer-core-lib
     volk::volk
     Vulkan::Headers
     VulkanMemoryAllocator)
+
+# suppress all compiler warnings for third-party dependencies
+foreach(_dep glfw glm imgui tinygltf)
+    target_compile_options(${_dep} PRIVATE
+        $<$<CXX_COMPILER_ID:GNU,Clang,AppleClang>:-w>
+        $<$<CXX_COMPILER_ID:MSVC>:/W0>
+    )
+endforeach()
 
 if(MSVC)
     # Group dependencies in Visual Studio
