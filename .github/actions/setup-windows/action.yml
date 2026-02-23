@@ -1,0 +1,39 @@
+name: "Setup Windows System"
+description: "Setup Windows System"
+inputs:
+  vulkan-sdk-version:
+    description: "Version of the Vulkan SDK to install"
+    required: true
+  vulkan-sdk-checksum:
+    description: "SHA256 checksum of the Vulkan SDK archive"
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - name: Update Environment
+      shell: pwsh
+      run: pip3 install wheel setuptools
+
+    - name: Check Cache for Vulkan SDK
+      id: cache-vulkan
+      uses: actions/cache@v5
+      with:
+        path: ${{ github.workspace }}/vulkan_sdk
+        key: vulkan-sdk-${{ inputs.vulkan-sdk-version }}-${{ runner.os }}
+
+    - name: Install Vulkan SDK
+      shell: pwsh
+      if: steps.cache-vulkan.outputs.cache-hit != 'true'
+      run: |
+        curl -LS -o vulkansdk.exe https://sdk.lunarg.com/sdk/download/${{ inputs.vulkan-sdk-version }}/windows/VulkanSDK-${{ inputs.vulkan-sdk-version }}-Installer.exe
+        if ((Get-FileHash vulkansdk.exe -Algorithm SHA256).Hash.ToLower() -ne "${{ inputs.vulkan-sdk-checksum }}") { Write-Error "Checksum mismatch!"; exit 1 }
+        7z x -y vulkansdk.exe -o"${{ github.workspace }}/vulkan_sdk"
+        Remove-Item vulkansdk.exe
+    
+    - name: Set ENV and PATH for Vulkan SDK
+      shell: pwsh
+      run: |
+        echo "${{ github.workspace }}/vulkan_sdk" >> $env:GITHUB_PATH
+        echo "${{ github.workspace }}/vulkan_sdk\Bin" >> $env:GITHUB_PATH
+        echo "VULKAN_SDK=${{ github.workspace }}/vulkan_sdk" >> $env:GITHUB_ENV

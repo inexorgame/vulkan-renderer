@@ -1,0 +1,88 @@
+name: "Setup Linux System"
+description: "Setup Linux System"
+inputs:
+  vulkan-sdk-version:
+    description: "Version of the Vulkan SDK to install"
+    required: true
+  vulkan-sdk-checksum:
+    description: "SHA256 checksum of the Vulkan SDK archive"
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - name: Install Dependencies
+      shell: bash
+      env:
+        CLANG_VERSION: 20
+        GCC_VERSION: 14
+      run: |
+        sudo apt update -qq
+        sudo apt install -y \
+          cmake \
+          curl \
+          doxygen \
+          g++-${{ env.GCC_VERSION }} \
+          gcc-${{ env.GCC_VERSION }} \
+          git \
+          gnupg \
+          libgl1-mesa-dev \
+          libwayland-dev \
+          libx11-dev \
+          libx11-xcb-dev \
+          libxcb-dri3-dev \
+          libxcb-icccm4-dev \
+          libxcb-image0-dev \
+          libxcb-keysyms1-dev \
+          libxcb-randr0-dev \
+          libxcb-render-util0-dev \
+          libxcb-render0-dev \
+          libxcb-shape0-dev \
+          libxcb-sync-dev \
+          libxcb-util-dev \
+          libxcb-xfixes0-dev \
+          libxcb-xinerama0-dev \
+          libxcb-xkb-dev \
+          libxkbcommon-dev \
+          lsb-release \
+          ninja-build \
+          pkg-config \
+          python3 \
+          python3-pip \
+          software-properties-common \
+          wget \
+          xkb-data \
+          xorg-dev
+        pip3 install --break-system-packages wheel setuptools
+        wget -O llvm.sh https://apt.llvm.org/llvm.sh
+        chmod +x llvm.sh
+        sudo bash llvm.sh ${{ env.CLANG_VERSION }} all
+        rm llvm.sh
+        # set ENV and PATH for future steps
+        echo "/usr/lib/llvm-${{ env.CLANG_VERSION }}/bin" >> $GITHUB_PATH
+
+    - name: Check Cache for Vulkan SDK
+      id: cache-vulkan-sdk
+      uses: actions/cache@v5
+      with:
+        path: ${{ github.workspace }}/vulkan_sdk
+        key: vulkan-sdk-${{ inputs.vulkan-sdk-version }}-${{ runner.os }}
+
+    - name: Install Vulkan SDK
+      if: steps.cache-vulkan-sdk.outputs.cache-hit != 'true'
+      shell: bash
+      run: |
+        mkdir -p "${{ github.workspace }}/vulkan_sdk"
+        wget -O vulkansdk.tar.xz https://sdk.lunarg.com/sdk/download/${{ inputs.vulkan-sdk-version }}/linux/vulkan-sdk.tar.xz
+        echo "${{ inputs.vulkan-sdk-checksum }} vulkansdk.tar.xz" | sha256sum --check
+        tar -xJf vulkansdk.tar.xz -C "${{ github.workspace }}/vulkan_sdk"
+        rm vulkansdk.tar.xz
+
+    - name: Set ENV and PATH for Vulkan SDK
+      shell: bash
+      run: |
+        VULKAN_SDK="${{ github.workspace }}/vulkan_sdk/${{ inputs.vulkan-sdk-version }}/x86_64"
+        echo "VULKAN_SDK=$VULKAN_SDK" >> $GITHUB_ENV
+        echo "LD_LIBRARY_PATH=$VULKAN_SDK/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}" >> $GITHUB_ENV
+        echo "VK_LAYER_PATH=$VULKAN_SDK/share/vulkan/explicit_layer.d" >> $GITHUB_ENV
+        echo "$VULKAN_SDK/bin" >> $GITHUB_PATH

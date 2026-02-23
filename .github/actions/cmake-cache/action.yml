@@ -1,0 +1,24 @@
+name: 'CMake Cache'
+description: 'Caches the CMake build directory'
+inputs:
+  key:
+    description: 'Cache key'
+    required: true
+  path:
+    description: 'Cache path'
+    required: false
+    default: 'build'
+outputs:
+  cache-hit:
+    description: "Whether the cache was restored"
+    value: ${{ steps.cache-cmake.outputs.cache-hit }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: Load CMake cache
+      id: cache-cmake
+      uses: actions/cache@v5
+      with:
+        path: ${{ inputs.path }}
+        key: cmake-${{ inputs.key }}-${{ hashFiles('CMakeLists.txt', 'CMakePresets.json', '**/CMakeLists.txt', '**/*.cmake', '.github/actions/*.yml', '.github/workflows/*.yml') }}

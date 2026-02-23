@@ -45,3 +45,24 @@ foreach(cfg Debug Release RelWithDebInfo MinSizeRel)
         RUNTIME_OUTPUT_DIRECTORY_${cfg} ${CMAKE_BINARY_DIR}/example
     )
 endforeach()
+
+# install
+
+include(GNUInstallDirs)
+
+install(
+    TARGETS inexor-vulkan-renderer-example
+    COMPONENT example
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+)
+install(
+    DIRECTORY ${PROJECT_SOURCE_DIR}/assets/
+    COMPONENT example
+    DESTINATION ${CMAKE_INSTALL_BINDIR}/assets
+)
+install(
+    DIRECTORY ${PROJECT_SOURCE_DIR}/shaders/
+    COMPONENT example
+    DESTINATION ${CMAKE_INSTALL_BINDIR}/shaders
+    FILES_MATCHING PATTERN "*.spv"
+)

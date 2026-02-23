@@ -109,14 +109,14 @@ CMake Build Options
      - Default Value
    * - ``INEXOR_BUILD_EXAMPLE``
      - Build ``inexor-renderer-example``
-     - ``ON``
+     - ``OFF``
    * - ``INEXOR_BUILD_TESTS``
      - Build ``inexor-renderer-tests``
      - ``OFF``
    * - ``INEXOR_BUILD_BENCHMARKS``
      - Build ``inexor-renderer-benchmarks``
      - ``OFF``
-   * - ``INEXOR_BUILD_DOC``
+   * - ``INEXOR_BUILD_DOCUMENTATION``
      - Build the documentation with `Sphinx <https://www.sphinx-doc.org/en/master/>`__
      - ``OFF``
    * - ``INEXOR_BUILD_DOCUMENTATION_USE_VENV``
@@ -176,7 +176,7 @@ Alternatively, download the source code from the `GitHub repository <https://git
 .. image:: images/cmake-win/cmake-win-7.png
    :width: 700px
 
-**STEP 10:** In this example, let's enable building benchmarks, tests, and the documentation as well. To do so, set the checkboxes for ``INEXOR_BUILD_BENCHMARKS``, ``INEXOR_BUILD_TESTS``, and ``INEXOR_BUILD_DOC``:
+**STEP 10:** In this example, let's enable building benchmarks, tests, and the documentation as well. To do so, set the checkboxes for ``INEXOR_BUILD_BENCHMARKS``, ``INEXOR_BUILD_TESTS``, and ``INEXOR_BUILD_DOCUMENTATION``:
 
 .. image:: images/cmake-win/cmake-win-8.png
    :width: 700px

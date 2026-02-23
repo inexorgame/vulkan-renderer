@@ -1,0 +1,123 @@
+name: Linux Builds
+
+on:
+  workflow_call:
+    inputs:
+      vulkan-sdk-version:
+        type: string
+        required: true
+      vulkan-sdk-checksum:
+        type: string
+        required: true
+
+jobs:
+  linux:
+    name: ${{ matrix.config.name }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        config:
+          - name: "Clang (Debug)"
+            cmake-preset: "linux-clang-debug"
+            artifacts-id: "clang_debug"
+          - name: "Clang (Release)"
+            cmake-preset: "linux-clang-release"
+            artifacts-id: "clang_release"
+          - name: "GCC (Debug)"
+            cmake-preset: "linux-gcc-debug"
+            artifacts-id: "gcc_debug"
+          - name: "GCC (Release)"
+            cmake-preset: "linux-gcc-release"
+            artifacts-id: "gcc_release"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup system
+        uses: ./.github/actions/setup-linux
+        with:
+          vulkan-sdk-version: ${{ inputs.vulkan-sdk-version }}
+          vulkan-sdk-checksum: ${{ inputs.vulkan-sdk-checksum }}
+
+      - name: Load CMake cache
+        id: cache-cmake
+        uses: ./.github/actions/cmake-cache
+        with:
+          key: ${{ matrix.config.cmake-preset }}
+
+      - name: Configure CMake
+        if: steps.cache-cmake.outputs.cache-hit != 'true'
+        run: |
+          cmake . --preset ${{ matrix.config.cmake-preset }} -Bbuild
+
+      - name: Build core
+        run: cmake --build build --target inexor-vulkan-renderer-core-lib --parallel
+
+      - name: Build example
+        run: cmake --build build --target inexor-vulkan-renderer-example --parallel
+      
+      - name: Install example
+        run: cmake --install build --component example --prefix install-example
+
+      - name: Build tests
+        run: cmake --build build --target inexor-vulkan-renderer-tests --parallel
+
+      - name: Build benchmarks
+        run: cmake --build build --target inexor-vulkan-renderer-benchmarks --parallel
+
+      - name: Run tests
+        working-directory: build
+        run: |
+          for test_exec in $(find . -type f -executable -name '*-tests'); do
+            echo "Running $test_exec"
+            $test_exec --gtest_output=xml:"$test_exec.xml"
+          done
+
+      - name: Run benchmarks
+        working-directory: build
+        run: |
+          mkdir -p benchmark
+          find . -type f -executable -name '*-benchmarks' | while read -r bench_exec; do
+            echo "Running $bench_exec"
+            "$bench_exec" 2>&1 | tee "benchmark/$(basename "$bench_exec").txt"
+          done
+
+      - name: Prepare artifacts
+        run: |
+          BASE="${{ matrix.config.artifacts-id }}"
+
+          # Core
+          mkdir -p linux-core-$BASE
+          find ./build -type f -name 'libinexor-vulkan-renderer-core-lib*' -exec cp {} linux-core-$BASE/ \;
+
+          # Benchmarks, Tests
+          mkdir -p linux-benchmarks_tests-$BASE
+          find ./build -type f -executable -name '*-tests' -exec cp {} linux-benchmarks_tests-$BASE/ \;
+          find ./build -type f -name '*.xml' -exec cp {} linux-benchmarks_tests-$BASE/ \;
+          find ./build -type f -executable -name '*-benchmarks' -exec cp {} linux-benchmarks_tests-$BASE/ \;
+          if [ -d "./build/benchmark" ]; then
+            cp -r ./build/benchmark linux-benchmarks_tests-$BASE/
+          fi
+
+      - name: Upload core artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: linux-core-${{ matrix.config.artifacts-id }}
+          path: linux-core-${{ matrix.config.artifacts-id }}
+          retention-days: 14
+
+      - name: Upload example artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: linux-example-${{ matrix.config.artifacts-id }}
+          path: install-example/bin
+          retention-days: 14
+
+      - name: Upload benchmarks artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: linux-benchmarks_tests-${{ matrix.config.artifacts-id }}
+          path: linux-benchmarks_tests-${{ matrix.config.artifacts-id }}
+          retention-days: 14
