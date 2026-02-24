@@ -129,7 +129,6 @@ jobs:
             -DVULKAN_SDK=$VULKAN_SDK \
             -DINEXOR_BUILD_BENCHMARKS=ON \
             -DINEXOR_BUILD_TESTS=ON \
-            -DCMAKE_CXX_FLAGS="-Wall -Wextra" \
             -GNinja \
             ${{ matrix.config.cmake_configure_options }}
 
