@@ -29,6 +29,6 @@ jobs:
       - name: Format code
         shell: bash
         run: |
-          git-clang-format ${{ github.base_ref }}
+          git-clang-format ${{ github.base_ref }} -- '*.cpp' '*.hpp' '*.h' '*.c'
           git diff | tee format-diff
           if [ -s format-diff ]; then exit 1; fi
