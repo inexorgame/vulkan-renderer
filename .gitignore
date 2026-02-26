@@ -50,7 +50,7 @@
 /documentation/build/
 /install/
 /out/
-vma-dumps/*.json
+*.json
 
 # auto generated documentations paths
 documentation/doxygen-output/
