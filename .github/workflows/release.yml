@@ -1,128 +1,68 @@
-name: Nightly Release
+name: Release
 
-on:
-  workflow_run:
-    workflows:
-      - Static Code Analysis
-    branches:
-      - main
-    types:
-      - completed
-
-concurrency:
-  group: nightly-release-${{ github.ref_name }}
-  cancel-in-progress: true
+on: [workflow_call, workflow_dispatch]
 
 jobs:
   nightly-release:
-    name: Nightly Release
+    name: Nightly
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Download example builds
+        uses: actions/download-artifact@v7
         with:
-          ref: main
+          pattern: "*-example-*"
+          path: archives
 
-      - name: Get latest workflow run artifacts
-        id: download-artifacts
-        uses: actions/github-script@v6
+      - name: Download documentation
+        uses: actions/download-artifact@v7
         with:
-          script: |
-            const fs = require('fs');
-            const path = require('path');
+          name: "documentation"
+          path: archives/documentation
 
-            const workflows = ['build.yml', 'build_documentation.yml', 'static_analysis.yml'];
-            let allArtifacts = [];
-
-            for (const workflow of workflows) {
-              const runs = await github.rest.actions.listWorkflowRuns({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                workflow_id: workflow,
-                head_sha: process.env.GITHUB_SHA, // ensures exact commit
-                branch: 'main',
-                per_page: 1
-              });
-
-              if (!runs.data.workflow_runs.length) {
-                console.log(`No runs found for workflow ${workflow}`);
-                continue;
-              }
-
-              const runId = runs.data.workflow_runs[0].id;
-              const artifacts = await github.rest.actions.listWorkflowRunArtifacts({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                run_id: runId
-              });
-
-              const nightlyArtifacts = artifacts.data.artifacts.filter(a =>
-                a.name.startsWith("Nightly_")
-              );
-
-              if (nightlyArtifacts.length === 0) {
-                console.log(`No Nightly artifacts found in workflow ${workflow}`);
-                continue;
-              }
-
-              allArtifacts.push(...nightlyArtifacts);
-            }
-
-            if (allArtifacts.length === 0) {
-              throw new Error("No Nightly artifacts found in any workflow.");
-            }
-
-            for (const artifact of allArtifacts) {
-              const download = await github.rest.actions.downloadArtifact({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                artifact_id: artifact.id,
-                archive_format: 'zip'
-              });
-
-              const filePath = path.join(process.env.GITHUB_WORKSPACE, `${artifact.name}.zip`);
-              fs.writeFileSync(filePath, Buffer.from(download.data));
-              console.log(`Downloaded artifact: ${filePath}`);
-            }
-
-      - name: List Files
+      - name: Prepare archives for release
+        working-directory: archives
         run: |
-          echo "Contents of archives:"
-          find archives -type f | sort
-          echo ""
-          echo "Directory structure:"
-          tree -L 3 archives || true
+          for dir in *-example-*; do
+            if [[ -d "$dir" ]]; then
+              cd "$dir"
+              zip -r "../${dir}.zip" ./*
+              cd ..
+            fi
+          done
 
-      - name: Configure Git
+          if [[ -d documentation ]]; then
+            cd documentation
+            zip -r ../documentation.zip ./*
+            cd ..
+          fi
+
+      - name: Create git tag
         run: |
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
           git tag nightly
           git push -f origin tag nightly
 
-      - name: List existing releases
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          gh release list
+      # wait 5s that the pushed tag is available in the next step, sometimes the next step saw only the local tag
+      - name: Wait 5s
+        run: sleep 5s
+        shell: bash
 
-      - name: Create or update Nightly release
+      - name: Create or update nightly release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NOTES: |
             Latest development release, continuously updated.
         run: |
-          gh release delete nightly -y
+          output=$(gh release delete nightly -y 2>&1) || [[ "${output}" == "release not found" ]]
           gh release create nightly \
+            ./archives/*.zip \
             --title "Nightly Release" \
             --notes "${{ env.NOTES }}" \
             --prerelease \
             --target ${{ github.sha }}
-
-          # Upload all .zip files in the root directory
-          echo "Uploading all build artifacts as .zip:"
-          find . -maxdepth 1 -name "*.zip" -print0 | while IFS= read -r -d '' file; do
-            echo "→ $file"
-            gh release upload --clobber nightly "$file"
-          done

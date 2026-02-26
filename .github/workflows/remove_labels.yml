@@ -6,11 +6,6 @@ on:
   pull_request:
     types: [closed]
 
-# Cancel CI workflows which are still running from previous pushes
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref_name }}
-  cancel-in-progress: true
-
 jobs:
   add_labels:
     runs-on: ubuntu-latest

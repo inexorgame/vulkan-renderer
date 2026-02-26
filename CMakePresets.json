@@ -1,0 +1,126 @@
+{
+  "version": 5,
+  "cmakeMinimumRequired": {
+    "major": 3,
+    "minor": 21
+  },
+  "configurePresets": [
+    {
+      "name": "base",
+      "hidden": true,
+      "cacheVariables": {
+        "INEXOR_BUILD_BENCHMARKS": "ON",
+        "INEXOR_BUILD_EXAMPLE": "ON",
+        "INEXOR_BUILD_TESTS": "ON"
+      }
+    },
+    {
+      "name": "debug",
+      "hidden": true,
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug"
+      }
+    },
+    {
+      "name": "release",
+      "hidden": true,
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release"
+      }
+    },
+    {
+      "name": "linux",
+      "hidden": true,
+      "inherits": "base",
+      "generator": "Ninja",
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Linux"
+      }
+    },
+    {
+      "name": "windows",
+      "hidden": true,
+      "inherits": "base",
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Windows"
+      }
+    },
+    {
+      "name": "linux-gcc-debug",
+      "inherits": [
+        "linux",
+        "debug"
+      ],
+      "toolchainFile": "${sourceDir}/cmake/toolchains/linux-gcc.cmake"
+    },
+    {
+      "name": "linux-gcc-release",
+      "inherits": [
+        "linux",
+        "release"
+      ],
+      "toolchainFile": "${sourceDir}/cmake/toolchains/linux-gcc.cmake"
+    },
+    {
+      "name": "linux-clang-debug",
+      "inherits": [
+        "linux",
+        "debug"
+      ],
+      "toolchainFile": "${sourceDir}/cmake/toolchains/linux-clang.cmake"
+    },
+    {
+      "name": "linux-clang-release",
+      "inherits": [
+        "linux",
+        "release"
+      ],
+      "toolchainFile": "${sourceDir}/cmake/toolchains/linux-clang.cmake"
+    },
+    {
+      "name": "windows-msvc",
+      "inherits": [
+        "windows"
+      ],
+      "generator": "Visual Studio 18 2026",
+      "architecture": "x64",
+      "cacheVariables": {
+        "CMAKE_CONFIGURATION_TYPES": "Debug;Release"
+      },
+      "toolchainFile": "${sourceDir}/cmake/toolchains/windows-msvc.cmake"
+    },
+    {
+      "name": "windows-clang-debug",
+      "inherits": [
+        "windows",
+        "debug"
+      ],
+      "generator": "Ninja",
+      "toolchainFile": "${sourceDir}/cmake/toolchains/windows-clang.cmake"
+    },
+    {
+      "name": "windows-clang-release",
+      "inherits": [
+        "windows",
+        "release"
+      ],
+      "generator": "Ninja",
+      "toolchainFile": "${sourceDir}/cmake/toolchains/windows-clang.cmake"
+    },
+    {
+      "name": "documentation",
+      "inherits": [
+        "linux",
+        "windows",
+        "release"
+      ],
+      "cacheVariables": {
+        "INEXOR_BUILD_DOCUMENTATION": "ON"
+      }
+    }
+  ]
+}

@@ -38,16 +38,19 @@
 # End of https://www.gitignore.io/api/c++
 
 # custom ignores
-.idea/
-cmake-build-*/
-build/
-*.spv
-vma-dumps/*.json
-*.ini
-*.csv
-*__pycache__*
 .cache/
+.idea/
 .vscode/
+*__pycache__*
+*.csv
+*.ini
+*.spv
+/build/
+/cmake-build-*/
+/documentation/build/
+/install/
+/out/
+*.json
 
 # auto generated documentations paths
 documentation/doxygen-output/

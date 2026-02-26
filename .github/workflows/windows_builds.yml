@@ -1,0 +1,136 @@
+name: Windows Builds
+
+on:
+  workflow_call:
+    inputs:
+      vulkan-sdk-version:
+        type: string
+        required: true
+      vulkan-sdk-checksum:
+        type: string
+        required: true
+
+jobs:
+  windows:
+    name: ${{ matrix.config.name }}
+    runs-on: windows-2025-vs2026
+    strategy:
+      fail-fast: false
+      matrix:
+        config:
+          - name: "MSVC (Debug)"
+            cmake-preset: "windows-msvc"
+            extra-cmake-args: "--config Debug"
+            artifacts-id: "msvc_debug"
+          - name: "MSVC (Release)"
+            cmake-preset: "windows-msvc"
+            extra-cmake-args: "--config Release"
+            artifacts-id: "msvc_release"
+          - name: "Clang (Debug)"
+            cmake-preset: "windows-clang-debug"
+            artifacts-id: "clang_debug"
+          - name: "Clang (Release)"
+            cmake-preset: "windows-clang-release"
+            artifacts-id: "clang_release"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup system
+        uses: ./.github/actions/setup-windows
+        with:
+          vulkan-sdk-version: ${{ inputs.vulkan-sdk-version }}
+          vulkan-sdk-checksum: ${{ inputs.vulkan-sdk-checksum }}
+
+      - name: Load CMake cache
+        id: cache-cmake
+        uses: ./.github/actions/cmake-cache
+        with:
+          key: ${{ matrix.config.cmake-preset }}
+
+      - name: Configure CMake
+        if: steps.cache-cmake.outputs.cache-hit != 'true'
+        run: |
+          cmake . --preset ${{ matrix.config.cmake-preset }} -Bbuild
+
+      - name: Build core
+        run: cmake --build build --target inexor-vulkan-renderer-core-lib --parallel ${{ matrix.config.extra-cmake-args }}
+
+      - name: Build example
+        run: cmake --build build --target inexor-vulkan-renderer-example --parallel ${{ matrix.config.extra-cmake-args }}
+
+      - name: Install example
+        run: cmake --install build --component example --prefix install-example ${{ matrix.config.extra-cmake-args }}
+
+      - name: Build tests
+        run: cmake --build build --target inexor-vulkan-renderer-tests --parallel ${{ matrix.config.extra-cmake-args }}
+
+      - name: Build benchmarks
+        run: cmake --build build --target inexor-vulkan-renderer-benchmarks --parallel ${{ matrix.config.extra-cmake-args }}
+
+      - name: Run tests
+        working-directory: build
+        run: |
+          Get-ChildItem -Recurse -Filter '*-tests.exe' | ForEach-Object {
+            Write-Host "Running $($_.FullName)"
+            & $_.FullName --gtest_output=xml:"$($_.FullName).xml"
+          }
+
+      - name: Run benchmarks
+        working-directory: build
+        run: |
+          if (Test-Path benchmark) { Remove-Item benchmark -Recurse -Force }
+          mkdir benchmark
+          Get-ChildItem -Recurse -Filter '*-benchmarks.exe' | ForEach-Object {
+            $benchPath = $_.FullName
+            $outputFile = Join-Path -Path "benchmark" -ChildPath "$($_.BaseName).txt"
+            Write-Host "Running $benchPath"
+            & $benchPath 2>&1 | Tee-Object -FilePath $outputFile
+          }
+
+      - name: Prepare artifacts
+        shell: pwsh
+        run: |
+          $base = "${{ matrix.config.artifacts-id }}"
+
+          # Core
+          mkdir "windows-core-$base"
+          Get-ChildItem -Path ./build -Recurse -Filter "inexor-vulkan-renderer-core-lib*" |
+            ForEach-Object { Copy-Item $_.FullName "windows-core-$base" }
+
+          # Benchmarks, Tests
+          mkdir "windows-benchmarks_tests-$base"
+          Get-ChildItem -Path ./build -Recurse -Filter "*-tests.exe" |
+            ForEach-Object { Copy-Item $_.FullName "windows-benchmarks_tests-$base" }
+
+          Get-ChildItem -Path ./build -Recurse -Filter "*.xml" |
+            ForEach-Object { Copy-Item $_.FullName "windows-benchmarks_tests-$base" }
+
+          Get-ChildItem -Path ./build -Recurse -Filter "*-benchmarks.exe" |
+            ForEach-Object { Copy-Item $_.FullName "windows-benchmarks_tests-$base" }
+
+          if (Test-Path ./build/benchmark) {
+            Copy-Item -Path ./build/benchmark -Destination "windows-benchmarks_tests-$base" -Recurse
+          }
+
+      - name: Upload core artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: windows-core-${{ matrix.config.artifacts-id }}
+          path: windows-core-${{ matrix.config.artifacts-id }}
+          retention-days: 14
+
+      - name: Upload example artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: windows-example-${{ matrix.config.artifacts-id }}
+          path: install-example/bin
+          retention-days: 14
+
+      - name: Upload benchmarks artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: windows-benchmarks_tests-${{ matrix.config.artifacts-id }}
+          path: windows-benchmarks_tests-${{ matrix.config.artifacts-id }}
+          retention-days: 14
