@@ -1,0 +1,21 @@
+name: Remove Labels
+
+on:
+  issues:
+    types: [closed]
+  pull_request:
+    types: [closed]
+
+# Cancel CI workflows which are still running from previous pushes
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref_name }}
+  cancel-in-progress: true
+
+jobs:
+  add_labels:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Remove labels
+        uses: andymckay/labeler@master
+        with:
+          remove-labels: "org:awaiting information, org:discussion, org:help wanted, org:in progress, org:on hold, org:planned, org:ready to merge, org:review"

@@ -46,7 +46,7 @@ private:
 
 public:
     /// This is the version of Vulkan API that we use in the entire engine.
-    static constexpr std::uint32_t REQUIRED_VK_API_VERSION{VK_API_VERSION_1_2};
+    static constexpr std::uint32_t REQUIRED_VK_API_VERSION{VK_API_VERSION_1_3};
 
     /// Default constructor.
     /// @param instance_layers The required instance layers (can be empty).

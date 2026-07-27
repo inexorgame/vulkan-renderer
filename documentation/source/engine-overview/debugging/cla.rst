@@ -15,6 +15,10 @@ You can start vulkan-renderer with the following command line arguments:
 
     Enables `vertical synchronization <https://en.wikipedia.org/wiki/Analog_television#Vertical_synchronization>`__ (limits FPS to monitor refresh rate).
 
+.. option:: --no-cmd-buf-cache
+
+    Disables the secondary command buffer cache and records graphics passes directly into the primary command buffer.
+
 .. option:: --maxfps <fps>
 
     Limits the max frames per seconds to a specified value. The command line argument will be `clamped <https://en.cppreference.com/w/cpp/algorithm/clamp.html>`__ in between the values ``1 fps`` and ``2000 fps`` as lower and higher bounds.

@@ -115,12 +115,25 @@ std::vector<VkQueueFamilyProperties> get_queue_family_properties(const VkPhysica
     if (physical_device == VK_NULL_HANDLE) {
         throw InexorException("Error: Parameter 'physical_device' is invalid!");
     }
+    if (vkGetPhysicalDeviceQueueFamilyProperties2 == nullptr) {
+        throw InexorException("Error: Function pointer 'vkGetPhysicalDeviceQueueFamilyProperties2' is not available!");
+    }
+
     std::uint32_t props_count = 0;
-    vkGetPhysicalDeviceQueueFamilyProperties(physical_device, &props_count, nullptr);
+    vkGetPhysicalDeviceQueueFamilyProperties2(physical_device, &props_count, nullptr);
     if (props_count != 0) {
         // We must call resize here, not reserve!
+        std::vector<VkQueueFamilyProperties2> queue_families2(props_count);
+        for (auto &props2 : queue_families2) {
+            props2.sType = VK_STRUCTURE_TYPE_QUEUE_FAMILY_PROPERTIES_2;
+        }
+
+        vkGetPhysicalDeviceQueueFamilyProperties2(physical_device, &props_count, queue_families2.data());
+
         queue_families.resize(props_count);
-        vkGetPhysicalDeviceQueueFamilyProperties(physical_device, &props_count, queue_families.data());
+        for (std::size_t i = 0; i < props_count; ++i) {
+            queue_families[i] = queue_families2[i].queueFamilyProperties;
+        }
     }
     return queue_families;
 }

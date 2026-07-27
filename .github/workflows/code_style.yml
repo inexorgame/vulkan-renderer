@@ -1,34 +1,43 @@
 name: Code Style
+on: pull_request
 
-on: [workflow_call, workflow_dispatch]
+# Cancel CI workflows which are still running from previous pushes
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref_name }}
+  cancel-in-progress: true
 
 jobs:
   clang-format:
     name: Clang Format
     runs-on: ubuntu-latest
     container: ubuntu:rolling
+    env:
+      DEBIAN_FRONTEND: "noninteractive"
     steps:
-      - name: Install tools
+      - name: Update environment
         shell: bash
         run: |
+          # Update package lists
           apt update -qq
+
+          # Install tools
           apt install -y \
             clang-format \
             git
 
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v4
         
       - name: Fetch ${{ github.base_ref }}
         shell: bash
         run: |
           git config --global --add safe.directory $(pwd)
-          git fetch --no-tags --prune --depth=1 origin ${{ github.base_ref }}:${{ github.base_ref }}
+          git fetch --progress --depth=1 origin ${{ github.base_ref }}
           git log --pretty=oneline
 
-      - name: Format code
+      - name: Style check
         shell: bash
         run: |
-          git-clang-format ${{ github.base_ref }} -- '*.cpp' '*.hpp' '*.h' '*.c'
+          git-clang-format origin/${{ github.base_ref }}
           git diff | tee format-diff
           if [ -s format-diff ]; then exit 1; fi

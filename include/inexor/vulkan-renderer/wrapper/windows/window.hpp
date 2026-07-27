@@ -8,14 +8,18 @@
 
 namespace inexor::vulkan_renderer::wrapper::windows {
 
-enum class Mode { WINDOWED, FULLSCREEN, WINDOWED_FULLSCREEN };
+enum class WindowMode {
+    WINDOWED,
+    FULLSCREEN,
+    WINDOWED_FULLSCREEN,
+};
 
 /// @brief RAII wrapper class for GLFW windows.
 class Window {
 private:
     std::uint32_t m_width;
     std::uint32_t m_height;
-    Mode m_mode;
+    WindowMode m_mode;
     GLFWwindow *m_window{nullptr};
 
 public:
@@ -26,7 +30,7 @@ public:
     /// @param visible True if the window is visible after creation, false otherwise.
     /// @param resizable True if the window should be resizable, false otherwise.
     Window(const std::string &title, std::uint32_t width, std::uint32_t height, bool visible, bool resizable,
-           Mode mode);
+           WindowMode mode);
 
     ~Window();
 
@@ -41,7 +45,7 @@ public:
         return m_height;
     }
 
-    [[nodiscard]] Mode mode() const {
+    [[nodiscard]] auto mode() const {
         return m_mode;
     }
 

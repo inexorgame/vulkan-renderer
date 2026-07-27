@@ -3,7 +3,7 @@
 #include "inexor/vulkan-renderer/meta/meta.hpp"
 #include "inexor/vulkan-renderer/tools/enumerate.hpp"
 #include "inexor/vulkan-renderer/tools/exception.hpp"
-#include "inexor/vulkan-renderer/wrapper/make_info.hpp"
+#include "inexor/vulkan-renderer/tools/make_info.hpp"
 
 #include <fmt/ranges.h>
 #include <spdlog/spdlog.h>
@@ -14,6 +14,7 @@ namespace inexor::vulkan_renderer::wrapper {
 
 // Using declarations
 using tools::InexorException;
+using tools::make_info;
 using tools::VulkanException;
 
 bool is_instance_extension_supported(const std::string &extension_name) {

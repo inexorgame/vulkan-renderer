@@ -3,7 +3,8 @@ if(NOT GLSL_VALIDATOR)
     message(FATAL_ERROR "glslangValidator not found!")
 endif()
 
-set(SHADERS
+set(
+    SHADERS
     main.vert
     main.frag
     ui.frag

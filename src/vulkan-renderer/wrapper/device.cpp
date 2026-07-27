@@ -2,9 +2,10 @@
 
 #include "inexor/vulkan-renderer/tools/device_info.hpp"
 #include "inexor/vulkan-renderer/tools/enumerate.hpp"
+#include "inexor/vulkan-renderer/tools/make_info.hpp"
 #include "inexor/vulkan-renderer/tools/queue_selection.hpp"
 #include "inexor/vulkan-renderer/wrapper/instance.hpp"
-#include "inexor/vulkan-renderer/wrapper/make_info.hpp"
+#include "inexor/vulkan-renderer/wrapper/pipelines/pipeline_cache.hpp"
 
 #define VMA_DEBUG_MARGIN 16
 #define VMA_DEBUG_DETECT_CORRUPTION 1
@@ -13,9 +14,55 @@
 
 #include <spdlog/spdlog.h>
 
+#include <algorithm>
+#include <functional>
 #include <utility>
 
 namespace inexor::vulkan_renderer::wrapper {
+
+/// Convert a DebugLabelColor to a rgba value
+/// @param color The debug label color
+/// @return The converted rgba values
+std::array<float, 4> get_debug_label_color(const DebugLabelColor color) {
+    switch (color) {
+    case DebugLabelColor::RED:
+        return {0.98f, 0.60f, 0.60f, 1.0f};
+    case DebugLabelColor::BLUE:
+        return {0.68f, 0.85f, 0.90f, 1.0f};
+    case DebugLabelColor::GREEN:
+        return {0.73f, 0.88f, 0.73f, 1.0f};
+    case DebugLabelColor::YELLOW:
+        return {0.98f, 0.98f, 0.70f, 1.0f};
+    case DebugLabelColor::PURPLE:
+        return {0.80f, 0.70f, 0.90f, 1.0f};
+    case DebugLabelColor::ORANGE:
+        return {0.98f, 0.75f, 0.53f, 1.0f};
+    case DebugLabelColor::MAGENTA:
+        return {0.96f, 0.60f, 0.76f, 1.0f};
+    case DebugLabelColor::CYAN:
+        return {0.70f, 0.98f, 0.98f, 1.0f};
+    case DebugLabelColor::BROWN:
+        return {0.82f, 0.70f, 0.55f, 1.0f};
+    case DebugLabelColor::PINK:
+        return {0.98f, 0.75f, 0.85f, 1.0f};
+    case DebugLabelColor::LIME:
+        return {0.80f, 0.98f, 0.60f, 1.0f};
+    case DebugLabelColor::TURQUOISE:
+        return {0.70f, 0.93f, 0.93f, 1.0f};
+    case DebugLabelColor::BEIGE:
+        return {0.96f, 0.96f, 0.86f, 1.0f};
+    case DebugLabelColor::MAROON:
+        return {0.76f, 0.50f, 0.50f, 1.0f};
+    case DebugLabelColor::OLIVE:
+        return {0.74f, 0.75f, 0.50f, 1.0f};
+    case DebugLabelColor::NAVY:
+        return {0.53f, 0.70f, 0.82f, 1.0f};
+    case DebugLabelColor::TEAL:
+        return {0.53f, 0.80f, 0.75f, 1.0f};
+    default:
+        return {0.0f, 0.0f, 0.0f, 1.0f}; // Default to opaque black if the color is not recognized
+    }
+}
 
 Device::Device(const Instance &inst, const VkSurfaceKHR surface, const VkPhysicalDevice desired_gpu,
                const VkPhysicalDeviceFeatures &required_features, const std::span<const char *> required_extensions)
@@ -44,9 +91,10 @@ Device::Device(const Instance &inst, const VkSurfaceKHR surface, const VkPhysica
     }
 
     // Get the device properties
-    VkPhysicalDeviceProperties device_properties{};
-    vkGetPhysicalDeviceProperties(m_physical_device, &device_properties);
-    std::memcpy(m_pipeline_cache_uuid.data(), device_properties.pipelineCacheUUID, VK_UUID_SIZE);
+    VkPhysicalDeviceProperties2 device_properties2{};
+    device_properties2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2;
+    vkGetPhysicalDeviceProperties2(m_physical_device, &device_properties2);
+    std::memcpy(m_pipeline_cache_uuid.data(), device_properties2.properties.pipelineCacheUUID, VK_UUID_SIZE);
 
     spdlog::trace("Creating Vulkan queues");
 
@@ -69,11 +117,60 @@ Device::Device(const Instance &inst, const VkSurfaceKHR surface, const VkPhysica
     // Store the enabled features.
     m_enabled_features = required_features;
 
+    std::vector<const char *> enabled_extensions(required_extensions.begin(), required_extensions.end());
+    const auto available_extensions = tools::get_extension_properties(m_physical_device);
+    const bool memory_priority_ext_supported =
+        tools::is_extension_supported(available_extensions, VK_EXT_MEMORY_PRIORITY_EXTENSION_NAME);
+    bool memory_priority_feature_supported = false;
+    if (memory_priority_ext_supported) {
+        VkPhysicalDeviceMemoryPriorityFeaturesEXT memory_priority_features{};
+        memory_priority_features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MEMORY_PRIORITY_FEATURES_EXT;
+
+        VkPhysicalDeviceFeatures2 features2{};
+        features2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
+        features2.pNext = &memory_priority_features;
+        vkGetPhysicalDeviceFeatures2(m_physical_device, &features2);
+
+        memory_priority_feature_supported = (memory_priority_features.memoryPriority == VK_TRUE);
+    }
+
+    const bool memory_priority_supported = memory_priority_ext_supported && memory_priority_feature_supported;
+    if (memory_priority_supported) {
+        const auto not_already_enabled = std::find(enabled_extensions.begin(), enabled_extensions.end(),
+                                                   VK_EXT_MEMORY_PRIORITY_EXTENSION_NAME) == enabled_extensions.end();
+        if (not_already_enabled) {
+            enabled_extensions.push_back(VK_EXT_MEMORY_PRIORITY_EXTENSION_NAME);
+        }
+    }
+
+    // We want to use synchronization2 for vkCmdPipelineBarrier2.
+    VkPhysicalDeviceSynchronization2Features sync2_feature{};
+    sync2_feature.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SYNCHRONIZATION_2_FEATURES;
+    sync2_feature.pNext = nullptr;
+    sync2_feature.synchronization2 = VK_TRUE;
+
+    VkPhysicalDeviceMemoryPriorityFeaturesEXT memory_priority_feature{};
+    memory_priority_feature.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MEMORY_PRIORITY_FEATURES_EXT;
+    memory_priority_feature.pNext = nullptr;
+    memory_priority_feature.memoryPriority = memory_priority_supported ? VK_TRUE : VK_FALSE;
+
+    sync2_feature.pNext = memory_priority_supported ? &memory_priority_feature : nullptr;
+
+    using tools::make_info;
+
+    // We want to use dynamic rendering (VK_KHR_dynamic_rendering).
+    auto dyn_rendering_feature = make_info<VkPhysicalDeviceDynamicRenderingFeaturesKHR>({
+        .pNext = &sync2_feature,
+        .dynamicRendering = VK_TRUE,
+    });
+
     const auto device_ci = make_info<VkDeviceCreateInfo>({
+        // This is one of those rare cases where pNext is actually not nullptr!
+        .pNext = &dyn_rendering_feature, // We use dynamic rendering
         .queueCreateInfoCount = static_cast<std::uint32_t>(optimal_queues.queues_to_create.size()),
         .pQueueCreateInfos = optimal_queues.queues_to_create.data(),
-        .enabledExtensionCount = static_cast<std::uint32_t>(required_extensions.size()),
-        .ppEnabledExtensionNames = required_extensions.data(),
+        .enabledExtensionCount = static_cast<std::uint32_t>(enabled_extensions.size()),
+        .ppEnabledExtensionNames = enabled_extensions.data(),
         .pEnabledFeatures = &m_enabled_features,
     });
 
@@ -114,43 +211,22 @@ Device::Device(const Instance &inst, const VkSurfaceKHR surface, const VkPhysica
 
     // We already checked earlier if the graphics queue family index is not std::nullopt.
     vkGetDeviceQueue(m_device, m_graphics_queue_family_index.value(), 0, &m_graphics_queue);
+    set_debug_name(m_graphics_queue, "m_graphics_queue");
 
     // Do we have any queue for compute?
     if (m_compute_queue_family_index) {
         vkGetDeviceQueue(m_device, m_compute_queue_family_index.value(), 0, &m_compute_queue);
+        set_debug_name(m_compute_queue, "m_compute_queue");
     }
     // Do we have any queue for compute?
     if (m_transfer_queue_family_index) {
         vkGetDeviceQueue(m_device, m_transfer_queue_family_index.value(), 0, &m_transfer_queue);
+        set_debug_name(m_transfer_queue, "m_transfer_queue");
     }
     // Do we have any queue for sparse binding?
     if (m_sparse_binding_queue_family_index) {
         vkGetDeviceQueue(m_device, m_sparse_binding_queue_family_index.value(), 0, &m_sparse_binding_queue);
-    }
-
-    // Check if compute or transfer queue can be used for presenting
-    if (m_compute_queue_family_index && is_presentation_supported(surface, m_compute_queue_family_index.value())) {
-        spdlog::trace("Using compute queue [queue family index: {}] for vkQueuePresentKHR",
-                      m_compute_queue_family_index.value());
-        m_present_queue = m_compute_queue;
-    } else if (m_transfer_queue_family_index &&
-               is_presentation_supported(surface, m_transfer_queue_family_index.value())) {
-        spdlog::trace("Using transfer queue [queue family index: {}] for vkQueuePresentKHR",
-                      m_transfer_queue_family_index.value());
-        m_present_queue = m_transfer_queue;
-    } else if (m_sparse_binding_queue_family_index &&
-               is_presentation_supported(surface, m_sparse_binding_queue_family_index.value())) {
-        spdlog::trace("Using sparse binding queue [queue family index: {}] for vkQueuePresentKHR",
-                      m_sparse_binding_queue_family_index.value());
-        m_present_queue = m_transfer_queue;
-    } else {
-        if (!is_presentation_supported(surface, m_graphics_queue_family_index.value())) {
-            // This should be extremely unlikely.
-            throw std::runtime_error("Error: Graphics queue does not support present on GPU '" + m_gpu_name + "'");
-        }
-        spdlog::trace("Using graphics queue [queue family index: {}] for vkQueuePresentKHR",
-                      m_graphics_queue_family_index.value());
-        m_present_queue = m_graphics_queue;
+        set_debug_name(m_sparse_binding_queue, "m_sparse_binding_queue");
     }
 
     VmaVulkanFunctions vma_vk_functions{
@@ -158,13 +234,16 @@ Device::Device(const Instance &inst, const VkSurfaceKHR surface, const VkPhysica
         .vkGetDeviceProcAddr = vkGetDeviceProcAddr,
     };
 
-    const VmaAllocatorCreateInfo vma_ci{
+    auto vma_ci = VmaAllocatorCreateInfo{
         .physicalDevice = m_physical_device,
         .device = m_device,
         .pVulkanFunctions = &vma_vk_functions,
         .instance = inst.instance(),
         .vulkanApiVersion = Instance::REQUIRED_VK_API_VERSION,
     };
+    if (memory_priority_supported) {
+        vma_ci.flags |= VMA_ALLOCATOR_CREATE_EXT_MEMORY_PRIORITY_BIT;
+    }
 
     spdlog::trace("Creating instance of Vulkan Memory Allocator (VMA)");
     if (const auto result = vmaCreateAllocator(&vma_ci, &m_allocator); result != VK_SUCCESS) {
@@ -172,29 +251,39 @@ Device::Device(const Instance &inst, const VkSurfaceKHR surface, const VkPhysica
         vkDestroyDevice(m_device, nullptr);
         throw VulkanException("Error: vmaCreateAllocator failed!", result);
     }
-}
 
-Device::Device(Device &&other) noexcept : m_cmd_pools(std::move(other.m_cmd_pools)) {
-    // After moving the cmd_pools, the memory is in a valid but unspecified state.
-    // By calling .clear(), we bring it back into a defined state again.
-    // This is not strictly necessary, but let's be safe in case we use it again.
-    other.m_cmd_pools.clear();
+    m_pipeline_cache = std::make_unique<PipelineCache>(*this);
 
-    // TODO: Check me
-    m_device = std::exchange(other.m_device, nullptr);
-    m_physical_device = std::exchange(other.m_physical_device, nullptr);
+    // Create command pools at here instead of allocating them lazily at first request during runtime
+    get_thread_command_pool(VK_QUEUE_GRAPHICS_BIT);
+    get_thread_command_pool(VK_QUEUE_TRANSFER_BIT);
+    get_thread_command_pool(VK_QUEUE_COMPUTE_BIT);
+    get_thread_command_pool(VK_QUEUE_SPARSE_BINDING_BIT);
 }
 
 Device::~Device() {
     std::scoped_lock locker(m_mutex);
-
+    // Wait for the device to complete ongoing work
+    spdlog::trace("Device::~Device begin");
+    wait_idle();
     // Because the device handle must be valid for the destruction of the command pools in the CommandPool destructor,
     // we must destroy the command pools manually here in order to ensure the right order of destruction
     m_cmd_pools.clear();
-
+    // Dump detailed allocator stats before destruction so leaking allocations can be identified by name.
+    char *vma_stats_string = nullptr;
+    vmaBuildStatsString(m_allocator, &vma_stats_string, VK_TRUE);
+    if (vma_stats_string != nullptr) {
+        spdlog::warn("VMA allocator stats before destruction:\n{}", vma_stats_string);
+        vmaFreeStatsString(m_allocator, vma_stats_string);
+    }
     // Now that we destroyed the command pools, we can destroy the allocator and finally the device itself
+    spdlog::trace("Device::~Device destroying VMA allocator");
     vmaDestroyAllocator(m_allocator);
+    // Shutdown pipeline cache
+    m_pipeline_cache.reset();
+    // Destroy the device
     vkDestroyDevice(m_device, nullptr);
+    spdlog::trace("Device::~Device end");
 }
 
 bool Device::is_presentation_supported(const VkSurfaceKHR surface, const std::uint32_t queue_family_index) const {
@@ -222,78 +311,147 @@ bool Device::surface_supports_usage(const VkSurfaceKHR surface, const VkImageUsa
     return (capabilities.supportedUsageFlags & usage) != 0u;
 }
 
-void Device::execute(const std::string &name, const VulkanQueueType queue_type,
-                     const std::function<void(const CommandBuffer &cmd_buf)> &cmd_lambda) const {
-    const auto &cmd_buf = get_thread_command_pool(queue_type).request_command_buffer(name);
-    cmd_lambda(cmd_buf);
-    cmd_buf.submit_and_wait();
+VkFence Device::execute(const VkQueueFlagBits queue_type, const DebugLabelColor dbg_label_color,
+                        const std::function<void(const CommandBuffer &cmd_buf)> &on_record,
+                        const std::span<const VkSemaphore> wait_semaphores,
+                        const std::span<const VkSemaphore> signal_semaphores,
+                        const std::source_location source_location) const {
+    const auto &cmd_buf = get_thread_command_pool(queue_type).request_command_buffer(source_location.function_name());
+    cmd_buf.begin_debug_label_region(source_location.function_name(), get_debug_label_color(dbg_label_color));
+    std::invoke(on_record, cmd_buf);
+    cmd_buf.end_debug_label_region();
+    cmd_buf.end_command_buffer();
+    cmd_buf.submit(queue_type, wait_semaphores, signal_semaphores);
+    return cmd_buf.submission_fence();
 }
 
-CommandPool &Device::get_thread_command_pool(const VulkanQueueType queue_type) const {
-    // Note that thread_local means that it is implicitely static!
+VkFence Device::execute(const VkQueueFlagBits queue_type, const DebugLabelColor dbg_label_color,
+                        const std::function<void(const CommandBuffer &cmd_buf)> &on_record,
+                        const std::span<const VkSemaphore> wait_semaphores,
+                        const std::span<const VkSemaphoreSubmitInfo> signal_semaphore_infos,
+                        const std::source_location source_location) const {
+    const auto &cmd_buf = get_thread_command_pool(queue_type).request_command_buffer(source_location.function_name());
+    cmd_buf.begin_debug_label_region(source_location.function_name(), get_debug_label_color(dbg_label_color));
+    std::invoke(on_record, cmd_buf);
+    cmd_buf.end_debug_label_region();
+    cmd_buf.end_command_buffer();
+    cmd_buf.submit(queue_type, wait_semaphores, signal_semaphore_infos);
+    return cmd_buf.submission_fence();
+}
+
+VkFence Device::execute(const VkQueueFlagBits queue_type, const DebugLabelColor dbg_label_color,
+                        const std::function<void(const CommandBuffer &cmd_buf)> &on_record,
+                        const std::span<const QueueSemaphoreWait> wait_semaphores,
+                        const std::span<const VkSemaphore> signal_semaphores,
+                        const std::source_location source_location) const {
+    const auto &cmd_buf = get_thread_command_pool(queue_type).request_command_buffer(source_location.function_name());
+    cmd_buf.begin_debug_label_region(source_location.function_name(), get_debug_label_color(dbg_label_color));
+    std::invoke(on_record, cmd_buf);
+    cmd_buf.end_debug_label_region();
+    cmd_buf.end_command_buffer();
+
+    cmd_buf.submit(queue_type, wait_semaphores, signal_semaphores);
+    return cmd_buf.submission_fence();
+}
+
+VkFence Device::execute(const VkQueueFlagBits queue_type, const DebugLabelColor dbg_label_color,
+                        const std::function<void(const CommandBuffer &cmd_buf)> &on_record,
+                        const std::span<const QueueSemaphoreWait> wait_semaphores,
+                        const std::span<const VkSemaphoreSubmitInfo> signal_semaphore_infos,
+                        const std::source_location source_location) const {
+    const auto &cmd_buf = get_thread_command_pool(queue_type).request_command_buffer(source_location.function_name());
+    cmd_buf.begin_debug_label_region(source_location.function_name(), get_debug_label_color(dbg_label_color));
+    std::invoke(on_record, cmd_buf);
+    cmd_buf.end_debug_label_region();
+    cmd_buf.end_command_buffer();
+
+    cmd_buf.submit(queue_type, wait_semaphores, signal_semaphore_infos);
+    return cmd_buf.submission_fence();
+}
+
+CommandPool &Device::get_thread_command_pool(const VkQueueFlagBits queue_type) const {
+    // NOTE: thread_local keyword means that it is implicitely static!
     thread_local CommandPool *thread_graphics_cmd_pool = nullptr;       // NOLINT
     thread_local CommandPool *thread_compute_cmd_pool = nullptr;        // NOLINT
     thread_local CommandPool *thread_transfer_cmd_pool = nullptr;       // NOLINT
     thread_local CommandPool *thread_sparse_binding_cmd_pool = nullptr; // NOLINT
 
     switch (queue_type) {
-    case VulkanQueueType::QUEUE_TYPE_GRAPHICS: {
+    case VK_QUEUE_GRAPHICS_BIT: {
         if (thread_graphics_cmd_pool == nullptr) {
-            // Note that we checked during construction that there is a valid queue family index for graphics.
-            // There is no need for additional error checking here.
-            auto cmd_pool =
-                std::make_unique<CommandPool>(*this, m_graphics_queue_family_index.value(), "graphics command pool");
+            // NOTE: We checked earlier for a valid queue family index for graphics so no error checks required here.
+            auto cmd_pool = std::make_unique<CommandPool>(*this, queue_type, m_graphics_queue_family_index.value(),
+                                                          "thread_graphics_cmd_pool");
             std::unique_lock lock(m_mutex);
             thread_graphics_cmd_pool = m_cmd_pools.emplace_back(std::move(cmd_pool)).get();
         }
         std::shared_lock lock(m_mutex);
         return *thread_graphics_cmd_pool;
     }
-    case VulkanQueueType::QUEUE_TYPE_COMPUTE: {
+    case VK_QUEUE_COMPUTE_BIT: {
         if (thread_compute_cmd_pool == nullptr) {
             if (!has_any_compute_queue()) {
                 throw std::runtime_error("Error: GPU '" + m_gpu_name + "' has no compute queue!");
             }
-            auto cmd_pool =
-                std::make_unique<CommandPool>(*this, m_compute_queue_family_index.value(), "compute command pool");
+            auto cmd_pool = std::make_unique<CommandPool>(*this, queue_type, m_compute_queue_family_index.value(),
+                                                          "thread_compute_cmd_pool");
             std::unique_lock lock(m_mutex);
             thread_compute_cmd_pool = m_cmd_pools.emplace_back(std::move(cmd_pool)).get();
         }
         std::shared_lock lock(m_mutex);
         return *thread_compute_cmd_pool;
     }
-    case VulkanQueueType::QUEUE_TYPE_TRANSFER: {
+    case VK_QUEUE_TRANSFER_BIT: {
         if (thread_transfer_cmd_pool == nullptr) {
             if (!has_any_transfer_queue()) {
                 throw std::runtime_error("Error: GPU '" + m_gpu_name + "' has no transfer queue!");
             }
-            auto cmd_pool =
-                std::make_unique<CommandPool>(*this, m_transfer_queue_family_index.value(), "transfer command pool");
+            auto cmd_pool = std::make_unique<CommandPool>(*this, queue_type, m_transfer_queue_family_index.value(),
+                                                          "thread_transfer_cmd_pool");
             std::unique_lock lock(m_mutex);
             thread_transfer_cmd_pool = m_cmd_pools.emplace_back(std::move(cmd_pool)).get();
         }
         std::shared_lock lock(m_mutex);
         return *thread_transfer_cmd_pool;
     }
-    case VulkanQueueType::QUEUE_TYPE_SPARSE_BINDING: {
-        if (thread_transfer_cmd_pool == nullptr) {
+    case VK_QUEUE_SPARSE_BINDING_BIT: {
+        if (thread_sparse_binding_cmd_pool == nullptr) {
             if (!has_any_sparse_binding_queue()) {
                 throw std::runtime_error("Error: GPU '" + m_gpu_name + "' has no sparse binding queue!");
             }
-            auto cmd_pool = std::make_unique<CommandPool>(*this, m_sparse_binding_queue_family_index.value(),
-                                                          "sparse binding command pool");
+            auto cmd_pool = std::make_unique<CommandPool>(
+                *this, queue_type, m_sparse_binding_queue_family_index.value(), "thread_sparse_binding_cmd_pool");
             std::unique_lock lock(m_mutex);
-            thread_transfer_cmd_pool = m_cmd_pools.emplace_back(std::move(cmd_pool)).get();
+            thread_sparse_binding_cmd_pool = m_cmd_pools.emplace_back(std::move(cmd_pool)).get();
         }
         std::shared_lock lock(m_mutex);
-        return *thread_transfer_cmd_pool;
+        return *thread_sparse_binding_cmd_pool;
     }
     }
     throw std::runtime_error("Error: Unknown VuklkanQueueType!");
 }
 
-const CommandBuffer &Device::request_command_buffer(const VulkanQueueType queue_type, const std::string &name) {
+VkPipelineCache Device::pipeline_cache() const {
+    return m_pipeline_cache->cache();
+}
+
+const CommandBuffer &Device::request_command_buffer(const VkQueueFlagBits queue_type, const std::string &name) {
     return get_thread_command_pool(queue_type).request_command_buffer(name);
+}
+
+const CommandBuffer &Device::request_secondary_command_buffer(const VkQueueFlagBits queue_type,
+                                                              const std::string &name) {
+    return get_thread_command_pool(queue_type).request_secondary_command_buffer(name);
+}
+
+void Device::wait_for_submissions(const VkQueueFlagBits queue_type) const {
+    get_thread_command_pool(queue_type).wait_for_all_submissions();
+}
+
+void Device::update_descriptor_sets(const std::span<VkWriteDescriptorSet> write_descriptor_sets) {
+    // NOTE: No error checks are required here because this function is of type void
+    vkUpdateDescriptorSets(m_device, static_cast<std::uint32_t>(write_descriptor_sets.size()),
+                           write_descriptor_sets.data(), 0, nullptr);
 }
 
 void Device::wait_idle(const VkQueue queue) const {

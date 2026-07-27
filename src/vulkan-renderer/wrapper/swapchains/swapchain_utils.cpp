@@ -153,15 +153,18 @@ VkPresentModeKHR choose_present_mode(const std::span<const VkPresentModeKHR> ava
             VK_PRESENT_MODE_MAILBOX_KHR,
             VK_PRESENT_MODE_FIFO_RELAXED_KHR,
         };
+        // @TODO Switch to std::ranges::contains when upgrading to C++23
         // Iterate through the preferred present modes and return the first one that is supported.
         for (auto requested_mode : present_modes_in_preference_order) {
             if (std::ranges::find(available_present_modes, requested_mode) != available_present_modes.end()) {
+                spdlog::trace("Selecting swapchain present mode '{}'", tools::as_string(requested_mode));
                 return requested_mode;
             }
         }
         // If none of the present modes from the priority list are available, fallback to FIFO.
     }
     // FIFO is guaranteed to be supported and enforces vsync to be enabled.
+    spdlog::trace("Selecting swapchain present mode 'VK_PRESENT_MODE_FIFO_KHR'");
     return VK_PRESENT_MODE_FIFO_KHR;
 }
 
@@ -239,7 +242,7 @@ VkSurfaceTransformFlagBitsKHR choose_transform(const VkSurfaceCapabilitiesKHR &c
     const auto chosen_transform = ((requested_transform & caps.supportedTransforms) != 0u)
                                       ? static_cast<VkSurfaceTransformFlagBitsKHR>(requested_transform)
                                       : caps.currentTransform;
-    spdlog::trace("Selecting swapchain image transform '{}'", tools::as_string(chosen_transform));
+    spdlog::trace("Selecting swapchain surface transform '{}'", tools::as_string(chosen_transform));
     return chosen_transform;
 }
 

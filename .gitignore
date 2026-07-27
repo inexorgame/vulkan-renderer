@@ -38,19 +38,16 @@
 # End of https://www.gitignore.io/api/c++
 
 # custom ignores
-.cache/
 .idea/
-.vscode/
-*__pycache__*
-*.csv
-*.ini
+cmake-build-*/
+build/
 *.spv
-/build/
-/cmake-build-*/
-/documentation/build/
-/install/
-/out/
-*.json
+vma-dumps/*.json
+*.ini
+*.csv
+*__pycache__*
+.cache/
+.vscode/
 
 # auto generated documentations paths
 documentation/doxygen-output/
@@ -62,3 +59,6 @@ documentation/source/exhale-generated/
 
 # Vulkan pipeline cache
 *.cache
+
+# Visual Studio Code
+.vs/

@@ -68,7 +68,7 @@ private:
     /// The sensitivity of the mouse.
     float m_mouse_sensitivity{0.005f};
     /// The camera's near plane.
-    float m_near_plane{0.001f};
+    float m_near_plane{0.1f};
     /// The camera's far plane.
     float m_far_plane{1000.0f};
 
