@@ -14,8 +14,8 @@ namespace inexor::vulkan_renderer::wrapper::synchronization {
 /// RAII wrapper class for VkSemaphore
 class Semaphore {
     const Device &m_device;
-    VkSemaphore m_semaphore{VK_NULL_HANDLE};
     std::string m_name;
+    VkSemaphore m_semaphore{VK_NULL_HANDLE};
 
 public:
     /// Default constructor
@@ -32,7 +32,7 @@ public:
     Semaphore &operator=(Semaphore &&) = delete;
 
     [[nodiscard]] auto semaphore() const {
-        return &m_semaphore;
+        return m_semaphore;
     }
 };
 

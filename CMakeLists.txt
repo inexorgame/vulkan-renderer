@@ -1,16 +1,17 @@
 cmake_minimum_required(VERSION 3.24)
 project(inexor-vulkan-renderer-core-lib CXX)
 
+# Stop in source builds
 set(CMAKE_DISABLE_IN_SOURCE_BUILD ON)
 
 # Options
 option(INEXOR_BUILD_BENCHMARKS "Build benchmarks" OFF)
-option(INEXOR_BUILD_DOCUMENTATION "Build documentation" OFF)
-option(INEXOR_BUILD_EXAMPLE "Build example" OFF)
+option(INEXOR_BUILD_DOC "Build documentation" OFF)
+option(INEXOR_BUILD_EXAMPLE "Build example" ON)
 option(INEXOR_BUILD_TESTS "Build tests" OFF)
 
 message(STATUS "INEXOR_BUILD_BENCHMARKS = ${INEXOR_BUILD_BENCHMARKS}")
-message(STATUS "INEXOR_BUILD_DOCUMENTATION = ${INEXOR_BUILD_DOCUMENTATION}")
+message(STATUS "INEXOR_BUILD_DOC = ${INEXOR_BUILD_DOC}")
 message(STATUS "INEXOR_BUILD_EXAMPLE = ${INEXOR_BUILD_EXAMPLE}")
 message(STATUS "INEXOR_BUILD_TESTS= ${INEXOR_BUILD_TESTS}") 
 
@@ -45,7 +46,7 @@ execute_process(
 )
 
 # Download dependencies through CMake
-include(cmake/dependencies.cmake)
+include(dependencies.cmake)
 
 set(CMAKE_COLOR_DIAGNOSTICS ON CACHE BOOL "Enable colored compiler diagnostics" FORCE)
 
@@ -62,7 +63,7 @@ if(INEXOR_BUILD_BENCHMARKS)
     add_subdirectory(benchmarks)
 endif()
 
-if(INEXOR_BUILD_DOCUMENTATION)
+if(INEXOR_BUILD_DOC)
     add_subdirectory(documentation)
 endif()
 

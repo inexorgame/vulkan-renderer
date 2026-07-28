@@ -1,18 +1,22 @@
 #pragma once
 
-#include "inexor/vulkan-renderer/input/gamepad_data.hpp"
-#include "inexor/vulkan-renderer/input/keyboard_mouse_data.hpp"
-
 #include <GLFW/glfw3.h>
 
+#include <memory>
+
 namespace inexor::vulkan_renderer::input {
+
+struct GamepadInputData;
+struct KeyboardMouseInputData;
+
 class Input {
 private:
-    GamepadInputData m_gamepad_data;
-    KeyboardMouseInputData m_kbm_data;
+    std::unique_ptr<GamepadInputData> m_gamepad_data;
+    std::unique_ptr<KeyboardMouseInputData> m_kbm_data;
 
 public:
-    Input() = default;
+    Input();
+    ~Input();
 
     /// @brief Call glfwSetCursorPosCallback.
     /// @param window The window that received the event.
@@ -20,13 +24,9 @@ public:
     /// @param y_pos The new y-coordinate, in screen coordinates, of the cursor.
     void cursor_position_callback(GLFWwindow *window, double x_pos, double y_pos);
 
-    GamepadInputData &gamepad_data() {
-        return m_gamepad_data;
-    }
+    [[nodiscard]] GamepadInputData &gamepad_data();
 
-    KeyboardMouseInputData &kbm_data() {
-        return m_kbm_data;
-    }
+    [[nodiscard]] KeyboardMouseInputData &kbm_data();
 
     /// @brief Call glfwSetKeyCallback.
     /// @param window The window that received the event.
@@ -53,4 +53,5 @@ public:
 
     void update_gamepad_data();
 };
+
 } // namespace inexor::vulkan_renderer::input

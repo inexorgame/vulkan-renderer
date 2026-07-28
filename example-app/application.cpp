@@ -1,6 +1,8 @@
 #include "application.hpp"
 
+#include "inexor/vulkan-renderer/input/gamepad_data.hpp"
 #include "inexor/vulkan-renderer/input/input.hpp"
+#include "inexor/vulkan-renderer/input/keyboard_mouse_data.hpp"
 #include "inexor/vulkan-renderer/meta/meta.hpp"
 #include "inexor/vulkan-renderer/octree/collision.hpp"
 #include "inexor/vulkan-renderer/octree/collision_query.hpp"
@@ -10,10 +12,9 @@
 #include "inexor/vulkan-renderer/tools/enumerate.hpp"
 #include "inexor/vulkan-renderer/tools/exception.hpp"
 #include "inexor/vulkan-renderer/tools/random.hpp"
-#include "inexor/vulkan-renderer/wrapper/cpu_texture.hpp"
-#include "inexor/vulkan-renderer/wrapper/descriptors/descriptor_builder.hpp"
 #include "inexor/vulkan-renderer/wrapper/instance.hpp"
-#include "standard_ubo.hpp"
+#include "inexor/vulkan-renderer/wrapper/windows/surface.hpp"
+#include "inexor/vulkan-renderer/wrapper/windows/window.hpp"
 
 #include <CLI/CLI.hpp>
 #include <GLFW/glfw3.h>
@@ -23,25 +24,18 @@
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include <spdlog/spdlog.h>
 
+#include <mutex>
 #include <string_view>
 #include <toml++/toml.hpp>
+#include <unordered_map>
 
 namespace inexor::example_app {
 
+// Using declarations
 using namespace inexor::vulkan_renderer;
 
 void ExampleApp::load_toml_configuration_file(const std::string &file_name) {
     spdlog::trace("Loading TOML configuration file: {}", file_name);
-
-    // @TODO Switch to std::filesystem::exists
-    std::ifstream toml_file(file_name, std::ios::in);
-    if (!toml_file) {
-        // If you are using CLion, go to "Edit Configurations" and select "Working Directory".
-        throw InexorException("Could not find configuration file: " + file_name +
-                              "! You must set the working directory properly in your IDE");
-    }
-
-    toml_file.close();
 
     // Load the TOML file using tomlplusplus.
     auto config_file = toml::parse_file(file_name);
@@ -52,85 +46,20 @@ void ExampleApp::load_toml_configuration_file(const std::string &file_name) {
     const std::string_view wnd_mode = config_file["application"]["window"]["mode"].value_or("windowed");
 
     if (wnd_mode == "windowed") {
-        m_window_mode = Mode::WINDOWED;
+        m_window_mode = WindowMode::WINDOWED;
     } else if (wnd_mode == "windowed_fullscreen") {
-        m_window_mode = Mode::WINDOWED_FULLSCREEN;
+        m_window_mode = WindowMode::WINDOWED_FULLSCREEN;
     } else if (wnd_mode == "fullscreen") {
-        m_window_mode = Mode::FULLSCREEN;
+        m_window_mode = WindowMode::FULLSCREEN;
     } else {
         spdlog::warn("Invalid application window mode: {}", wnd_mode);
-        m_window_mode = Mode::WINDOWED;
+        m_window_mode = WindowMode::WINDOWED;
     }
 
     m_window_width = config_file["application"]["window"]["width"].value_or(1280);
     m_window_height = config_file["application"]["window"]["height"].value_or(720);
     m_window_title = config_file["application"]["window"]["name"].value_or("Undefined Window Title!");
     spdlog::trace("Window: {}, {} x {}", m_window_title, m_window_width, m_window_height);
-
-    spdlog::trace("Textures:");
-    const auto texture_files = config_file["textures"]["files"].as_array();
-    for (const auto &value : *texture_files) {
-        const auto texture_file = value.value_or("");
-        spdlog::trace("   - {}", texture_file);
-        m_texture_files.push_back(texture_file);
-    }
-
-    spdlog::trace("glTF 2.0 models:");
-    const auto gltf_models = config_file["glTFmodels"]["files"].as_array();
-    for (const auto &value : *gltf_models) {
-        const std::string gltf_model_file = value.value_or("");
-        spdlog::trace("   - {}", gltf_model_file);
-        m_gltf_model_files.push_back(gltf_model_file);
-    }
-
-    spdlog::trace("Vertex shaders:");
-    const auto vertex_shader_files = config_file["shaders"]["vertex"]["files"].as_array();
-    for (const auto &value : *vertex_shader_files) {
-        const std::string vertex_shader_file = value.value_or("");
-        spdlog::trace("   - {}", vertex_shader_file);
-        m_vertex_shader_files.push_back(vertex_shader_file);
-    }
-
-    spdlog::trace("Fragment shaders:");
-    const auto fragment_shader_files = config_file["shaders"]["fragment"]["files"].as_array();
-    for (const auto &value : *fragment_shader_files) {
-        const std::string fragment_shader_file = value.value_or("");
-        spdlog::trace("   - {}", fragment_shader_file);
-        m_fragment_shader_files.push_back(fragment_shader_file);
-    }
-}
-
-void ExampleApp::load_shaders() {
-    spdlog::trace("Loading vertex shaders:");
-
-    if (m_vertex_shader_files.empty()) {
-        spdlog::error("No vertex shaders to load!");
-    }
-
-    // Loop through the list of vertex shaders and initialise all of them.
-    for (const auto &vertex_shader_file : m_vertex_shader_files) {
-        spdlog::trace("   - {}", vertex_shader_file);
-
-        // Insert the new shader into the list of shaders.
-        m_shaders.emplace_back(*m_device, VK_SHADER_STAGE_VERTEX_BIT, "unnamed vertex shader", vertex_shader_file);
-    }
-
-    spdlog::trace("Loading fragment shaders:");
-
-    if (m_fragment_shader_files.empty()) {
-        spdlog::error("No fragment shaders to load!");
-    }
-
-    // Loop through the list of fragment shaders and initialise all of them.
-    for (const auto &fragment_shader_file : m_fragment_shader_files) {
-        spdlog::trace("   - {}", fragment_shader_file);
-
-        // Insert the new shader into the list of shaders.
-        m_shaders.emplace_back(*m_device, VK_SHADER_STAGE_FRAGMENT_BIT, "unnamed fragment shader",
-                               fragment_shader_file);
-    }
-
-    spdlog::trace("Loading shaders finished");
 }
 
 VkBool32 ExampleApp::validation_layer_debug_messenger_callback(const VkDebugUtilsMessageSeverityFlagBitsEXT severity,
@@ -151,7 +80,7 @@ VkBool32 ExampleApp::validation_layer_debug_messenger_callback(const VkDebugUtil
 }
 
 void ExampleApp::load_octree_geometry(bool initialize) {
-    spdlog::trace("Creating octree geometry");
+    const auto old_vertex_count = m_octree_vertices.size();
 
     // 4: 23 012 | 5: 184352 | 6: 1474162 | 7: 11792978 cubes, DO NOT USE 7!
     m_worlds.clear();
@@ -175,13 +104,14 @@ void ExampleApp::load_octree_geometry(bool initialize) {
             }
         }
     }
+    spdlog::trace("Octree vertices generated [new: {}, old: {}]", m_octree_vertices.size(), old_vertex_count);
 }
 
 void ExampleApp::generate_octree_indices() {
     auto old_vertices = std::move(m_octree_vertices);
     m_octree_indices.clear();
     m_octree_vertices.clear();
-    std::unordered_map<OctreeGpuVertex, std::uint32_t> vertex_map;
+    std::unordered_map<OctreeVertex, std::uint32_t> vertex_map;
     for (auto &vertex : old_vertices) {
         // TODO: Use std::unordered_map::contains() when we switch to C++ 20.
         if (vertex_map.count(vertex) == 0) {
@@ -191,58 +121,45 @@ void ExampleApp::generate_octree_indices() {
         }
         m_octree_indices.push_back(vertex_map.at(vertex));
     }
-    spdlog::trace("Reduced octree by {} vertices (from {} to {})", old_vertices.size() - m_octree_vertices.size(),
-                  old_vertices.size(), m_octree_vertices.size());
-    spdlog::trace("Total indices {} ", m_octree_indices.size());
+    // @TODO Fix index generation and bring back debug output
 }
 
 void ExampleApp::setup_window_and_input_callbacks() {
     m_window->set_user_ptr(this);
 
     spdlog::trace("Setting up window callback:");
-
     auto lambda_frame_buffer_resize_callback = [](GLFWwindow *window, int width, int height) {
         auto *app = static_cast<ExampleApp *>(glfwGetWindowUserPointer(window));
-        spdlog::trace("Frame buffer resize callback called. window width: {}, height: {}", width, height);
         app->m_window_resized = true;
     };
-
     m_window->set_resize_callback(lambda_frame_buffer_resize_callback);
 
     spdlog::trace("   - keyboard button callback");
-
     auto lambda_key_callback = [](GLFWwindow *window, int key, int scancode, int action, int mods) {
         auto *app = static_cast<ExampleApp *>(glfwGetWindowUserPointer(window));
         app->m_input->key_callback(window, key, scancode, action, mods);
     };
-
     m_window->set_keyboard_button_callback(lambda_key_callback);
 
     spdlog::trace("   - cursor position callback");
-
     auto lambda_cursor_position_callback = [](GLFWwindow *window, double xpos, double ypos) {
         auto *app = static_cast<ExampleApp *>(glfwGetWindowUserPointer(window));
         app->m_input->cursor_position_callback(window, xpos, ypos);
     };
-
     m_window->set_cursor_position_callback(lambda_cursor_position_callback);
 
     spdlog::trace("   - mouse button callback");
-
     auto lambda_mouse_button_callback = [](GLFWwindow *window, int button, int action, int mods) {
         auto *app = static_cast<ExampleApp *>(glfwGetWindowUserPointer(window));
         app->m_input->mouse_button_callback(window, button, action, mods);
     };
-
     m_window->set_mouse_button_callback(lambda_mouse_button_callback);
 
     spdlog::trace("   - mouse wheel scroll callback");
-
     auto lambda_mouse_scroll_callback = [](GLFWwindow *window, double xoffset, double yoffset) {
         auto *app = static_cast<ExampleApp *>(glfwGetWindowUserPointer(window));
         app->m_input->mouse_scroll_callback(window, xoffset, yoffset);
     };
-
     m_window->set_mouse_scroll_callback(lambda_mouse_scroll_callback);
 }
 
@@ -251,35 +168,37 @@ void ExampleApp::initialize_spdlog() {
     // messages to be written to the console and the logfile.
     spdlog::init_thread_pool(8192, 1);
 
+    // A copy of the console sink will automatically be saved to a logfile
     auto console_sink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
-
-    // A copy of the console output will automatically be saved to a logfile
     auto file_sink = std::make_shared<spdlog::sinks::basic_file_sink_mt>(std::string(meta::APP_NAME) + ".log", true);
+
+    // We only use one global logger by default instead of one logger for each code component to keep it simple
     auto logger = std::make_shared<spdlog::async_logger>("main", spdlog::sinks_init_list{console_sink, file_sink},
                                                          spdlog::thread_pool(), spdlog::async_overflow_policy::block);
+    spdlog::set_default_logger(logger);
 
     logger->flush_on(spdlog::level::trace);
     logger->set_level(spdlog::level::trace);
     logger->set_pattern("%Y-%m-%d %T.%f %^%l%$ %5t [%n] %v");
-
-    // We only use one global logger by default, not one logger for each component of the code.
-    spdlog::set_default_logger(logger);
-
-    spdlog::trace("Inexor vulkan-renderer, BUILD " + std::string(__DATE__) + ", " + __TIME__);
 }
 
 ExampleApp::ExampleApp(int argc, char **argv) {
     initialize_spdlog();
 
+    // Print some metadata about the project and build to console
     using namespace vulkan_renderer::meta;
-
+    spdlog::trace("{}", APP_NAME);
     spdlog::trace("Application version: {}", APP_VERSION_STR);
     spdlog::trace("Engine version: {}", ENGINE_VERSION_STR);
+    spdlog::trace("Build configuration: {}", BUILD_TYPE);
+    spdlog::trace("Build date: {}, Time: {}", std::string(__DATE__), std::string(__TIME__));
+    spdlog::trace("Git SHA: {}", BUILD_GIT);
 
-    // Parse command line arguments.
+    // Parse the command line arguments
     CLI::App app{"vulkan-renderer"};
     argv = app.ensure_utf8(argv);
     app.add_flag("--vsync", m_vsync_enabled);
+    app.add_flag("--no-cmd-buf-cache", m_no_cmd_buf_cache);
     std::optional<std::uint32_t> preferred_gpu;
     app.add_option("--gpu", preferred_gpu);
     std::uint32_t max_fps = FPSLimiter::DEFAULT_FPS;
@@ -289,8 +208,6 @@ ExampleApp::ExampleApp(int argc, char **argv) {
     m_fps_limiter.set_max_fps(max_fps);
 
     load_toml_configuration_file("assets/configuration/renderer.toml");
-
-    spdlog::trace("Creating Vulkan instance");
 
     m_window = std::make_unique<Window>(m_window_title, m_window_width, m_window_height, true, true, m_window_mode);
 
@@ -336,41 +253,34 @@ ExampleApp::ExampleApp(int argc, char **argv) {
         spdlog::error("Instance layer 'VK_LAYER_KHRONOS_validation' is not available on this system!");
     }
 
-    m_instance = std::make_unique<Instance>(instance_layers, instance_extensions);
+    spdlog::trace("Creating Vulkan instance");
 
+    m_instance = std::make_unique<Instance>(instance_layers, instance_extensions);
     m_dbg_callback = std::make_unique<VulkanDebugUtilsCallback>(*m_instance, validation_layer_debug_messenger_callback);
 
     m_input = std::make_unique<Input>();
-
-    m_surface = std::make_unique<WindowSurface>(m_instance->instance(), m_window->window());
-
     setup_window_and_input_callbacks();
 
-    spdlog::trace("Creating window surface");
+    m_surface = std::make_unique<WindowSurface>(m_instance->instance(), m_window->window());
 
     if (preferred_gpu) {
         spdlog::trace("Preferential graphics card index {} specified", *preferred_gpu);
     }
 
-    if (m_vsync_enabled) {
-        spdlog::trace("V-sync enabled!");
-    } else {
-        spdlog::trace("V-sync disabled!");
-    }
+    spdlog::trace("V-sync {}", m_vsync_enabled ? "enabled" : "disabled");
 
     const auto physical_devices = tools::get_physical_devices(m_instance->instance());
     if (preferred_gpu && *preferred_gpu >= physical_devices.size()) {
         spdlog::critical("GPU index {} is out of range!", *preferred_gpu);
-        // The most suitable gpu will be chosen automatically later.
+        // NOTE: This is not a problem, the most suitable gpu will be chosen automatically later!
         preferred_gpu = std::nullopt;
     }
 
     const VkPhysicalDeviceFeatures required_features{
-        // Add required physical device features here
+        // Add required physical device features here if desired...
     };
 
     std::vector<const char *> required_extensions{
-        // Since we want to draw on a window, we need the swapchain extension
         VK_KHR_SWAPCHAIN_EXTENSION_NAME,
     };
 
@@ -382,51 +292,88 @@ ExampleApp::ExampleApp(int argc, char **argv) {
     m_device = std::make_unique<Device>(*m_instance, m_surface->surface(), physical_device, required_features,
                                         required_extensions);
 
-    m_swapchain = std::make_unique<Swapchain>(*m_device, m_surface->surface(), m_window->width(), m_window->height(),
-                                              m_vsync_enabled);
+    m_swapchain = std::make_shared<Swapchain>(*m_device, "m_swapchain", m_surface->surface());
 
     m_camera = std::make_unique<Camera>(glm::vec3(6.0f, 10.0f, 2.0f), 180.0f, 0.0f,
                                         static_cast<float>(m_window->width()), static_cast<float>(m_window->height()));
+    // @TODO Find a balance between exposing too few and too many parameters in Camera class constructor
+    m_camera->set_near_plane(0.1f);
     m_camera->set_movement_speed(5.0f);
     m_camera->set_rotation_speed(0.5f);
 
-    load_shaders();
-
-    m_uniform_buffers.emplace_back(*m_device, "matrices uniform buffer", sizeof(UniformBufferObject));
-
-    // Create an instance of the resource descriptor builder.
-    // This allows us to make resource descriptors with the help of a builder pattern.
-    DescriptorBuilder descriptor_builder(*m_device);
-
-    // Make use of the builder to create a resource descriptor for the uniform buffer.
-    m_descriptors.emplace_back(
-        descriptor_builder.add_uniform_buffer<UniformBufferObject>(m_uniform_buffers[0].buffer(), 0)
-            .build("Default uniform buffer"));
+    m_render_graph = std::make_unique<RenderGraph>(*m_device, !m_no_cmd_buf_cache);
 
     load_octree_geometry(true);
     generate_octree_indices();
 
     m_window->show();
     recreate_swapchain();
+    setup_render_graph();
+
+    m_octree_renderer->set_vertices_and_indices(m_octree_vertices, m_octree_indices);
 }
 
-void ExampleApp::update_uniform_buffers() {
-    UniformBufferObject ubo{};
+ExampleApp::~ExampleApp() {}
 
-    ubo.model = glm::mat4(1.0f);
-    ubo.view = m_camera->view_matrix();
-    ubo.proj = m_camera->perspective_matrix();
-    ubo.proj[1][1] *= -1;
+void ExampleApp::render_frame() {
+    if (m_window_resized) {
+        m_window_resized = false;
+        recreate_swapchain();
+        return;
+    }
 
-    // TODO: Embed this into the render graph.
-    m_uniform_buffers[0].update(&ubo, sizeof(ubo));
+    m_render_graph->render();
+
+    if (auto fps_value = m_fps_limiter.get_fps()) {
+        m_window->set_title("Inexor Vulkan API renderer demo - " + std::to_string(*fps_value) + " FPS");
+    }
+}
+
+void ExampleApp::recreate_swapchain() {
+    m_window->wait_for_focus();
+    m_device->wait_idle();
+
+    // Query the framebuffer size here again although the window width is set during framebuffer resize callback
+    // The reason for this is that the framebuffer size could already be different again because we missed a poll
+    // This seems to be an issue on Linux only though
+    auto [window_width, window_height] = m_window->get_framebuffer_size();
+    m_camera->set_aspect_ratio(window_width, window_height);
+
+    m_swapchain->setup_swapchain(
+        VkExtent2D{static_cast<std::uint32_t>(window_width), static_cast<std::uint32_t>(window_height)},
+        m_vsync_enabled);
+
+    // @TODO Update or recreate all swapchain or image attachments!
+}
+
+void ExampleApp::setup_render_graph() {
+    // Create a depth buffer for octree rendering (ImGui pass does not require it)
+    m_depth_buffer = m_render_graph->add_texture("m_depth_buffer", TextureUsage::DEPTH_ATTACHMENT,
+                                                 VK_FORMAT_D32_SFLOAT_S8_UINT, m_swapchain->extent().width,
+                                                 m_swapchain->extent().height, 1, VK_SAMPLE_COUNT_1_BIT, [&]() {
+                                                     if (const auto depth_buffer = m_depth_buffer.lock()) {
+                                                         const auto extent = m_swapchain->extent();
+                                                         depth_buffer->request_resize(extent.width, extent.height);
+                                                     }
+                                                 });
+
+    // Initialize the octree renderer
+    m_octree_renderer = std::make_unique<OctreeRenderer>(m_render_graph, m_swapchain, m_depth_buffer, m_camera);
+
+    // Initialize the ImGui renderer
+    m_imgui_renderer = std::make_unique<ImGuiRenderer>(m_render_graph, m_swapchain, [&]() {
+        // This is the external user-defined ImGui update function
+        update_imgui_overlay();
+    });
+
+    m_render_graph->compile();
 }
 
 void ExampleApp::update_imgui_overlay() {
     auto cursor_pos = m_input->kbm_data().get_cursor_pos();
 
     ImGuiIO &io = ImGui::GetIO();
-    io.DeltaTime = m_time_passed;
+    io.DeltaTime = m_fps_limiter.elapsed_seconds();
     io.MousePos = ImVec2(static_cast<float>(cursor_pos[0]), static_cast<float>(cursor_pos[1]));
     io.MouseDown[0] = m_input->kbm_data().is_mouse_button_pressed(GLFW_MOUSE_BUTTON_LEFT);
     io.MouseDown[1] = m_input->kbm_data().is_mouse_button_pressed(GLFW_MOUSE_BUTTON_RIGHT);
@@ -442,8 +389,9 @@ void ExampleApp::update_imgui_overlay() {
                  ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
     ImGui::Text("%s", m_device->gpu_name().c_str());
     ImGui::Text("Engine version %s (git SHA %s)", ENGINE_VERSION_STR, BUILD_GIT);
-    ImGui::Text("Vulkan API %d.%d.%d", VK_API_VERSION_MAJOR(VK_API_VERSION_1_2),
-                VK_API_VERSION_MINOR(VK_API_VERSION_1_2), VK_API_VERSION_PATCH(VK_API_VERSION_1_2));
+    ImGui::Text("Vulkan API %d.%d.%d", VK_API_VERSION_MAJOR(Instance::REQUIRED_VK_API_VERSION),
+                VK_API_VERSION_MINOR(Instance::REQUIRED_VK_API_VERSION),
+                VK_API_VERSION_PATCH(Instance::REQUIRED_VK_API_VERSION));
     const auto cam_pos = m_camera->position();
     ImGui::Text("Camera position (%.2f, %.2f, %.2f)", cam_pos.x, cam_pos.y, cam_pos.z);
     const auto cam_rot = m_camera->rotation();
@@ -457,13 +405,11 @@ void ExampleApp::update_imgui_overlay() {
     ImGui::Text("Yaw: %.2f pitch: %.2f roll: %.2f", m_camera->yaw(), m_camera->pitch(), m_camera->roll());
     const auto cam_fov = m_camera->fov();
     ImGui::Text("Field of view: %d", static_cast<std::uint32_t>(cam_fov));
-    ImGui::PushItemWidth(150.0f * m_imgui_overlay->scale());
+    ImGui::PushItemWidth(150.0f);
     ImGui::PopItemWidth();
     ImGui::End();
     ImGui::PopStyleVar();
     ImGui::Render();
-
-    m_imgui_overlay->update();
 }
 
 void ExampleApp::process_input() {
@@ -488,11 +434,11 @@ void ExampleApp::process_input() {
                                  m_input->gamepad_data().current_joystick_axes(0)[GLFW_GAMEPAD_AXIS_LEFT_Y] >= 0.15);
     m_camera->set_movement_state(CameraMovement::RIGHT,
                                  m_input->gamepad_data().current_joystick_axes(0)[GLFW_GAMEPAD_AXIS_LEFT_X] >= 0.15);
-    m_camera->update(m_time_passed);
     m_camera->set_movement_state(CameraMovement::FORWARD, m_input->kbm_data().is_key_pressed(GLFW_KEY_W));
     m_camera->set_movement_state(CameraMovement::LEFT, m_input->kbm_data().is_key_pressed(GLFW_KEY_A));
     m_camera->set_movement_state(CameraMovement::BACKWARD, m_input->kbm_data().is_key_pressed(GLFW_KEY_S));
     m_camera->set_movement_state(CameraMovement::RIGHT, m_input->kbm_data().is_key_pressed(GLFW_KEY_D));
+    m_camera->update(m_fps_limiter.elapsed_seconds());
 }
 
 void ExampleApp::check_octree_collisions() {
@@ -523,18 +469,14 @@ void ExampleApp::run() {
         m_window->poll();
         if (m_fps_limiter.is_next_frame_allowed()) {
             m_input->update_gamepad_data();
-            update_uniform_buffers();
+            process_input();
             update_imgui_overlay();
             render_frame();
-            process_input();
             if (m_input->kbm_data().was_key_pressed_once(GLFW_KEY_N)) {
                 load_octree_geometry(false);
                 generate_octree_indices();
-                m_index_buffer->upload_data(m_octree_indices);
-                m_vertex_buffer->upload_data(m_octree_vertices);
+                m_octree_renderer->set_vertices_and_indices(m_octree_vertices, m_octree_indices);
             }
-            m_camera->update(m_time_passed);
-            m_time_passed = m_stopwatch.time_step();
             check_octree_collisions();
         }
     }

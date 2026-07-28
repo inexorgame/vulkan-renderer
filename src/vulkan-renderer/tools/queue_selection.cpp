@@ -1,6 +1,6 @@
 #include "inexor/vulkan-renderer/tools/queue_selection.hpp"
 
-#include "inexor/vulkan-renderer/wrapper/make_info.hpp"
+#include "inexor/vulkan-renderer/tools/make_info.hpp"
 
 #include <algorithm>
 #include <set>
@@ -77,7 +77,7 @@ QueueFamilyIndexCandidates determine_queue_family_indices(const std::vector<VkQu
             // We must make sure that the family is unique in the VkDeviceQueueCreateInfo!
             if (!already_used_queue_family_indices.contains(queue_family_index.value())) {
                 // If we reach this, the queue family has not yet been added to the VkDeviceQueueCreateInfo.
-                return_value.queues_to_create.push_back(wrapper::make_info<VkDeviceQueueCreateInfo>({
+                return_value.queues_to_create.push_back(make_info<VkDeviceQueueCreateInfo>({
                     .queueFamilyIndex = queue_family_index.value(),
                     .queueCount = 1,
                     .pQueuePriorities = &DEFAULT_QUEUE_PRIORITY,

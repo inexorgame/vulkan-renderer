@@ -19,6 +19,8 @@ public:
     /// @param inst The Vulkan instance.
     /// @param debug_callback A pointer to the debug utils messenger callback.
     VulkanDebugUtilsCallback(const Instance &inst, PFN_vkDebugUtilsMessengerCallbackEXT debug_callback);
+
+    /// Call vkDestroyDebugUtilsMessengerEXT
     ~VulkanDebugUtilsCallback();
 };
 

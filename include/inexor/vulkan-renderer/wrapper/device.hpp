@@ -1,16 +1,25 @@
 #pragma once
 
 #include "inexor/vulkan-renderer/tools/exception.hpp"
+#include "inexor/vulkan-renderer/tools/make_info.hpp"
 #include "inexor/vulkan-renderer/tools/representation.hpp"
+#include "inexor/vulkan-renderer/wrapper/commands/command_buffer.hpp"
 #include "inexor/vulkan-renderer/wrapper/commands/command_pool.hpp"
-#include "inexor/vulkan-renderer/wrapper/make_info.hpp"
 
 #include <array>
 #include <functional>
+#include <memory>
 #include <optional>
 #include <shared_mutex>
+#include <source_location>
 #include <span>
+#include <stdexcept>
 #include <string>
+
+namespace inexor::vulkan_renderer::wrapper::pipelines {
+// Forward declaration
+class PipelineCache;
+} // namespace inexor::vulkan_renderer::wrapper::pipelines
 
 namespace inexor::vulkan_renderer::wrapper {
 
@@ -18,25 +27,53 @@ namespace inexor::vulkan_renderer::wrapper {
 class Instance;
 
 // Using declarations
+using commands::CommandBuffer;
+using commands::CommandPool;
 using tools::InexorException;
 using tools::VulkanException;
-using wrapper::commands::CommandBuffer;
-using wrapper::commands::CommandPool;
+using wrapper::pipelines::PipelineCache;
 
-/// An enum for the supported queue types
-enum class VulkanQueueType {
-    QUEUE_TYPE_GRAPHICS,
-    QUEUE_TYPE_COMPUTE,
-    QUEUE_TYPE_TRANSFER,
-    QUEUE_TYPE_SPARSE_BINDING,
+/// Debug label colors
+enum class DebugLabelColor {
+    RED,
+    BLUE,
+    GREEN,
+    YELLOW,
+    PURPLE,
+    ORANGE,
+    MAGENTA,
+    CYAN,
+    BROWN,
+    PINK,
+    LIME,
+    TURQUOISE,
+    BEIGE,
+    MAROON,
+    OLIVE,
+    NAVY,
+    TEAL,
 };
+
+struct QueueSemaphoreWait {
+    VkSemaphore semaphore{VK_NULL_HANDLE};
+    VkPipelineStageFlags2 stage_mask{VK_PIPELINE_STAGE_2_NONE};
+};
+
+/// Convert a DebugLabelColor to a rgba value
+/// @param color The debug label color
+/// @return The converted rgba values
+[[nodiscard]] std::array<float, 4> get_debug_label_color(const DebugLabelColor color);
 
 /// RAII wrapper class for `VkDevice`, `VkPhysicalDevice` and `VkQueue`.
 /// @note There is no method ``is_layer_supported`` in this wrapper class because device layers are deprecated.
 class Device {
+    friend class CommandBuffer;
+    friend class CommandPool;
+
 private:
     VkDevice m_device{VK_NULL_HANDLE};
     VkPhysicalDevice m_physical_device{VK_NULL_HANDLE};
+    std::unique_ptr<PipelineCache> m_pipeline_cache;
     VmaAllocator m_allocator{VK_NULL_HANDLE};
     std::string m_gpu_name;
     VkPhysicalDeviceFeatures m_enabled_features{};
@@ -46,7 +83,6 @@ private:
     VkQueue m_transfer_queue{VK_NULL_HANDLE};
     VkQueue m_compute_queue{VK_NULL_HANDLE};
     VkQueue m_sparse_binding_queue{VK_NULL_HANDLE};
-    VkQueue m_present_queue{VK_NULL_HANDLE};
 
     std::optional<std::uint32_t> m_graphics_queue_family_index{0};
     std::optional<std::uint32_t> m_compute_queue_family_index{0};
@@ -62,7 +98,7 @@ private:
     /// Get the thread_local command pool.
     /// @param queue_type The Vulkan queue type
     /// @note This method will create a command pool for the thread if it doesn't already exist.
-    CommandPool &get_thread_command_pool(VulkanQueueType queue_type) const;
+    CommandPool &get_thread_command_pool(VkQueueFlagBits queue_type) const;
 
     // @TODO Implement get_thread_command_pool with "transfer if available, graphics otherwise" for copy operations.
 
@@ -82,13 +118,7 @@ public:
     Device(const Instance &inst, VkSurfaceKHR surface, VkPhysicalDevice physical_device,
            const VkPhysicalDeviceFeatures &required_features, std::span<const char *> required_extensions);
 
-    Device(const Device &) = delete;
-    Device(Device &&) noexcept;
-
     ~Device();
-
-    Device &operator=(const Device &) = delete;
-    Device &operator=(Device &&) = delete;
 
     [[nodiscard]] auto device() const {
         return m_device;
@@ -110,13 +140,76 @@ public:
     [[nodiscard]] bool is_presentation_supported(VkSurfaceKHR surface, std::uint32_t queue_family_index) const;
 
     /// A wrapper method for beginning, ending and submitting command buffers. This method calls the request method for
-    /// the given command pool, begins the command buffer, executes the lambda, ends recording the command buffer,
-    /// submits it and waits for it.
-    /// @param name The internal debug name of the command buffer (must not be empty).
-    /// @param queue_type The queue type which determines which command pool is used.
-    /// @param cmd_lambda The command lambda to execute.
-    void execute(const std::string &name, const VulkanQueueType queue_type,
-                 const std::function<void(const CommandBuffer &cmd_buf)> &cmd_lambda) const;
+    /// the given command pool, begins the command buffer, invokes the recording function, ends recording the command
+    /// buffer, and submits it on the specified queue. The returned fence can be used by callers for synchronization.
+    /// Using this execute method is the preferred way of
+    /// using command buffers in the engine. There is no need to request a command buffer manually, which is why this
+    /// method in CommandPool is not public.
+    /// @param name The internal debug name of the command buffer (must not be empty)
+    /// @param queue_type The queue type to submit the command buffer to
+    /// @param dbg_label_color The color of the debug label when calling ``begin_debug_label_region``
+    /// @note Debug label colors are only visible in graphics debuggers such as RenderDoc
+    /// @param on_record The command buffer recording function to invoke after starting recording
+    /// @note It's technically allowed that the command buffer recording function is empty or a function which does not
+    /// do any vkCmd command calls, but this makes no real sense because an empty command buffer will be submitted. It
+    /// will not be checked if any commands have been recorded into the command buffer, although this could be
+    /// implemented using CommandBuffer wrapper. However, this would be a case for validation layers though.
+    /// @param wait_semaphores The semaphores to wait on before starting command buffer execution (empty by default)
+    /// @param signal_semaphores The semaphores to signal once command buffer execution will finish (empty by default)
+    [[nodiscard]] VkFence execute(VkQueueFlagBits queue_type, DebugLabelColor dbg_label_color,
+                                  const std::function<void(const CommandBuffer &cmd_buf)> &on_record,
+                                  std::span<const VkSemaphore> wait_semaphores = {},
+                                  std::span<const VkSemaphore> signal_semaphores = {},
+                                  std::source_location source_location = std::source_location::current()) const;
+
+    template <typename OnRecord>
+    [[nodiscard]] VkFence execute(VkQueueFlagBits queue_type, DebugLabelColor dbg_label_color, OnRecord &&on_record,
+                                  std::span<const VkSemaphore> wait_semaphores = {},
+                                  std::span<const VkSemaphore> signal_semaphores = {},
+                                  std::source_location source_location = std::source_location::current()) const {
+        const auto &cmd_buf =
+            get_thread_command_pool(queue_type).request_command_buffer(source_location.function_name());
+        cmd_buf.begin_debug_label_region(source_location.function_name(), get_debug_label_color(dbg_label_color));
+        std::invoke(on_record, cmd_buf);
+        cmd_buf.end_debug_label_region();
+        cmd_buf.end_command_buffer();
+        cmd_buf.submit(queue_type, wait_semaphores, signal_semaphores);
+        return cmd_buf.submission_fence();
+    }
+
+    [[nodiscard]] VkFence execute(VkQueueFlagBits queue_type, DebugLabelColor dbg_label_color,
+                                  const std::function<void(const CommandBuffer &cmd_buf)> &on_record,
+                                  std::span<const VkSemaphore> wait_semaphores,
+                                  std::span<const VkSemaphoreSubmitInfo> signal_semaphore_infos,
+                                  std::source_location source_location = std::source_location::current()) const;
+
+    [[nodiscard]] VkFence execute(VkQueueFlagBits queue_type, DebugLabelColor dbg_label_color,
+                                  const std::function<void(const CommandBuffer &cmd_buf)> &on_record,
+                                  std::span<const QueueSemaphoreWait> wait_semaphores,
+                                  std::span<const VkSemaphore> signal_semaphores = {},
+                                  std::source_location source_location = std::source_location::current()) const;
+
+    template <typename OnRecord>
+    [[nodiscard]] VkFence execute(VkQueueFlagBits queue_type, DebugLabelColor dbg_label_color, OnRecord &&on_record,
+                                  std::span<const QueueSemaphoreWait> wait_semaphores,
+                                  std::span<const VkSemaphore> signal_semaphores = {},
+                                  std::source_location source_location = std::source_location::current()) const {
+        const auto &cmd_buf =
+            get_thread_command_pool(queue_type).request_command_buffer(source_location.function_name());
+        cmd_buf.begin_debug_label_region(source_location.function_name(), get_debug_label_color(dbg_label_color));
+        std::invoke(on_record, cmd_buf);
+        cmd_buf.end_debug_label_region();
+        cmd_buf.end_command_buffer();
+
+        cmd_buf.submit(queue_type, wait_semaphores, signal_semaphores);
+        return cmd_buf.submission_fence();
+    }
+
+    [[nodiscard]] VkFence execute(VkQueueFlagBits queue_type, DebugLabelColor dbg_label_color,
+                                  const std::function<void(const CommandBuffer &cmd_buf)> &on_record,
+                                  std::span<const QueueSemaphoreWait> wait_semaphores,
+                                  std::span<const VkSemaphoreSubmitInfo> signal_semaphore_infos,
+                                  std::source_location source_location = std::source_location::current()) const;
 
     [[nodiscard]] VkPhysicalDevice physical_device() const {
         return m_physical_device;
@@ -134,6 +227,8 @@ public:
         return m_gpu_name;
     }
 
+    [[nodiscard]] VkPipelineCache pipeline_cache() const;
+
     /// Get the pipeline cache UUID for the physical device
     /// @return A span view of the pipeline cache UUID bytes
     [[nodiscard]] std::span<const std::uint8_t, VK_UUID_SIZE> pipeline_cache_uuid() const {
@@ -148,13 +243,18 @@ public:
         return m_transfer_queue != VK_NULL_HANDLE;
     }
 
+    [[nodiscard]] bool transfer_queue_shares_graphics_family() const {
+        return m_transfer_queue_family_index.has_value() && m_graphics_queue_family_index.has_value() &&
+               m_transfer_queue_family_index.value() == m_graphics_queue_family_index.value();
+    }
+
     [[nodiscard]] bool has_any_sparse_binding_queue() const {
         return m_transfer_queue != VK_NULL_HANDLE;
     }
 
     // TODO: Move to command buffer wrapper!
     [[nodiscard]] VkQueue compute_queue() const {
-        return m_graphics_queue;
+        return m_compute_queue;
     }
 
     // TODO: Move to command buffer wrapper!
@@ -163,13 +263,22 @@ public:
     }
 
     // TODO: Move to command buffer wrapper!
-    [[nodiscard]] VkQueue present_queue() const {
-        return m_present_queue;
-    }
-
-    // TODO: Move to command buffer wrapper!
     [[nodiscard]] VkQueue transfer_queue() const {
         return m_transfer_queue;
+    }
+
+    [[nodiscard]] std::uint32_t graphics_queue_family_index() const {
+        if (!m_graphics_queue_family_index.has_value()) {
+            throw std::runtime_error("Error: Graphics queue family index is not available!");
+        }
+        return m_graphics_queue_family_index.value();
+    }
+
+    [[nodiscard]] std::uint32_t transfer_queue_family_index() const {
+        if (!m_transfer_queue_family_index.has_value()) {
+            throw std::runtime_error("Error: Transfer queue family index is not available!");
+        }
+        return m_transfer_queue_family_index.value();
     }
 
     /// Request a command buffer from the thread_local command pool.
@@ -177,7 +286,18 @@ public:
     /// index associated with it.
     /// @param name The name which will be assigned to the command buffer.
     /// @return A command buffer from the thread_local command pool.
-    [[nodiscard]] const CommandBuffer &request_command_buffer(VulkanQueueType queue_type, const std::string &name);
+    [[nodiscard]] const CommandBuffer &request_command_buffer(VkQueueFlagBits queue_type, const std::string &name);
+
+    /// Request a secondary command buffer from the thread_local command pool.
+    /// @param queue_type The Vulkan queue type which is required because a command pool is created with a queue family
+    /// index associated with it.
+    /// @param name The name which will be assigned to the command buffer.
+    /// @return A secondary command buffer from the thread_local command pool.
+    [[nodiscard]] const CommandBuffer &request_secondary_command_buffer(VkQueueFlagBits queue_type,
+                                                                        const std::string &name);
+
+    /// Wait until all submitted command buffers in the current thread's pool for a queue type are complete.
+    void wait_for_submissions(VkQueueFlagBits queue_type) const;
 
     /// Check if a surface supports a certain image usage.
     /// @param surface The window surface.
@@ -198,7 +318,7 @@ public:
             throw InexorException("Error: Parameter 'vk_object' is invalid!");
         }
 
-        const auto dbg_obj_name = wrapper::make_info<VkDebugUtilsObjectNameInfoEXT>({
+        const auto dbg_obj_name = tools::make_info<VkDebugUtilsObjectNameInfoEXT>({
             .objectType = tools::get_vk_object_type(vk_object),
             .objectHandle = reinterpret_cast<std::uint64_t>(vk_object),
             .pObjectName = name.c_str(),
@@ -208,6 +328,10 @@ public:
             throw VulkanException("Error: vkSetDebugUtilsObjectNameEXT failed!", result);
         }
     }
+
+    /// Call vkUpdateDescriptorSets
+    /// @param write_descriptor_sets The write descriptor sets
+    void update_descriptor_sets(std::span<VkWriteDescriptorSet> write_descriptor_sets);
 
     /// Call `vkDeviceWaitIdle` or `vkQueueWaitIdle` depending on whether `queue` is specified.
     /// @warning Avoid using those methods because they result in bad gpu performance due to global stalls!

@@ -5,14 +5,16 @@
 
 #include <cassert>
 #include <stdexcept>
+#include <thread>
 
 namespace inexor::vulkan_renderer::wrapper::windows {
 
 Window::Window(const std::string &title, const std::uint32_t width, const std::uint32_t height, const bool visible,
-               const bool resizable, const Mode mode)
+               const bool resizable, const WindowMode mode)
     : m_width(width), m_height(height), m_mode(mode) {
-    assert(!title.empty());
-
+    if (title.empty()) {
+        throw std::invalid_argument("Error: Parameter 'title' is an empty string!");
+    }
     if (glfwInit() != GLFW_TRUE) {
         throw std::runtime_error("Error: glfwInit failed for window " + title + " !");
     }
@@ -24,9 +26,9 @@ Window::Window(const std::string &title, const std::uint32_t width, const std::u
     spdlog::trace("Creating window");
 
     GLFWmonitor *monitor = nullptr;
-    if (m_mode != Mode::WINDOWED) {
+    if (m_mode != WindowMode::WINDOWED) {
         monitor = glfwGetPrimaryMonitor();
-        if (m_mode == Mode::WINDOWED_FULLSCREEN) {
+        if (m_mode == WindowMode::WINDOWED_FULLSCREEN) {
             const auto *video_mode = glfwGetVideoMode(monitor);
             m_width = video_mode->width;
             m_height = video_mode->height;
@@ -93,6 +95,8 @@ void Window::wait_for_focus() {
     do {
         glfwWaitEvents();
         glfwGetFramebufferSize(m_window, &current_width, &current_height);
+        // Wait for 10 milliseconds instead of pulling aggressively
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
     } while (current_width == 0 || current_height == 0);
 
     m_width = current_width;

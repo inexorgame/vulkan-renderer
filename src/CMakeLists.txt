@@ -1,10 +1,23 @@
 set(INEXOR_SOURCE_FILES
-    vulkan-renderer/imgui.cpp
-    vulkan-renderer/render_graph.cpp
-
     vulkan-renderer/input/gamepad_data.cpp
     vulkan-renderer/input/input.cpp
     vulkan-renderer/input/keyboard_mouse_data.cpp
+
+    vulkan-renderer/render-graph/buffer.cpp
+    vulkan-renderer/render-graph/buffer_copy_batch_builder.cpp
+    vulkan-renderer/render-graph/frame_sync_manager.cpp
+    vulkan-renderer/render-graph/graphics_pass.cpp
+    vulkan-renderer/render-graph/graphics_pass_builder.cpp
+    vulkan-renderer/render-graph/render_graph.cpp
+    vulkan-renderer/render-graph/resource_descriptor_manager.cpp
+    vulkan-renderer/render-graph/staging_buffer.cpp
+    vulkan-renderer/render-graph/swapchain_manager.cpp
+    vulkan-renderer/render-graph/texture_copy_batch_builder.cpp
+    vulkan-renderer/render-graph/texture.cpp
+
+    vulkan-renderer/render-modules/imgui/imgui_renderer.cpp
+    vulkan-renderer/render-modules/octree/octree_renderer.cpp
+    vulkan-renderer/render-modules/octree/octree_vertex.cpp
 
     vulkan-renderer/tools/camera.cpp
     vulkan-renderer/tools/device_info.cpp
@@ -12,6 +25,7 @@ set(INEXOR_SOURCE_FILES
     vulkan-renderer/tools/exception.cpp
     vulkan-renderer/tools/file.cpp
     vulkan-renderer/tools/fps_limiter.cpp
+    vulkan-renderer/tools/make_info.cpp
     vulkan-renderer/tools/queue_selection.cpp
     vulkan-renderer/tools/random.cpp
     vulkan-renderer/tools/representation.cpp
@@ -19,23 +33,28 @@ set(INEXOR_SOURCE_FILES
 
     vulkan-renderer/tools/allocators/pool_allocator.cpp
 
-    vulkan-renderer/wrapper/cpu_texture.cpp
     vulkan-renderer/wrapper/debug_callback.cpp
     vulkan-renderer/wrapper/device.cpp
-    vulkan-renderer/wrapper/framebuffer.cpp
-    vulkan-renderer/wrapper/gpu_memory_buffer.cpp
-    vulkan-renderer/wrapper/gpu_texture.cpp
-    vulkan-renderer/wrapper/image.cpp
+
+    vulkan-renderer/wrapper/images/image.cpp
+    vulkan-renderer/wrapper/images/image_view.cpp
+    vulkan-renderer/wrapper/images/sampler.cpp
+
     vulkan-renderer/wrapper/instance.cpp
-    vulkan-renderer/wrapper/make_info.cpp
     vulkan-renderer/wrapper/shader.cpp
-    vulkan-renderer/wrapper/uniform_buffer.cpp
 
     vulkan-renderer/wrapper/commands/command_buffer.cpp
+    vulkan-renderer/wrapper/commands/command_buffer_cache.cpp
     vulkan-renderer/wrapper/commands/command_pool.cpp
 
-    vulkan-renderer/wrapper/descriptors/descriptor.cpp
-    vulkan-renderer/wrapper/descriptors/descriptor_builder.cpp
+    vulkan-renderer/wrapper/descriptors/descriptor_pool.cpp
+    vulkan-renderer/wrapper/descriptors/descriptor_pool_allocator.cpp
+    vulkan-renderer/wrapper/descriptors/descriptor_set_allocator.cpp
+    vulkan-renderer/wrapper/descriptors/descriptor_set_layout.cpp
+    vulkan-renderer/wrapper/descriptors/descriptor_set_layout_builder.cpp
+    vulkan-renderer/wrapper/descriptors/descriptor_set_layout_cache.cpp
+    vulkan-renderer/wrapper/descriptors/per_frame_descriptor_sets.cpp
+    vulkan-renderer/wrapper/descriptors/write_descriptor_set_builder.cpp
 
     vulkan-renderer/wrapper/pipelines/graphics_pipeline.cpp
     vulkan-renderer/wrapper/pipelines/graphics_pipeline_builder.cpp
@@ -48,6 +67,7 @@ set(INEXOR_SOURCE_FILES
     vulkan-renderer/wrapper/swapchains/swapchain_utils.cpp
 
     vulkan-renderer/wrapper/synchronization/fence.cpp
+    vulkan-renderer/wrapper/synchronization/pipeline_barrier_batch_builder.cpp
     vulkan-renderer/wrapper/synchronization/semaphore.cpp
 
     vulkan-renderer/octree/collision.cpp
@@ -77,24 +97,23 @@ add_library(inexor-vulkan-renderer-core-lib ${INEXOR_SOURCE_FILES})
 
 add_dependencies(inexor-vulkan-renderer-core-lib inexor-shaders)
 
-set_target_properties(inexor-vulkan-renderer-core-lib PROPERTIES
+set_target_properties(
+    inexor-vulkan-renderer-core-lib PROPERTIES
+
     CXX_EXTENSIONS OFF
     CXX_STANDARD 20
     CXX_STANDARD_REQUIRED ON
 )
 
-target_compile_definitions(inexor-vulkan-renderer-core-lib PUBLIC
+target_compile_definitions(
+    inexor-vulkan-renderer-core-lib
+
+    PUBLIC
     GLFW_INCLUDE_VULKAN
     GLM_ENABLE_EXPERIMENTAL
     GLM_FORCE_DEPTH_ZERO_TO_ONE
     GLM_FORCE_RADIANS
     VK_NO_PROTOTYPES # Required by volk metaloader
-)
-
-# enable warnings for our own code
-target_compile_options(inexor-vulkan-renderer-core-lib PRIVATE
-    $<$<CXX_COMPILER_ID:GNU,Clang,AppleClang>:-Wall -Wextra -Wpedantic>
-    $<$<CXX_COMPILER_ID:MSVC>:/W4>
 )
 
 # enable multi processor building if VS project
@@ -109,19 +128,22 @@ if(MSVC)
     target_compile_options(inexor-vulkan-renderer-core-lib PRIVATE "/Zc:__cplusplus")
 endif()
 
-# replace variables in header file with CMake values
+# Replace variables in header file with CMake values
 configure_file(
     ${PROJECT_SOURCE_DIR}/include/inexor/vulkan-renderer/meta/meta.hpp.in
     ${CMAKE_CURRENT_BINARY_DIR}/include/inexor/vulkan-renderer/meta/meta.hpp
 )
 
-target_include_directories(inexor-vulkan-renderer-core-lib PUBLIC
+target_include_directories(
+    inexor-vulkan-renderer-core-lib
+
+    PUBLIC
     ${PROJECT_SOURCE_DIR}/include
-    # include configured header file which contains engine metadata
+    # Include configured header file which contains engine metadata
     ${CMAKE_CURRENT_BINARY_DIR}/include/
 )
 
-# declare use of dependencies
+# Declare use of dependencies
 FetchContent_MakeAvailable(CLI11)
 FetchContent_MakeAvailable(fmt)
 FetchContent_MakeAvailable(spdlog)
@@ -138,11 +160,11 @@ add_library(imgui
     ${imgui_SOURCE_DIR}/imgui.cpp
     ${imgui_SOURCE_DIR}/imgui_draw.cpp
     ${imgui_SOURCE_DIR}/imgui_tables.cpp
-    ${imgui_SOURCE_DIR}/imgui_widgets.cpp
-)
-target_include_directories(imgui SYSTEM PUBLIC ${imgui_SOURCE_DIR})
+    ${imgui_SOURCE_DIR}/imgui_widgets.cpp)
+target_include_directories(imgui PUBLIC ${imgui_SOURCE_DIR})
 
-target_link_libraries(inexor-vulkan-renderer-core-lib PUBLIC
+target_link_libraries(inexor-vulkan-renderer-core-lib
+    PUBLIC
     CLI11::CLI11
     fmt::fmt
     glfw
@@ -153,19 +175,10 @@ target_link_libraries(inexor-vulkan-renderer-core-lib PUBLIC
     tomlplusplus::tomlplusplus
     volk::volk
     Vulkan::Headers
-    VulkanMemoryAllocator
-)
-
-# suppress all compiler warnings for third-party dependencies
-foreach(_dep glfw glm imgui tinygltf)
-    target_compile_options(${_dep} PRIVATE
-        $<$<CXX_COMPILER_ID:GNU,Clang,AppleClang>:-w>
-        $<$<CXX_COMPILER_ID:MSVC>:/W0>
-    )
-endforeach()
+    VulkanMemoryAllocator)
 
 if(MSVC)
-    # group dependencies in Visual Studio
+    # Group dependencies in Visual Studio
     set(THIRD_PARTY_TARGETS
         CLI11
         fmt
@@ -176,14 +189,19 @@ if(MSVC)
         tinygltf
         volk
         VulkanMemoryAllocator
-        # also those extra ones
+        # Also those extra ones
         loader_example
         uninstall
         update_mappings
     )
-    # move all dependencies into a subfolder
-    set_target_properties(${THIRD_PARTY_TARGETS} PROPERTIES
-        EXCLUDE_FROM_ALL TRUE
-        FOLDER "Dependencies"
-    )
+    # Move all dependencies into a subfolder
+    foreach(THIRD_PARTY_TARGET IN LISTS THIRD_PARTY_TARGETS)
+        if(TARGET ${THIRD_PARTY_TARGET})
+            set_target_properties(${THIRD_PARTY_TARGET}
+                PROPERTIES
+                    EXCLUDE_FROM_ALL TRUE
+                    FOLDER "Dependencies"
+            )
+        endif()
+    endforeach()
 endif()
