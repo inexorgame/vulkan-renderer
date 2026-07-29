@@ -27,10 +27,10 @@ FetchContent_Declare(CLI11 SYSTEM
 # Formatting library
 FetchContent_Declare(fmt SYSTEM
     GIT_REPOSITORY https://github.com/fmtlib/fmt.git
-    GIT_TAG 11.0.1
+    GIT_TAG 11.2.0
     GIT_SHALLOW ON
     GIT_PROGRESS ON
-    FIND_PACKAGE_ARGS 11.0.1
+    FIND_PACKAGE_ARGS 11.2.0
 )
 
 # Window management for Linux and Microsoft Windows
@@ -129,8 +129,8 @@ FetchContent_Declare(volk SYSTEM
 # The Vulkan API headers
 FetchContent_Declare(Vulkan SYSTEM
     GIT_REPOSITORY https://github.com/KhronosGroup/Vulkan-Headers
-    GIT_TAG v1.3.283
+    GIT_TAG v1.4.357
     GIT_SHALLOW ON
     GIT_PROGRESS ON
-    FIND_PACKAGE_ARGS 1.3.283
+    FIND_PACKAGE_ARGS 1.4.357
 )
