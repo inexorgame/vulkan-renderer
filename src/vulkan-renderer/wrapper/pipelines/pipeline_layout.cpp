@@ -1,8 +1,8 @@
 #include "inexor/vulkan-renderer/wrapper/pipelines/pipeline_layout.hpp"
 
 #include "inexor/vulkan-renderer/tools/exception.hpp"
+#include "inexor/vulkan-renderer/tools/make_info.hpp"
 #include "inexor/vulkan-renderer/wrapper/device.hpp"
-#include "inexor/vulkan-renderer/wrapper/make_info.hpp"
 
 #include <utility>
 
@@ -16,7 +16,7 @@ PipelineLayout::PipelineLayout(const Device &device, std::string name,
         throw InexorException("Error: Parameter 'name' is an emtpy string!");
     }
 
-    const auto pipeline_layout_ci = wrapper::make_info<VkPipelineLayoutCreateInfo>({
+    const auto pipeline_layout_ci = tools::make_info<VkPipelineLayoutCreateInfo>({
         .setLayoutCount = static_cast<std::uint32_t>(descriptor_set_layouts.size()),
         .pSetLayouts = descriptor_set_layouts.data(),
         .pushConstantRangeCount = static_cast<std::uint32_t>(push_constant_ranges.size()),

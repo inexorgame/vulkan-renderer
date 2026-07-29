@@ -13,14 +13,20 @@
 namespace inexor::vulkan_renderer::tools {
 
 DeviceInfo build_device_info(const VkPhysicalDevice physical_device, const VkSurfaceKHR surface) {
-    VkPhysicalDeviceProperties properties{};
-    vkGetPhysicalDeviceProperties(physical_device, &properties);
+    VkPhysicalDeviceProperties2 properties2{};
+    properties2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2;
+    vkGetPhysicalDeviceProperties2(physical_device, &properties2);
+    const auto &properties = properties2.properties;
 
-    VkPhysicalDeviceMemoryProperties memory_properties{};
-    vkGetPhysicalDeviceMemoryProperties(physical_device, &memory_properties);
+    VkPhysicalDeviceMemoryProperties2 memory_properties2{};
+    memory_properties2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MEMORY_PROPERTIES_2;
+    vkGetPhysicalDeviceMemoryProperties2(physical_device, &memory_properties2);
+    const auto &memory_properties = memory_properties2.memoryProperties;
 
-    VkPhysicalDeviceFeatures features{};
-    vkGetPhysicalDeviceFeatures(physical_device, &features);
+    VkPhysicalDeviceFeatures2 features2{};
+    features2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
+    vkGetPhysicalDeviceFeatures2(physical_device, &features2);
+    const auto &features = features2.features;
 
     VkDeviceSize total_device_local = 0;
     for (std::size_t i = 0; i < memory_properties.memoryHeapCount; i++) {
@@ -95,9 +101,10 @@ std::vector<VkBool32> get_device_features_as_vector(const VkPhysicalDeviceFeatur
 
 std::string get_physical_device_name(const VkPhysicalDevice physical_device) {
     assert(physical_device);
-    VkPhysicalDeviceProperties properties{};
-    vkGetPhysicalDeviceProperties(physical_device, &properties);
-    return properties.deviceName;
+    VkPhysicalDeviceProperties2 properties2{};
+    properties2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2;
+    vkGetPhysicalDeviceProperties2(physical_device, &properties2);
+    return properties2.properties.deviceName;
 }
 
 bool is_gpu_suitable(const DeviceInfo &info, const VkPhysicalDeviceFeatures &required_features,

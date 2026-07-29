@@ -1,10 +1,34 @@
 set(INEXOR_SOURCE_FILES
-    vulkan-renderer/imgui.cpp
-    vulkan-renderer/render_graph.cpp
-
     vulkan-renderer/input/gamepad_data.cpp
     vulkan-renderer/input/input.cpp
     vulkan-renderer/input/keyboard_mouse_data.cpp
+
+    vulkan-renderer/octree/serialization/byte_stream.cpp
+    vulkan-renderer/octree/serialization/nxoc_parser.cpp
+
+    vulkan-renderer/octree/collision_query.cpp
+    vulkan-renderer/octree/collision.cpp
+    vulkan-renderer/octree/cube.cpp
+    vulkan-renderer/octree/indentation.cpp
+
+    vulkan-renderer/render-graph/buffer_copy_batch_builder.cpp
+    vulkan-renderer/render-graph/buffer.cpp
+    vulkan-renderer/render-graph/frame_sync_manager.cpp
+    vulkan-renderer/render-graph/graphics_pass_builder.cpp
+    vulkan-renderer/render-graph/graphics_pass.cpp
+    vulkan-renderer/render-graph/render_graph.cpp
+    vulkan-renderer/render-graph/resource_descriptor_manager.cpp
+    vulkan-renderer/render-graph/staging_buffer.cpp
+    vulkan-renderer/render-graph/swapchain_manager.cpp
+    vulkan-renderer/render-graph/texture_copy_batch_builder.cpp
+    vulkan-renderer/render-graph/texture.cpp
+
+    vulkan-renderer/render-modules/imgui/imgui_renderer.cpp
+
+    vulkan-renderer/render-modules/octree/octree_renderer.cpp
+    vulkan-renderer/render-modules/octree/octree_vertex.cpp
+
+    vulkan-renderer/tools/allocators/pool_allocator.cpp
 
     vulkan-renderer/tools/camera.cpp
     vulkan-renderer/tools/device_info.cpp
@@ -12,51 +36,48 @@ set(INEXOR_SOURCE_FILES
     vulkan-renderer/tools/exception.cpp
     vulkan-renderer/tools/file.cpp
     vulkan-renderer/tools/fps_limiter.cpp
+    vulkan-renderer/tools/make_info.cpp
     vulkan-renderer/tools/queue_selection.cpp
     vulkan-renderer/tools/random.cpp
     vulkan-renderer/tools/representation.cpp
     vulkan-renderer/tools/time_step.cpp
 
-    vulkan-renderer/tools/allocators/pool_allocator.cpp
-
-    vulkan-renderer/wrapper/cpu_texture.cpp
-    vulkan-renderer/wrapper/debug_callback.cpp
-    vulkan-renderer/wrapper/device.cpp
-    vulkan-renderer/wrapper/framebuffer.cpp
-    vulkan-renderer/wrapper/gpu_memory_buffer.cpp
-    vulkan-renderer/wrapper/gpu_texture.cpp
-    vulkan-renderer/wrapper/image.cpp
-    vulkan-renderer/wrapper/instance.cpp
-    vulkan-renderer/wrapper/make_info.cpp
-    vulkan-renderer/wrapper/shader.cpp
-    vulkan-renderer/wrapper/uniform_buffer.cpp
-
+    vulkan-renderer/wrapper/commands/command_buffer_cache.cpp
     vulkan-renderer/wrapper/commands/command_buffer.cpp
     vulkan-renderer/wrapper/commands/command_pool.cpp
 
-    vulkan-renderer/wrapper/descriptors/descriptor.cpp
-    vulkan-renderer/wrapper/descriptors/descriptor_builder.cpp
+    vulkan-renderer/wrapper/descriptors/descriptor_pool_allocator.cpp
+    vulkan-renderer/wrapper/descriptors/descriptor_pool.cpp
+    vulkan-renderer/wrapper/descriptors/descriptor_set_allocator.cpp
+    vulkan-renderer/wrapper/descriptors/descriptor_set_layout_builder.cpp
+    vulkan-renderer/wrapper/descriptors/descriptor_set_layout_cache.cpp
+    vulkan-renderer/wrapper/descriptors/descriptor_set_layout.cpp
+    vulkan-renderer/wrapper/descriptors/per_frame_descriptor_sets.cpp
+    vulkan-renderer/wrapper/descriptors/write_descriptor_set_builder.cpp
 
-    vulkan-renderer/wrapper/pipelines/graphics_pipeline.cpp
+    vulkan-renderer/wrapper/images/image_view.cpp
+    vulkan-renderer/wrapper/images/image.cpp
+    vulkan-renderer/wrapper/images/sampler.cpp
+
     vulkan-renderer/wrapper/pipelines/graphics_pipeline_builder.cpp
+    vulkan-renderer/wrapper/pipelines/graphics_pipeline.cpp
     vulkan-renderer/wrapper/pipelines/pipeline_cache.cpp
     vulkan-renderer/wrapper/pipelines/pipeline_layout.cpp
-    vulkan-renderer/wrapper/windows/window.cpp
-    vulkan-renderer/wrapper/windows/surface.cpp
 
-    vulkan-renderer/wrapper/swapchains/swapchain.cpp
     vulkan-renderer/wrapper/swapchains/swapchain_utils.cpp
+    vulkan-renderer/wrapper/swapchains/swapchain.cpp
 
     vulkan-renderer/wrapper/synchronization/fence.cpp
+    vulkan-renderer/wrapper/synchronization/pipeline_barrier_batch_builder.cpp
     vulkan-renderer/wrapper/synchronization/semaphore.cpp
 
-    vulkan-renderer/octree/collision.cpp
-    vulkan-renderer/octree/collision_query.cpp
-    vulkan-renderer/octree/cube.cpp
-    vulkan-renderer/octree/indentation.cpp
+    vulkan-renderer/wrapper/windows/surface.cpp
+    vulkan-renderer/wrapper/windows/window.cpp
 
-    vulkan-renderer/octree/serialization/byte_stream.cpp
-    vulkan-renderer/octree/serialization/nxoc_parser.cpp
+    vulkan-renderer/wrapper/debug_callback.cpp
+    vulkan-renderer/wrapper/device.cpp
+    vulkan-renderer/wrapper/instance.cpp
+    vulkan-renderer/wrapper/shader.cpp
 )
 
 foreach(FILE ${INEXOR_SOURCE_FILES})
@@ -155,14 +176,6 @@ target_link_libraries(inexor-vulkan-renderer-core-lib PUBLIC
     Vulkan::Headers
     VulkanMemoryAllocator
 )
-
-# suppress all compiler warnings for third-party dependencies
-foreach(_dep glfw glm imgui tinygltf)
-    target_compile_options(${_dep} PRIVATE
-        $<$<CXX_COMPILER_ID:GNU,Clang,AppleClang>:-w>
-        $<$<CXX_COMPILER_ID:MSVC>:/W0>
-    )
-endforeach()
 
 if(MSVC)
     # group dependencies in Visual Studio

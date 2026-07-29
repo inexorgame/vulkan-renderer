@@ -6,32 +6,45 @@
 
 namespace inexor::vulkan_renderer::tools {
 
-/// A wrapper class for counting and limiting frames per second.
+/// Counts rendered frames and limits the maximum frame rate.
+///
+/// Call is_next_frame_allowed() before rendering a frame.
+/// Call get_fps() exactly once per rendered frame.
 class FPSLimiter {
-private:
-    std::uint32_t m_max_fps{DEFAULT_FPS};
-    std::chrono::milliseconds m_frame_time{DEFAULT_FPS / 1000};
-    std::chrono::time_point<std::chrono::high_resolution_clock> m_last_time;
-    std::chrono::time_point<std::chrono::high_resolution_clock> m_last_fps_update_time;
-    std::chrono::milliseconds m_fps_update_interval{1000};
-    std::uint32_t m_frames{0};
-
-    // The requested max_fps will be clamped in between these limits.
-    static constexpr std::uint32_t MIN_FPS{1};
-    static constexpr std::uint32_t MAX_FPS{2000};
-
 public:
-    static constexpr std::uint32_t DEFAULT_FPS{1000};
+    using Clock = std::chrono::steady_clock;
+    using Duration = std::chrono::duration<double>;
 
-    FPSLimiter(std::uint32_t max_fps = DEFAULT_FPS);
+    static constexpr std::uint32_t MIN_FPS{1};
+    static constexpr std::uint32_t MAX_FPS{10000};
+    static constexpr std::uint32_t DEFAULT_FPS{4000};
+
+    explicit FPSLimiter(std::uint32_t max_fps = DEFAULT_FPS);
 
     void set_max_fps(std::uint32_t max_fps);
 
-    /// Ask if the next frame is allowed to be rendered.
+    /// Returns true when enough time has elapsed for the next frame.
     [[nodiscard]] bool is_next_frame_allowed();
 
-    /// Return the fps every second, std::nullopt otherwise.
+    /// Records one rendered frame and returns an updated FPS value periodically.
     [[nodiscard]] std::optional<std::uint32_t> get_fps();
+
+    /// Returns the time elapsed since the last allowed frame, in seconds.
+    [[nodiscard]] double elapsed_seconds() const noexcept {
+        return m_frame_elapsed.count();
+    }
+
+private:
+    static constexpr Duration FPS_UPDATE_INTERVAL{1.0};
+
+    std::uint32_t m_max_fps{DEFAULT_FPS};
+    Duration m_frame_time{1.0 / static_cast<double>(DEFAULT_FPS)};
+
+    Clock::time_point m_last_frame_time;
+    Clock::time_point m_last_fps_update_time;
+
+    Duration m_frame_elapsed{0.0};
+    std::uint32_t m_frames{0};
 };
 
 } // namespace inexor::vulkan_renderer::tools

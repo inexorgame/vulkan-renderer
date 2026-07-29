@@ -13,11 +13,13 @@ namespace inexor::vulkan_renderer::wrapper::windows {
 using tools::VulkanException;
 
 WindowSurface::WindowSurface(const VkInstance instance, GLFWwindow *window) : m_instance(instance) {
-    assert(instance);
-    assert(window);
-
+    if (instance == VK_NULL_HANDLE) {
+        throw std::invalid_argument("Error: Parameter 'instance' is an invalid pointer!");
+    }
+    if (window == nullptr) {
+        throw std::invalid_argument("Error: Parameter 'window' is an invalid pointer!");
+    }
     spdlog::trace("Creating window surface");
-
     if (const auto result = glfwCreateWindowSurface(instance, window, nullptr, &m_surface); result != VK_SUCCESS) {
         throw VulkanException("Error: glfwCreateWindowSurface failed!", result);
     }

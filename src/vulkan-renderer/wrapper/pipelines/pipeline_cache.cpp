@@ -1,7 +1,8 @@
 #include "inexor/vulkan-renderer/wrapper/pipelines/pipeline_cache.hpp"
 
 #include "inexor/vulkan-renderer/tools/exception.hpp"
-#include "inexor/vulkan-renderer/wrapper/make_info.hpp"
+#include "inexor/vulkan-renderer/tools/make_info.hpp"
+#include "inexor/vulkan-renderer/wrapper/device.hpp"
 #include "inexor/vulkan-renderer/wrapper/pipelines/graphics_pipeline.hpp"
 
 #include <spdlog/spdlog.h>
@@ -60,7 +61,7 @@ PipelineCache::PipelineCache(const Device &device) : m_device(device) {
     const auto pipeline_cache_data = read_cache_data_from_disk();
 
     // TODO: Do we need to set flag VK_PIPELINE_CACHE_CREATE_EXTERNALLY_SYNCHRONIZED_BIT?
-    const auto pipeline_cache_ci = wrapper::make_info<VkPipelineCacheCreateInfo>({
+    const auto pipeline_cache_ci = tools::make_info<VkPipelineCacheCreateInfo>({
         .initialDataSize = pipeline_cache_data.size(),
         .pInitialData = pipeline_cache_data.data(),
     });
@@ -73,6 +74,7 @@ PipelineCache::PipelineCache(const Device &device) : m_device(device) {
 }
 
 PipelineCache::~PipelineCache() {
+    // @TODO Bug: The destructor is invoked twice? Why?
     save_cache_data_to_disk();
     vkDestroyPipelineCache(m_device.device(), m_pipeline_cache, nullptr);
 }
@@ -97,10 +99,10 @@ std::vector<uint8_t> PipelineCache::read_cache_data_from_disk() {
                 // Read the data from the file
                 if (!cache_file_stream.read(reinterpret_cast<char *>(pipeline_cache_data.data()),
                                             pipeline_cache_data.size())) {
-                    spdlog::error("Error: Could not load Vulkan pipeline cache '{}'!", m_cache_file_name);
+                    spdlog::error("Could not load Vulkan pipeline cache file '{}'!", m_cache_file_name);
                     pipeline_cache_data.clear();
                 } else {
-                    spdlog::trace("Loaded {} bytes from Vulkan pipeline cache '{}'.", cache_file_size,
+                    spdlog::trace("Loaded {} bytes from Vulkan pipeline cache file '{}'.", cache_file_size,
                                   m_cache_file_name);
                 }
             }
@@ -120,7 +122,7 @@ std::vector<uint8_t> PipelineCache::read_cache_data_from_disk() {
 void PipelineCache::save_cache_data_to_disk() {
     std::size_t cache_size = 0;
     if (m_pipeline_cache == VK_NULL_HANDLE) {
-        spdlog::error("Vulkan pipeline cache cannot be saved to disk!");
+        spdlog::error("Vulkan pipeline cache is invalid and cannot be saved to a file!");
         return;
     }
     auto result = vkGetPipelineCacheData(m_device.device(), m_pipeline_cache, &cache_size, nullptr);
@@ -140,20 +142,19 @@ void PipelineCache::save_cache_data_to_disk() {
                                   m_cache_file_name);
                 } else {
                     // Maybe the file path was set incorrectly?
-                    spdlog::error("Error: Could not create file '{}' to write Vulkan pipeline cache to file!",
-                                  m_cache_file_name);
+                    spdlog::error("Could not create file Vulkan pipeline cache file '{}'!", m_cache_file_name);
                 }
             } else {
                 // This should be a rare error!
-                spdlog::error("Error: Could not retrieve Vulkan pipeline cache data with vkGetPipelineCacheData!");
+                spdlog::error("Could not retrieve Vulkan pipeline cache data with vkGetPipelineCacheData!");
             }
         } else {
             // In this case, we probably forgot to pass the Vulkan pipeline cache handle during pipeline creation!
-            spdlog::warn("Warning: Vulkan pipeline cache is empty at application shutdown!");
+            spdlog::warn("Vulkan pipeline cache is empty at application shutdown!");
         }
     } else {
-        // No exception thrown because we are in a destructor!
-        spdlog::error("Error: vkGetPipelineCacheData returned {}!", tools::as_string(result));
+        // NOTE: No exception thrown because we are in a destructor!
+        spdlog::error("vkGetPipelineCacheData returned {}!", tools::as_string(result));
     }
 }
 

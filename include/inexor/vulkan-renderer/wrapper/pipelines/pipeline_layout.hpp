@@ -52,11 +52,15 @@ public:
     PipelineLayout(const PipelineLayout &) = delete;
     PipelineLayout(PipelineLayout &&) noexcept;
 
-    PipelineLayout &operator=(const PipelineLayout &) = delete;
-    PipelineLayout &operator=(PipelineLayout &&other) noexcept;
-
     /// Call vkDestroyPipelineLayout
     ~PipelineLayout();
+
+    PipelineLayout &operator=(const PipelineLayout &) = delete;
+    PipelineLayout &operator=(PipelineLayout &&) noexcept;
+
+    [[nodiscard]] auto pipeline_layout() const {
+        return m_pipeline_layout;
+    }
 };
 
 } // namespace inexor::vulkan_renderer::wrapper::pipelines
