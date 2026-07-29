@@ -1,0 +1,31 @@
+{
+    "name": "Inexor Devcontainer",
+    "dockerComposeFile": [
+        "compose.yml"
+    ],
+    "features": {
+        "ghcr.io/devcontainers/features/python:1": {
+            "installTools": true,
+            "version": "latest"
+        }
+    },
+     "service": "devcontainer",
+    "workspaceFolder": "/workspaces/inexor",
+    "remoteUser": "vscode",
+    "containerUser": "vscode",
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "dtoplak.vscode-glsllint",
+                "github.vscode-github-actions",
+                "ms-vscode.cmake-tools",
+                "ms-vscode.cpp-devtools",
+                "PascalReitermann93.vscode-yaml-sort",
+                "redhat.vscode-yaml",
+                "slevesque.shader",
+                "tamasfe.even-better-toml",
+                "twxs.cmake"
+            ]
+        }
+    }
+}

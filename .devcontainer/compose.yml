@@ -1,0 +1,21 @@
+name: inexor_devcontainer
+
+services:
+  devcontainer:
+    build: .
+    cap_add:
+      - SYS_PTRACE
+    security_opt:
+      - seccomp:unconfined
+    command: sleep infinity
+    volumes:
+      - ..:/workspaces/inexor:cached
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    privileged: true
+    network_mode: host
