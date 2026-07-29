@@ -1,11 +1,11 @@
 #include <gtest/gtest.h>
 
+#include <volk.h>
+
+#include "inexor/vulkan-renderer/tools/make_info.hpp"
 #include "inexor/vulkan-renderer/tools/queue_selection.hpp"
-#include "inexor/vulkan-renderer/wrapper/make_info.hpp"
 
 namespace inexor::vulkan_renderer::tools {
-
-using namespace inexor::vulkan_renderer::wrapper;
 
 TEST(QueueSelection, TheoreticalTest1) {
     const QueueFamilyIndexCandidates expected_result = {
