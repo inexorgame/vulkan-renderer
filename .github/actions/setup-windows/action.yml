@@ -28,7 +28,7 @@ runs:
       run: |
         curl -LS -o vulkansdk.exe https://sdk.lunarg.com/sdk/download/${{ inputs.vulkan-sdk-version }}/windows/vulkansdk-windows-X64-${{ inputs.vulkan-sdk-version }}.exe
         if ((Get-FileHash vulkansdk.exe -Algorithm SHA256).Hash.ToLower() -ne "${{ inputs.vulkan-sdk-checksum }}") { Write-Error "Checksum mismatch!"; exit 1 }
-        7z x -y vulkansdk.exe -o"${{ github.workspace }}/vulkan_sdk"
+        ./vulkansdk.exe install --root "${{ github.workspace }}/vulkan_sdk" --accept-licenses --default-answer --confirm-command
         Remove-Item vulkansdk.exe
     
     - name: Set ENV and PATH for Vulkan SDK
