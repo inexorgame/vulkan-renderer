@@ -1,21 +1,21 @@
 #pragma once
 
-#include "inexor/vulkan-renderer/wrapper/device.hpp"
+#include "inexor/vulkan-renderer/wrapper/core/device.hpp"
 
 #include <vulkan/vulkan_core.h>
 
 #include <string>
 #include <vector>
 
-namespace inexor::vulkan_renderer::wrapper {
+namespace inexor::vulkan_renderer::wrapper::core {
 // Forward declaration
 class Device;
-} // namespace inexor::vulkan_renderer::wrapper
+} // namespace inexor::vulkan_renderer::wrapper::core
 
 namespace inexor::vulkan_renderer::wrapper::pipelines {
 
 // Using declaration
-using wrapper::Device;
+using wrapper::core::Device;
 
 /// RAII wrapper class for VkPipelineCache
 /// We use one pipeline cache for all pipelines (no matter what type: graphics or compute)

@@ -1,12 +1,12 @@
-#include "inexor/vulkan-renderer/wrapper/debug_callback.hpp"
+#include "inexor/vulkan-renderer/wrapper/core/debug_callback.hpp"
 
 #include "inexor/vulkan-renderer/tools/exception.hpp"
 #include "inexor/vulkan-renderer/tools/make_info.hpp"
-#include "inexor/vulkan-renderer/wrapper/instance.hpp"
+#include "inexor/vulkan-renderer/wrapper/core/instance.hpp"
 
 #include <spdlog/spdlog.h>
 
-namespace inexor::vulkan_renderer::wrapper {
+namespace inexor::vulkan_renderer::wrapper::core {
 
 // Using declarations
 using tools::InexorException;
@@ -54,4 +54,4 @@ VulkanDebugUtilsCallback::~VulkanDebugUtilsCallback() {
     vkDestroyDebugUtilsMessengerEXT(m_instance.instance(), m_debug_callback, nullptr);
 }
 
-} // namespace inexor::vulkan_renderer::wrapper
+} // namespace inexor::vulkan_renderer::wrapper::core

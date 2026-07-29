@@ -7,16 +7,19 @@
 #include <span>
 #include <vector>
 
-namespace inexor::vulkan_renderer::wrapper {
+namespace inexor::vulkan_renderer::wrapper::core {
 // Forward declaration
 class Device;
-} // namespace inexor::vulkan_renderer::wrapper
+} // namespace inexor::vulkan_renderer::wrapper::core
 
 namespace inexor::vulkan_renderer::render_graph {
 
+// Using declaration
+using wrapper::core::Device;
+
 class FrameSyncManager {
 private:
-    const wrapper::Device &m_device;
+    const Device &m_device;
     std::vector<VkFence> m_frame_slot_submission_fences{VK_NULL_HANDLE};
     std::size_t m_frame_slot_count{1};
     std::size_t m_current_frame_slot{0};
@@ -29,7 +32,7 @@ private:
     std::vector<DeferredRelease> m_deferred_releases;
 
 public:
-    explicit FrameSyncManager(const wrapper::Device &device);
+    explicit FrameSyncManager(const Device &device);
 
     void set_frame_context(std::size_t frame_slot_count, std::size_t current_frame_slot);
 

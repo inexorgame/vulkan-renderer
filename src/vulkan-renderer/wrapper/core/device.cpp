@@ -1,10 +1,10 @@
-#include "inexor/vulkan-renderer/wrapper/device.hpp"
+#include "inexor/vulkan-renderer/wrapper/core/device.hpp"
 
 #include "inexor/vulkan-renderer/tools/device_info.hpp"
 #include "inexor/vulkan-renderer/tools/enumerate.hpp"
 #include "inexor/vulkan-renderer/tools/make_info.hpp"
 #include "inexor/vulkan-renderer/tools/queue_selection.hpp"
-#include "inexor/vulkan-renderer/wrapper/instance.hpp"
+#include "inexor/vulkan-renderer/wrapper/core/instance.hpp"
 #include "inexor/vulkan-renderer/wrapper/pipelines/pipeline_cache.hpp"
 
 #define VMA_DEBUG_MARGIN 16
@@ -18,7 +18,7 @@
 #include <functional>
 #include <utility>
 
-namespace inexor::vulkan_renderer::wrapper {
+namespace inexor::vulkan_renderer::wrapper::core {
 
 /// Convert a DebugLabelColor to a rgba value
 /// @param color The debug label color
@@ -466,4 +466,4 @@ void Device::wait_idle(const VkQueue queue) const {
     }
 }
 
-} // namespace inexor::vulkan_renderer::wrapper
+} // namespace inexor::vulkan_renderer::wrapper::core

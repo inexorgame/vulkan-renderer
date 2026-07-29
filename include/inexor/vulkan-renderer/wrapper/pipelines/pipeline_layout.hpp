@@ -1,8 +1,9 @@
 #pragma once
 
-#include "inexor/vulkan-renderer/wrapper/device.hpp"
+#include <volk.h>
 
 #include <span>
+#include <string>
 
 namespace inexor::vulkan_renderer::render_graph {
 // Forward declaration
@@ -14,6 +15,11 @@ namespace inexor::vulkan_renderer::wrapper::commands {
 class CommandBuffer;
 } // namespace inexor::vulkan_renderer::wrapper::commands
 
+namespace inexor::vulkan_renderer::wrapper::core {
+// Forward declaration
+class Device;
+} // namespace inexor::vulkan_renderer::wrapper::core
+
 namespace inexor::vulkan_renderer::wrapper::pipelines {
 
 // Forward declaration
@@ -22,6 +28,7 @@ class GraphicsPipeline;
 // Using declarations
 using commands::CommandBuffer;
 using render_graph::RenderGraph;
+using wrapper::core::Device;
 
 /// RAII wrapper class for VkPipelineLayout
 class PipelineLayout {

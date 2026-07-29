@@ -6,10 +6,10 @@
 
 #include <vector>
 
+namespace inexor::vulkan_renderer::wrapper::core {
 // Forward declaration
-namespace inexor::vulkan_renderer::wrapper {
 class Device;
-}
+} // namespace inexor::vulkan_renderer::wrapper::core
 
 namespace inexor::vulkan_renderer::wrapper::descriptors {
 
@@ -22,13 +22,13 @@ class DescriptorPoolAllocator {
 
 private:
     /// The device wrapper
-    const Device &m_device;
+    const core::Device &m_device;
     /// The descriptor pools
     std::vector<DescriptorPool> m_pools;
 
     /// Default constructor
     /// @param device The device wrapper
-    explicit DescriptorPoolAllocator(const Device &device);
+    explicit DescriptorPoolAllocator(const core::Device &device);
 
     /// Return a descriptor pool from ``m_pools`` and in case all pools are used up, create a new one
     /// @note If we run out of descriptor pools, we simply create one new descriptor pool (not multiple ones!)

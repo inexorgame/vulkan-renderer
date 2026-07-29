@@ -3,8 +3,8 @@
 #include <volk.h>
 
 #include "inexor/vulkan-renderer/render-graph/texture.hpp"
+#include "inexor/vulkan-renderer/wrapper/core/device.hpp"
 #include "inexor/vulkan-renderer/wrapper/descriptors/descriptor_set_layout.hpp"
-#include "inexor/vulkan-renderer/wrapper/device.hpp"
 #include "inexor/vulkan-renderer/wrapper/swapchains/swapchain.hpp"
 
 #include <array>
@@ -24,8 +24,8 @@ namespace inexor::vulkan_renderer::render_graph {
 class RenderGraph;
 
 // Using declarations
-using wrapper::CommandBuffer;
-using wrapper::DebugLabelColor;
+using wrapper::commands::CommandBuffer;
+using wrapper::core::DebugLabelColor;
 using wrapper::descriptors::DescriptorSetLayout;
 using wrapper::swapchains::Swapchain;
 

@@ -9,7 +9,7 @@
 
 namespace inexor::vulkan_renderer::render_graph {
 
-SwapchainManager::SwapchainManager(wrapper::Device &device) : m_device(device) {}
+SwapchainManager::SwapchainManager(Device &device) : m_device(device) {}
 
 void SwapchainManager::mark_swapchain_cache_dirty() {
     m_swapchain_cache_dirty = true;

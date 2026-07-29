@@ -6,17 +6,19 @@
 
 #include <string>
 
-namespace inexor::vulkan_renderer::wrapper {
+namespace inexor::vulkan_renderer::wrapper::core {
 // Forward declaration
 class Device;
-} // namespace inexor::vulkan_renderer::wrapper
+} // namespace inexor::vulkan_renderer::wrapper::core
 
 namespace inexor::vulkan_renderer::wrapper::images {
+
+// Using declaration
 
 /// RAII wrapper class for VkSampler
 class Sampler {
 private:
-    const Device &m_device;
+    const core::Device &m_device;
     VkSampler m_sampler{VK_NULL_HANDLE};
     std::string m_name;
 
@@ -25,7 +27,7 @@ public:
     /// @param device The device wrapper
     /// @param name The internal debug name of the sampler
     /// @param sampler_ci The sampler create info
-    Sampler(const Device &device, std::string name,
+    Sampler(const core::Device &device, std::string name,
             const VkSamplerCreateInfo &sampler_ci = tools::make_info<VkSamplerCreateInfo>({
                 // NOTE: These are the default sampler settings
                 .magFilter = VK_FILTER_LINEAR,

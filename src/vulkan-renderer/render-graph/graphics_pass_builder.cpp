@@ -7,7 +7,7 @@
 namespace inexor::vulkan_renderer::render_graph {
 
 // Using declaration
-using wrapper::InexorException;
+using tools::InexorException;
 
 GraphicsPassBuilder::GraphicsPassBuilder() {
     reset();

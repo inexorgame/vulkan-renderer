@@ -21,7 +21,7 @@ namespace inexor::vulkan_renderer::wrapper::pipelines {
 class PipelineCache;
 } // namespace inexor::vulkan_renderer::wrapper::pipelines
 
-namespace inexor::vulkan_renderer::wrapper {
+namespace inexor::vulkan_renderer::wrapper::core {
 
 // Forward declaration
 class Instance;
@@ -341,4 +341,4 @@ public:
     void wait_idle(VkQueue queue = VK_NULL_HANDLE) const;
 };
 
-} // namespace inexor::vulkan_renderer::wrapper
+} // namespace inexor::vulkan_renderer::wrapper::core

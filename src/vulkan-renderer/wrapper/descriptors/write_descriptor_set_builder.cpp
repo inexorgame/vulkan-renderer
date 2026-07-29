@@ -1,12 +1,12 @@
 #include "inexor/vulkan-renderer/wrapper/descriptors/write_descriptor_set_builder.hpp"
 
-#include "inexor/vulkan-renderer/wrapper/device.hpp"
+#include "inexor/vulkan-renderer/wrapper/core/device.hpp"
 
 #include <stdexcept>
 
 namespace inexor::vulkan_renderer::wrapper::descriptors {
 
-WriteDescriptorSetBuilder::WriteDescriptorSetBuilder(const Device &device) : m_device(device) {}
+WriteDescriptorSetBuilder::WriteDescriptorSetBuilder(const core::Device &device) : m_device(device) {}
 
 std::vector<VkWriteDescriptorSet> WriteDescriptorSetBuilder::build() {
     std::vector<VkWriteDescriptorSet> write_descriptor_sets;

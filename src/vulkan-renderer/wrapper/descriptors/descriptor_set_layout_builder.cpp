@@ -1,11 +1,11 @@
 #include "inexor/vulkan-renderer/wrapper/descriptors/descriptor_set_layout_builder.hpp"
 
 #include "inexor/vulkan-renderer/tools/make_info.hpp"
-#include "inexor/vulkan-renderer/wrapper/device.hpp"
+#include "inexor/vulkan-renderer/wrapper/core/device.hpp"
 
 namespace inexor::vulkan_renderer::wrapper::descriptors {
 
-DescriptorSetLayoutBuilder::DescriptorSetLayoutBuilder(const Device &device)
+DescriptorSetLayoutBuilder::DescriptorSetLayoutBuilder(const core::Device &device)
     : m_device(device), m_descriptor_set_layout_cache(device) {}
 
 VkDescriptorSetLayout DescriptorSetLayoutBuilder::build(std::string name) {

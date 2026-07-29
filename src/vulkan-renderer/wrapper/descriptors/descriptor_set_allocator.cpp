@@ -2,7 +2,7 @@
 
 #include "inexor/vulkan-renderer/tools/exception.hpp"
 #include "inexor/vulkan-renderer/tools/make_info.hpp"
-#include "inexor/vulkan-renderer/wrapper/device.hpp"
+#include "inexor/vulkan-renderer/wrapper/core/device.hpp"
 
 #include <spdlog/spdlog.h>
 
@@ -10,7 +10,10 @@
 
 namespace inexor::vulkan_renderer::wrapper::descriptors {
 
-DescriptorSetAllocator::DescriptorSetAllocator(const Device &device)
+using tools::InexorException;
+using tools::VulkanException;
+
+DescriptorSetAllocator::DescriptorSetAllocator(const core::Device &device)
     : m_device(device), m_descriptor_pool_allocator(device) {
     m_current_pool = m_descriptor_pool_allocator.request_new_descriptor_pool();
     if (m_current_pool == VK_NULL_HANDLE) {

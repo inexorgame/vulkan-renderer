@@ -2,8 +2,8 @@
 
 #include "inexor/vulkan-renderer/tools/exception.hpp"
 #include "inexor/vulkan-renderer/tools/make_info.hpp"
+#include "inexor/vulkan-renderer/wrapper/core/device.hpp"
 #include "inexor/vulkan-renderer/wrapper/descriptors/per_frame_descriptor_sets.hpp"
-#include "inexor/vulkan-renderer/wrapper/device.hpp"
 #include "inexor/vulkan-renderer/wrapper/pipelines/graphics_pipeline.hpp"
 
 #include <spdlog/spdlog.h>
@@ -18,7 +18,7 @@ namespace inexor::vulkan_renderer::wrapper::commands {
 using tools::make_info;
 using tools::VulkanException;
 
-CommandBuffer::CommandBuffer(const Device &device, const VkCommandPool cmd_pool, std::string name,
+CommandBuffer::CommandBuffer(const core::Device &device, const VkCommandPool cmd_pool, std::string name,
                              const VkCommandBufferLevel level)
     : m_device(device), m_name(std::move(name)) {
 
@@ -647,7 +647,7 @@ void CommandBuffer::submit(const VkQueueFlagBits queue_type, const std::span<con
 }
 
 void CommandBuffer::submit(const VkQueueFlagBits queue_type,
-                           const std::span<const wrapper::QueueSemaphoreWait> wait_semaphores,
+                           const std::span<const core::QueueSemaphoreWait> wait_semaphores,
                            const std::span<const VkSemaphore> signal_semaphores) const {
     m_wait_submit_infos_scratch.resize(wait_semaphores.size());
     for (std::size_t index = 0; index < wait_semaphores.size(); ++index) {
@@ -663,7 +663,7 @@ void CommandBuffer::submit(const VkQueueFlagBits queue_type,
 }
 
 void CommandBuffer::submit(const VkQueueFlagBits queue_type,
-                           const std::span<const wrapper::QueueSemaphoreWait> wait_semaphores,
+                           const std::span<const core::QueueSemaphoreWait> wait_semaphores,
                            const std::span<const VkSemaphoreSubmitInfo> signal_semaphore_infos) const {
     m_wait_submit_infos_scratch.resize(wait_semaphores.size());
     for (std::size_t index = 0; index < wait_semaphores.size(); ++index) {

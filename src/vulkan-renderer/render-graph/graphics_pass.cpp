@@ -8,8 +8,8 @@
 namespace inexor::vulkan_renderer::render_graph {
 
 // Using declaration
+using tools::InexorException;
 using tools::make_info;
-using wrapper::InexorException;
 
 GraphicsPass::GraphicsPass(
     std::string name, std::function<void(const CommandBuffer &)> on_record_cmd_buffer,
@@ -46,7 +46,7 @@ GraphicsPass::GraphicsPass(
     m_buffer_reads = std::move(buffer_reads);
     m_texture_writes = std::move(texture_writes);
     m_swapchain_writes = std::move(swapchain_writes);
-    m_debug_label_color = wrapper::get_debug_label_color(pass_debug_label_color);
+    m_debug_label_color = wrapper::core::get_debug_label_color(pass_debug_label_color);
 
     const auto texture_write_count = m_texture_writes.size();
     const auto swapchain_write_count = m_swapchain_writes.size();

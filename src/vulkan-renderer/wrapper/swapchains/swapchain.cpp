@@ -4,7 +4,7 @@
 #include "inexor/vulkan-renderer/tools/exception.hpp"
 #include "inexor/vulkan-renderer/tools/make_info.hpp"
 #include "inexor/vulkan-renderer/tools/representation.hpp"
-#include "inexor/vulkan-renderer/wrapper/device.hpp"
+#include "inexor/vulkan-renderer/wrapper/core/device.hpp"
 #include "inexor/vulkan-renderer/wrapper/swapchains/swapchain_utils.hpp"
 #include "inexor/vulkan-renderer/wrapper/synchronization/semaphore.hpp"
 
@@ -17,9 +17,11 @@
 namespace inexor::vulkan_renderer::wrapper::swapchains {
 
 // Using declaration
+using tools::InexorException;
 using tools::make_info;
+using tools::VulkanException;
 
-Swapchain::Swapchain(const Device &device, std::string name, const VkSurfaceKHR surface)
+Swapchain::Swapchain(const core::Device &device, std::string name, const VkSurfaceKHR surface)
     : m_device(device), m_name(std::move(name)), m_surface(surface) {
     if (vkCreateSwapchainKHR == nullptr) {
         throw InexorException("Error: Function pointer 'vkCreateSwapchainKHR' is not available!");

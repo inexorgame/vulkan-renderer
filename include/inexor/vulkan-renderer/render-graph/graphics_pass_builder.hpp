@@ -19,8 +19,8 @@ class CommandBuffer;
 namespace inexor::vulkan_renderer::render_graph {
 
 // Using declarations
-using wrapper::DebugLabelColor;
 using wrapper::commands::CommandBuffer;
+using wrapper::core::DebugLabelColor;
 using wrapper::swapchains::Swapchain;
 
 /// A builder class for graphics passes in the rendergraph

@@ -4,16 +4,16 @@
 
 #include <string>
 
-namespace inexor::vulkan_renderer::wrapper {
+namespace inexor::vulkan_renderer::wrapper::core {
 // Forward declaration
 class Device;
-} // namespace inexor::vulkan_renderer::wrapper
+} // namespace inexor::vulkan_renderer::wrapper::core
 
 namespace inexor::vulkan_renderer::wrapper::synchronization {
 
 /// RAII wrapper class for VkSemaphore
 class Semaphore {
-    const Device &m_device;
+    const core::Device &m_device;
     std::string m_name;
     VkSemaphore m_semaphore{VK_NULL_HANDLE};
 
@@ -21,7 +21,7 @@ public:
     /// Default constructor
     /// @param device The const reference to a device RAII wrapper instance.
     /// @param name The internal debug marker name of the VkSemaphore.
-    Semaphore(const Device &device, const std::string &name);
+    Semaphore(const core::Device &device, const std::string &name);
 
     Semaphore(const Semaphore &) = delete;
     Semaphore(Semaphore &&) noexcept;

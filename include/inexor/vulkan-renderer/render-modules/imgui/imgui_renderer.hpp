@@ -13,10 +13,14 @@
 #include <vector>
 
 namespace inexor::vulkan_renderer::wrapper {
-// Forward declarations
-class Device;
+// Forward declaration
 class Shader;
 } // namespace inexor::vulkan_renderer::wrapper
+
+namespace inexor::vulkan_renderer::wrapper::core {
+// Forward declaration
+class Device;
+} // namespace inexor::vulkan_renderer::wrapper::core
 
 namespace inexor::vulkan_renderer::wrapper::swapchains {
 // Forward declaration
@@ -40,9 +44,9 @@ using render_graph::GraphicsPass;
 using render_graph::GraphicsPipelineBuilder;
 using render_graph::RenderGraph;
 using render_graph::Texture;
-using wrapper::Device;
 using wrapper::Shader;
 using wrapper::commands::CommandBuffer;
+using wrapper::core::Device;
 using wrapper::descriptors::DescriptorSetAllocator;
 using wrapper::descriptors::DescriptorSetLayoutBuilder;
 using wrapper::descriptors::DescriptorType;

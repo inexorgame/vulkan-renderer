@@ -46,6 +46,10 @@ set(INEXOR_SOURCE_FILES
     vulkan-renderer/wrapper/commands/command_buffer.cpp
     vulkan-renderer/wrapper/commands/command_pool.cpp
 
+    vulkan-renderer/wrapper/core/debug_callback.cpp
+    vulkan-renderer/wrapper/core/device.cpp
+    vulkan-renderer/wrapper/core/instance.cpp
+
     vulkan-renderer/wrapper/descriptors/descriptor_pool_allocator.cpp
     vulkan-renderer/wrapper/descriptors/descriptor_pool.cpp
     vulkan-renderer/wrapper/descriptors/descriptor_set_allocator.cpp
@@ -74,9 +78,6 @@ set(INEXOR_SOURCE_FILES
     vulkan-renderer/wrapper/windows/surface.cpp
     vulkan-renderer/wrapper/windows/window.cpp
 
-    vulkan-renderer/wrapper/debug_callback.cpp
-    vulkan-renderer/wrapper/device.cpp
-    vulkan-renderer/wrapper/instance.cpp
     vulkan-renderer/wrapper/shader.cpp
 )
 

@@ -5,14 +5,16 @@
 #include <string>
 #include <vector>
 
-namespace inexor::vulkan_renderer::wrapper {
-
+namespace inexor::vulkan_renderer::wrapper::core {
 // Forward declaration
 class Device;
+} // namespace inexor::vulkan_renderer::wrapper::core
+
+namespace inexor::vulkan_renderer::wrapper {
 
 /// RAII wrapper class for VkShaderModules
 class Shader {
-    const Device &m_device;
+    const core::Device &m_device;
     std::string m_name;
     std::string m_entry_point;
     VkShaderStageFlagBits m_shader_stage;
@@ -24,7 +26,7 @@ public:
     /// @param shader_stage The shader type.
     /// @param shader_file_name The name of the SPIR-V shader file to load.
     /// @param entry_point The name of the entry point, "main" by default.
-    Shader(const Device &m_device, VkShaderStageFlagBits shader_stage, const std::string &shader_file_name,
+    Shader(const core::Device &m_device, VkShaderStageFlagBits shader_stage, const std::string &shader_file_name,
            const std::string &entry_point = "main");
 
     Shader(const Shader &) = delete;

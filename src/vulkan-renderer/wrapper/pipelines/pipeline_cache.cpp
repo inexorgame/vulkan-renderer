@@ -2,7 +2,7 @@
 
 #include "inexor/vulkan-renderer/tools/exception.hpp"
 #include "inexor/vulkan-renderer/tools/make_info.hpp"
-#include "inexor/vulkan-renderer/wrapper/device.hpp"
+#include "inexor/vulkan-renderer/wrapper/core/device.hpp"
 #include "inexor/vulkan-renderer/wrapper/pipelines/graphics_pipeline.hpp"
 
 #include <spdlog/spdlog.h>
@@ -15,7 +15,9 @@
 
 namespace inexor::vulkan_renderer::wrapper::pipelines {
 
-PipelineCache::PipelineCache(const Device &device) : m_device(device) {
+using tools::VulkanException;
+
+PipelineCache::PipelineCache(const core::Device &device) : m_device(device) {
     // Sanitize GPU name to only contain alphanumeric characters and underscores
     const auto &gpu_name = m_device.gpu_name();
     std::string sanitized_gpu_name;

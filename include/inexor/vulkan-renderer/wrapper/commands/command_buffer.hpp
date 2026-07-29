@@ -11,13 +11,11 @@
 #include <span>
 #include <vector>
 
-namespace inexor::vulkan_renderer::wrapper {
-// Forward declaration
+namespace inexor::vulkan_renderer::wrapper::core {
+// Forward declarations
 class Device;
-
-// Forward declaration
 struct QueueSemaphoreWait;
-} // namespace inexor::vulkan_renderer::wrapper
+} // namespace inexor::vulkan_renderer::wrapper::core
 
 namespace inexor::vulkan_renderer::wrapper::synchronization {
 // Forward declaration
@@ -50,7 +48,7 @@ namespace inexor::vulkan_renderer::wrapper::commands {
 using render_graph::Buffer;
 using render_graph::BufferType;
 using tools::InexorException;
-using wrapper::Device;
+using wrapper::core::QueueSemaphoreWait;
 using wrapper::descriptors::PerFrameDescriptorSets;
 using wrapper::images::Image;
 using wrapper::pipelines::GraphicsPipeline;
@@ -62,12 +60,12 @@ using wrapper::synchronization::Fence;
 /// @TODO Make trivially copyable (this class doesn't really "own" the command buffer, more just an OOP wrapper).
 class CommandBuffer {
     // The Device wrapper must be able to call begin_command_buffer and end_command_buffer
-    friend class Device;
+    friend class core::Device;
     friend class CommandPool;
 
 private:
     VkCommandBuffer m_cmd_buf{VK_NULL_HANDLE};
-    const Device &m_device;
+    const core::Device &m_device;
     mutable std::string m_name;
     std::unique_ptr<Fence> m_wait_fence;
     mutable bool m_has_been_submitted{false};
@@ -112,11 +110,11 @@ private:
                 std::span<const VkSemaphore> signal_semaphores = {}) const;
 
     /// Compatibility overload that accepts explicit stage masks per wait semaphore.
-    void submit(const VkQueueFlagBits queue_type, std::span<const wrapper::QueueSemaphoreWait> wait_semaphores,
+    void submit(const VkQueueFlagBits queue_type, std::span<const QueueSemaphoreWait> wait_semaphores,
                 std::span<const VkSemaphore> signal_semaphores = {}) const;
 
     /// Compatibility overload that accepts explicit stage masks per wait semaphore and per signal semaphore.
-    void submit(const VkQueueFlagBits queue_type, std::span<const wrapper::QueueSemaphoreWait> wait_semaphores,
+    void submit(const VkQueueFlagBits queue_type, std::span<const QueueSemaphoreWait> wait_semaphores,
                 std::span<const VkSemaphoreSubmitInfo> signal_semaphore_infos) const;
 
     ///
@@ -143,7 +141,7 @@ public:
     /// @param device A const reference to the device wrapper class
     /// @param cmd_pool The command pool from which the command buffer will be allocated
     /// @param name The internal debug marker name of the command buffer (must not be empty)
-    CommandBuffer(const Device &device, VkCommandPool cmd_pool, std::string name,
+    CommandBuffer(const core::Device &device, VkCommandPool cmd_pool, std::string name,
                   VkCommandBufferLevel level = VK_COMMAND_BUFFER_LEVEL_PRIMARY);
 
     CommandBuffer(const CommandBuffer &) = delete;

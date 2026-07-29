@@ -12,7 +12,7 @@
 #include "inexor/vulkan-renderer/tools/enumerate.hpp"
 #include "inexor/vulkan-renderer/tools/exception.hpp"
 #include "inexor/vulkan-renderer/tools/random.hpp"
-#include "inexor/vulkan-renderer/wrapper/instance.hpp"
+#include "inexor/vulkan-renderer/wrapper/core/instance.hpp"
 #include "inexor/vulkan-renderer/wrapper/windows/surface.hpp"
 #include "inexor/vulkan-renderer/wrapper/windows/window.hpp"
 
@@ -223,7 +223,7 @@ ExampleApp::ExampleApp(int argc, char **argv) {
     }
 
     // If the instance extension "VK_EXT_debug_utils" is available on the system, enable it.
-    if (wrapper::is_instance_extension_supported(VK_EXT_DEBUG_UTILS_EXTENSION_NAME)) {
+    if (wrapper::core::is_instance_extension_supported(VK_EXT_DEBUG_UTILS_EXTENSION_NAME)) {
         instance_extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
     }
 
@@ -237,7 +237,7 @@ ExampleApp::ExampleApp(int argc, char **argv) {
     spdlog::trace("Required GLFW instance extensions:");
     for (std::size_t index = 0; index < glfw_extension_count; index++) {
         // We must make sure that each instance extension that is required by glfw is available on the system.
-        if (!wrapper::is_instance_extension_supported(glfw_extensions[index])) {
+        if (!wrapper::core::is_instance_extension_supported(glfw_extensions[index])) {
             // If any of the instance extensions that is required by glfw is not available, we will fail.
             throw InexorException("Error: glfw instance extension '" + std::string(glfw_extensions[index]) +
                                   "' is not available on the system!");
@@ -247,7 +247,7 @@ ExampleApp::ExampleApp(int argc, char **argv) {
         }
     }
 
-    if (wrapper::is_instance_layer_supported("VK_LAYER_KHRONOS_validation")) {
+    if (wrapper::core::is_instance_layer_supported("VK_LAYER_KHRONOS_validation")) {
         instance_layers.push_back("VK_LAYER_KHRONOS_validation");
     } else {
         spdlog::error("Instance layer 'VK_LAYER_KHRONOS_validation' is not available on this system!");

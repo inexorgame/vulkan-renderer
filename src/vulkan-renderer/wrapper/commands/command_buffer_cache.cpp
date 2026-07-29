@@ -2,7 +2,7 @@
 
 #include "inexor/vulkan-renderer/tools/exception.hpp"
 #include "inexor/vulkan-renderer/wrapper/commands/command_buffer.hpp"
-#include "inexor/vulkan-renderer/wrapper/device.hpp"
+#include "inexor/vulkan-renderer/wrapper/core/device.hpp"
 
 #include <limits>
 #include <span>
@@ -10,9 +10,7 @@
 
 namespace inexor::vulkan_renderer::wrapper::commands {
 
-using tools::VulkanException;
-
-CommandBufferCache::CommandBufferCache(Device &device, const bool use_secondary_command_buffers)
+CommandBufferCache::CommandBufferCache(core::Device &device, const bool use_secondary_command_buffers)
     : m_device(device), m_use_secondary_command_buffers(use_secondary_command_buffers) {}
 
 CommandBufferCache::SecondaryCommandBufferState &CommandBufferCache::state_for_pass(const std::string &pass_name) {

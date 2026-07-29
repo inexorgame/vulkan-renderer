@@ -4,7 +4,7 @@
 #include "inexor/vulkan-renderer/tools/exception.hpp"
 #include "inexor/vulkan-renderer/tools/make_info.hpp"
 #include "inexor/vulkan-renderer/wrapper/commands/command_buffer.hpp"
-#include "inexor/vulkan-renderer/wrapper/device.hpp"
+#include "inexor/vulkan-renderer/wrapper/core/device.hpp"
 #include "inexor/vulkan-renderer/wrapper/images/image.hpp"
 #include "inexor/vulkan-renderer/wrapper/images/sampler.hpp"
 #include "inexor/vulkan-renderer/wrapper/synchronization/pipeline_barrier_batch_builder.hpp"
@@ -14,7 +14,7 @@
 
 namespace inexor::vulkan_renderer::render_graph {
 
-Texture::Texture(const Device &device, std::string name, const TextureUsage usage, const VkFormat format,
+Texture::Texture(const wrapper::core::Device &device, std::string name, const TextureUsage usage, const VkFormat format,
                  const std::uint32_t width, const std::uint32_t height, const std::uint32_t channels,
                  const VkSampleCountFlagBits samples, std::optional<std::function<void()>> on_update)
     : m_device(device), m_name(std::move(name)), m_usage(usage), m_on_update(std::move(on_update)), m_format(format),

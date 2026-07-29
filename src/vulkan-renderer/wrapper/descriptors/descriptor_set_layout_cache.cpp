@@ -1,7 +1,7 @@
 #include "inexor/vulkan-renderer/wrapper/descriptors/descriptor_set_layout_cache.hpp"
 
 #include "inexor/vulkan-renderer/tools/exception.hpp"
-#include "inexor/vulkan-renderer/wrapper/device.hpp"
+#include "inexor/vulkan-renderer/wrapper/core/device.hpp"
 
 #include <algorithm>
 #include <cassert>
@@ -9,7 +9,7 @@
 
 namespace inexor::vulkan_renderer::wrapper::descriptors {
 
-DescriptorSetLayoutCache::DescriptorSetLayoutCache(const Device &device) : m_device(device) {}
+DescriptorSetLayoutCache::DescriptorSetLayoutCache(const core::Device &device) : m_device(device) {}
 
 DescriptorSetLayoutCache::DescriptorSetLayoutCache(DescriptorSetLayoutCache &&other) noexcept
     : m_device(other.m_device) {

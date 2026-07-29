@@ -34,7 +34,7 @@ using vulkan_renderer::tools::CameraType;
 using vulkan_renderer::tools::FPSLimiter;
 using vulkan_renderer::tools::InexorException;
 using vulkan_renderer::tools::VulkanException;
-using vulkan_renderer::wrapper::Instance;
+using vulkan_renderer::wrapper::core::Instance;
 using vulkan_renderer::wrapper::descriptors::DescriptorSetLayoutBuilder;
 using vulkan_renderer::wrapper::descriptors::WriteDescriptorSetBuilder;
 using vulkan_renderer::wrapper::pipelines::GraphicsPipelineBuilder;

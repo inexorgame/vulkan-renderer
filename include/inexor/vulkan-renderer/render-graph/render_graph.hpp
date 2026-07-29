@@ -13,7 +13,7 @@
 #include "inexor/vulkan-renderer/render-graph/texture_copy_batch_builder.hpp"
 #include "inexor/vulkan-renderer/wrapper/commands/command_buffer.hpp"
 #include "inexor/vulkan-renderer/wrapper/commands/command_buffer_cache.hpp"
-#include "inexor/vulkan-renderer/wrapper/device.hpp"
+#include "inexor/vulkan-renderer/wrapper/core/device.hpp"
 #include "inexor/vulkan-renderer/wrapper/pipelines/graphics_pipeline_builder.hpp"
 #include "inexor/vulkan-renderer/wrapper/pipelines/pipeline_cache.hpp"
 #include "inexor/vulkan-renderer/wrapper/synchronization/pipeline_barrier_batch_builder.hpp"
@@ -29,16 +29,17 @@
 #include <unordered_map>
 #include <vector>
 
-namespace inexor::vulkan_renderer::wrapper {
+namespace inexor::vulkan_renderer::wrapper::core {
 // Forward declaration
 class Device;
-} // namespace inexor::vulkan_renderer::wrapper
+} // namespace inexor::vulkan_renderer::wrapper::core
 
 namespace inexor::vulkan_renderer::render_graph {
 
 // Using declarations
-using wrapper::DebugLabelColor;
 using wrapper::commands::CommandBufferCache;
+using wrapper::core::DebugLabelColor;
+using wrapper::core::Device;
 using wrapper::descriptors::PerFrameDescriptorSets;
 using wrapper::pipelines::GraphicsPipelineBuilder;
 using wrapper::pipelines::PipelineCache;
@@ -119,7 +120,7 @@ private:
     std::vector<std::function<void()>> m_scratch_pending_releases;
     std::vector<VkFormat> m_scratch_color_attachment_formats;
     /// Reused scratch storage for render() to avoid a heap allocation every frame
-    std::vector<wrapper::QueueSemaphoreWait> m_scratch_render_wait_semaphores;
+    std::vector<wrapper::core::QueueSemaphoreWait> m_scratch_render_wait_semaphores;
 
     void defer_release(std::span<const VkFence> fences, std::function<void()> release);
 

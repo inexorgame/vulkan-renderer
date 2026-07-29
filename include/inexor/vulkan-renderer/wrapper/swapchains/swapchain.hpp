@@ -10,10 +10,10 @@
 #include <span>
 #include <vector>
 
-namespace inexor::vulkan_renderer::wrapper {
+namespace inexor::vulkan_renderer::wrapper::core {
 // Forward declaration
 class Device;
-} // namespace inexor::vulkan_renderer::wrapper
+} // namespace inexor::vulkan_renderer::wrapper::core
 
 namespace inexor::vulkan_renderer::wrapper::commands {
 // Forward declaration
@@ -29,8 +29,8 @@ namespace inexor::vulkan_renderer::wrapper::swapchains {
 
 // Using declaration
 using synchronization::Semaphore;
-using wrapper::Device;
 using wrapper::commands::CommandBuffer;
+using wrapper::core::Device;
 
 /// RAII wrapper class for swapchains
 class Swapchain {

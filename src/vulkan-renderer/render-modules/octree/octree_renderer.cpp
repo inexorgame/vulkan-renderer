@@ -26,7 +26,8 @@ OctreeRenderer::OctreeRenderer(std::shared_ptr<RenderGraph> render_graph, std::w
     using render_graph::GraphicsPassBuilder;
     using tools::InexorException;
     using tools::make_info;
-    using wrapper::DebugLabelColor;
+    using wrapper::commands::CommandBuffer;
+    using wrapper::core::DebugLabelColor;
     using wrapper::pipelines::GraphicsPipelineBuilder;
 
     if (!render_graph) {

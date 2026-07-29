@@ -7,10 +7,10 @@
 #include <string>
 #include <vector>
 
-namespace inexor::vulkan_renderer::wrapper {
+namespace inexor::vulkan_renderer::wrapper::core {
 // Forward declaration
 class Device;
-} // namespace inexor::vulkan_renderer::wrapper
+} // namespace inexor::vulkan_renderer::wrapper::core
 
 namespace inexor::vulkan_renderer::tools {
 /// Forward declarations
@@ -22,7 +22,7 @@ namespace inexor::vulkan_renderer::render_graph {
 
 using tools::InexorException;
 using tools::VulkanException;
-using wrapper::Device;
+using wrapper::core::Device;
 
 class StagingBuffer {
 private:

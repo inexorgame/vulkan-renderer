@@ -1,7 +1,7 @@
 #pragma once
 
 #include "inexor/vulkan-renderer/wrapper/commands/command_buffer.hpp"
-#include "inexor/vulkan-renderer/wrapper/device.hpp"
+#include "inexor/vulkan-renderer/wrapper/core/device.hpp"
 #include "inexor/vulkan-renderer/wrapper/swapchains/swapchain.hpp"
 
 #include <cstddef>
@@ -14,6 +14,7 @@ namespace inexor::vulkan_renderer::render_graph {
 class GraphicsPass;
 
 using wrapper::commands::CommandBuffer;
+using wrapper::core::Device;
 using wrapper::swapchains::Swapchain;
 
 class SwapchainManager {
@@ -23,7 +24,7 @@ private:
         std::weak_ptr<Swapchain> swapchain;
     };
 
-    wrapper::Device &m_device;
+    Device &m_device;
     std::vector<SwapchainCacheEntry> m_cached_swapchains;
     bool m_swapchain_cache_dirty{true};
     std::vector<std::shared_ptr<Swapchain>> m_frame_swapchains;
@@ -35,7 +36,7 @@ private:
     void rebuild_swapchain_cache(const std::vector<std::shared_ptr<GraphicsPass>> &graphics_passes);
 
 public:
-    explicit SwapchainManager(wrapper::Device &device);
+    explicit SwapchainManager(Device &device);
 
     void mark_swapchain_cache_dirty();
 

@@ -5,10 +5,10 @@
 #include <memory>
 #include <string>
 
-namespace inexor::vulkan_renderer::wrapper {
+namespace inexor::vulkan_renderer::wrapper::core {
 // Forward declaration
 class Device;
-} // namespace inexor::vulkan_renderer::wrapper
+} // namespace inexor::vulkan_renderer::wrapper::core
 
 namespace inexor::vulkan_renderer::wrapper::commands {
 // Forward declaration
@@ -21,12 +21,12 @@ class RenderGraph;
 class Texture;
 } // namespace inexor::vulkan_renderer::render_graph
 
-// Using declarations
-using inexor::vulkan_renderer::render_graph::Texture;
-using inexor::vulkan_renderer::wrapper::Device;
-using inexor::vulkan_renderer::wrapper::commands::CommandBuffer;
-
 namespace inexor::vulkan_renderer::wrapper::images {
+
+// Using declarations
+using render_graph::Texture;
+using wrapper::commands::CommandBuffer;
+using wrapper::core::Device;
 
 /// RAII wrapper for VkImage and VkImageView
 class Image {

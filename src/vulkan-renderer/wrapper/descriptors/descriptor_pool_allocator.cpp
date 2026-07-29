@@ -6,7 +6,7 @@
 
 namespace inexor::vulkan_renderer::wrapper::descriptors {
 
-DescriptorPoolAllocator::DescriptorPoolAllocator(const Device &device) : m_device(device) {}
+DescriptorPoolAllocator::DescriptorPoolAllocator(const core::Device &device) : m_device(device) {}
 
 DescriptorPoolAllocator::DescriptorPoolAllocator(DescriptorPoolAllocator &&other) noexcept : m_device(other.m_device) {
     m_pools = std::move(other.m_pools);
