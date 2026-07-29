@@ -6,6 +6,8 @@
 #include "inexor/vulkan-renderer/wrapper/commands/command_buffer.hpp"
 #include "inexor/vulkan-renderer/wrapper/commands/command_pool.hpp"
 
+#include <vk_mem_alloc.h>
+
 #include <array>
 #include <functional>
 #include <memory>
@@ -342,3 +344,6 @@ public:
 };
 
 } // namespace inexor::vulkan_renderer::wrapper::core
+ 
+ 
+ 

@@ -1,9 +1,14 @@
 ﻿#include "inexor/vulkan-renderer/render-graph/render_graph.hpp"
 
+#include "inexor/vulkan-renderer/render-graph/buffer.hpp"
+#include "inexor/vulkan-renderer/render-graph/graphics_pass.hpp"
+#include "inexor/vulkan-renderer/render-graph/texture.hpp"
 #include "inexor/vulkan-renderer/tools/exception.hpp"
 #include "inexor/vulkan-renderer/tools/make_info.hpp"
+#include "inexor/vulkan-renderer/wrapper/core/device.hpp"
 #include "inexor/vulkan-renderer/wrapper/descriptors/per_frame_descriptor_sets.hpp"
 #include "inexor/vulkan-renderer/wrapper/synchronization/pipeline_barrier_batch_builder.hpp"
+#include "inexor/vulkan-renderer/wrapper/synchronization/semaphore.hpp"
 
 #include <spdlog/spdlog.h>
 
@@ -21,6 +26,7 @@ using wrapper::descriptors::DescriptorSetLayoutBuilder;
 using wrapper::descriptors::DescriptorType;
 using wrapper::descriptors::PerFrameDescriptorSets;
 using wrapper::descriptors::WriteDescriptorSetBuilder;
+using wrapper::synchronization::Semaphore;
 
 RenderGraph::RenderGraph(Device &device, const bool use_secondary_command_buffers)
     : m_device(device), m_resource_descriptors(device), m_graphics_pipeline_builder(device),

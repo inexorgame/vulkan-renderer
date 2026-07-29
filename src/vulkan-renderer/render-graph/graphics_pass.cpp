@@ -1,7 +1,10 @@
 #include "inexor/vulkan-renderer/render-graph/graphics_pass.hpp"
 
+#include "inexor/vulkan-renderer/render-graph/buffer.hpp"
 #include "inexor/vulkan-renderer/tools/exception.hpp"
 #include "inexor/vulkan-renderer/tools/make_info.hpp"
+#include "inexor/vulkan-renderer/wrapper/descriptors/descriptor_set_layout.hpp"
+#include "inexor/vulkan-renderer/wrapper/swapchains/swapchain.hpp"
 
 #include <utility>
 
@@ -84,6 +87,8 @@ GraphicsPass::GraphicsPass(GraphicsPass &&other) noexcept {
     m_scratch_current_texture_states = std::move(other.m_scratch_current_texture_states);
     m_scratch_current_swapchain_states = std::move(other.m_scratch_current_swapchain_states);
 }
+
+GraphicsPass::~GraphicsPass() = default;
 
 void GraphicsPass::reset_rendering_info() {
     m_rendering_info = make_info<VkRenderingInfo>();

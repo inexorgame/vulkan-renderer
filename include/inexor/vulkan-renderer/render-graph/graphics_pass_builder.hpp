@@ -1,10 +1,7 @@
 #pragma once
 
-#include "inexor/vulkan-renderer/render-graph/buffer.hpp"
-#include "inexor/vulkan-renderer/render-graph/graphics_pass.hpp"
-#include "inexor/vulkan-renderer/render-graph/texture.hpp"
 #include "inexor/vulkan-renderer/tools/make_info.hpp"
-#include "inexor/vulkan-renderer/wrapper/swapchains/swapchain.hpp"
+#include "inexor/vulkan-renderer/wrapper/core/device.hpp"
 
 #include <functional>
 #include <memory>
@@ -15,6 +12,18 @@ namespace inexor::vulkan_renderer::wrapper::commands {
 // Forward declaration
 class CommandBuffer;
 } // namespace inexor::vulkan_renderer::wrapper::commands
+
+namespace inexor::vulkan_renderer::wrapper::swapchains {
+// Forward declaration
+class Swapchain;
+} // namespace inexor::vulkan_renderer::wrapper::swapchains
+
+namespace inexor::vulkan_renderer::render_graph {
+// Forward declarations
+class Buffer;
+class GraphicsPass;
+class Texture;
+} // namespace inexor::vulkan_renderer::render_graph
 
 namespace inexor::vulkan_renderer::render_graph {
 

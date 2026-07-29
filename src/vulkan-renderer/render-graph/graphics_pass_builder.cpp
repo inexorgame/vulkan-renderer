@@ -1,6 +1,10 @@
 #include "inexor/vulkan-renderer/render-graph/graphics_pass_builder.hpp"
 
+#include "inexor/vulkan-renderer/render-graph/buffer.hpp"
+#include "inexor/vulkan-renderer/render-graph/graphics_pass.hpp"
+#include "inexor/vulkan-renderer/render-graph/texture.hpp"
 #include "inexor/vulkan-renderer/tools/exception.hpp"
+#include "inexor/vulkan-renderer/wrapper/swapchains/swapchain.hpp"
 
 #include <utility>
 

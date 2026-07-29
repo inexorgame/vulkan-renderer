@@ -1,23 +1,17 @@
 #pragma once
 
-// @TODO Forward-declare as much as possible!
-#include "inexor/vulkan-renderer/render-graph/buffer.hpp"
 #include "inexor/vulkan-renderer/render-graph/buffer_copy_batch_builder.hpp"
 #include "inexor/vulkan-renderer/render-graph/frame_sync_manager.hpp"
-#include "inexor/vulkan-renderer/render-graph/graphics_pass.hpp"
 #include "inexor/vulkan-renderer/render-graph/graphics_pass_builder.hpp"
 #include "inexor/vulkan-renderer/render-graph/resource_descriptor_manager.hpp"
 #include "inexor/vulkan-renderer/render-graph/staging_buffer.hpp"
 #include "inexor/vulkan-renderer/render-graph/swapchain_manager.hpp"
-#include "inexor/vulkan-renderer/render-graph/texture.hpp"
 #include "inexor/vulkan-renderer/render-graph/texture_copy_batch_builder.hpp"
 #include "inexor/vulkan-renderer/wrapper/commands/command_buffer.hpp"
 #include "inexor/vulkan-renderer/wrapper/commands/command_buffer_cache.hpp"
-#include "inexor/vulkan-renderer/wrapper/core/device.hpp"
 #include "inexor/vulkan-renderer/wrapper/pipelines/graphics_pipeline_builder.hpp"
 #include "inexor/vulkan-renderer/wrapper/pipelines/pipeline_cache.hpp"
 #include "inexor/vulkan-renderer/wrapper/synchronization/pipeline_barrier_batch_builder.hpp"
-#include "inexor/vulkan-renderer/wrapper/synchronization/semaphore.hpp"
 
 #include <functional>
 #include <limits>
@@ -34,6 +28,18 @@ namespace inexor::vulkan_renderer::wrapper::core {
 class Device;
 } // namespace inexor::vulkan_renderer::wrapper::core
 
+namespace inexor::vulkan_renderer::wrapper::synchronization {
+// Forward declaration
+class Semaphore;
+} // namespace inexor::vulkan_renderer::wrapper::synchronization
+
+namespace inexor::vulkan_renderer::render_graph {
+// Forward declarations
+class Buffer;
+class GraphicsPass;
+class Texture;
+} // namespace inexor::vulkan_renderer::render_graph
+
 namespace inexor::vulkan_renderer::render_graph {
 
 // Using declarations
@@ -44,7 +50,6 @@ using wrapper::descriptors::PerFrameDescriptorSets;
 using wrapper::pipelines::GraphicsPipelineBuilder;
 using wrapper::pipelines::PipelineCache;
 using wrapper::synchronization::PipelineBarrierBuilder;
-using wrapper::synchronization::Semaphore;
 
 // @TODO How to handle optional texture update depending on texture type?
 // @TODO By implementing textures which are not updated, but only initliazed, we could save memory!
@@ -96,7 +101,7 @@ private:
 
     SwapchainManager m_swapchain_manager;
     CommandBufferCache m_command_buffer_cache;
-    std::unique_ptr<Semaphore> m_upload_finished;
+    std::unique_ptr<wrapper::synchronization::Semaphore> m_upload_finished;
     bool m_upload_submission_pending{false};
     VkPipelineStageFlags2 m_upload_wait_stage_mask{VK_PIPELINE_STAGE_2_NONE};
     std::function<void(const CommandBuffer &)> m_inline_update_commands;

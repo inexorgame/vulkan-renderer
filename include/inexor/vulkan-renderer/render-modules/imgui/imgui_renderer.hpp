@@ -1,14 +1,10 @@
 ﻿#pragma once
 
-#include "inexor/vulkan-renderer/render-graph/buffer.hpp"
-#include "inexor/vulkan-renderer/render-graph/graphics_pass.hpp"
-#include "inexor/vulkan-renderer/render-graph/render_graph.hpp"
-#include "inexor/vulkan-renderer/render-graph/texture.hpp"
-#include "inexor/vulkan-renderer/wrapper/pipelines/graphics_pipeline.hpp"
-
 #include <glm/vec2.hpp>
 #include <imgui.h>
+#include <volk.h>
 
+#include <functional>
 #include <memory>
 #include <vector>
 
@@ -32,26 +28,28 @@ namespace inexor::vulkan_renderer::wrapper::descriptors {
 class PerFrameDescriptorSets;
 } // namespace inexor::vulkan_renderer::wrapper::descriptors
 
+namespace inexor::vulkan_renderer::render_graph {
+// Forward declarations
+class Buffer;
+class GraphicsPass;
+class RenderGraph;
+class Texture;
+} // namespace inexor::vulkan_renderer::render_graph
+
+namespace inexor::vulkan_renderer::wrapper::pipelines {
+// Forward declaration
+class GraphicsPipeline;
+} // namespace inexor::vulkan_renderer::wrapper::pipelines
+
 namespace inexor::vulkan_renderer::render_modules::imgui {
 
-// @TODO: Simplify the using declarations! Which ones do we need?
-
-// Using declarations
+// Using declarations - only those needed by header declarations
 using render_graph::Buffer;
-using render_graph::BufferType;
-using render_graph::DebugLabelColor;
 using render_graph::GraphicsPass;
-using render_graph::GraphicsPipelineBuilder;
 using render_graph::RenderGraph;
 using render_graph::Texture;
 using wrapper::Shader;
-using wrapper::commands::CommandBuffer;
-using wrapper::core::Device;
-using wrapper::descriptors::DescriptorSetAllocator;
-using wrapper::descriptors::DescriptorSetLayoutBuilder;
-using wrapper::descriptors::DescriptorType;
 using wrapper::descriptors::PerFrameDescriptorSets;
-using wrapper::descriptors::WriteDescriptorSetBuilder;
 using wrapper::pipelines::GraphicsPipeline;
 using wrapper::swapchains::Swapchain;
 

@@ -4,8 +4,6 @@
 
 #include "inexor/vulkan-renderer/render-graph/texture.hpp"
 #include "inexor/vulkan-renderer/wrapper/core/device.hpp"
-#include "inexor/vulkan-renderer/wrapper/descriptors/descriptor_set_layout.hpp"
-#include "inexor/vulkan-renderer/wrapper/swapchains/swapchain.hpp"
 
 #include <array>
 #include <functional>
@@ -13,10 +11,25 @@
 #include <optional>
 #include <string>
 
+namespace inexor::vulkan_renderer::wrapper::descriptors {
+// Forward declaration
+class DescriptorSetLayout;
+} // namespace inexor::vulkan_renderer::wrapper::descriptors
+
+namespace inexor::vulkan_renderer::wrapper::swapchains {
+// Forward declaration
+class Swapchain;
+} // namespace inexor::vulkan_renderer::wrapper::swapchains
+
 namespace inexor::vulkan_renderer::wrapper::commands {
 // Forward declaration
 class CommandBuffer;
 } // namespace inexor::vulkan_renderer::wrapper::commands
+
+namespace inexor::vulkan_renderer::render_graph {
+// Forward declaration
+class Buffer;
+} // namespace inexor::vulkan_renderer::render_graph
 
 namespace inexor::vulkan_renderer::render_graph {
 
@@ -114,7 +127,7 @@ public:
 
     GraphicsPass(const GraphicsPass &) = delete;
     GraphicsPass(GraphicsPass &&other) noexcept;
-    ~GraphicsPass() = default;
+    ~GraphicsPass();
 
     GraphicsPass &operator=(const GraphicsPass &) = delete;
     GraphicsPass &operator=(GraphicsPass &&) = delete;

@@ -1,9 +1,25 @@
 #include "inexor/vulkan-renderer/render-modules/imgui/imgui_renderer.hpp"
 
+#include "inexor/vulkan-renderer/render-graph/buffer.hpp"
+#include "inexor/vulkan-renderer/render-graph/graphics_pass.hpp"
+#include "inexor/vulkan-renderer/render-graph/render_graph.hpp"
+#include "inexor/vulkan-renderer/render-graph/texture.hpp"
 #include "inexor/vulkan-renderer/wrapper/descriptors/per_frame_descriptor_sets.hpp"
+#include "inexor/vulkan-renderer/wrapper/pipelines/graphics_pipeline.hpp"
 #include "inexor/vulkan-renderer/wrapper/shader.hpp"
 
 namespace inexor::vulkan_renderer::render_modules::imgui {
+
+// Using declarations for types only used in the implementation
+using render_graph::BufferType;
+using render_graph::DebugLabelColor;
+using render_graph::GraphicsPipelineBuilder;
+using wrapper::commands::CommandBuffer;
+using wrapper::core::Device;
+using wrapper::descriptors::DescriptorSetAllocator;
+using wrapper::descriptors::DescriptorSetLayoutBuilder;
+using wrapper::descriptors::DescriptorType;
+using wrapper::descriptors::WriteDescriptorSetBuilder;
 
 ImGuiRenderer::ImGuiRenderer(std::shared_ptr<RenderGraph> render_graph, std::weak_ptr<Swapchain> swapchain,
                              std::function<void()> on_update_user_imgui_data)

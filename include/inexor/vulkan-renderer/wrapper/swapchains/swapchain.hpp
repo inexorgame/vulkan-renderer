@@ -1,7 +1,8 @@
 #pragma once
 
-#include "inexor/vulkan-renderer/wrapper/commands/command_buffer.hpp"
 #include "inexor/vulkan-renderer/wrapper/synchronization/semaphore.hpp"
+
+#include <volk.h>
 
 #include <cstdint>
 #include <limits>
@@ -19,11 +20,6 @@ namespace inexor::vulkan_renderer::wrapper::commands {
 // Forward declaration
 class CommandBuffer;
 } // namespace inexor::vulkan_renderer::wrapper::commands
-
-namespace inexor::vulkan_renderer::wrapper::synchronization {
-// Forward declaration
-class Semaphore;
-} // namespace inexor::vulkan_renderer::wrapper::synchronization
 
 namespace inexor::vulkan_renderer::wrapper::swapchains {
 

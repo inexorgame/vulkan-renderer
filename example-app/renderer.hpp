@@ -1,6 +1,5 @@
 ﻿#pragma once
 
-// @TODO Forward-declare as much as possible!
 #include "inexor/vulkan-renderer/render-graph/render_graph.hpp"
 #include "inexor/vulkan-renderer/render-modules/imgui/imgui_renderer.hpp"
 #include "inexor/vulkan-renderer/render-modules/octree/octree_renderer.hpp"

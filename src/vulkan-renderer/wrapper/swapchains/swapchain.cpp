@@ -4,9 +4,9 @@
 #include "inexor/vulkan-renderer/tools/exception.hpp"
 #include "inexor/vulkan-renderer/tools/make_info.hpp"
 #include "inexor/vulkan-renderer/tools/representation.hpp"
+#include "inexor/vulkan-renderer/wrapper/commands/command_buffer.hpp"
 #include "inexor/vulkan-renderer/wrapper/core/device.hpp"
 #include "inexor/vulkan-renderer/wrapper/swapchains/swapchain_utils.hpp"
-#include "inexor/vulkan-renderer/wrapper/synchronization/semaphore.hpp"
 
 #include <spdlog/spdlog.h>
 

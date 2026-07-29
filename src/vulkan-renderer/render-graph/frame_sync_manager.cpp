@@ -11,6 +11,8 @@
 
 namespace inexor::vulkan_renderer::render_graph {
 
+using tools::VulkanException;
+
 FrameSyncManager::FrameSyncManager(const wrapper::core::Device &device) : m_device(device) {}
 
 void FrameSyncManager::set_frame_context(const std::size_t frame_slot_count, const std::size_t current_frame_slot) {
