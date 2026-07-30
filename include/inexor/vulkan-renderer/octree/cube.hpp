@@ -40,7 +40,8 @@ public:
     static constexpr std::size_t EDGES{12};
     /// Cube Type.
     enum class Type { EMPTY = 0b00u, SOLID = 0b01u, NORMAL = 0b10u, OCTANT = 0b11u };
-    enum class NeighborAxis { X = 2, Y = 1, Z = 0 };
+    /// Axis enumeration for neighbor lookups and rotations.
+    enum class Axis { X = 2, Y = 1, Z = 0 };
     enum class NeighborDirection { POSITIVE, NEGATIVE };
 
     /// IDs of the children and edges which will be swapped to receive the rotation.
@@ -153,7 +154,7 @@ public:
     /// @see Samet, H. (1989) [Neighbor finding in Images Represented by Octrees.]
     /// (https://web.archive.org/web/20190712063957/http://www.cs.umd.edu/~hjs/pubs/SameCVGIP89.pdf)
     /// Computer Vision, Graphics, and Image Processing. 46 (3), 367-386.
-    [[nodiscard]] std::shared_ptr<Cube> neighbor(NeighborAxis axis, NeighborDirection direction);
+    [[nodiscard]] std::shared_ptr<Cube> neighbor(Axis axis, NeighborDirection direction);
 
     /// Recursive way to collect all the caches.
     /// @param update_invalid If true it will update invalid polygon caches.

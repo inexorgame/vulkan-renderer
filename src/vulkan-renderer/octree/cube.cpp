@@ -182,7 +182,7 @@ std::vector<PolygonCache> Cube::polygons(const bool update_invalid) const {
     return polygons;
 }
 
-std::shared_ptr<Cube> Cube::neighbor(const NeighborAxis axis, const NeighborDirection direction) {
+std::shared_ptr<Cube> Cube::neighbor(const Axis axis, const NeighborDirection direction) {
     if (is_root()) {
         return nullptr;
     }
