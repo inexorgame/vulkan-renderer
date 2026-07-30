@@ -19,10 +19,10 @@ namespace inexor::vulkan_renderer::tools {
 class Camera;
 } // namespace inexor::vulkan_renderer::tools
 
-namespace inexor::vulkan_renderer::wrapper {
+namespace inexor::vulkan_renderer::wrapper::shaders {
 // Forward declaration
 class Shader;
-} // namespace inexor::vulkan_renderer::wrapper
+} // namespace inexor::vulkan_renderer::wrapper::shaders
 
 namespace inexor::vulkan_renderer::wrapper::descriptors {
 // Forward declaration
@@ -47,9 +47,9 @@ using render_graph::GraphicsPass;
 using render_graph::RenderGraph;
 using render_graph::Texture;
 using vulkan_renderer::tools::Camera;
-using wrapper::Shader;
 using wrapper::descriptors::PerFrameDescriptorSets;
 using wrapper::pipelines::GraphicsPipeline;
+using wrapper::shaders::Shader;
 using wrapper::swapchains::Swapchain;
 
 /// @note We can exactly match the definition in the shader using data types in GLM.

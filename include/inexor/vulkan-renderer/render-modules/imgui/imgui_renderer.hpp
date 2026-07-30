@@ -8,10 +8,10 @@
 #include <memory>
 #include <vector>
 
-namespace inexor::vulkan_renderer::wrapper {
+namespace inexor::vulkan_renderer::wrapper::shaders {
 // Forward declaration
 class Shader;
-} // namespace inexor::vulkan_renderer::wrapper
+} // namespace inexor::vulkan_renderer::wrapper::shaders
 
 namespace inexor::vulkan_renderer::wrapper::core {
 // Forward declaration
@@ -48,9 +48,9 @@ using render_graph::Buffer;
 using render_graph::GraphicsPass;
 using render_graph::RenderGraph;
 using render_graph::Texture;
-using wrapper::Shader;
 using wrapper::descriptors::PerFrameDescriptorSets;
 using wrapper::pipelines::GraphicsPipeline;
+using wrapper::shaders::Shader;
 using wrapper::swapchains::Swapchain;
 
 // ImGui user interface integration

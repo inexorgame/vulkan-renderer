@@ -1,4 +1,4 @@
-#include "inexor/vulkan-renderer/wrapper/shader.hpp"
+#include "inexor/vulkan-renderer/wrapper/shaders/shader.hpp"
 
 #include "inexor/vulkan-renderer/tools/exception.hpp"
 #include "inexor/vulkan-renderer/tools/file.hpp"
@@ -8,7 +8,7 @@
 #include <cassert>
 #include <utility>
 
-namespace inexor::vulkan_renderer::wrapper {
+namespace inexor::vulkan_renderer::wrapper::shaders {
 
 Shader::Shader(const core::Device &device, const VkShaderStageFlagBits shader_stage,
                const std::string &shader_file_name, const std::string &entry_point)
@@ -48,4 +48,4 @@ Shader::~Shader() {
     vkDestroyShaderModule(m_device.device(), m_shader_module, nullptr);
 }
 
-} // namespace inexor::vulkan_renderer::wrapper
+} // namespace inexor::vulkan_renderer::wrapper::shaders

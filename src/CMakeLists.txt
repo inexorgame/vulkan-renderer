@@ -68,6 +68,8 @@ set(INEXOR_SOURCE_FILES
     vulkan-renderer/wrapper/pipelines/pipeline_cache.cpp
     vulkan-renderer/wrapper/pipelines/pipeline_layout.cpp
 
+    vulkan-renderer/wrapper/shaders/shader.cpp
+
     vulkan-renderer/wrapper/swapchains/swapchain_utils.cpp
     vulkan-renderer/wrapper/swapchains/swapchain.cpp
 
@@ -77,8 +79,6 @@ set(INEXOR_SOURCE_FILES
 
     vulkan-renderer/wrapper/windows/surface.cpp
     vulkan-renderer/wrapper/windows/window.cpp
-
-    vulkan-renderer/wrapper/shader.cpp
 )
 
 foreach(FILE ${INEXOR_SOURCE_FILES})

@@ -4,7 +4,7 @@
 #include "inexor/vulkan-renderer/tools/make_info.hpp"
 #include "inexor/vulkan-renderer/wrapper/core/device.hpp"
 #include "inexor/vulkan-renderer/wrapper/pipelines/graphics_pipeline.hpp"
-#include "inexor/vulkan-renderer/wrapper/shader.hpp"
+#include "inexor/vulkan-renderer/wrapper/shaders/shader.hpp"
 
 #include <spdlog/spdlog.h>
 
@@ -20,10 +20,10 @@ namespace inexor::vulkan_renderer::wrapper::core {
 class Device;
 } // namespace inexor::vulkan_renderer::wrapper::core
 
-namespace inexor::vulkan_renderer::wrapper {
+namespace inexor::vulkan_renderer::wrapper::shaders {
 // Forward declarations
 class Shader;
-} // namespace inexor::vulkan_renderer::wrapper
+} // namespace inexor::vulkan_renderer::wrapper::shaders
 
 namespace inexor::vulkan_renderer::wrapper::descriptors {
 // Forward declaration
@@ -38,6 +38,7 @@ class RenderGraph;
 namespace inexor::vulkan_renderer::wrapper::pipelines {
 
 // Using declaration
+using shaders::Shader;
 using tools::InexorException;
 
 // TODO: ComputePipelineBuilder

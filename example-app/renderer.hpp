@@ -11,7 +11,7 @@
 #include "inexor/vulkan-renderer/wrapper/core/instance.hpp"
 #include "inexor/vulkan-renderer/wrapper/pipelines/graphics_pipeline.hpp"
 #include "inexor/vulkan-renderer/wrapper/pipelines/pipeline_cache.hpp"
-#include "inexor/vulkan-renderer/wrapper/shader.hpp"
+#include "inexor/vulkan-renderer/wrapper/shaders/shader.hpp"
 
 #include <memory>
 #include <vector>

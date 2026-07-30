@@ -10,7 +10,7 @@ namespace inexor::vulkan_renderer::wrapper::core {
 class Device;
 } // namespace inexor::vulkan_renderer::wrapper::core
 
-namespace inexor::vulkan_renderer::wrapper {
+namespace inexor::vulkan_renderer::wrapper::shaders {
 
 /// RAII wrapper class for VkShaderModules
 class Shader {
@@ -54,4 +54,4 @@ public:
     }
 };
 
-} // namespace inexor::vulkan_renderer::wrapper
+} // namespace inexor::vulkan_renderer::wrapper::shaders
