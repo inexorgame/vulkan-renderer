@@ -24,6 +24,8 @@
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include <spdlog/spdlog.h>
 
+#include <vk_mem_alloc.h>
+
 #include <mutex>
 #include <stdexcept>
 #include <string_view>
@@ -34,6 +36,22 @@ namespace inexor::example_app {
 
 // Using declarations
 using namespace inexor::vulkan_renderer;
+
+namespace {
+
+void log_vma_statistics(const wrapper::core::Device &device, std::string_view context) {
+    char *vma_stats_string = nullptr;
+    vmaBuildStatsString(device.allocator(), &vma_stats_string, VK_TRUE);
+    if (vma_stats_string == nullptr) {
+        spdlog::warn("[{}] VMA statistics are unavailable", context);
+        return;
+    }
+
+    spdlog::info("[{}] VMA memory statistics:\n{}", context, vma_stats_string);
+    vmaFreeStatsString(device.allocator(), vma_stats_string);
+}
+
+} // namespace
 
 void ExampleApp::load_toml_configuration_file(const std::string &file_name) {
     spdlog::trace("Loading TOML configuration file: {}", file_name);
@@ -505,6 +523,8 @@ void ExampleApp::update_imgui_overlay() {
     ImGui::Text("Vulkan API %d.%d.%d, %s", VK_API_VERSION_MAJOR(Instance::REQUIRED_VK_API_VERSION),
                 VK_API_VERSION_MINOR(Instance::REQUIRED_VK_API_VERSION),
                 VK_API_VERSION_PATCH(Instance::REQUIRED_VK_API_VERSION), msaa_text);
+    ImGui::Text("Press N to regenerate octree");
+    ImGui::Text("Press V for VMA memory statistics");
     const auto cam_pos = m_camera->position();
     ImGui::Text("Camera position (%.2f, %.2f, %.2f)", cam_pos.x, cam_pos.y, cam_pos.z);
     const auto cam_rot = m_camera->rotation();
@@ -589,6 +609,9 @@ void ExampleApp::run() {
                 load_octree_geometry(false);
                 generate_octree_indices();
                 m_octree_renderer->set_vertices_and_indices(m_octree_vertices, m_octree_indices);
+            }
+            if (m_input->kbm_data().was_key_pressed_once(GLFW_KEY_V)) {
+                log_vma_statistics(*m_device, "Manual VMA statistics");
             }
             check_octree_collisions();
         }

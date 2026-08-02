@@ -16,6 +16,7 @@
 
 #include <algorithm>
 #include <functional>
+#include <string_view>
 #include <utility>
 
 namespace inexor::vulkan_renderer::wrapper::core {
