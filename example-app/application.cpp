@@ -12,6 +12,7 @@
 #include "inexor/vulkan-renderer/tools/enumerate.hpp"
 #include "inexor/vulkan-renderer/tools/exception.hpp"
 #include "inexor/vulkan-renderer/tools/random.hpp"
+#include "inexor/vulkan-renderer/tools/representation.hpp"
 #include "inexor/vulkan-renderer/wrapper/core/instance.hpp"
 #include "inexor/vulkan-renderer/wrapper/windows/surface.hpp"
 #include "inexor/vulkan-renderer/wrapper/windows/window.hpp"
@@ -256,6 +257,7 @@ ExampleApp::ExampleApp(int argc, char **argv) {
     }
 
     spdlog::info("MSAA sample count set to: {}", static_cast<int>(m_msaa_sample_count));
+    m_msaa_text = tools::as_string(m_msaa_sample_count);
 
     if (m_msaa_sample_count != VK_SAMPLE_COUNT_1_BIT) {
         spdlog::trace("MSAA requested: {}x", msaa_samples);
@@ -351,13 +353,8 @@ ExampleApp::ExampleApp(int argc, char **argv) {
         // Query supported sample counts for the depth format
         VkImageFormatProperties image_format_props;
         const VkResult result = vkGetPhysicalDeviceImageFormatProperties(
-            physical_device,
-            VK_FORMAT_D32_SFLOAT_S8_UINT,
-            VK_IMAGE_TYPE_2D,
-            VK_IMAGE_TILING_OPTIMAL,
-            VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
-            0,
-            &image_format_props);
+            physical_device, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_IMAGE_TYPE_2D, VK_IMAGE_TILING_OPTIMAL,
+            VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, 0, &image_format_props);
 
         if (result != VK_SUCCESS) {
             spdlog::error("Failed to query image format properties for depth format");
@@ -386,7 +383,8 @@ ExampleApp::ExampleApp(int argc, char **argv) {
                              static_cast<int>(m_msaa_sample_count), static_cast<int>(clamped));
                 m_msaa_sample_count = clamped;
             } else {
-                spdlog::info("MSAA sample count {} is supported by depth format", static_cast<int>(m_msaa_sample_count));
+                spdlog::info("MSAA sample count {} is supported by depth format",
+                             static_cast<int>(m_msaa_sample_count));
             }
         }
     }
@@ -470,7 +468,8 @@ void ExampleApp::setup_render_graph() {
     }
 
     // Initialize the octree renderer
-    m_octree_renderer = std::make_unique<OctreeRenderer>(m_render_graph, m_swapchain, m_depth_buffer, m_camera, m_color_buffer);
+    m_octree_renderer =
+        std::make_unique<OctreeRenderer>(m_render_graph, m_swapchain, m_depth_buffer, m_camera, m_color_buffer);
 
     // Initialize the ImGui renderer
     m_imgui_renderer = std::make_unique<ImGuiRenderer>(m_render_graph, m_swapchain, [&]() {
@@ -501,28 +500,9 @@ void ExampleApp::update_imgui_overlay() {
                  ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
     ImGui::Text("%s", m_device->gpu_name().c_str());
     ImGui::Text("Engine version %s (git SHA %s)", ENGINE_VERSION_STR, BUILD_GIT);
-    const char *msaa_text = "No MSAA";
-    switch (m_msaa_sample_count) {
-    case VK_SAMPLE_COUNT_2_BIT:
-        msaa_text = "2xMSAA";
-        break;
-    case VK_SAMPLE_COUNT_4_BIT:
-        msaa_text = "4xMSAA";
-        break;
-    case VK_SAMPLE_COUNT_8_BIT:
-        msaa_text = "8xMSAA";
-        break;
-    case VK_SAMPLE_COUNT_16_BIT:
-        msaa_text = "16xMSAA";
-        break;
-    case VK_SAMPLE_COUNT_1_BIT:
-    default:
-        msaa_text = "No MSAA";
-        break;
-    }
     ImGui::Text("Vulkan API %d.%d.%d, %s", VK_API_VERSION_MAJOR(Instance::REQUIRED_VK_API_VERSION),
                 VK_API_VERSION_MINOR(Instance::REQUIRED_VK_API_VERSION),
-                VK_API_VERSION_PATCH(Instance::REQUIRED_VK_API_VERSION), msaa_text);
+                VK_API_VERSION_PATCH(Instance::REQUIRED_VK_API_VERSION), m_msaa_text.data());
     ImGui::Text("Press N to regenerate octree");
     ImGui::Text("Press V for VMA memory statistics");
     const auto cam_pos = m_camera->position();

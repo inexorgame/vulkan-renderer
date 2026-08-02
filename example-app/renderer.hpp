@@ -14,6 +14,7 @@
 #include "inexor/vulkan-renderer/wrapper/shaders/shader.hpp"
 
 #include <memory>
+#include <string_view>
 #include <vector>
 
 namespace inexor::vulkan_renderer::wrapper::core {
@@ -100,6 +101,7 @@ protected:
 
     bool m_vsync_enabled{false};
     VkSampleCountFlagBits m_msaa_sample_count{VK_SAMPLE_COUNT_1_BIT};
+    std::string_view m_msaa_text{"No MSAA"};
 
     // @TODO Move to window wrapper!
     bool m_window_resized{false};
