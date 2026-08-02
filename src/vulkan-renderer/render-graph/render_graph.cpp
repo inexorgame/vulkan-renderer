@@ -25,8 +25,8 @@ void log_vma_statistics(const inexor::vulkan_renderer::wrapper::core::Device &de
     vmaCalculateStatistics(device.allocator(), &total_statistics);
 
     const auto log_statistics = [context](const char *label, const VmaStatistics &statistics) {
-        spdlog::info("[{}] {}: blockCount={}, allocationCount={}, blockBytes={}, allocationBytes={}", context,
-                     label, statistics.blockCount, statistics.allocationCount, statistics.blockBytes,
+        spdlog::info("[{}] {}: blockCount={}, allocationCount={}, blockBytes={}, allocationBytes={}", context, label,
+                     statistics.blockCount, statistics.allocationCount, statistics.blockBytes,
                      statistics.allocationBytes);
     };
 
@@ -45,7 +45,8 @@ void log_vma_statistics(const inexor::vulkan_renderer::wrapper::core::Device &de
     for (std::size_t memory_type_index = 0; memory_type_index < VK_MAX_MEMORY_TYPES; ++memory_type_index) {
         const auto &memory_type_statistics = total_statistics.memoryType[memory_type_index];
         if (memory_type_statistics.statistics.blockCount == 0 &&
-            memory_type_statistics.statistics.allocationCount == 0 && memory_type_statistics.statistics.blockBytes == 0 &&
+            memory_type_statistics.statistics.allocationCount == 0 &&
+            memory_type_statistics.statistics.blockBytes == 0 &&
             memory_type_statistics.statistics.allocationBytes == 0) {
             continue;
         }
@@ -57,7 +58,8 @@ void log_vma_statistics(const inexor::vulkan_renderer::wrapper::core::Device &de
     for (std::size_t memory_heap_index = 0; memory_heap_index < VK_MAX_MEMORY_HEAPS; ++memory_heap_index) {
         const auto &memory_heap_statistics = total_statistics.memoryHeap[memory_heap_index];
         if (memory_heap_statistics.statistics.blockCount == 0 &&
-            memory_heap_statistics.statistics.allocationCount == 0 && memory_heap_statistics.statistics.blockBytes == 0 &&
+            memory_heap_statistics.statistics.allocationCount == 0 &&
+            memory_heap_statistics.statistics.blockBytes == 0 &&
             memory_heap_statistics.statistics.allocationBytes == 0) {
             continue;
         }
@@ -556,14 +558,11 @@ void RenderGraph::refresh_graphics_pass_swapchain_rendering_info(GraphicsPass &p
             }
         }
 
-        pass.m_color_attachments.push_back(make_rendering_attachment_info(attachment_state.image_view,
-                                                                          attachment_state.image_layout,
-                                                                          attachment_state.clear_value,
-                                                                          attachment_state.resolve_image_view,
-                                                                          attachment_state.usage ==
-                                                                              TextureUsage::COLOR_ATTACHMENT &&
-                                                                              attachment_state.resolve_image_view !=
-                                                                                  VK_NULL_HANDLE));
+        pass.m_color_attachments.push_back(
+            make_rendering_attachment_info(attachment_state.image_view, attachment_state.image_layout,
+                                           attachment_state.clear_value, attachment_state.resolve_image_view,
+                                           attachment_state.usage == TextureUsage::COLOR_ATTACHMENT &&
+                                               attachment_state.resolve_image_view != VK_NULL_HANDLE));
     }
 
     if (!resolve_to_swapchain) {

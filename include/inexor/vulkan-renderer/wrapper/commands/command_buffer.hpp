@@ -446,8 +446,8 @@ public:
     /// @param filter The filter to apply (VK_FILTER_LINEAR by default)
     /// @return A const reference to the dereferenced ``this`` pointer (allowing for method calls to be chained)
     const CommandBuffer &blit_image(VkImage src_image, VkImageLayout src_layout, VkImage dst_image,
-                                   VkImageLayout dst_layout, const VkImageBlit &blit,
-                                   VkFilter filter = VK_FILTER_LINEAR) const;
+                                    VkImageLayout dst_layout, const VkImageBlit &blit,
+                                    VkFilter filter = VK_FILTER_LINEAR) const;
 
     /// Call vkCmdInsertDebugUtilsLabelEXT
     /// @param name The name of the debug label to insert

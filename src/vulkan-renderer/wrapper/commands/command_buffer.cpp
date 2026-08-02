@@ -520,8 +520,8 @@ const CommandBuffer &CommandBuffer::barrier_depth_stencil_write_to_shader_read()
 }
 
 const CommandBuffer &CommandBuffer::blit_image(VkImage src_image, VkImageLayout src_layout, VkImage dst_image,
-                                              VkImageLayout dst_layout, const VkImageBlit &blit,
-                                              VkFilter filter) const {
+                                               VkImageLayout dst_layout, const VkImageBlit &blit,
+                                               VkFilter filter) const {
     vkCmdBlitImage(m_cmd_buf, src_image, src_layout, dst_image, dst_layout, 1, &blit, filter);
     return *this;
 }

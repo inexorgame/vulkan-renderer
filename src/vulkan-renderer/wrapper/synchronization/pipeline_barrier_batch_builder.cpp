@@ -14,8 +14,8 @@ bool PipelineBarrierBatchBuilder::empty() const {
 
 void PipelineBarrierBatchBuilder::flush(const wrapper::commands::CommandBuffer &cmd_buf) {
     if (empty()) {
-        throw std::logic_error(
-            "PipelineBarrierBatchBuilder::flush called with no barriers. Use flush_if_not_empty() if this is expected.");
+        throw std::logic_error("PipelineBarrierBatchBuilder::flush called with no barriers. Use flush_if_not_empty() "
+                               "if this is expected.");
     }
 
     const auto dependency_info = VkDependencyInfo{

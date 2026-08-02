@@ -21,7 +21,8 @@ namespace inexor::vulkan_renderer::render_modules::octree {
 OctreeRenderer::OctreeRenderer(std::shared_ptr<RenderGraph> render_graph, std::weak_ptr<Swapchain> swapchain,
                                std::weak_ptr<Texture> depth_buffer, std::shared_ptr<Camera> camera,
                                std::weak_ptr<Texture> color_buffer)
-    : m_swapchain(std::move(swapchain)), m_depth_buffer(std::move(depth_buffer)), m_color_buffer(std::move(color_buffer)), m_camera(std::move(camera)) {
+    : m_swapchain(std::move(swapchain)), m_depth_buffer(std::move(depth_buffer)),
+      m_color_buffer(std::move(color_buffer)), m_camera(std::move(camera)) {
     // Using declarations
     using render_graph::BufferType;
     using render_graph::GraphicsPassBuilder;
@@ -97,45 +98,45 @@ OctreeRenderer::OctreeRenderer(std::shared_ptr<RenderGraph> render_graph, std::w
 
         // The octree graphics pipeline is stored in the octree renderer
         // It is being build in this lambda by reference capture
-        m_octree_pipeline = builder.add_shader(m_vertex_shader)
-                                .add_shader(m_fragment_shader)
-                                .set_vertex_input_bindings({{
-                                    .binding = 0,
-                                    .stride = sizeof(OctreeVertex),
-                                    .inputRate = VK_VERTEX_INPUT_RATE_VERTEX,
-                                }})
-                                .set_vertex_input_attributes({
-                                    {
-                                        .location = 0,
-                                        .format = VK_FORMAT_R32G32B32_SFLOAT,
-                                        .offset = offsetof(OctreeVertex, position),
-                                    },
-                                    {
-                                        .location = 1,
-                                        .format = VK_FORMAT_R32G32B32_SFLOAT,
-                                        .offset = offsetof(OctreeVertex, color),
-                                    },
-                                })
-                                .add_standard_alpha_blend_attachment()
-                                .set_depth_attachment_format(m_depth_buffer.lock()->format())
-                                .set_multisampling(m_color_buffer.expired() ? VK_SAMPLE_COUNT_1_BIT
-                                                                           : m_color_buffer.lock()->samples())
-                                .set_standard_depth_stencil()
-                                .add_color_attachment_format(m_swapchain.lock()->image_format())
-                                .set_dynamic_scissor()
-                                .set_dynamic_viewport()
-                                .set_viewport({
-                                    .width = static_cast<float>(pipeline_extent.width),
-                                    .height = static_cast<float>(pipeline_extent.height),
-                                    .minDepth = 0.0f,
-                                    .maxDepth = 1.0f,
-                                })
-                                .set_scissor({
-                                    .extent = pipeline_extent,
-                                })
-                                .set_descriptor_set_layout(descriptor_set->layout())
-                                .add_descriptor_set(m_descriptor_set)
-                                .build("Octree");
+        m_octree_pipeline =
+            builder.add_shader(m_vertex_shader)
+                .add_shader(m_fragment_shader)
+                .set_vertex_input_bindings({{
+                    .binding = 0,
+                    .stride = sizeof(OctreeVertex),
+                    .inputRate = VK_VERTEX_INPUT_RATE_VERTEX,
+                }})
+                .set_vertex_input_attributes({
+                    {
+                        .location = 0,
+                        .format = VK_FORMAT_R32G32B32_SFLOAT,
+                        .offset = offsetof(OctreeVertex, position),
+                    },
+                    {
+                        .location = 1,
+                        .format = VK_FORMAT_R32G32B32_SFLOAT,
+                        .offset = offsetof(OctreeVertex, color),
+                    },
+                })
+                .add_standard_alpha_blend_attachment()
+                .set_depth_attachment_format(m_depth_buffer.lock()->format())
+                .set_multisampling(m_color_buffer.expired() ? VK_SAMPLE_COUNT_1_BIT : m_color_buffer.lock()->samples())
+                .set_standard_depth_stencil()
+                .add_color_attachment_format(m_swapchain.lock()->image_format())
+                .set_dynamic_scissor()
+                .set_dynamic_viewport()
+                .set_viewport({
+                    .width = static_cast<float>(pipeline_extent.width),
+                    .height = static_cast<float>(pipeline_extent.height),
+                    .minDepth = 0.0f,
+                    .maxDepth = 1.0f,
+                })
+                .set_scissor({
+                    .extent = pipeline_extent,
+                })
+                .set_descriptor_set_layout(descriptor_set->layout())
+                .add_descriptor_set(m_descriptor_set)
+                .build("Octree");
     });
 
     // Add the graphics pass for the octree renderer
