@@ -460,29 +460,26 @@ const CommandBuffer &CommandBuffer::pipeline_barrier(const VkDependencyInfo &dep
 
 const CommandBuffer &
 CommandBuffer::pipeline_buffer_memory_barrier(const VkBufferMemoryBarrier2 &buffer_mem_barrier) const {
-    const auto dependency_info = VkDependencyInfo{
-        .sType = VK_STRUCTURE_TYPE_DEPENDENCY_INFO,
+    const auto dependency_info = make_info<VkDependencyInfo>({
         .bufferMemoryBarrierCount = 1,
         .pBufferMemoryBarriers = &buffer_mem_barrier,
-    };
+    });
     return pipeline_barrier(dependency_info);
 }
 
 const CommandBuffer &CommandBuffer::pipeline_image_memory_barrier(const VkImageMemoryBarrier2 &img_barrier) const {
-    const auto dependency_info = VkDependencyInfo{
-        .sType = VK_STRUCTURE_TYPE_DEPENDENCY_INFO,
+    const auto dependency_info = make_info<VkDependencyInfo>({
         .imageMemoryBarrierCount = 1,
         .pImageMemoryBarriers = &img_barrier,
-    };
+    });
     return pipeline_barrier(dependency_info);
 }
 
 const CommandBuffer &CommandBuffer::pipeline_memory_barrier(const VkMemoryBarrier2 &mem_barrier) const {
-    const auto dependency_info = VkDependencyInfo{
-        .sType = VK_STRUCTURE_TYPE_DEPENDENCY_INFO,
+    const auto dependency_info = make_info<VkDependencyInfo>({
         .memoryBarrierCount = 1,
         .pMemoryBarriers = &mem_barrier,
-    };
+    });
     return pipeline_barrier(dependency_info);
 }
 

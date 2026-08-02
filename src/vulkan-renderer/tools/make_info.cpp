@@ -35,6 +35,12 @@ VkCommandBufferAllocateInfo make_info(VkCommandBufferAllocateInfo info) {
 }
 
 template <>
+VkCommandBufferBeginInfo make_info(VkCommandBufferBeginInfo info) {
+    info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+    return info;
+}
+
+template <>
 VkCommandBufferInheritanceInfo make_info(VkCommandBufferInheritanceInfo info) {
     info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_INHERITANCE_INFO;
     return info;
@@ -47,26 +53,8 @@ VkCommandBufferInheritanceRenderingInfo make_info(VkCommandBufferInheritanceRend
 }
 
 template <>
-VkCommandBufferBeginInfo make_info(VkCommandBufferBeginInfo info) {
-    info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-    return info;
-}
-
-template <>
 VkCommandPoolCreateInfo make_info(VkCommandPoolCreateInfo info) {
     info.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
-    return info;
-}
-
-template <>
-VkPhysicalDeviceDynamicRenderingFeaturesKHR make_info(VkPhysicalDeviceDynamicRenderingFeaturesKHR info) {
-    info.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DYNAMIC_RENDERING_FEATURES;
-    return info;
-}
-
-template <>
-VkDebugUtilsLabelEXT make_info(VkDebugUtilsLabelEXT info) {
-    info.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_LABEL_EXT;
     return info;
 }
 
@@ -95,6 +83,12 @@ VkDebugReportCallbackCreateInfoEXT make_info(VkDebugReportCallbackCreateInfoEXT 
 }
 
 template <>
+VkDebugUtilsLabelEXT make_info(VkDebugUtilsLabelEXT info) {
+    info.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_LABEL_EXT;
+    return info;
+}
+
+template <>
 VkDebugUtilsMessengerCreateInfoEXT make_info(VkDebugUtilsMessengerCreateInfoEXT info) {
     info.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
     return info;
@@ -103,6 +97,12 @@ VkDebugUtilsMessengerCreateInfoEXT make_info(VkDebugUtilsMessengerCreateInfoEXT 
 template <>
 VkDebugUtilsObjectNameInfoEXT make_info(VkDebugUtilsObjectNameInfoEXT info) {
     info.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT;
+    return info;
+}
+
+template <>
+VkDependencyInfo make_info(VkDependencyInfo info) {
+    info.sType = VK_STRUCTURE_TYPE_DEPENDENCY_INFO;
     return info;
 }
 
@@ -187,6 +187,12 @@ VkInstanceCreateInfo make_info(VkInstanceCreateInfo info) {
 template <>
 VkMemoryBarrier make_info(VkMemoryBarrier info) {
     info.sType = VK_STRUCTURE_TYPE_MEMORY_BARRIER;
+    return info;
+}
+
+template <>
+VkPhysicalDeviceDynamicRenderingFeaturesKHR make_info(VkPhysicalDeviceDynamicRenderingFeaturesKHR info) {
+    info.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DYNAMIC_RENDERING_FEATURES;
     return info;
 }
 
