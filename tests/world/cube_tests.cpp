@@ -17,10 +17,8 @@ TEST(Cube, neighbor) {
         }
     }
 
-    EXPECT_EQ(root->children()[1]->neighbor(Cube::Axis::Y, Cube::NeighborDirection::POSITIVE),
-              root->children()[3]);
-    EXPECT_NE(root->children()[1]->neighbor(Cube::Axis::Y, Cube::NeighborDirection::POSITIVE),
-              root->children()[0]);
+    EXPECT_EQ(root->children()[1]->neighbor(Cube::Axis::Y, Cube::NeighborDirection::POSITIVE), root->children()[3]);
+    EXPECT_NE(root->children()[1]->neighbor(Cube::Axis::Y, Cube::NeighborDirection::POSITIVE), root->children()[0]);
     EXPECT_EQ(root->children()[1]->children()[2]->neighbor(Cube::Axis::Y, Cube::NeighborDirection::POSITIVE),
               root->children()[3]->children()[0]);
     EXPECT_EQ(root->children()[1]->children()[2]->neighbor(Cube::Axis::Z, Cube::NeighborDirection::NEGATIVE),

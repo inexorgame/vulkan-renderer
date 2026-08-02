@@ -4,8 +4,8 @@
 #include "inexor/vulkan-renderer/tools/exception.hpp"
 #include "inexor/vulkan-renderer/tools/make_info.hpp"
 #include "inexor/vulkan-renderer/tools/representation.hpp"
-#include "inexor/vulkan-renderer/wrapper/commands/command_buffer_builder.hpp"
 #include "inexor/vulkan-renderer/wrapper/commands/command_buffer.hpp"
+#include "inexor/vulkan-renderer/wrapper/commands/command_buffer_builder.hpp"
 #include "inexor/vulkan-renderer/wrapper/core/device.hpp"
 #include "inexor/vulkan-renderer/wrapper/swapchains/swapchain_utils.hpp"
 
@@ -310,5 +310,3 @@ Swapchain::~Swapchain() {
 }
 
 } // namespace inexor::vulkan_renderer::wrapper::swapchains
-
-

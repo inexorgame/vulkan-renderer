@@ -3,8 +3,8 @@
 #include "inexor/vulkan-renderer/tools/exception.hpp"
 #include "inexor/vulkan-renderer/tools/make_info.hpp"
 #include "inexor/vulkan-renderer/tools/representation.hpp"
-#include "inexor/vulkan-renderer/wrapper/commands/command_buffer_builder.hpp"
 #include "inexor/vulkan-renderer/wrapper/commands/command_buffer.hpp"
+#include "inexor/vulkan-renderer/wrapper/commands/command_buffer_builder.hpp"
 #include "inexor/vulkan-renderer/wrapper/commands/command_pool.hpp"
 
 #include <vk_mem_alloc.h>
@@ -348,6 +348,3 @@ public:
 };
 
 } // namespace inexor::vulkan_renderer::wrapper::core
- 
- 
- 

@@ -1,7 +1,7 @@
 #include "inexor/vulkan-renderer/render-graph/buffer_copy_batch_builder.hpp"
 
-#include "inexor/vulkan-renderer/wrapper/commands/command_buffer_builder.hpp"
 #include "inexor/vulkan-renderer/wrapper/commands/command_buffer.hpp"
+#include "inexor/vulkan-renderer/wrapper/commands/command_buffer_builder.hpp"
 #include "inexor/vulkan-renderer/wrapper/synchronization/pipeline_barrier_batch_builder.hpp"
 
 #include <algorithm>
@@ -166,4 +166,3 @@ void BufferCopyBatchBuilder::reset() {
 }
 
 } // namespace inexor::vulkan_renderer::render_graph
-
