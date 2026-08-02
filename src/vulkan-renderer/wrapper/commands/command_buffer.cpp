@@ -490,6 +490,13 @@ const CommandBuffer &CommandBuffer::barrier_depth_stencil_write_to_shader_read()
     });
 }
 
+const CommandBuffer &CommandBuffer::blit_image(VkImage src_image, VkImageLayout src_layout, VkImage dst_image,
+                                              VkImageLayout dst_layout, const VkImageBlit &blit,
+                                              VkFilter filter) const {
+    vkCmdBlitImage(m_cmd_buf, src_image, src_layout, dst_image, dst_layout, 1, &blit, filter);
+    return *this;
+}
+
 const CommandBuffer &CommandBuffer::insert_debug_label(const std::string &name, std::array<float, 4> color) const {
     if (name.empty()) {
         throw InexorException("Error: Parameter 'name' is an empty string!");

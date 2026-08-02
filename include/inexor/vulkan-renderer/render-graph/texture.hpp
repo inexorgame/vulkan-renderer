@@ -175,6 +175,8 @@ public:
 
     [[nodiscard]] VkImageView image_view() const;
 
+    [[nodiscard]] VkImageView msaa_image_view() const;
+
     [[nodiscard]] const auto &name() const {
         return m_name;
     }
@@ -184,6 +186,10 @@ public:
     void request_resize(std::uint32_t width, std::uint32_t height);
 
     void request_update(void *src_texture_data, std::size_t src_texture_data_size);
+
+    [[nodiscard]] VkSampleCountFlagBits samples() const {
+        return m_samples;
+    }
 
     [[nodiscard]] auto usage() const {
         return m_usage;

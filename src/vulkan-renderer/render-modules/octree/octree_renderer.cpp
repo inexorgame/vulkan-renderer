@@ -19,8 +19,9 @@
 namespace inexor::vulkan_renderer::render_modules::octree {
 
 OctreeRenderer::OctreeRenderer(std::shared_ptr<RenderGraph> render_graph, std::weak_ptr<Swapchain> swapchain,
-                               std::weak_ptr<Texture> depth_buffer, std::shared_ptr<Camera> camera)
-    : m_swapchain(std::move(swapchain)), m_depth_buffer(std::move(depth_buffer)), m_camera(std::move(camera)) {
+                               std::weak_ptr<Texture> depth_buffer, std::shared_ptr<Camera> camera,
+                               std::weak_ptr<Texture> color_buffer)
+    : m_swapchain(std::move(swapchain)), m_depth_buffer(std::move(depth_buffer)), m_color_buffer(std::move(color_buffer)), m_camera(std::move(camera)) {
     // Using declarations
     using render_graph::BufferType;
     using render_graph::GraphicsPassBuilder;
@@ -117,6 +118,8 @@ OctreeRenderer::OctreeRenderer(std::shared_ptr<RenderGraph> render_graph, std::w
                                 })
                                 .add_standard_alpha_blend_attachment()
                                 .set_depth_attachment_format(m_depth_buffer.lock()->format())
+                                .set_multisampling(m_color_buffer.expired() ? VK_SAMPLE_COUNT_1_BIT
+                                                                           : m_color_buffer.lock()->samples())
                                 .set_standard_depth_stencil()
                                 .add_color_attachment_format(m_swapchain.lock()->image_format())
                                 .set_dynamic_scissor()
@@ -137,8 +140,19 @@ OctreeRenderer::OctreeRenderer(std::shared_ptr<RenderGraph> render_graph, std::w
 
     // Add the graphics pass for the octree renderer
     m_octree_pass = render_graph->add_graphics_pass([&](GraphicsPassBuilder &builder) {
-        return builder.writes_to(m_swapchain, VkClearValue{0.0f, 0.0f, 0.0f})
-            .writes_to(m_depth_buffer, VkClearValue{.depthStencil = {.depth = 1.0f, .stencil = 0}})
+        // When MSAA is enabled, render to color buffer which will auto-resolve to swapchain
+        // Otherwise render directly to swapchain
+        if (!m_color_buffer.expired()) {
+            // MSAA path: write to MSAA color buffer
+            builder.writes_to(m_color_buffer, VkClearValue{0.0f, 0.0f, 0.0f});
+            // Keep the swapchain in the pass so render-graph can resolve into it
+            builder.writes_to(m_swapchain, std::nullopt);
+        } else {
+            // Non-MSAA path: write directly to swapchain
+            builder.writes_to(m_swapchain, VkClearValue{0.0f, 0.0f, 0.0f});
+        }
+
+        return builder.writes_to(m_depth_buffer, VkClearValue{.depthStencil = {.depth = 1.0f, .stencil = 0}})
             .reads_from(m_vertex_buffer)
             .writes_to(m_index_buffer)
             .reads_from(m_index_buffer)
@@ -150,19 +164,19 @@ OctreeRenderer::OctreeRenderer(std::shared_ptr<RenderGraph> render_graph, std::w
                     index_buffer->buffer() == VK_NULL_HANDLE || m_octree_indices.empty() || !swapchain) {
                     return;
                 }
-                const auto swapchain_extent = swapchain->extent();
+                const auto render_extent = swapchain->extent();
                 cmd_buf.bind_pipeline(m_octree_pipeline)
                     .bind_descriptor_set(m_descriptor_set)
                     .bind_vertex_buffer(m_vertex_buffer)
                     .bind_index_buffer(m_index_buffer)
                     .set_viewport({
-                        .width = static_cast<float>(swapchain_extent.width),
-                        .height = static_cast<float>(swapchain_extent.height),
+                        .width = static_cast<float>(render_extent.width),
+                        .height = static_cast<float>(render_extent.height),
                         .minDepth = 0.0f,
                         .maxDepth = 1.0f,
                     })
                     .set_scissor({
-                        .extent = swapchain_extent,
+                        .extent = render_extent,
                     })
                     .draw_indexed(static_cast<std::uint32_t>(m_octree_indices.size()));
             })

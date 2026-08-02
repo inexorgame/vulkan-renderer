@@ -84,10 +84,12 @@ private:
 
     struct CachedAttachmentState {
         VkImageView image_view{VK_NULL_HANDLE};
+        VkImageView resolve_image_view{VK_NULL_HANDLE}; // For MSAA resolve
         VkImageLayout image_layout{VK_IMAGE_LAYOUT_UNDEFINED};
         VkExtent2D extent{0, 0};
         std::optional<VkClearValue> clear_value{std::nullopt};
         TextureUsage usage{TextureUsage::DEFAULT};
+        VkSampleCountFlagBits samples{VK_SAMPLE_COUNT_1_BIT}; // Track sample count
     };
 
     bool m_rendering_info_dirty{true};
@@ -102,6 +104,8 @@ private:
     std::vector<VkFormat> m_cached_color_attachment_formats{};
     VkFormat m_cached_depth_attachment_format{VK_FORMAT_UNDEFINED};
     VkFormat m_cached_stencil_attachment_format{VK_FORMAT_UNDEFINED};
+    /// Cached sample count from texture attachments for MSAA support
+    VkSampleCountFlagBits m_cached_sample_count{VK_SAMPLE_COUNT_1_BIT};
     /// Reused scratch storage for RenderGraph::fill_graphics_pass_rendering_info() to avoid a heap allocation
     /// every frame (this function runs unconditionally once per pass per frame)
     std::vector<CachedAttachmentState> m_scratch_current_texture_states{};

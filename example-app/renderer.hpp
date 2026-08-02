@@ -90,6 +90,7 @@ protected:
     std::shared_ptr<Swapchain> m_swapchain;
     std::shared_ptr<RenderGraph> m_render_graph;
     std::weak_ptr<Texture> m_depth_buffer;
+    std::weak_ptr<Texture> m_color_buffer;
 
     std::shared_ptr<Camera> m_camera;
     std::unique_ptr<Window> m_window;
@@ -98,6 +99,7 @@ protected:
     std::unique_ptr<OctreeRenderer> m_octree_renderer;
 
     bool m_vsync_enabled{false};
+    VkSampleCountFlagBits m_msaa_sample_count{VK_SAMPLE_COUNT_1_BIT};
 
     // @TODO Move to window wrapper!
     bool m_window_resized{false};

@@ -437,6 +437,18 @@ public:
     /// @return A const reference to the dereferenced ``this`` pointer (allowing for method calls to be chained)
     const CommandBuffer &barrier_depth_stencil_write_to_shader_read() const;
 
+    /// Call vkCmdBlitImage for blitting one image region to another
+    /// @param src_image The source image
+    /// @param src_layout The current layout of the source image
+    /// @param dst_image The destination image
+    /// @param dst_layout The current layout of the destination image
+    /// @param blit The blit region specification
+    /// @param filter The filter to apply (VK_FILTER_LINEAR by default)
+    /// @return A const reference to the dereferenced ``this`` pointer (allowing for method calls to be chained)
+    const CommandBuffer &blit_image(VkImage src_image, VkImageLayout src_layout, VkImage dst_image,
+                                   VkImageLayout dst_layout, const VkImageBlit &blit,
+                                   VkFilter filter = VK_FILTER_LINEAR) const;
+
     /// Call vkCmdInsertDebugUtilsLabelEXT
     /// @param name The name of the debug label to insert
     /// @return A const reference to the dereferenced ``this`` pointer (allowing for method calls to be chained)

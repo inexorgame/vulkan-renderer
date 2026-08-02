@@ -258,6 +258,15 @@ VkImageView Texture::image_view() const {
     return current_frame_resources().m_image->image_view();
 }
 
+VkImageView Texture::msaa_image_view() const {
+    const auto &resources = current_frame_resources();
+    if (resources.m_msaa_image) {
+        return resources.m_msaa_image->image_view();
+    }
+    // If no MSAA image, return the regular image view
+    return resources.m_image->image_view();
+}
+
 void Texture::prepare_initial_layout_barriers(PipelineBarrierBatchBuilder &barrier_builder) {
     if (m_src_texture_data_size != 0) {
         return;
@@ -344,6 +353,29 @@ void Texture::prepare_initial_layout_barriers(PipelineBarrierBatchBuilder &barri
                     .layerCount = 1,
                 },
         }));
+
+        // Also transition MSAA image if it exists
+        if (slot.m_msaa_image) {
+            barrier_builder.add(tools::make_info<VkImageMemoryBarrier2>({
+                .srcStageMask = VK_PIPELINE_STAGE_2_NONE,
+                .srcAccessMask = VK_ACCESS_2_NONE,
+                .dstStageMask = target_stage_mask,
+                .dstAccessMask = target_access_mask,
+                .oldLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+                .newLayout = target_layout,
+                .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+                .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+                .image = slot.m_msaa_image->m_img,
+                .subresourceRange =
+                    {
+                        .aspectMask = aspect_mask,
+                        .baseMipLevel = 0,
+                        .levelCount = 1,
+                        .baseArrayLayer = 0,
+                        .layerCount = 1,
+                    },
+            }));
+        }
     }
 }
 

@@ -236,12 +236,16 @@ void RenderGraph::rebuild_graphics_pass_texture_rendering_info(GraphicsPass &pas
     };
 
     auto make_rendering_attachment_info = [&](const VkImageView image_view, const VkImageLayout image_layout,
-                                              const std::optional<VkClearValue> &clear_value) {
+                                              const std::optional<VkClearValue> &clear_value,
+                                              const VkImageView resolve_image_view = VK_NULL_HANDLE,
+                                              const bool enable_resolve = false) {
+        const bool has_resolve = enable_resolve && resolve_image_view != VK_NULL_HANDLE;
         return make_info<VkRenderingAttachmentInfo>({
             .imageView = image_view,
             .imageLayout = image_layout,
-            .resolveMode = VK_RESOLVE_MODE_NONE,
-            .resolveImageView = nullptr,
+            .resolveMode = has_resolve ? VK_RESOLVE_MODE_AVERAGE_BIT : VK_RESOLVE_MODE_NONE,
+            .resolveImageView = resolve_image_view,
+            .resolveImageLayout = has_resolve ? image_layout : VK_IMAGE_LAYOUT_UNDEFINED,
             .loadOp = clear_value ? VK_ATTACHMENT_LOAD_OP_CLEAR : VK_ATTACHMENT_LOAD_OP_LOAD,
             .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
             .clearValue = clear_value.value_or(VkClearValue{}),
@@ -288,6 +292,7 @@ void RenderGraph::rebuild_graphics_pass_texture_rendering_info(GraphicsPass &pas
     cached_texture_color_attachment_formats.reserve(pass.m_texture_writes.size());
     pass.m_cached_depth_attachment_format = VK_FORMAT_UNDEFINED;
     pass.m_cached_stencil_attachment_format = VK_FORMAT_UNDEFINED;
+    pass.m_cached_sample_count = VK_SAMPLE_COUNT_1_BIT;
 
     std::size_t color_texture_attachment_count = 0;
     bool has_depth_attachment = false;
@@ -299,15 +304,31 @@ void RenderGraph::rebuild_graphics_pass_texture_rendering_info(GraphicsPass &pas
             throw std::runtime_error("Error: Graphics pass texture attachment expired!");
         }
 
+        const auto sample_count = attachment->samples();
+        const bool is_msaa = sample_count > VK_SAMPLE_COUNT_1_BIT;
+
+        // Check if this MSAA color attachment should resolve to swapchain instead of internal image
+        VkImageView resolve_target = VK_NULL_HANDLE;
+        if (is_msaa && attachment->usage() == TextureUsage::COLOR_ATTACHMENT && !pass.m_swapchain_writes.empty()) {
+            // Will be filled in later with actual swapchain image view
+            resolve_target = VK_NULL_HANDLE;
+        }
+
         current_texture_states.push_back({
-            .image_view = attachment->image_view(),
+            .image_view = is_msaa ? attachment->msaa_image_view() : attachment->image_view(),
+            .resolve_image_view = resolve_target,
             .image_layout = get_image_layout(attachment->usage()),
             .extent = attachment->extent(),
             .clear_value = write_attachment.second,
             .usage = attachment->usage(),
+            .samples = sample_count,
         });
         track_attachment_usage(attachment->usage(), color_texture_attachment_count, has_depth_attachment,
                                has_stencil_attachment);
+
+        // Capture the sample count from the texture attachments
+        pass.m_cached_sample_count = attachment->samples();
+
         switch (attachment->usage()) {
         case TextureUsage::COLOR_ATTACHMENT:
             pass.m_cached_texture_color_attachment_formats.push_back(attachment->format());
@@ -335,13 +356,20 @@ void RenderGraph::rebuild_graphics_pass_texture_rendering_info(GraphicsPass &pas
     pass.m_cached_texture_render_extent =
         render_extent_initialized ? std::optional<VkExtent2D>{render_extent} : std::nullopt;
 
+    // When there are no swapchain writes, m_cached_color_attachment_formats is solely from textures
+    if (pass.m_swapchain_writes.empty()) {
+        pass.m_cached_color_attachment_formats = cached_texture_color_attachment_formats;
+    }
+
     pass.reset_rendering_info();
     pass.m_color_attachments.clear();
     pass.m_color_attachments.reserve(color_texture_attachment_count + pass.m_swapchain_writes.size());
 
     auto build_rendering_attachment_info = [&](const GraphicsPass::CachedAttachmentState &attachment_state) {
         return make_rendering_attachment_info(attachment_state.image_view, attachment_state.image_layout,
-                                              attachment_state.clear_value);
+                                              attachment_state.clear_value, attachment_state.resolve_image_view,
+                                              attachment_state.usage == TextureUsage::COLOR_ATTACHMENT &&
+                                                  attachment_state.resolve_image_view != VK_NULL_HANDLE);
     };
 
     for (const auto &attachment_state : texture_states) {
@@ -384,12 +412,16 @@ void RenderGraph::refresh_graphics_pass_swapchain_rendering_info(GraphicsPass &p
     }
 
     auto make_rendering_attachment_info = [](const VkImageView image_view, const VkImageLayout image_layout,
-                                             const std::optional<VkClearValue> &clear_value) {
+                                             const std::optional<VkClearValue> &clear_value,
+                                             const VkImageView resolve_image_view = VK_NULL_HANDLE,
+                                             const bool enable_resolve = false) {
+        const bool has_resolve = enable_resolve && resolve_image_view != VK_NULL_HANDLE;
         return make_info<VkRenderingAttachmentInfo>({
             .imageView = image_view,
             .imageLayout = image_layout,
-            .resolveMode = VK_RESOLVE_MODE_NONE,
-            .resolveImageView = nullptr,
+            .resolveMode = has_resolve ? VK_RESOLVE_MODE_AVERAGE_BIT : VK_RESOLVE_MODE_NONE,
+            .resolveImageView = resolve_image_view,
+            .resolveImageLayout = has_resolve ? image_layout : VK_IMAGE_LAYOUT_UNDEFINED,
             .loadOp = clear_value ? VK_ATTACHMENT_LOAD_OP_CLEAR : VK_ATTACHMENT_LOAD_OP_LOAD,
             .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
             .clearValue = clear_value.value_or(VkClearValue{}),
@@ -403,6 +435,10 @@ void RenderGraph::refresh_graphics_pass_swapchain_rendering_info(GraphicsPass &p
     VkExtent2D render_extent = pass.m_cached_texture_render_extent.value_or(VkExtent2D{});
     bool render_extent_initialized = pass.m_cached_texture_render_extent.has_value();
 
+    const bool resolve_to_swapchain = pass.m_cached_texture_color_attachment_count > 0 &&
+                                      pass.m_cached_sample_count > VK_SAMPLE_COUNT_1_BIT &&
+                                      !pass.m_swapchain_writes.empty();
+
     for (const auto &write_swapchain : pass.m_swapchain_writes) {
         const auto swapchain = write_swapchain.first.lock();
         if (!swapchain) {
@@ -410,12 +446,15 @@ void RenderGraph::refresh_graphics_pass_swapchain_rendering_info(GraphicsPass &p
         }
 
         const auto extent = swapchain->extent();
+
         current_swapchain_states.push_back({
             .image_view = swapchain->current_swapchain_image_view(),
+            .resolve_image_view = VK_NULL_HANDLE,
             .image_layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
             .extent = extent,
             .clear_value = write_swapchain.second,
             .usage = TextureUsage::COLOR_ATTACHMENT,
+            .samples = VK_SAMPLE_COUNT_1_BIT,
         });
 
         if (!render_extent_initialized) {
@@ -433,6 +472,11 @@ void RenderGraph::refresh_graphics_pass_swapchain_rendering_info(GraphicsPass &p
 
     pass.m_cached_swapchain_attachment_states = current_swapchain_states;
 
+    // Swapchain images always have 1 sample.
+    if (!resolve_to_swapchain) {
+        pass.m_cached_sample_count = VK_SAMPLE_COUNT_1_BIT;
+    }
+
     auto &cached_color_attachment_formats = pass.m_cached_color_attachment_formats;
     cached_color_attachment_formats.clear();
     cached_color_attachment_formats.reserve(pass.m_cached_texture_color_attachment_formats.size() +
@@ -441,19 +485,52 @@ void RenderGraph::refresh_graphics_pass_swapchain_rendering_info(GraphicsPass &p
                                            pass.m_cached_texture_color_attachment_formats.begin(),
                                            pass.m_cached_texture_color_attachment_formats.end());
 
+    // Rebuild the active color attachments from the cached texture attachments.
     pass.m_color_attachments.clear();
-    pass.m_color_attachments.reserve(pass.m_cached_texture_color_attachment_count + current_swapchain_states.size());
-    for (const auto &attachment_state : current_swapchain_states) {
-        pass.m_color_attachments.push_back(make_rendering_attachment_info(
-            attachment_state.image_view, attachment_state.image_layout, attachment_state.clear_value));
+    pass.m_color_attachments.reserve(pass.m_cached_texture_color_attachment_count +
+                                     (resolve_to_swapchain ? 0u : current_swapchain_states.size()));
+
+    for (auto &attachment_state : pass.m_cached_texture_attachment_states) {
+        if (attachment_state.usage != TextureUsage::COLOR_ATTACHMENT) {
+            continue;
+        }
+
+        if (resolve_to_swapchain) {
+            for (const auto &write_swapchain : pass.m_swapchain_writes) {
+                const auto swapchain = write_swapchain.first.lock();
+                if (!swapchain) {
+                    throw std::runtime_error("Error: Graphics pass swapchain attachment expired!");
+                }
+                attachment_state.resolve_image_view = swapchain->current_swapchain_image_view();
+                break;
+            }
+        }
+
+        pass.m_color_attachments.push_back(make_rendering_attachment_info(attachment_state.image_view,
+                                                                          attachment_state.image_layout,
+                                                                          attachment_state.clear_value,
+                                                                          attachment_state.resolve_image_view,
+                                                                          attachment_state.usage ==
+                                                                              TextureUsage::COLOR_ATTACHMENT &&
+                                                                              attachment_state.resolve_image_view !=
+                                                                                  VK_NULL_HANDLE));
     }
 
-    for (const auto &write_swapchain : pass.m_swapchain_writes) {
-        const auto swapchain = write_swapchain.first.lock();
-        if (!swapchain) {
-            throw std::runtime_error("Error: Graphics pass swapchain attachment expired!");
+    if (!resolve_to_swapchain) {
+        for (const auto &attachment_state : current_swapchain_states) {
+            pass.m_color_attachments.push_back(make_rendering_attachment_info(
+                attachment_state.image_view, attachment_state.image_layout, attachment_state.clear_value));
         }
-        cached_color_attachment_formats.push_back(swapchain->image_format());
+    }
+
+    if (!resolve_to_swapchain) {
+        for (const auto &write_swapchain : pass.m_swapchain_writes) {
+            const auto swapchain = write_swapchain.first.lock();
+            if (!swapchain) {
+                throw std::runtime_error("Error: Graphics pass swapchain attachment expired!");
+            }
+            cached_color_attachment_formats.push_back(swapchain->image_format());
+        }
     }
 
     pass.m_cached_render_extent = render_extent;
@@ -485,7 +562,7 @@ void RenderGraph::record_command_buffer_for_pass(const CommandBuffer &cmd_buf, G
             pass.m_cached_color_attachment_formats.empty() ? nullptr : pass.m_cached_color_attachment_formats.data(),
         .depthAttachmentFormat = pass.m_cached_depth_attachment_format,
         .stencilAttachmentFormat = pass.m_cached_stencil_attachment_format,
-        .rasterizationSamples = VK_SAMPLE_COUNT_1_BIT,
+        .rasterizationSamples = pass.m_cached_sample_count,
     });
 
     const auto inheritance_info = make_info<VkCommandBufferInheritanceInfo>({
