@@ -177,7 +177,7 @@ ImGuiRenderer::ImGuiRenderer(std::shared_ptr<RenderGraph> render_graph, std::wea
         return builder.writes_to(swapchain)
             .reads_from(m_vertex_buffer)
             .reads_from(m_index_buffer)
-            .set_on_record([&](const CommandBuffer &cmd_buf) {
+            .set_on_record([&](wrapper::commands::CommandBufferBuilder &cmd_buf) {
                 ImDrawData *draw_data = ImGui::GetDrawData();
                 if (draw_data == nullptr || draw_data->TotalVtxCount == 0 || draw_data->TotalIdxCount == 0) {
                     return;

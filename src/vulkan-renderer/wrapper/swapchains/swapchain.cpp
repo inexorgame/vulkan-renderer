@@ -4,6 +4,7 @@
 #include "inexor/vulkan-renderer/tools/exception.hpp"
 #include "inexor/vulkan-renderer/tools/make_info.hpp"
 #include "inexor/vulkan-renderer/tools/representation.hpp"
+#include "inexor/vulkan-renderer/wrapper/commands/command_buffer_builder.hpp"
 #include "inexor/vulkan-renderer/wrapper/commands/command_buffer.hpp"
 #include "inexor/vulkan-renderer/wrapper/core/device.hpp"
 #include "inexor/vulkan-renderer/wrapper/swapchains/swapchain_utils.hpp"
@@ -20,6 +21,7 @@ namespace inexor::vulkan_renderer::wrapper::swapchains {
 using tools::InexorException;
 using tools::make_info;
 using tools::VulkanException;
+using wrapper::commands::CommandBufferBuilder;
 
 Swapchain::Swapchain(const core::Device &device, std::string name, const VkSurfaceKHR surface)
     : m_device(device), m_name(std::move(name)), m_surface(surface) {
@@ -138,13 +140,13 @@ void Swapchain::mark_current_frame_slot_in_flight(const VkFence fence) {
 }
 
 // @TODO Move to inside of rendergraph
-void Swapchain::change_image_layout_to_prepare_for_rendering(const CommandBuffer &cmd_buf) {
+void Swapchain::change_image_layout_to_prepare_for_rendering(CommandBufferBuilder &cmd_buf) {
     cmd_buf.change_image_layout(m_current_swapchain_img, m_format, VK_IMAGE_LAYOUT_UNDEFINED,
                                 VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
 }
 
 // @TODO Move to inside of rendergraph
-void Swapchain::change_image_layout_to_prepare_for_presenting(const CommandBuffer &cmd_buf) {
+void Swapchain::change_image_layout_to_prepare_for_presenting(CommandBufferBuilder &cmd_buf) {
     cmd_buf.change_image_layout(m_current_swapchain_img, m_format, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
                                 VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
 }
@@ -308,3 +310,5 @@ Swapchain::~Swapchain() {
 }
 
 } // namespace inexor::vulkan_renderer::wrapper::swapchains
+
+

@@ -15,7 +15,7 @@ using tools::InexorException;
 using tools::make_info;
 
 GraphicsPass::GraphicsPass(
-    std::string name, std::function<void(const CommandBuffer &)> on_record_cmd_buffer,
+    std::string name, std::function<void(CommandBufferBuilder &)> on_record_cmd_buffer,
     std::vector<std::weak_ptr<Buffer>> buffer_reads,
     std::vector<std::pair<std::weak_ptr<Texture>, std::optional<VkClearValue>>> texture_writes,
     std::vector<std::pair<std::weak_ptr<Swapchain>, std::optional<VkClearValue>>> swapchain_writes,

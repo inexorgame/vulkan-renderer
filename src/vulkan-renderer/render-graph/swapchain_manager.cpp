@@ -2,12 +2,15 @@
 
 #include "inexor/vulkan-renderer/render-graph/graphics_pass.hpp"
 #include "inexor/vulkan-renderer/tools/exception.hpp"
+#include "inexor/vulkan-renderer/wrapper/commands/command_buffer_builder.hpp"
 
 #include <algorithm>
 #include <stdexcept>
 #include <unordered_set>
 
 namespace inexor::vulkan_renderer::render_graph {
+
+using wrapper::commands::CommandBufferBuilder;
 
 SwapchainManager::SwapchainManager(Device &device) : m_device(device) {}
 
@@ -116,13 +119,13 @@ void SwapchainManager::synchronize_frame_context() {
     m_current_frame_slot = std::min(current_frame_slot, m_frame_slot_count - 1);
 }
 
-void SwapchainManager::prepare_swapchains_for_rendering(const CommandBuffer &cmd_buf) const {
+void SwapchainManager::prepare_swapchains_for_rendering(CommandBufferBuilder &cmd_buf) const {
     for (const auto &swapchain : m_frame_swapchains) {
         swapchain->change_image_layout_to_prepare_for_rendering(cmd_buf);
     }
 }
 
-void SwapchainManager::prepare_swapchains_for_presenting(const CommandBuffer &cmd_buf) const {
+void SwapchainManager::prepare_swapchains_for_presenting(CommandBufferBuilder &cmd_buf) const {
     for (const auto &swapchain : m_frame_swapchains) {
         swapchain->change_image_layout_to_prepare_for_presenting(cmd_buf);
     }

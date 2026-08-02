@@ -23,7 +23,7 @@ class Swapchain;
 
 namespace inexor::vulkan_renderer::wrapper::commands {
 // Forward declaration
-class CommandBuffer;
+class CommandBufferBuilder;
 } // namespace inexor::vulkan_renderer::wrapper::commands
 
 namespace inexor::vulkan_renderer::render_graph {
@@ -37,7 +37,7 @@ namespace inexor::vulkan_renderer::render_graph {
 class RenderGraph;
 
 // Using declarations
-using wrapper::commands::CommandBuffer;
+using wrapper::commands::CommandBufferBuilder;
 using wrapper::core::DebugLabelColor;
 using wrapper::descriptors::DescriptorSetLayout;
 using wrapper::swapchains::Swapchain;
@@ -52,7 +52,7 @@ private:
     /// The name of the graphics pass
     std::string m_name;
     /// The command buffer recording function of the graphics pass
-    std::function<void(const CommandBuffer &)> m_on_record_cmd_buffer{[](auto &) {}};
+    std::function<void(CommandBufferBuilder &)> m_on_record_cmd_buffer{[](auto &) {}};
     /// The descriptor set layout of the pass (this will be created by rendergraph)
     std::unique_ptr<DescriptorSetLayout> m_descriptor_set_layout;
     /// The descriptor set of the pass (this will be created by rendergraph)
@@ -123,7 +123,7 @@ public:
     /// @param texture_writes The textures which are written to by this graphics pass
     /// @param swapchain_writes The swapchains which are written to by this graphics pass
     /// @param pass_debug_label_color The debug label of the pass (visible in graphics debuggers like RenderDoc)
-    GraphicsPass(std::string name, std::function<void(const CommandBuffer &)> on_record_cmd_buffer,
+    GraphicsPass(std::string name, std::function<void(CommandBufferBuilder &)> on_record_cmd_buffer,
                  std::vector<std::weak_ptr<Buffer>> buffer_reads,
                  std::vector<std::pair<std::weak_ptr<Texture>, std::optional<VkClearValue>>> texture_writes,
                  std::vector<std::pair<std::weak_ptr<Swapchain>, std::optional<VkClearValue>>> swapchain_writes,

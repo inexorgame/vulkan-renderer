@@ -18,6 +18,7 @@ class Device;
 namespace inexor::vulkan_renderer::wrapper::commands {
 // Forward declaration
 class CommandBuffer;
+class CommandBufferBuilder;
 } // namespace inexor::vulkan_renderer::wrapper::commands
 
 namespace inexor::vulkan_renderer::wrapper::commands {
@@ -51,7 +52,7 @@ public:
                                          std::array<float, 4> debug_label_color, VkExtent2D render_extent,
                                          const VkCommandBufferInheritanceInfo &inheritance_info,
                                          const VkRenderingInfo &rendering_info,
-                                         std::function<void(const CommandBuffer &)> on_record);
+                                         std::function<void(CommandBufferBuilder &)> on_record);
 };
 
 } // namespace inexor::vulkan_renderer::wrapper::commands

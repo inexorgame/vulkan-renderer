@@ -2,6 +2,7 @@
 
 #include "inexor/vulkan-renderer/tools/exception.hpp"
 #include "inexor/vulkan-renderer/wrapper/commands/command_buffer.hpp"
+#include "inexor/vulkan-renderer/wrapper/commands/command_buffer_builder.hpp"
 #include "inexor/vulkan-renderer/wrapper/core/device.hpp"
 
 #include <limits>
@@ -53,13 +54,14 @@ void CommandBufferCache::invalidate_all_secondary_command_buffers() {
 void CommandBufferCache::record_secondary_command_buffer(
     const CommandBuffer &primary_cmd_buf, const std::string &pass_name, std::array<float, 4> debug_label_color,
     const VkExtent2D render_extent, const VkCommandBufferInheritanceInfo &inheritance_info,
-    const VkRenderingInfo &rendering_info, std::function<void(const CommandBuffer &)> on_record) {
+    const VkRenderingInfo &rendering_info, std::function<void(CommandBufferBuilder &)> on_record) {
     if (!m_use_secondary_command_buffers) {
-        primary_cmd_buf.begin_debug_label_region(pass_name, debug_label_color);
-        primary_cmd_buf.begin_rendering(rendering_info);
-        std::invoke(on_record, primary_cmd_buf);
-        primary_cmd_buf.end_rendering();
-        primary_cmd_buf.end_debug_label_region();
+        CommandBufferBuilder primary_builder(primary_cmd_buf);
+        primary_builder.begin_debug_label_region(pass_name, debug_label_color);
+        primary_builder.begin_rendering(rendering_info);
+        std::invoke(on_record, primary_builder);
+        primary_builder.end_rendering();
+        primary_builder.end_debug_label_region();
         return;
     }
 
@@ -81,7 +83,8 @@ void CommandBufferCache::record_secondary_command_buffer(
         secondary_cmd.reset_recording();
         secondary_cmd.begin_secondary_command_buffer(inheritance_info,
                                                      VK_COMMAND_BUFFER_USAGE_RENDER_PASS_CONTINUE_BIT);
-        std::invoke(on_record, secondary_cmd);
+        CommandBufferBuilder secondary_builder(secondary_cmd);
+        std::invoke(on_record, secondary_builder);
         secondary_cmd.end_recording();
         state.cached_render_extent = render_extent;
         state.dirty_by_frame_slot[slot_index] = false;
@@ -90,12 +93,13 @@ void CommandBufferCache::record_secondary_command_buffer(
     auto rendering_info_with_secondary = rendering_info;
     rendering_info_with_secondary.flags |= VK_RENDERING_CONTENTS_SECONDARY_COMMAND_BUFFERS_BIT;
 
-    primary_cmd_buf.begin_debug_label_region(pass_name, debug_label_color);
-    primary_cmd_buf.begin_rendering(rendering_info_with_secondary);
+    CommandBufferBuilder primary_builder(primary_cmd_buf);
+    primary_builder.begin_debug_label_region(pass_name, debug_label_color);
+    primary_builder.begin_rendering(rendering_info_with_secondary);
     const VkCommandBuffer secondary_handle = secondary_cmd.command_buffer();
-    primary_cmd_buf.execute_secondary_command_buffers(std::span<const VkCommandBuffer>(&secondary_handle, 1));
-    primary_cmd_buf.end_rendering();
-    primary_cmd_buf.end_debug_label_region();
+    primary_builder.execute_secondary_command_buffers(std::span<const VkCommandBuffer>(&secondary_handle, 1));
+    primary_builder.end_rendering();
+    primary_builder.end_debug_label_region();
 }
 
 } // namespace inexor::vulkan_renderer::wrapper::commands

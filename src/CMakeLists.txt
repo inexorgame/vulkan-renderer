@@ -43,6 +43,7 @@ set(INEXOR_SOURCE_FILES
     vulkan-renderer/tools/time_step.cpp
 
     vulkan-renderer/wrapper/commands/command_buffer_cache.cpp
+    vulkan-renderer/wrapper/commands/command_buffer_builder.cpp
     vulkan-renderer/wrapper/commands/command_buffer.cpp
     vulkan-renderer/wrapper/commands/command_pool.cpp
 

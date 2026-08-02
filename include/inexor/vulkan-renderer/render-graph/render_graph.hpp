@@ -7,8 +7,8 @@
 #include "inexor/vulkan-renderer/render-graph/staging_buffer.hpp"
 #include "inexor/vulkan-renderer/render-graph/swapchain_manager.hpp"
 #include "inexor/vulkan-renderer/render-graph/texture_copy_batch_builder.hpp"
-#include "inexor/vulkan-renderer/wrapper/commands/command_buffer.hpp"
 #include "inexor/vulkan-renderer/wrapper/commands/command_buffer_cache.hpp"
+#include "inexor/vulkan-renderer/wrapper/commands/command_buffer_builder.hpp"
 #include "inexor/vulkan-renderer/wrapper/pipelines/graphics_pipeline_builder.hpp"
 #include "inexor/vulkan-renderer/wrapper/pipelines/pipeline_cache.hpp"
 #include "inexor/vulkan-renderer/wrapper/synchronization/pipeline_barrier_batch_builder.hpp"
@@ -104,7 +104,7 @@ private:
     std::unique_ptr<wrapper::synchronization::Semaphore> m_upload_finished;
     bool m_upload_submission_pending{false};
     VkPipelineStageFlags2 m_upload_wait_stage_mask{VK_PIPELINE_STAGE_2_NONE};
-    std::function<void(const CommandBuffer &)> m_inline_update_commands;
+    std::function<void(wrapper::commands::CommandBufferBuilder &)> m_inline_update_commands;
     std::vector<std::function<void()>> m_inline_update_pending_releases;
 
     /// Queue family ownership transfer barriers to be replayed as "acquire" operations on the graphics queue,
@@ -169,7 +169,7 @@ private:
     /// inside of the on_record function.
     /// @param cmd_buf The command buffer to record the pass into
     /// @param pass The graphics pass to record the command buffer for
-    void record_command_buffer_for_pass(const CommandBuffer &cmd_buf, GraphicsPass &pass);
+    void record_command_buffer_for_pass(const wrapper::commands::CommandBuffer &cmd_buf, GraphicsPass &pass);
 
 public:
     /// Default constructor

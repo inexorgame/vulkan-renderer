@@ -157,7 +157,7 @@ OctreeRenderer::OctreeRenderer(std::shared_ptr<RenderGraph> render_graph, std::w
             .reads_from(m_vertex_buffer)
             .writes_to(m_index_buffer)
             .reads_from(m_index_buffer)
-            .set_on_record([&](const CommandBuffer &cmd_buf) {
+            .set_on_record([&](wrapper::commands::CommandBufferBuilder &cmd_buf) {
                 const auto vertex_buffer = m_vertex_buffer.lock();
                 const auto index_buffer = m_index_buffer.lock();
                 const auto swapchain = m_swapchain.lock();

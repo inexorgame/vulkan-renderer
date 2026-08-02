@@ -9,7 +9,7 @@
 
 namespace inexor::vulkan_renderer::wrapper::commands {
 /// Forward declaration
-class CommandBuffer;
+class CommandBufferBuilder;
 } // namespace inexor::vulkan_renderer::wrapper::commands
 
 namespace inexor::vulkan_renderer::wrapper::synchronization {
@@ -60,10 +60,10 @@ public:
     [[nodiscard]] bool empty() const;
 
     /// Flushes only when at least one barrier has been queued.
-    void flush_if_not_empty(const wrapper::commands::CommandBuffer &cmd_buf);
+    void flush_if_not_empty(wrapper::commands::CommandBufferBuilder &cmd_buf);
 
     /// Flush queued barriers. Throws if called while empty.
-    void flush(const wrapper::commands::CommandBuffer &cmd_buf);
+    void flush(wrapper::commands::CommandBufferBuilder &cmd_buf);
     void reset();
 };
 

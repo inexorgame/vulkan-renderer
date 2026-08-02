@@ -73,6 +73,8 @@ void log_vma_statistics(const inexor::vulkan_renderer::wrapper::core::Device &de
 
 namespace inexor::vulkan_renderer::render_graph {
 
+using wrapper::commands::CommandBufferBuilder;
+
 // Using declaration
 using tools::make_info;
 using wrapper::descriptors::DescriptorSetLayoutBuilder;
@@ -664,20 +666,20 @@ void RenderGraph::render() {
 
     const auto render_submit_fence = m_device.execute(
         VK_QUEUE_GRAPHICS_BIT, DebugLabelColor::CYAN,
-        [&](const CommandBuffer &cmd_buf) {
+        [&](CommandBufferBuilder &builder) {
             if (m_inline_update_commands) {
-                m_inline_update_commands(cmd_buf);
+                m_inline_update_commands(builder);
             }
 
             // Acquire ownership of any buffers/images that were uploaded on a transfer queue whose family differs
             // from the graphics queue family, before they are read by any pass below.
-            m_pending_queue_ownership_acquire_barriers.flush_if_not_empty(cmd_buf);
+            m_pending_queue_ownership_acquire_barriers.flush_if_not_empty(builder);
 
-            m_swapchain_manager.prepare_swapchains_for_rendering(cmd_buf);
+            m_swapchain_manager.prepare_swapchains_for_rendering(builder);
             for (const auto &pass : m_graphics_passes) {
-                record_command_buffer_for_pass(cmd_buf, *pass);
+                record_command_buffer_for_pass(builder.command_buffer(), *pass);
             }
-            m_swapchain_manager.prepare_swapchains_for_presenting(cmd_buf);
+            m_swapchain_manager.prepare_swapchains_for_presenting(builder);
         },
         render_wait_semaphores, m_swapchain_manager.rendering_finished_semaphores());
 
@@ -896,7 +898,7 @@ void RenderGraph::update_resources() {
                                    needs_queue_family_ownership_transfer, transfer_family_index, graphics_family_index,
                                    pre_copy_barriers = std::move(pre_copy_barriers),
                                    post_copy_barriers =
-                                       std::move(post_copy_barriers)](const CommandBuffer &cmd_buf) mutable {
+                                       std::move(post_copy_barriers)](CommandBufferBuilder &cmd_buf) mutable {
         // Phase 1: Emit all pre-copy transitions at once.
         pre_copy_barriers.flush_if_not_empty(cmd_buf);
 
