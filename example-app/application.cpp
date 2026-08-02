@@ -25,6 +25,7 @@
 #include <spdlog/spdlog.h>
 
 #include <mutex>
+#include <stdexcept>
 #include <string_view>
 #include <toml++/toml.hpp>
 #include <unordered_map>
@@ -115,7 +116,9 @@ void ExampleApp::generate_octree_indices() {
     for (auto &vertex : old_vertices) {
         // TODO: Use std::unordered_map::contains() when we switch to C++ 20.
         if (vertex_map.count(vertex) == 0) {
-            assert(vertex_map.size() < std::numeric_limits<std::uint32_t>::max() && "Octree too big!");
+            if (vertex_map.size() >= std::numeric_limits<std::uint32_t>::max()) {
+                throw std::overflow_error("Octree too big!");
+            }
             vertex_map.emplace(vertex, static_cast<std::uint32_t>(vertex_map.size()));
             m_octree_vertices.push_back(vertex);
         }

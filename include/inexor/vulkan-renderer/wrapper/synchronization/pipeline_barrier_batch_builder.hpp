@@ -3,6 +3,7 @@
 #include <volk.h>
 
 #include <span>
+#include <stdexcept>
 #include <type_traits>
 #include <vector>
 
@@ -35,7 +36,7 @@ public:
         } else if constexpr (std::is_same_v<U, VkImageMemoryBarrier2>) {
             m_image_barriers.push_back(barrier);
         } else {
-            static_assert(std::is_same_v<U, void>, "Unsupported Vulkan barrier type");
+            throw std::invalid_argument("Unsupported Vulkan barrier type");
         }
         return *this;
     }
@@ -51,7 +52,7 @@ public:
         } else if constexpr (std::is_same_v<U, VkImageMemoryBarrier2>) {
             m_image_barriers.insert(m_image_barriers.end(), barriers.begin(), barriers.end());
         } else {
-            static_assert(std::is_same_v<U, void>, "Unsupported Vulkan barrier type");
+            throw std::invalid_argument("Unsupported Vulkan barrier type");
         }
         return *this;
     }
@@ -61,7 +62,7 @@ public:
     /// Flushes only when at least one barrier has been queued.
     void flush_if_not_empty(const wrapper::commands::CommandBuffer &cmd_buf);
 
-    /// Flush queued barriers. In debug builds this asserts if called while empty.
+    /// Flush queued barriers. Throws if called while empty.
     void flush(const wrapper::commands::CommandBuffer &cmd_buf);
     void reset();
 };

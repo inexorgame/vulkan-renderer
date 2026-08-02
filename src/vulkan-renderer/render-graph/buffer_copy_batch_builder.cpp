@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <cstring>
 #include <functional>
+#include <stdexcept>
 #include <type_traits>
 
 namespace inexor::vulkan_renderer::render_graph {
@@ -14,11 +15,13 @@ namespace {
 
 template <typename T>
 std::size_t hash_handle(T handle) {
-    static_assert(std::is_trivially_copyable_v<T>);
-
-    std::uintptr_t value = 0;
-    std::memcpy(&value, &handle, std::min(sizeof(value), sizeof(handle)));
-    return std::hash<std::uintptr_t>{}(value);
+    if constexpr (!std::is_trivially_copyable_v<T>) {
+        throw std::invalid_argument("Error: Handle type must be trivially copyable!");
+    } else {
+        std::uintptr_t value = 0;
+        std::memcpy(&value, &handle, std::min(sizeof(value), sizeof(handle)));
+        return std::hash<std::uintptr_t>{}(value);
+    }
 }
 
 [[nodiscard]] bool can_merge_buffer_copy_regions(const VkBufferCopy &lhs, const VkBufferCopy &rhs) {

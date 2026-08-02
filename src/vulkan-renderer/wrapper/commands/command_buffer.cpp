@@ -8,8 +8,8 @@
 
 #include <spdlog/spdlog.h>
 
-#include <cassert>
 #include <memory>
+#include <stdexcept>
 #include <utility>
 
 namespace inexor::vulkan_renderer::wrapper::commands {
@@ -74,7 +74,9 @@ void CommandBuffer::reset_recording() const {
 
 const CommandBuffer &
 CommandBuffer::execute_secondary_command_buffers(const std::span<const VkCommandBuffer> secondary_cmd_buffers) const {
-    assert(!secondary_cmd_buffers.empty());
+    if (secondary_cmd_buffers.empty()) {
+        throw std::invalid_argument("Error: Parameter 'secondary_cmd_buffers' is empty!");
+    }
     vkCmdExecuteCommands(m_cmd_buf, static_cast<std::uint32_t>(secondary_cmd_buffers.size()),
                          secondary_cmd_buffers.data());
     return *this;
@@ -144,8 +146,12 @@ const CommandBuffer &CommandBuffer::bind_descriptor_sets(const std::span<const V
                                                          const VkPipelineBindPoint bind_point,
                                                          const std::uint32_t first_set,
                                                          const std::span<const std::uint32_t> dyn_offsets) const {
-    assert(layout);
-    assert(!desc_sets.empty());
+    if (!layout) {
+        throw std::invalid_argument("Error: Parameter 'layout' is invalid!");
+    }
+    if (desc_sets.empty()) {
+        throw std::invalid_argument("Error: Parameter 'desc_sets' is empty!");
+    }
     vkCmdBindDescriptorSets(m_cmd_buf, bind_point, layout, first_set, static_cast<std::uint32_t>(desc_sets.size()),
                             desc_sets.data(), static_cast<std::uint32_t>(dyn_offsets.size()), dyn_offsets.data());
     return *this;
@@ -167,7 +173,9 @@ CommandBuffer::bind_index_buffer(const std::weak_ptr<inexor::vulkan_renderer::re
 
 const CommandBuffer &CommandBuffer::bind_index_buffer(const VkBuffer buf, const VkIndexType index_type,
                                                       const VkDeviceSize offset) const {
-    assert(buf);
+    if (!buf) {
+        throw std::invalid_argument("Error: Parameter 'buf' is invalid!");
+    }
     vkCmdBindIndexBuffer(m_cmd_buf, buf, offset, index_type);
     return *this;
 }
@@ -183,7 +191,9 @@ const CommandBuffer &CommandBuffer::bind_pipeline(
 
 const CommandBuffer &CommandBuffer::bind_pipeline(const VkPipeline pipeline,
                                                   const VkPipelineBindPoint bind_point) const {
-    assert(pipeline);
+    if (!pipeline) {
+        throw std::invalid_argument("Error: Parameter 'pipeline' is invalid!");
+    }
     vkCmdBindPipeline(m_cmd_buf, bind_point, pipeline);
     return *this;
 }
@@ -191,7 +201,9 @@ const CommandBuffer &CommandBuffer::bind_pipeline(const VkPipeline pipeline,
 const CommandBuffer &CommandBuffer::bind_vertex_buffers(const std::span<const VkBuffer> bufs,
                                                         const std::uint32_t first_binding,
                                                         const std::span<const VkDeviceSize> offsets) const {
-    assert(!bufs.empty());
+    if (bufs.empty()) {
+        throw std::invalid_argument("Error: Parameter 'bufs' is empty!");
+    }
     if (!offsets.empty()) {
         vkCmdBindVertexBuffers(m_cmd_buf, first_binding, static_cast<std::uint32_t>(bufs.size()), bufs.data(),
                                offsets.data());
@@ -200,7 +212,9 @@ const CommandBuffer &CommandBuffer::bind_vertex_buffers(const std::span<const Vk
     // NOTE: When no offsets are specified, all buffers are bound at offset 0. We use a fixed-size stack array here
     // instead of a temporary std::vector to avoid a heap allocation on every call.
     constexpr std::size_t MAX_STACK_BINDINGS = 16;
-    assert(bufs.size() <= MAX_STACK_BINDINGS && "Too many vertex buffer bindings for the fixed-size stack buffer!");
+    if (bufs.size() > MAX_STACK_BINDINGS) {
+        throw std::out_of_range("Too many vertex buffer bindings for the fixed-size stack buffer!");
+    }
     const std::array<VkDeviceSize, MAX_STACK_BINDINGS> zero_offsets{};
     vkCmdBindVertexBuffers(m_cmd_buf, first_binding, static_cast<std::uint32_t>(bufs.size()), bufs.data(),
                            zero_offsets.data());
@@ -215,7 +229,9 @@ const CommandBuffer &CommandBuffer::change_image_layout(const VkImage image, con
     if (image == VK_NULL_HANDLE) {
         throw std::invalid_argument("Error: Parameter 'image' is an invalid pointer!");
     }
-    assert(new_layout != old_layout);
+    if (new_layout == old_layout) {
+        throw std::invalid_argument("Error: old_layout and new_layout must differ!");
+    }
 
     auto barrier = VkImageMemoryBarrier2{
         .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2,
@@ -320,9 +336,15 @@ CommandBuffer::change_image_layout(const VkImage image, const VkFormat format, c
 
 const CommandBuffer &CommandBuffer::copy_buffer(const VkBuffer src_buf, const VkBuffer dst_buf,
                                                 const std::span<const VkBufferCopy> copy_regions) const {
-    assert(src_buf);
-    assert(dst_buf);
-    assert(!copy_regions.empty());
+    if (!src_buf) {
+        throw std::invalid_argument("Error: Parameter 'src_buf' is invalid!");
+    }
+    if (!dst_buf) {
+        throw std::invalid_argument("Error: Parameter 'dst_buf' is invalid!");
+    }
+    if (copy_regions.empty()) {
+        throw std::invalid_argument("Error: Parameter 'copy_regions' is empty!");
+    }
     vkCmdCopyBuffer(m_cmd_buf, src_buf, dst_buf, static_cast<std::uint32_t>(copy_regions.size()), copy_regions.data());
     return *this;
 }
@@ -339,8 +361,15 @@ const CommandBuffer &CommandBuffer::copy_buffer(const VkBuffer src_buf, const Vk
 
 const CommandBuffer &CommandBuffer::copy_buffer_to_image(const VkBuffer src_buf, const VkImage dst_img,
                                                          const std::span<const VkBufferImageCopy> copy_regions) const {
-    assert(src_buf);
-    assert(dst_img);
+    if (!src_buf) {
+        throw std::invalid_argument("Error: Parameter 'src_buf' is invalid!");
+    }
+    if (!dst_img) {
+        throw std::invalid_argument("Error: Parameter 'dst_img' is invalid!");
+    }
+    if (copy_regions.empty()) {
+        throw std::invalid_argument("Error: Parameter 'copy_regions' is empty!");
+    }
     vkCmdCopyBufferToImage(m_cmd_buf, src_buf, dst_img, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
                            static_cast<std::uint32_t>(copy_regions.size()), copy_regions.data());
     return *this;
@@ -512,9 +541,15 @@ const CommandBuffer &CommandBuffer::insert_debug_label(const std::string &name, 
 const CommandBuffer &CommandBuffer::push_constants(const VkPipelineLayout layout, const VkShaderStageFlags stage,
                                                    const std::uint32_t size, const void *data,
                                                    const VkDeviceSize offset) const {
-    assert(layout);
-    assert(size > 0);
-    assert(data);
+    if (!layout) {
+        throw std::invalid_argument("Error: Parameter 'layout' is invalid!");
+    }
+    if (size == 0) {
+        throw std::invalid_argument("Error: Parameter 'size' must be greater than zero!");
+    }
+    if (data == nullptr) {
+        throw std::invalid_argument("Error: Parameter 'data' is invalid!");
+    }
     vkCmdPushConstants(m_cmd_buf, layout, stage, static_cast<std::uint32_t>(offset), size, data);
     return *this;
 }

@@ -83,7 +83,7 @@ private:
     /// Get the root to this cube.
     [[nodiscard]] std::shared_ptr<Cube> root();
     /// Get the vertices of this cube. Use only on geometry cubes.
-    [[nodiscard]] std::array<glm::vec3, 8> vertices() const noexcept;
+    [[nodiscard]] std::array<glm::vec3, 8> vertices() const;
 
     /// Optimized implementations of 90°, 180° and 270° rotations.
     template <int Rotations>

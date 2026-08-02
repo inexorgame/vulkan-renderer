@@ -1,8 +1,8 @@
 #include "inexor/vulkan-renderer/tools/representation.hpp"
 
 #include <array>
-#include <cassert>
 #include <format>
+#include <stdexcept>
 
 namespace inexor::vulkan_renderer::tools {
 
@@ -922,7 +922,9 @@ std::string_view get_device_feature_description(const std::size_t index) {
         // inheritedQueries
         "execution of secondary command buffers while a query is active"};
 
-    assert(index < FEATURE_DESCRIPTIONS.size());
+    if (index >= FEATURE_DESCRIPTIONS.size()) {
+        throw std::out_of_range("Error: Feature description index out of range!");
+    }
     return FEATURE_DESCRIPTIONS[index];
 }
 

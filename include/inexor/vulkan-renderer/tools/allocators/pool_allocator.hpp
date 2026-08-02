@@ -1,6 +1,5 @@
 #pragma once
 
-#include <cassert>
 #include <memory>
 #include <mutex>
 #include <shared_mutex>
@@ -61,10 +60,11 @@ public:
     PoolAllocator &operator=(const PoolAllocator &other) = delete;
     PoolAllocator &operator=(PoolAllocator &&other) = delete;
 
-    ~PoolAllocator() noexcept {
+    ~PoolAllocator() noexcept(false) {
         // If this is not 0, we have allocations that are still in use and whose destructors have NOT been called yet!
-        // Note that we can't throw an exception in a destructor, because std::terminate will be invoked!
-        assert(m_blocks_in_use == 0 && "Error: Not all allocations in the pool allocator have been freed!");
+        if (m_blocks_in_use != 0) {
+            throw std::logic_error("Error: Not all allocations in the pool allocator have been freed!");
+        }
         // @TODO Attempt to delete memory anyways
         delete[] m_data;
         m_data = nullptr;

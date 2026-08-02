@@ -7,7 +7,6 @@
 
 #include <spdlog/spdlog.h>
 
-#include <cassert>
 #include <cstring>
 
 namespace inexor::vulkan_renderer::tools {
@@ -100,7 +99,9 @@ std::vector<VkBool32> get_device_features_as_vector(const VkPhysicalDeviceFeatur
 }
 
 std::string get_physical_device_name(const VkPhysicalDevice physical_device) {
-    assert(physical_device);
+    if (!physical_device) {
+        throw InexorException("Error: Parameter 'physical_device' is invalid!");
+    }
     VkPhysicalDeviceProperties2 properties2{};
     properties2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2;
     vkGetPhysicalDeviceProperties2(physical_device, &properties2);

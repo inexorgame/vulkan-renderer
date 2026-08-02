@@ -29,7 +29,9 @@ DescriptorSetAllocator::DescriptorSetAllocator(DescriptorSetAllocator &&other) n
 
 VkDescriptorSet DescriptorSetAllocator::allocate(const std::string &name,
                                                  const VkDescriptorSetLayout descriptor_set_layout) {
-    assert(descriptor_set_layout);
+    if (!descriptor_set_layout) {
+        throw InexorException("Error: Parameter 'descriptor_set_layout' is invalid!");
+    }
 
     if (m_current_pool_set_allocations >= MAX_DESCRIPTOR_SETS_PER_POOL) {
         m_current_pool = m_descriptor_pool_allocator.request_new_descriptor_pool();

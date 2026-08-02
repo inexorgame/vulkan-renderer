@@ -4,7 +4,7 @@
 
 #include <spdlog/spdlog.h>
 
-#include <cassert>
+#include <stdexcept>
 
 namespace inexor::vulkan_renderer::wrapper::synchronization {
 
@@ -13,10 +13,9 @@ bool PipelineBarrierBatchBuilder::empty() const {
 }
 
 void PipelineBarrierBatchBuilder::flush(const wrapper::commands::CommandBuffer &cmd_buf) {
-    assert(!empty() &&
-           "PipelineBarrierBatchBuilder::flush called with no barriers. Use flush_if_not_empty() if this is expected.");
     if (empty()) {
-        return;
+        throw std::logic_error(
+            "PipelineBarrierBatchBuilder::flush called with no barriers. Use flush_if_not_empty() if this is expected.");
     }
 
     const auto dependency_info = VkDependencyInfo{
