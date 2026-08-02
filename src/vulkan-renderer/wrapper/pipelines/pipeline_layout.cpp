@@ -2,13 +2,17 @@
 
 #include "inexor/vulkan-renderer/tools/exception.hpp"
 #include "inexor/vulkan-renderer/tools/make_info.hpp"
-#include "inexor/vulkan-renderer/wrapper/device.hpp"
+#include "inexor/vulkan-renderer/wrapper/core/device.hpp"
 
 #include <utility>
 
 namespace inexor::vulkan_renderer::wrapper::pipelines {
 
-PipelineLayout::PipelineLayout(const Device &device, std::string name,
+// Using declaration
+using tools::InexorException;
+using tools::VulkanException;
+
+PipelineLayout::PipelineLayout(const core::Device &device, std::string name,
                                const std::span<const VkDescriptorSetLayout> descriptor_set_layouts,
                                const std::span<const VkPushConstantRange> push_constant_ranges)
     : m_device(device), m_name(std::move(name)) {

@@ -9,10 +9,10 @@
 #include <string>
 #include <vector>
 
-namespace inexor::vulkan_renderer::wrapper {
+namespace inexor::vulkan_renderer::wrapper::core {
 // Forward declaration
 class Device;
-} // namespace inexor::vulkan_renderer::wrapper
+} // namespace inexor::vulkan_renderer::wrapper::core
 
 namespace inexor::vulkan_renderer::wrapper::commands {
 // Forward declaration
@@ -84,7 +84,7 @@ struct GraphicsPipelineSetupData {
 /// RAII wrapper for graphics pipelines
 class GraphicsPipeline {
 private:
-    const Device &m_device;
+    const core::Device &m_device;
     std::string m_name;
     VkPipeline m_pipeline;
     std::unique_ptr<PipelineLayout> m_pipeline_layout;
@@ -94,7 +94,7 @@ public:
     /// @param device The device wrapper
     /// @param setup_data The graphics pipeline setup data
     /// @param name The internal debug name of the graphics pipeline
-    GraphicsPipeline(const Device &device, GraphicsPipelineSetupData setup_data, std::string name);
+    GraphicsPipeline(const core::Device &device, GraphicsPipelineSetupData setup_data, std::string name);
 
     /// Call vkDestroyPipeline
     ~GraphicsPipeline();

@@ -1,17 +1,17 @@
-#include "inexor/vulkan-renderer/wrapper/shader.hpp"
+#include "inexor/vulkan-renderer/wrapper/shaders/shader.hpp"
 
 #include "inexor/vulkan-renderer/tools/exception.hpp"
 #include "inexor/vulkan-renderer/tools/file.hpp"
 #include "inexor/vulkan-renderer/tools/make_info.hpp"
-#include "inexor/vulkan-renderer/wrapper/device.hpp"
+#include "inexor/vulkan-renderer/wrapper/core/device.hpp"
 
 #include <cassert>
 #include <utility>
 
-namespace inexor::vulkan_renderer::wrapper {
+namespace inexor::vulkan_renderer::wrapper::shaders {
 
-Shader::Shader(const Device &device, const VkShaderStageFlagBits shader_stage, const std::string &shader_file_name,
-               const std::string &entry_point)
+Shader::Shader(const core::Device &device, const VkShaderStageFlagBits shader_stage,
+               const std::string &shader_file_name, const std::string &entry_point)
     : m_device(device), m_shader_stage(shader_stage), m_name(shader_file_name), m_entry_point(entry_point) {
     if (shader_file_name.empty()) {
         throw std::invalid_argument("Error: Parameter 'shader_file_name' is an empty string!");
@@ -32,7 +32,7 @@ Shader::Shader(const Device &device, const VkShaderStageFlagBits shader_stage, c
 
     if (const auto result = vkCreateShaderModule(m_device.device(), &shader_module_ci, nullptr, &m_shader_module);
         result != VK_SUCCESS) {
-        throw VulkanException("Error: vkCreateShaderModule failed!", result, m_name);
+        throw tools::VulkanException("Error: vkCreateShaderModule failed!", result, m_name);
     }
     m_device.set_debug_name(m_shader_module, m_name);
 }
@@ -48,4 +48,4 @@ Shader::~Shader() {
     vkDestroyShaderModule(m_device.device(), m_shader_module, nullptr);
 }
 
-} // namespace inexor::vulkan_renderer::wrapper
+} // namespace inexor::vulkan_renderer::wrapper::shaders

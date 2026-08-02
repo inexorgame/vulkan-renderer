@@ -1,17 +1,25 @@
 #pragma once
 
+#include "inexor/vulkan-renderer/wrapper/core/device.hpp"
 #include "inexor/vulkan-renderer/wrapper/descriptors/descriptor_set_allocator.hpp"
 #include "inexor/vulkan-renderer/wrapper/descriptors/descriptor_set_layout_builder.hpp"
 #include "inexor/vulkan-renderer/wrapper/descriptors/per_frame_descriptor_sets.hpp"
 #include "inexor/vulkan-renderer/wrapper/descriptors/write_descriptor_set_builder.hpp"
-#include "inexor/vulkan-renderer/wrapper/device.hpp"
 
 #include <functional>
 #include <memory>
 #include <string>
 #include <vector>
 
+namespace inexor::vulkan_renderer::wrapper::core {
+// Forward declaration
+class Device;
+} // namespace inexor::vulkan_renderer::wrapper::core
+
 namespace inexor::vulkan_renderer::render_graph {
+
+// Using declaration
+using wrapper::core::Device;
 
 class ResourceDescriptorManager {
 public:
@@ -29,7 +37,7 @@ private:
         VkDescriptorSetLayout descriptor_set_layout{VK_NULL_HANDLE};
     };
 
-    wrapper::Device &m_device;
+    Device &m_device;
     wrapper::descriptors::DescriptorSetLayoutBuilder m_descriptor_set_layout_builder;
     wrapper::descriptors::DescriptorSetAllocator m_descriptor_set_allocator;
     wrapper::descriptors::WriteDescriptorSetBuilder m_write_descriptor_set_builder;
@@ -44,7 +52,7 @@ private:
     void sync_descriptor_resource_dirty_tracking();
 
 public:
-    explicit ResourceDescriptorManager(wrapper::Device &device);
+    explicit ResourceDescriptorManager(Device &device);
 
     [[nodiscard]] std::weak_ptr<wrapper::descriptors::PerFrameDescriptorSets>
     add_resource_descriptor(std::string name, OnBuildDescriptorSetLayout on_build_descriptor_set_layout,

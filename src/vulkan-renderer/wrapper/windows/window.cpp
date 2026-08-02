@@ -3,7 +3,6 @@
 #include <GLFW/glfw3.h>
 #include <spdlog/spdlog.h>
 
-#include <cassert>
 #include <stdexcept>
 #include <thread>
 
@@ -72,7 +71,9 @@ void Window::set_resize_callback(GLFWframebuffersizefun frame_buffer_resize_call
 }
 
 void Window::set_title(const std::string &title) {
-    assert(!title.empty());
+    if (title.empty()) {
+        throw std::invalid_argument("Error: Parameter 'title' is an empty string!");
+    }
     glfwSetWindowTitle(m_window, title.c_str());
 }
 

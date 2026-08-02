@@ -6,21 +6,22 @@
 #include <string>
 #include <vector>
 
-namespace inexor::vulkan_renderer::wrapper {
+namespace inexor::vulkan_renderer::wrapper::core {
 // Forward declaration
 class Device;
-} // namespace inexor::vulkan_renderer::wrapper
+} // namespace inexor::vulkan_renderer::wrapper::core
 
 namespace inexor::vulkan_renderer::wrapper::descriptors {
 
-// Forward declaration
+// Forward declarations
 class DescriptorPoolAllocator;
+using wrapper::core::Device;
 
 /// RAII wrapper for VkDescriptorPool
 /// For internal use inside of rendergraph only!
 class DescriptorPool {
 private:
-    const Device &m_device;
+    const core::Device &m_device;
     VkDescriptorPool m_descriptor_pool{VK_NULL_HANDLE};
     std::vector<VkDescriptorPoolSize> m_pool_sizes;
     std::string m_name;
@@ -34,7 +35,7 @@ public:
     /// @exception std::invalid_argument Internal debug name for descriptor pool must not be empty
     /// @exception std::invalid_argument Descriptor pool sizes must not be empty
     /// @exception VulkanException vkCreateDescriptorPool call failed
-    DescriptorPool(const Device &device, std::vector<VkDescriptorPoolSize> pool_sizes, std::uint32_t max_sets,
+    DescriptorPool(const core::Device &device, std::vector<VkDescriptorPoolSize> pool_sizes, std::uint32_t max_sets,
                    std::string name);
 
     DescriptorPool(const DescriptorPool &) = delete;

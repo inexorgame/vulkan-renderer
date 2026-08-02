@@ -1,13 +1,17 @@
 #include "inexor/vulkan-renderer/wrapper/descriptors/descriptor_set_layout.hpp"
 
 #include "inexor/vulkan-renderer/tools/exception.hpp"
-#include "inexor/vulkan-renderer/wrapper/device.hpp"
+#include "inexor/vulkan-renderer/wrapper/core/device.hpp"
 
 #include <utility>
 
 namespace inexor::vulkan_renderer::wrapper::descriptors {
 
-DescriptorSetLayout::DescriptorSetLayout(const Device &device,
+// Using declarations
+using tools::InexorException;
+using tools::VulkanException;
+
+DescriptorSetLayout::DescriptorSetLayout(const core::Device &device,
                                          const VkDescriptorSetLayoutCreateInfo descriptor_set_layout_ci,
                                          std::string name)
     : m_device(device), m_name(std::move(name)) {

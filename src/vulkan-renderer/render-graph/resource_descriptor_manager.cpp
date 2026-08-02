@@ -8,7 +8,7 @@
 
 namespace inexor::vulkan_renderer::render_graph {
 
-ResourceDescriptorManager::ResourceDescriptorManager(wrapper::Device &device)
+ResourceDescriptorManager::ResourceDescriptorManager(Device &device)
     : m_device(device), m_descriptor_set_layout_builder(device), m_descriptor_set_allocator(device),
       m_write_descriptor_set_builder(device) {}
 

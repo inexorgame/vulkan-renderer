@@ -5,17 +5,19 @@
 #include <cstdint>
 #include <string>
 
-namespace inexor::vulkan_renderer::wrapper {
+namespace inexor::vulkan_renderer::wrapper::core {
 // Forward declaration
 class Device;
-} // namespace inexor::vulkan_renderer::wrapper
+} // namespace inexor::vulkan_renderer::wrapper::core
 
 namespace inexor::vulkan_renderer::wrapper::synchronization {
+
+// Using declaration
 
 /// A RAII wrapper for VkFence
 class Fence {
 private:
-    const Device &m_device;
+    const core::Device &m_device;
     std::string m_name;
     VkFence m_fence{VK_NULL_HANDLE};
 
@@ -23,7 +25,7 @@ public:
     /// @brief Default constructor.
     /// @param device The const reference to a device RAII wrapper instance.
     /// @param name The internal debug marker name of the VkFence.
-    Fence(const Device &device, const std::string &name);
+    Fence(const core::Device &device, const std::string &name);
 
     Fence(const Fence &) = delete;
     Fence(Fence &&) noexcept;

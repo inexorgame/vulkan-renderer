@@ -1,10 +1,7 @@
 #pragma once
 
-#include "inexor/vulkan-renderer/render-graph/buffer.hpp"
-#include "inexor/vulkan-renderer/render-graph/graphics_pass.hpp"
-#include "inexor/vulkan-renderer/render-graph/texture.hpp"
 #include "inexor/vulkan-renderer/tools/make_info.hpp"
-#include "inexor/vulkan-renderer/wrapper/swapchains/swapchain.hpp"
+#include "inexor/vulkan-renderer/wrapper/core/device.hpp"
 
 #include <functional>
 #include <memory>
@@ -13,21 +10,33 @@
 
 namespace inexor::vulkan_renderer::wrapper::commands {
 // Forward declaration
-class CommandBuffer;
+class CommandBufferBuilder;
 } // namespace inexor::vulkan_renderer::wrapper::commands
+
+namespace inexor::vulkan_renderer::wrapper::swapchains {
+// Forward declaration
+class Swapchain;
+} // namespace inexor::vulkan_renderer::wrapper::swapchains
+
+namespace inexor::vulkan_renderer::render_graph {
+// Forward declarations
+class Buffer;
+class GraphicsPass;
+class Texture;
+} // namespace inexor::vulkan_renderer::render_graph
 
 namespace inexor::vulkan_renderer::render_graph {
 
 // Using declarations
-using wrapper::DebugLabelColor;
-using wrapper::commands::CommandBuffer;
+using wrapper::commands::CommandBufferBuilder;
+using wrapper::core::DebugLabelColor;
 using wrapper::swapchains::Swapchain;
 
 /// A builder class for graphics passes in the rendergraph
 class GraphicsPassBuilder {
 private:
     /// The command buffer recording function
-    std::function<void(const CommandBuffer &)> m_on_record_cmd_buffer;
+    std::function<void(CommandBufferBuilder &)> m_on_record_cmd_buffer;
     /// The textures to which this graphics pass writes to
     std::vector<std::pair<std::weak_ptr<Texture>, std::optional<VkClearValue>>> m_texture_writes;
     /// The swapchains to which this graphics pass writes to
@@ -60,7 +69,7 @@ public:
     /// Set the function which will be called when the command buffer for rendering of the pass is being recorded
     /// @param on_record_cmd_buffer The command buffer recording function
     /// @return A const reference to the this pointer (allowing method calls to be chained)
-    [[nodiscard]] GraphicsPassBuilder &set_on_record(std::function<void(const CommandBuffer &)> on_record_cmd_buffer);
+    [[nodiscard]] GraphicsPassBuilder &set_on_record(std::function<void(CommandBufferBuilder &)> on_record_cmd_buffer);
 
     /// Specify that this graphics pass writes to a buffer
     /// @brief buffer The buffer that is written to

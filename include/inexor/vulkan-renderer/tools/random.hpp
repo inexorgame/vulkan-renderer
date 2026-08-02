@@ -3,6 +3,7 @@
 #include <concepts>
 #include <optional>
 #include <random>
+#include <stdexcept>
 #include <type_traits>
 
 namespace inexor::vulkan_renderer::tools {
@@ -22,7 +23,7 @@ inline auto generate_random_number =
         std::uniform_real_distribution<U> distribution(min, max);
         return distribution(generator);
     } else {
-        static_assert(std::is_arithmetic_v<U>, "Error: Type must be numeric (integer or float)!");
+        throw std::invalid_argument("Error: Type must be numeric (integer or float)!");
     }
 };
 

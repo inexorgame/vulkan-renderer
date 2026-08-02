@@ -19,10 +19,10 @@ namespace inexor::vulkan_renderer::tools {
 class Camera;
 } // namespace inexor::vulkan_renderer::tools
 
-namespace inexor::vulkan_renderer::wrapper {
+namespace inexor::vulkan_renderer::wrapper::shaders {
 // Forward declaration
 class Shader;
-} // namespace inexor::vulkan_renderer::wrapper
+} // namespace inexor::vulkan_renderer::wrapper::shaders
 
 namespace inexor::vulkan_renderer::wrapper::descriptors {
 // Forward declaration
@@ -47,9 +47,9 @@ using render_graph::GraphicsPass;
 using render_graph::RenderGraph;
 using render_graph::Texture;
 using vulkan_renderer::tools::Camera;
-using wrapper::Shader;
 using wrapper::descriptors::PerFrameDescriptorSets;
 using wrapper::pipelines::GraphicsPipeline;
+using wrapper::shaders::Shader;
 using wrapper::swapchains::Swapchain;
 
 /// @note We can exactly match the definition in the shader using data types in GLM.
@@ -86,6 +86,7 @@ private:
 
     std::weak_ptr<Swapchain> m_swapchain;
     std::weak_ptr<Texture> m_depth_buffer;
+    std::weak_ptr<Texture> m_color_buffer; // Optional MSAA color buffer
 
     std::vector<OctreeVertex> m_octree_vertices;
     std::vector<std::uint32_t> m_octree_indices;
@@ -100,8 +101,11 @@ public:
     /// @param render_graph The rendergraph to use for octree rendering
     /// @param swapchain The swapchain to use for octree rendering
     /// @param depth_buffer The depth buffer to use for octree rendering
+    /// @param camera The camera to use for octree rendering
+    /// @param color_buffer Optional MSAA color buffer (if not provided, writes directly to swapchain)
     OctreeRenderer(std::shared_ptr<RenderGraph> render_graph, std::weak_ptr<Swapchain> swapchain,
-                   std::weak_ptr<Texture> depth_buffer, std::shared_ptr<Camera> camera);
+                   std::weak_ptr<Texture> depth_buffer, std::shared_ptr<Camera> camera,
+                   std::weak_ptr<Texture> color_buffer = {});
 
     void set_vertices_and_indices(std::vector<OctreeVertex> vertices, std::vector<std::uint32_t> indices);
 };

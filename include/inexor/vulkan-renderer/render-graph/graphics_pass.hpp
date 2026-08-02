@@ -3,9 +3,7 @@
 #include <volk.h>
 
 #include "inexor/vulkan-renderer/render-graph/texture.hpp"
-#include "inexor/vulkan-renderer/wrapper/descriptors/descriptor_set_layout.hpp"
-#include "inexor/vulkan-renderer/wrapper/device.hpp"
-#include "inexor/vulkan-renderer/wrapper/swapchains/swapchain.hpp"
+#include "inexor/vulkan-renderer/wrapper/core/device.hpp"
 
 #include <array>
 #include <functional>
@@ -13,10 +11,25 @@
 #include <optional>
 #include <string>
 
+namespace inexor::vulkan_renderer::wrapper::descriptors {
+// Forward declaration
+class DescriptorSetLayout;
+} // namespace inexor::vulkan_renderer::wrapper::descriptors
+
+namespace inexor::vulkan_renderer::wrapper::swapchains {
+// Forward declaration
+class Swapchain;
+} // namespace inexor::vulkan_renderer::wrapper::swapchains
+
 namespace inexor::vulkan_renderer::wrapper::commands {
 // Forward declaration
-class CommandBuffer;
+class CommandBufferBuilder;
 } // namespace inexor::vulkan_renderer::wrapper::commands
+
+namespace inexor::vulkan_renderer::render_graph {
+// Forward declaration
+class Buffer;
+} // namespace inexor::vulkan_renderer::render_graph
 
 namespace inexor::vulkan_renderer::render_graph {
 
@@ -24,8 +37,8 @@ namespace inexor::vulkan_renderer::render_graph {
 class RenderGraph;
 
 // Using declarations
-using wrapper::CommandBuffer;
-using wrapper::DebugLabelColor;
+using wrapper::commands::CommandBufferBuilder;
+using wrapper::core::DebugLabelColor;
 using wrapper::descriptors::DescriptorSetLayout;
 using wrapper::swapchains::Swapchain;
 
@@ -39,7 +52,7 @@ private:
     /// The name of the graphics pass
     std::string m_name;
     /// The command buffer recording function of the graphics pass
-    std::function<void(const CommandBuffer &)> m_on_record_cmd_buffer{[](auto &) {}};
+    std::function<void(CommandBufferBuilder &)> m_on_record_cmd_buffer{[](auto &) {}};
     /// The descriptor set layout of the pass (this will be created by rendergraph)
     std::unique_ptr<DescriptorSetLayout> m_descriptor_set_layout;
     /// The descriptor set of the pass (this will be created by rendergraph)
@@ -71,10 +84,12 @@ private:
 
     struct CachedAttachmentState {
         VkImageView image_view{VK_NULL_HANDLE};
+        VkImageView resolve_image_view{VK_NULL_HANDLE}; // For MSAA resolve
         VkImageLayout image_layout{VK_IMAGE_LAYOUT_UNDEFINED};
         VkExtent2D extent{0, 0};
         std::optional<VkClearValue> clear_value{std::nullopt};
         TextureUsage usage{TextureUsage::DEFAULT};
+        VkSampleCountFlagBits samples{VK_SAMPLE_COUNT_1_BIT}; // Track sample count
     };
 
     bool m_rendering_info_dirty{true};
@@ -89,6 +104,8 @@ private:
     std::vector<VkFormat> m_cached_color_attachment_formats{};
     VkFormat m_cached_depth_attachment_format{VK_FORMAT_UNDEFINED};
     VkFormat m_cached_stencil_attachment_format{VK_FORMAT_UNDEFINED};
+    /// Cached sample count from texture attachments for MSAA support
+    VkSampleCountFlagBits m_cached_sample_count{VK_SAMPLE_COUNT_1_BIT};
     /// Reused scratch storage for RenderGraph::fill_graphics_pass_rendering_info() to avoid a heap allocation
     /// every frame (this function runs unconditionally once per pass per frame)
     std::vector<CachedAttachmentState> m_scratch_current_texture_states{};
@@ -106,7 +123,7 @@ public:
     /// @param texture_writes The textures which are written to by this graphics pass
     /// @param swapchain_writes The swapchains which are written to by this graphics pass
     /// @param pass_debug_label_color The debug label of the pass (visible in graphics debuggers like RenderDoc)
-    GraphicsPass(std::string name, std::function<void(const CommandBuffer &)> on_record_cmd_buffer,
+    GraphicsPass(std::string name, std::function<void(CommandBufferBuilder &)> on_record_cmd_buffer,
                  std::vector<std::weak_ptr<Buffer>> buffer_reads,
                  std::vector<std::pair<std::weak_ptr<Texture>, std::optional<VkClearValue>>> texture_writes,
                  std::vector<std::pair<std::weak_ptr<Swapchain>, std::optional<VkClearValue>>> swapchain_writes,
@@ -114,7 +131,7 @@ public:
 
     GraphicsPass(const GraphicsPass &) = delete;
     GraphicsPass(GraphicsPass &&other) noexcept;
-    ~GraphicsPass() = default;
+    ~GraphicsPass();
 
     GraphicsPass &operator=(const GraphicsPass &) = delete;
     GraphicsPass &operator=(GraphicsPass &&) = delete;

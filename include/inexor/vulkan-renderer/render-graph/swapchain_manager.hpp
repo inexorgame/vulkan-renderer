@@ -1,7 +1,7 @@
 #pragma once
 
-#include "inexor/vulkan-renderer/wrapper/commands/command_buffer.hpp"
-#include "inexor/vulkan-renderer/wrapper/device.hpp"
+#include "inexor/vulkan-renderer/wrapper/commands/command_buffer_builder.hpp"
+#include "inexor/vulkan-renderer/wrapper/core/device.hpp"
 #include "inexor/vulkan-renderer/wrapper/swapchains/swapchain.hpp"
 
 #include <cstddef>
@@ -13,7 +13,8 @@ namespace inexor::vulkan_renderer::render_graph {
 
 class GraphicsPass;
 
-using wrapper::commands::CommandBuffer;
+using wrapper::commands::CommandBufferBuilder;
+using wrapper::core::Device;
 using wrapper::swapchains::Swapchain;
 
 class SwapchainManager {
@@ -23,7 +24,7 @@ private:
         std::weak_ptr<Swapchain> swapchain;
     };
 
-    wrapper::Device &m_device;
+    Device &m_device;
     std::vector<SwapchainCacheEntry> m_cached_swapchains;
     bool m_swapchain_cache_dirty{true};
     std::vector<std::shared_ptr<Swapchain>> m_frame_swapchains;
@@ -35,7 +36,7 @@ private:
     void rebuild_swapchain_cache(const std::vector<std::shared_ptr<GraphicsPass>> &graphics_passes);
 
 public:
-    explicit SwapchainManager(wrapper::Device &device);
+    explicit SwapchainManager(Device &device);
 
     void mark_swapchain_cache_dirty();
 
@@ -59,9 +60,9 @@ public:
         return m_frame_swapchains;
     }
 
-    void prepare_swapchains_for_rendering(const CommandBuffer &cmd_buf) const;
+    void prepare_swapchains_for_rendering(CommandBufferBuilder &cmd_buf) const;
 
-    void prepare_swapchains_for_presenting(const CommandBuffer &cmd_buf) const;
+    void prepare_swapchains_for_presenting(CommandBufferBuilder &cmd_buf) const;
 
     void mark_frame_swapchains_in_flight(VkFence fence) const;
 

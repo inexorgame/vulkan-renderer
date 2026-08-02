@@ -1,11 +1,13 @@
 #include "inexor/vulkan-renderer/render-graph/buffer_copy_batch_builder.hpp"
 
 #include "inexor/vulkan-renderer/wrapper/commands/command_buffer.hpp"
+#include "inexor/vulkan-renderer/wrapper/commands/command_buffer_builder.hpp"
 #include "inexor/vulkan-renderer/wrapper/synchronization/pipeline_barrier_batch_builder.hpp"
 
 #include <algorithm>
 #include <cstring>
 #include <functional>
+#include <stdexcept>
 #include <type_traits>
 
 namespace inexor::vulkan_renderer::render_graph {
@@ -14,11 +16,13 @@ namespace {
 
 template <typename T>
 std::size_t hash_handle(T handle) {
-    static_assert(std::is_trivially_copyable_v<T>);
-
-    std::uintptr_t value = 0;
-    std::memcpy(&value, &handle, std::min(sizeof(value), sizeof(handle)));
-    return std::hash<std::uintptr_t>{}(value);
+    if constexpr (!std::is_trivially_copyable_v<T>) {
+        throw std::invalid_argument("Error: Handle type must be trivially copyable!");
+    } else {
+        std::uintptr_t value = 0;
+        std::memcpy(&value, &handle, std::min(sizeof(value), sizeof(handle)));
+        return std::hash<std::uintptr_t>{}(value);
+    }
 }
 
 [[nodiscard]] bool can_merge_buffer_copy_regions(const VkBufferCopy &lhs, const VkBufferCopy &rhs) {
@@ -89,7 +93,7 @@ bool BufferCopyBatchBuilder::empty() const {
 }
 
 void BufferCopyBatchBuilder::flush(
-    const wrapper::commands::CommandBuffer &cmd_buf,
+    wrapper::commands::CommandBufferBuilder &cmd_buf,
     wrapper::synchronization::PipelineBarrierBatchBuilder &post_copy_barriers,
     wrapper::synchronization::PipelineBarrierBatchBuilder &queue_family_acquire_barriers) {
     if (empty()) {

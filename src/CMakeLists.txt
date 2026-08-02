@@ -43,8 +43,13 @@ set(INEXOR_SOURCE_FILES
     vulkan-renderer/tools/time_step.cpp
 
     vulkan-renderer/wrapper/commands/command_buffer_cache.cpp
+    vulkan-renderer/wrapper/commands/command_buffer_builder.cpp
     vulkan-renderer/wrapper/commands/command_buffer.cpp
     vulkan-renderer/wrapper/commands/command_pool.cpp
+
+    vulkan-renderer/wrapper/core/debug_callback.cpp
+    vulkan-renderer/wrapper/core/device.cpp
+    vulkan-renderer/wrapper/core/instance.cpp
 
     vulkan-renderer/wrapper/descriptors/descriptor_pool_allocator.cpp
     vulkan-renderer/wrapper/descriptors/descriptor_pool.cpp
@@ -64,6 +69,8 @@ set(INEXOR_SOURCE_FILES
     vulkan-renderer/wrapper/pipelines/pipeline_cache.cpp
     vulkan-renderer/wrapper/pipelines/pipeline_layout.cpp
 
+    vulkan-renderer/wrapper/shaders/shader.cpp
+
     vulkan-renderer/wrapper/swapchains/swapchain_utils.cpp
     vulkan-renderer/wrapper/swapchains/swapchain.cpp
 
@@ -73,11 +80,6 @@ set(INEXOR_SOURCE_FILES
 
     vulkan-renderer/wrapper/windows/surface.cpp
     vulkan-renderer/wrapper/windows/window.cpp
-
-    vulkan-renderer/wrapper/debug_callback.cpp
-    vulkan-renderer/wrapper/device.cpp
-    vulkan-renderer/wrapper/instance.cpp
-    vulkan-renderer/wrapper/shader.cpp
 )
 
 foreach(FILE ${INEXOR_SOURCE_FILES})

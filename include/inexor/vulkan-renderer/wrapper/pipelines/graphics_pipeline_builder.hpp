@@ -2,9 +2,9 @@
 
 #include "inexor/vulkan-renderer/tools/exception.hpp"
 #include "inexor/vulkan-renderer/tools/make_info.hpp"
-#include "inexor/vulkan-renderer/wrapper/device.hpp"
+#include "inexor/vulkan-renderer/wrapper/core/device.hpp"
 #include "inexor/vulkan-renderer/wrapper/pipelines/graphics_pipeline.hpp"
-#include "inexor/vulkan-renderer/wrapper/shader.hpp"
+#include "inexor/vulkan-renderer/wrapper/shaders/shader.hpp"
 
 #include <spdlog/spdlog.h>
 
@@ -15,11 +15,15 @@
 #include <utility>
 #include <vector>
 
-namespace inexor::vulkan_renderer::wrapper {
+namespace inexor::vulkan_renderer::wrapper::core {
 // Forward declarations
 class Device;
+} // namespace inexor::vulkan_renderer::wrapper::core
+
+namespace inexor::vulkan_renderer::wrapper::shaders {
+// Forward declarations
 class Shader;
-} // namespace inexor::vulkan_renderer::wrapper
+} // namespace inexor::vulkan_renderer::wrapper::shaders
 
 namespace inexor::vulkan_renderer::wrapper::descriptors {
 // Forward declaration
@@ -33,6 +37,10 @@ class RenderGraph;
 
 namespace inexor::vulkan_renderer::wrapper::pipelines {
 
+// Using declaration
+using shaders::Shader;
+using tools::InexorException;
+
 // TODO: ComputePipelineBuilder
 
 /// Builder class for VkPipelineCreateInfo for graphics pipelines which use dynamic rendering
@@ -43,7 +51,7 @@ namespace inexor::vulkan_renderer::wrapper::pipelines {
 /// to implement checks in case required fields are not set in this builder.
 class GraphicsPipelineBuilder {
 private:
-    const Device &m_device;
+    const core::Device &m_device;
     GraphicsPipelineSetupData m_data;
     void reset();
 
@@ -52,7 +60,7 @@ public:
 
     /// Default constructor
     /// @param device The device wrapper
-    GraphicsPipelineBuilder(const Device &device);
+    GraphicsPipelineBuilder(const core::Device &device);
 
     /// Adds a color attachment
     /// @param format The format of the color attachment

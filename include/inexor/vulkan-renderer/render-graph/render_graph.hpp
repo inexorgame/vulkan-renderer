@@ -1,23 +1,17 @@
 #pragma once
 
-// @TODO Forward-declare as much as possible!
-#include "inexor/vulkan-renderer/render-graph/buffer.hpp"
 #include "inexor/vulkan-renderer/render-graph/buffer_copy_batch_builder.hpp"
 #include "inexor/vulkan-renderer/render-graph/frame_sync_manager.hpp"
-#include "inexor/vulkan-renderer/render-graph/graphics_pass.hpp"
 #include "inexor/vulkan-renderer/render-graph/graphics_pass_builder.hpp"
 #include "inexor/vulkan-renderer/render-graph/resource_descriptor_manager.hpp"
 #include "inexor/vulkan-renderer/render-graph/staging_buffer.hpp"
 #include "inexor/vulkan-renderer/render-graph/swapchain_manager.hpp"
-#include "inexor/vulkan-renderer/render-graph/texture.hpp"
 #include "inexor/vulkan-renderer/render-graph/texture_copy_batch_builder.hpp"
-#include "inexor/vulkan-renderer/wrapper/commands/command_buffer.hpp"
+#include "inexor/vulkan-renderer/wrapper/commands/command_buffer_builder.hpp"
 #include "inexor/vulkan-renderer/wrapper/commands/command_buffer_cache.hpp"
-#include "inexor/vulkan-renderer/wrapper/device.hpp"
 #include "inexor/vulkan-renderer/wrapper/pipelines/graphics_pipeline_builder.hpp"
 #include "inexor/vulkan-renderer/wrapper/pipelines/pipeline_cache.hpp"
 #include "inexor/vulkan-renderer/wrapper/synchronization/pipeline_barrier_batch_builder.hpp"
-#include "inexor/vulkan-renderer/wrapper/synchronization/semaphore.hpp"
 
 #include <functional>
 #include <limits>
@@ -29,21 +23,33 @@
 #include <unordered_map>
 #include <vector>
 
-namespace inexor::vulkan_renderer::wrapper {
+namespace inexor::vulkan_renderer::wrapper::core {
 // Forward declaration
 class Device;
-} // namespace inexor::vulkan_renderer::wrapper
+} // namespace inexor::vulkan_renderer::wrapper::core
+
+namespace inexor::vulkan_renderer::wrapper::synchronization {
+// Forward declaration
+class Semaphore;
+} // namespace inexor::vulkan_renderer::wrapper::synchronization
+
+namespace inexor::vulkan_renderer::render_graph {
+// Forward declarations
+class Buffer;
+class GraphicsPass;
+class Texture;
+} // namespace inexor::vulkan_renderer::render_graph
 
 namespace inexor::vulkan_renderer::render_graph {
 
 // Using declarations
-using wrapper::DebugLabelColor;
 using wrapper::commands::CommandBufferCache;
+using wrapper::core::DebugLabelColor;
+using wrapper::core::Device;
 using wrapper::descriptors::PerFrameDescriptorSets;
 using wrapper::pipelines::GraphicsPipelineBuilder;
 using wrapper::pipelines::PipelineCache;
 using wrapper::synchronization::PipelineBarrierBuilder;
-using wrapper::synchronization::Semaphore;
 
 // @TODO How to handle optional texture update depending on texture type?
 // @TODO By implementing textures which are not updated, but only initliazed, we could save memory!
@@ -95,10 +101,10 @@ private:
 
     SwapchainManager m_swapchain_manager;
     CommandBufferCache m_command_buffer_cache;
-    std::unique_ptr<Semaphore> m_upload_finished;
+    std::unique_ptr<wrapper::synchronization::Semaphore> m_upload_finished;
     bool m_upload_submission_pending{false};
     VkPipelineStageFlags2 m_upload_wait_stage_mask{VK_PIPELINE_STAGE_2_NONE};
-    std::function<void(const CommandBuffer &)> m_inline_update_commands;
+    std::function<void(wrapper::commands::CommandBufferBuilder &)> m_inline_update_commands;
     std::vector<std::function<void()>> m_inline_update_pending_releases;
 
     /// Queue family ownership transfer barriers to be replayed as "acquire" operations on the graphics queue,
@@ -119,7 +125,7 @@ private:
     std::vector<std::function<void()>> m_scratch_pending_releases;
     std::vector<VkFormat> m_scratch_color_attachment_formats;
     /// Reused scratch storage for render() to avoid a heap allocation every frame
-    std::vector<wrapper::QueueSemaphoreWait> m_scratch_render_wait_semaphores;
+    std::vector<wrapper::core::QueueSemaphoreWait> m_scratch_render_wait_semaphores;
 
     void defer_release(std::span<const VkFence> fences, std::function<void()> release);
 
@@ -163,7 +169,7 @@ private:
     /// inside of the on_record function.
     /// @param cmd_buf The command buffer to record the pass into
     /// @param pass The graphics pass to record the command buffer for
-    void record_command_buffer_for_pass(const CommandBuffer &cmd_buf, GraphicsPass &pass);
+    void record_command_buffer_for_pass(const wrapper::commands::CommandBuffer &cmd_buf, GraphicsPass &pass);
 
 public:
     /// Default constructor

@@ -2,15 +2,18 @@
 
 #include "inexor/vulkan-renderer/tools/exception.hpp"
 #include "inexor/vulkan-renderer/tools/make_info.hpp"
-#include "inexor/vulkan-renderer/wrapper/device.hpp"
+#include "inexor/vulkan-renderer/wrapper/core/device.hpp"
 
 #include <utility>
 
 namespace inexor::vulkan_renderer::wrapper::descriptors {
 
-DescriptorPool::DescriptorPool(const Device &device, std::vector<VkDescriptorPoolSize> pool_sizes,
+DescriptorPool::DescriptorPool(const core::Device &device, std::vector<VkDescriptorPoolSize> pool_sizes,
                                const std::uint32_t max_sets, std::string name)
     : m_device(device), m_pool_sizes(pool_sizes), m_name(std::move(name)) {
+    // Using declarations
+    using tools::InexorException;
+    using tools::VulkanException;
     if (m_name.empty()) {
         throw InexorException("Error: Parameter 'name' is an empty string!");
     }

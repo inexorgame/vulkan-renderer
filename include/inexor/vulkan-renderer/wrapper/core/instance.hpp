@@ -6,7 +6,7 @@
 #include <span>
 #include <string>
 
-namespace inexor::vulkan_renderer::wrapper {
+namespace inexor::vulkan_renderer::wrapper::core {
 
 /// Check if a certain instance extension is supported on the system.
 /// @note If is the responsibility of the programmer to make sure that every instance layer which is passed to the
@@ -101,4 +101,4 @@ public:
     }
 };
 
-} // namespace inexor::vulkan_renderer::wrapper
+} // namespace inexor::vulkan_renderer::wrapper::core

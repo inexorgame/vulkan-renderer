@@ -1,6 +1,5 @@
 ﻿#pragma once
 
-// @TODO Forward-declare as much as possible!
 #include "inexor/vulkan-renderer/render-graph/render_graph.hpp"
 #include "inexor/vulkan-renderer/render-modules/imgui/imgui_renderer.hpp"
 #include "inexor/vulkan-renderer/render-modules/octree/octree_renderer.hpp"
@@ -8,19 +7,24 @@
 #include "inexor/vulkan-renderer/tools/fps_limiter.hpp"
 #include "inexor/vulkan-renderer/tools/make_info.hpp"
 #include "inexor/vulkan-renderer/tools/time_step.hpp"
-#include "inexor/vulkan-renderer/wrapper/debug_callback.hpp"
-#include "inexor/vulkan-renderer/wrapper/instance.hpp"
+#include "inexor/vulkan-renderer/wrapper/core/debug_callback.hpp"
+#include "inexor/vulkan-renderer/wrapper/core/instance.hpp"
 #include "inexor/vulkan-renderer/wrapper/pipelines/graphics_pipeline.hpp"
 #include "inexor/vulkan-renderer/wrapper/pipelines/pipeline_cache.hpp"
-#include "inexor/vulkan-renderer/wrapper/shader.hpp"
+#include "inexor/vulkan-renderer/wrapper/shaders/shader.hpp"
 
 #include <memory>
+#include <string_view>
 #include <vector>
 
-namespace inexor::vulkan_renderer::wrapper {
+namespace inexor::vulkan_renderer::wrapper::core {
 // Forward declarations
 class Device;
 class Instance;
+} // namespace inexor::vulkan_renderer::wrapper::core
+
+namespace inexor::vulkan_renderer::wrapper {
+// Forward declarations
 class Shader;
 } // namespace inexor::vulkan_renderer::wrapper
 
@@ -52,17 +56,23 @@ class Window;
 class WindowSurface;
 } // namespace inexor::vulkan_renderer::wrapper::windows
 
+namespace inexor::vulkan_renderer::render_graph {
+// Forward declaration
+class Texture;
+} // namespace inexor::vulkan_renderer::render_graph
+
 namespace inexor::example_app {
 
 // Using declarations
 using vulkan_renderer::render_graph::RenderGraph;
+using vulkan_renderer::render_graph::Texture;
 using vulkan_renderer::render_modules::imgui::ImGuiRenderer;
 using vulkan_renderer::render_modules::octree::OctreeRenderer;
 using vulkan_renderer::tools::Camera;
 using vulkan_renderer::tools::FPSLimiter;
-using vulkan_renderer::wrapper::Device;
-using vulkan_renderer::wrapper::Instance;
-using vulkan_renderer::wrapper::VulkanDebugUtilsCallback;
+using vulkan_renderer::wrapper::core::Device;
+using vulkan_renderer::wrapper::core::Instance;
+using vulkan_renderer::wrapper::core::VulkanDebugUtilsCallback;
 using vulkan_renderer::wrapper::swapchains::Swapchain;
 using vulkan_renderer::wrapper::windows::Window;
 using vulkan_renderer::wrapper::windows::WindowSurface;
@@ -81,6 +91,7 @@ protected:
     std::shared_ptr<Swapchain> m_swapchain;
     std::shared_ptr<RenderGraph> m_render_graph;
     std::weak_ptr<Texture> m_depth_buffer;
+    std::weak_ptr<Texture> m_color_buffer;
 
     std::shared_ptr<Camera> m_camera;
     std::unique_ptr<Window> m_window;
@@ -89,6 +100,8 @@ protected:
     std::unique_ptr<OctreeRenderer> m_octree_renderer;
 
     bool m_vsync_enabled{false};
+    VkSampleCountFlagBits m_msaa_sample_count{VK_SAMPLE_COUNT_1_BIT};
+    std::string_view m_msaa_text{"No MSAA"};
 
     // @TODO Move to window wrapper!
     bool m_window_resized{false};

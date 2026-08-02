@@ -1,10 +1,11 @@
-#include "inexor/vulkan-renderer/wrapper/device.hpp"
+#include "inexor/vulkan-renderer/wrapper/core/device.hpp"
 
 #include "inexor/vulkan-renderer/tools/device_info.hpp"
 #include "inexor/vulkan-renderer/tools/enumerate.hpp"
 #include "inexor/vulkan-renderer/tools/make_info.hpp"
 #include "inexor/vulkan-renderer/tools/queue_selection.hpp"
-#include "inexor/vulkan-renderer/wrapper/instance.hpp"
+#include "inexor/vulkan-renderer/wrapper/commands/command_buffer_builder.hpp"
+#include "inexor/vulkan-renderer/wrapper/core/instance.hpp"
 #include "inexor/vulkan-renderer/wrapper/pipelines/pipeline_cache.hpp"
 
 #define VMA_DEBUG_MARGIN 16
@@ -16,9 +17,12 @@
 
 #include <algorithm>
 #include <functional>
+#include <string_view>
 #include <utility>
 
-namespace inexor::vulkan_renderer::wrapper {
+namespace inexor::vulkan_renderer::wrapper::core {
+
+using wrapper::commands::CommandBufferBuilder;
 
 /// Convert a DebugLabelColor to a rgba value
 /// @param color The debug label color
@@ -312,42 +316,45 @@ bool Device::surface_supports_usage(const VkSurfaceKHR surface, const VkImageUsa
 }
 
 VkFence Device::execute(const VkQueueFlagBits queue_type, const DebugLabelColor dbg_label_color,
-                        const std::function<void(const CommandBuffer &cmd_buf)> &on_record,
+                        const std::function<void(CommandBufferBuilder &cmd_buf)> &on_record,
                         const std::span<const VkSemaphore> wait_semaphores,
                         const std::span<const VkSemaphore> signal_semaphores,
                         const std::source_location source_location) const {
     const auto &cmd_buf = get_thread_command_pool(queue_type).request_command_buffer(source_location.function_name());
-    cmd_buf.begin_debug_label_region(source_location.function_name(), get_debug_label_color(dbg_label_color));
-    std::invoke(on_record, cmd_buf);
-    cmd_buf.end_debug_label_region();
+    CommandBufferBuilder builder(cmd_buf);
+    builder.begin_debug_label_region(source_location.function_name(), get_debug_label_color(dbg_label_color));
+    std::invoke(on_record, builder);
+    builder.end_debug_label_region();
     cmd_buf.end_command_buffer();
     cmd_buf.submit(queue_type, wait_semaphores, signal_semaphores);
     return cmd_buf.submission_fence();
 }
 
 VkFence Device::execute(const VkQueueFlagBits queue_type, const DebugLabelColor dbg_label_color,
-                        const std::function<void(const CommandBuffer &cmd_buf)> &on_record,
+                        const std::function<void(CommandBufferBuilder &cmd_buf)> &on_record,
                         const std::span<const VkSemaphore> wait_semaphores,
                         const std::span<const VkSemaphoreSubmitInfo> signal_semaphore_infos,
                         const std::source_location source_location) const {
     const auto &cmd_buf = get_thread_command_pool(queue_type).request_command_buffer(source_location.function_name());
-    cmd_buf.begin_debug_label_region(source_location.function_name(), get_debug_label_color(dbg_label_color));
-    std::invoke(on_record, cmd_buf);
-    cmd_buf.end_debug_label_region();
+    CommandBufferBuilder builder(cmd_buf);
+    builder.begin_debug_label_region(source_location.function_name(), get_debug_label_color(dbg_label_color));
+    std::invoke(on_record, builder);
+    builder.end_debug_label_region();
     cmd_buf.end_command_buffer();
     cmd_buf.submit(queue_type, wait_semaphores, signal_semaphore_infos);
     return cmd_buf.submission_fence();
 }
 
 VkFence Device::execute(const VkQueueFlagBits queue_type, const DebugLabelColor dbg_label_color,
-                        const std::function<void(const CommandBuffer &cmd_buf)> &on_record,
+                        const std::function<void(CommandBufferBuilder &cmd_buf)> &on_record,
                         const std::span<const QueueSemaphoreWait> wait_semaphores,
                         const std::span<const VkSemaphore> signal_semaphores,
                         const std::source_location source_location) const {
     const auto &cmd_buf = get_thread_command_pool(queue_type).request_command_buffer(source_location.function_name());
-    cmd_buf.begin_debug_label_region(source_location.function_name(), get_debug_label_color(dbg_label_color));
-    std::invoke(on_record, cmd_buf);
-    cmd_buf.end_debug_label_region();
+    CommandBufferBuilder builder(cmd_buf);
+    builder.begin_debug_label_region(source_location.function_name(), get_debug_label_color(dbg_label_color));
+    std::invoke(on_record, builder);
+    builder.end_debug_label_region();
     cmd_buf.end_command_buffer();
 
     cmd_buf.submit(queue_type, wait_semaphores, signal_semaphores);
@@ -355,14 +362,15 @@ VkFence Device::execute(const VkQueueFlagBits queue_type, const DebugLabelColor 
 }
 
 VkFence Device::execute(const VkQueueFlagBits queue_type, const DebugLabelColor dbg_label_color,
-                        const std::function<void(const CommandBuffer &cmd_buf)> &on_record,
+                        const std::function<void(CommandBufferBuilder &cmd_buf)> &on_record,
                         const std::span<const QueueSemaphoreWait> wait_semaphores,
                         const std::span<const VkSemaphoreSubmitInfo> signal_semaphore_infos,
                         const std::source_location source_location) const {
     const auto &cmd_buf = get_thread_command_pool(queue_type).request_command_buffer(source_location.function_name());
-    cmd_buf.begin_debug_label_region(source_location.function_name(), get_debug_label_color(dbg_label_color));
-    std::invoke(on_record, cmd_buf);
-    cmd_buf.end_debug_label_region();
+    CommandBufferBuilder builder(cmd_buf);
+    builder.begin_debug_label_region(source_location.function_name(), get_debug_label_color(dbg_label_color));
+    std::invoke(on_record, builder);
+    builder.end_debug_label_region();
     cmd_buf.end_command_buffer();
 
     cmd_buf.submit(queue_type, wait_semaphores, signal_semaphore_infos);
@@ -466,4 +474,4 @@ void Device::wait_idle(const VkQueue queue) const {
     }
 }
 
-} // namespace inexor::vulkan_renderer::wrapper
+} // namespace inexor::vulkan_renderer::wrapper::core

@@ -1,7 +1,7 @@
 #include "inexor/vulkan-renderer/render-graph/frame_sync_manager.hpp"
 
 #include "inexor/vulkan-renderer/tools/exception.hpp"
-#include "inexor/vulkan-renderer/wrapper/device.hpp"
+#include "inexor/vulkan-renderer/wrapper/core/device.hpp"
 
 #include <algorithm>
 #include <limits>
@@ -11,7 +11,9 @@
 
 namespace inexor::vulkan_renderer::render_graph {
 
-FrameSyncManager::FrameSyncManager(const wrapper::Device &device) : m_device(device) {}
+using tools::VulkanException;
+
+FrameSyncManager::FrameSyncManager(const wrapper::core::Device &device) : m_device(device) {}
 
 void FrameSyncManager::set_frame_context(const std::size_t frame_slot_count, const std::size_t current_frame_slot) {
     m_frame_slot_count = std::max<std::size_t>(1, frame_slot_count);

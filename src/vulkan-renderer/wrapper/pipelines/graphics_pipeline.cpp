@@ -1,8 +1,8 @@
 #include "inexor/vulkan-renderer/wrapper/pipelines/graphics_pipeline.hpp"
 
 #include "inexor/vulkan-renderer/tools/exception.hpp"
+#include "inexor/vulkan-renderer/wrapper/core/device.hpp"
 #include "inexor/vulkan-renderer/wrapper/descriptors/per_frame_descriptor_sets.hpp"
-#include "inexor/vulkan-renderer/wrapper/device.hpp"
 #include "inexor/vulkan-renderer/wrapper/pipelines/pipeline_cache.hpp"
 #include "inexor/vulkan-renderer/wrapper/pipelines/pipeline_layout.hpp"
 
@@ -12,7 +12,10 @@
 
 namespace inexor::vulkan_renderer::wrapper::pipelines {
 
-GraphicsPipeline::GraphicsPipeline(const Device &device, GraphicsPipelineSetupData setup_data, std::string name)
+using tools::InexorException;
+using tools::VulkanException;
+
+GraphicsPipeline::GraphicsPipeline(const core::Device &device, GraphicsPipelineSetupData setup_data, std::string name)
     : m_device(device), m_name(std::move(name)) {
 
     spdlog::trace("   - Building graphics pipeline [{}]", m_name);

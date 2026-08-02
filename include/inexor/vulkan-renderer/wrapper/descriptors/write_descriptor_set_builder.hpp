@@ -11,10 +11,10 @@
 #include <variant>
 #include <vector>
 
-namespace inexor::vulkan_renderer::wrapper {
+namespace inexor::vulkan_renderer::wrapper::core {
 // Forward declaration
 class Device;
-} // namespace inexor::vulkan_renderer::wrapper
+} // namespace inexor::vulkan_renderer::wrapper::core
 
 namespace inexor::vulkan_renderer::render_graph {
 // Forward declarations
@@ -35,13 +35,13 @@ using tools::make_info;
 /// A wrapper class for batching calls to vkUpdateDescriptorSets
 class WriteDescriptorSetBuilder {
 private:
-    const Device &m_device;
+    const core::Device &m_device;
     std::vector<VkWriteDescriptorSet> m_write_descriptor_sets;
 
 public:
     /// Default constructor
     /// @param device The device wrapper
-    explicit WriteDescriptorSetBuilder(const Device &device);
+    explicit WriteDescriptorSetBuilder(const core::Device &device);
 
     /// Add a new entry to the write descriptor set builder
     /// @param descriptor_set The descriptor set

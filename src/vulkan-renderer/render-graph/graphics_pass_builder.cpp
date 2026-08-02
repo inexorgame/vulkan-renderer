@@ -1,13 +1,17 @@
 #include "inexor/vulkan-renderer/render-graph/graphics_pass_builder.hpp"
 
+#include "inexor/vulkan-renderer/render-graph/buffer.hpp"
+#include "inexor/vulkan-renderer/render-graph/graphics_pass.hpp"
+#include "inexor/vulkan-renderer/render-graph/texture.hpp"
 #include "inexor/vulkan-renderer/tools/exception.hpp"
+#include "inexor/vulkan-renderer/wrapper/swapchains/swapchain.hpp"
 
 #include <utility>
 
 namespace inexor::vulkan_renderer::render_graph {
 
 // Using declaration
-using wrapper::InexorException;
+using tools::InexorException;
 
 GraphicsPassBuilder::GraphicsPassBuilder() {
     reset();
@@ -47,7 +51,7 @@ void GraphicsPassBuilder::reset() {
 }
 
 GraphicsPassBuilder &
-GraphicsPassBuilder::set_on_record(std::function<void(const CommandBuffer &)> on_record_cmd_buffer) {
+GraphicsPassBuilder::set_on_record(std::function<void(CommandBufferBuilder &)> on_record_cmd_buffer) {
     m_on_record_cmd_buffer = std::move(on_record_cmd_buffer);
     return *this;
 }

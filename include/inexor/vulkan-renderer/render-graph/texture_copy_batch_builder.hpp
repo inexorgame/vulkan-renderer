@@ -12,7 +12,7 @@
 #include <vector>
 
 namespace inexor::vulkan_renderer::wrapper::commands {
-class CommandBuffer;
+class CommandBufferBuilder;
 } // namespace inexor::vulkan_renderer::wrapper::commands
 
 namespace inexor::vulkan_renderer::wrapper::synchronization {
@@ -55,7 +55,7 @@ public:
 
     [[nodiscard]] bool empty() const;
 
-    void flush(const wrapper::commands::CommandBuffer &cmd_buf,
+    void flush(wrapper::commands::CommandBufferBuilder &cmd_buf,
                wrapper::synchronization::PipelineBarrierBatchBuilder &post_copy_barriers,
                wrapper::synchronization::PipelineBarrierBatchBuilder &queue_family_acquire_barriers);
 

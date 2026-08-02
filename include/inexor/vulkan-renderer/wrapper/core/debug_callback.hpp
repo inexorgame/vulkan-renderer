@@ -2,7 +2,7 @@
 
 #include <volk.h>
 
-namespace inexor::vulkan_renderer::wrapper {
+namespace inexor::vulkan_renderer::wrapper::core {
 
 // Forward declaration
 class Instance;
@@ -24,4 +24,4 @@ public:
     ~VulkanDebugUtilsCallback();
 };
 
-} // namespace inexor::vulkan_renderer::wrapper
+} // namespace inexor::vulkan_renderer::wrapper::core

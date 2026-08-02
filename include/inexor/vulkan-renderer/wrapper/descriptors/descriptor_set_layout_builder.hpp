@@ -9,10 +9,10 @@
 #include <utility>
 #include <vector>
 
-namespace inexor::vulkan_renderer::wrapper {
+namespace inexor::vulkan_renderer::wrapper::core {
 // Forward declaration
 class Device;
-} // namespace inexor::vulkan_renderer::wrapper
+} // namespace inexor::vulkan_renderer::wrapper::core
 
 namespace inexor::vulkan_renderer::wrapper::descriptors {
 
@@ -37,7 +37,7 @@ enum class DescriptorType {
 /// A builder for descriptors
 class DescriptorSetLayoutBuilder {
 private:
-    const Device &m_device;
+    const core::Device &m_device;
     /// All instances of DescriptorSetLayoutBuilder have the same DescriptorSetLayoutCache instance!
     DescriptorSetLayoutCache m_descriptor_set_layout_cache;
     std::vector<VkDescriptorSetLayoutBinding> m_bindings;
@@ -46,7 +46,7 @@ private:
 public:
     /// Default constructor
     /// @param device The device wrapper
-    DescriptorSetLayoutBuilder(const Device &device);
+    DescriptorSetLayoutBuilder(const core::Device &device);
 
     /// Add a new descriptor
     /// @param type The type of the descriptor

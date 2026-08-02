@@ -6,10 +6,10 @@
 #include <string>
 #include <vector>
 
-namespace inexor::vulkan_renderer::wrapper {
+namespace inexor::vulkan_renderer::wrapper::core {
 // Forward declaration
 class Device;
-} // namespace inexor::vulkan_renderer::wrapper
+} // namespace inexor::vulkan_renderer::wrapper::core
 
 namespace inexor::vulkan_renderer::wrapper::commands {
 /// Forward declaration
@@ -36,8 +36,8 @@ class StagingBuffer;
 // Using declarations
 using tools::InexorException;
 using tools::VulkanException;
-using wrapper::Device;
 using wrapper::commands::CommandBuffer;
+using wrapper::core::Device;
 
 /// The supported buffer types
 /// Based on the buffer type, the rendergraph will use Vulkan Memory Allocator to create the buffers

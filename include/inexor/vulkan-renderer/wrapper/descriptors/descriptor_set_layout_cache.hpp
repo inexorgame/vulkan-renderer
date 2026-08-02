@@ -9,10 +9,10 @@
 #include <unordered_map>
 #include <vector>
 
-namespace inexor::vulkan_renderer::wrapper {
+namespace inexor::vulkan_renderer::wrapper::core {
 // Forward declaration
 class Device;
-} // namespace inexor::vulkan_renderer::wrapper
+} // namespace inexor::vulkan_renderer::wrapper::core
 
 namespace inexor::vulkan_renderer::render_graph {
 // Forward declaration
@@ -46,7 +46,7 @@ class DescriptorSetLayoutCache {
 
 private:
     /// The device wrapper
-    const Device &m_device;
+    const core::Device &m_device;
 
     /// The actual descriptor set layout cache
     /// Note that std::unordered_map can accept a third template parameter which is the hash function
@@ -58,7 +58,7 @@ private:
 public:
     /// Default constructor
     /// @param device The device wrapper
-    DescriptorSetLayoutCache(const Device &device);
+    DescriptorSetLayoutCache(const core::Device &device);
 
     DescriptorSetLayoutCache(const DescriptorSetLayoutCache &) = delete;
     DescriptorSetLayoutCache(DescriptorSetLayoutCache &&) noexcept;

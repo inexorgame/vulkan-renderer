@@ -373,7 +373,9 @@ As ImHex pattern.
     };
 
     char identifier[0x0D] @ 0x00;
-    std::assert(identifier == "Inexor Octree", "invalid identifier");
+    if (identifier != "Inexor Octree") {
+        throw std::runtime_error("invalid identifier");
+    }
 
     u32 formatVersion @ 0x0D;
 
@@ -457,7 +459,9 @@ As ImHex pattern.
     };
 
     char identifier[0x0D] @ 0x00;
-    std::assert(identifier == "Inexor Octree", "invalid identifier");
+    if (identifier != "Inexor Octree") {
+        throw std::runtime_error("invalid identifier");
+    }
 
     u32 formatVersion @ 0x0D;
 

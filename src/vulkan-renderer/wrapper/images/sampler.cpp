@@ -1,17 +1,17 @@
 #include "inexor/vulkan-renderer/wrapper/images/sampler.hpp"
 
 #include "inexor/vulkan-renderer/tools/exception.hpp"
-#include "inexor/vulkan-renderer/wrapper/device.hpp"
+#include "inexor/vulkan-renderer/wrapper/core/device.hpp"
 
 #include <utility>
 
 namespace inexor::vulkan_renderer::wrapper::images {
 
-Sampler::Sampler(const Device &device, std::string name, const VkSamplerCreateInfo &sampler_ci)
+Sampler::Sampler(const core::Device &device, std::string name, const VkSamplerCreateInfo &sampler_ci)
     : m_device(device), m_name(std::move(name)) {
     if (const auto result = vkCreateSampler(m_device.device(), &sampler_ci, nullptr, &m_sampler);
         result != VK_SUCCESS) {
-        throw VulkanException("Error: vkCreateSampler failed!", result, m_name);
+        throw tools::VulkanException("Error: vkCreateSampler failed!", result, m_name);
     }
     m_device.set_debug_name(m_sampler, m_name);
 }

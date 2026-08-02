@@ -5,9 +5,9 @@
 #include <string>
 
 // Forward declaration
-namespace inexor::vulkan_renderer::wrapper {
+namespace inexor::vulkan_renderer::wrapper::core {
 class Device;
-} // namespace inexor::vulkan_renderer::wrapper
+} // namespace inexor::vulkan_renderer::wrapper::core
 
 namespace inexor::vulkan_renderer::wrapper::descriptors {
 
@@ -21,7 +21,7 @@ private:
     friend DescriptorSetLayoutCache;
     // TODO: Make RenderGraph friend
 
-    const Device &m_device;
+    const core::Device &m_device;
     std::string m_name;
     VkDescriptorSetLayout m_descriptor_set_layout{VK_NULL_HANDLE};
 
@@ -32,7 +32,7 @@ public:
     /// @param device The device wrapper
     /// @param descriptor_set_layout_ci The descriptor set layout create info
     /// @param name The internal debug name of the descriptor set layout
-    DescriptorSetLayout(const Device &device, VkDescriptorSetLayoutCreateInfo descriptor_set_layout_ci,
+    DescriptorSetLayout(const core::Device &device, VkDescriptorSetLayoutCreateInfo descriptor_set_layout_ci,
                         std::string name);
 
     DescriptorSetLayout(const DescriptorSetLayout &) = delete;

@@ -6,10 +6,10 @@
 #include <string>
 #include <vector>
 
-namespace inexor::vulkan_renderer::wrapper {
+namespace inexor::vulkan_renderer::wrapper::core {
 // Forward declaration
 class Device;
-} // namespace inexor::vulkan_renderer::wrapper
+} // namespace inexor::vulkan_renderer::wrapper::core
 
 namespace inexor::vulkan_renderer::wrapper::commands {
 // Forward declaration
@@ -21,7 +21,7 @@ namespace inexor::vulkan_renderer::wrapper::commands {
 /// RAII wrapper class for VkCommandPool
 class CommandPool {
     std::string m_name;
-    const Device &m_device;
+    const core::Device &m_device;
     VkCommandPool m_cmd_pool{VK_NULL_HANDLE};
     VkQueueFlagBits m_queue_type;
     /// The command buffers which can be requested by the current thread
@@ -46,7 +46,8 @@ public:
     /// @param queue_type The queue type
     /// @param queue_family_index The queue family index
     /// @param name The internal debug marker name which will be assigned to this command pool
-    CommandPool(const Device &device, VkQueueFlagBits queue_type, std::uint32_t queue_family_index, std::string name);
+    CommandPool(const core::Device &device, VkQueueFlagBits queue_type, std::uint32_t queue_family_index,
+                std::string name);
 
     CommandPool(const CommandPool &) = delete;
     CommandPool(CommandPool &&) noexcept;

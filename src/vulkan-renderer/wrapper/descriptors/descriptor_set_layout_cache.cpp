@@ -1,15 +1,14 @@
 #include "inexor/vulkan-renderer/wrapper/descriptors/descriptor_set_layout_cache.hpp"
 
 #include "inexor/vulkan-renderer/tools/exception.hpp"
-#include "inexor/vulkan-renderer/wrapper/device.hpp"
+#include "inexor/vulkan-renderer/wrapper/core/device.hpp"
 
 #include <algorithm>
-#include <cassert>
 #include <utility>
 
 namespace inexor::vulkan_renderer::wrapper::descriptors {
 
-DescriptorSetLayoutCache::DescriptorSetLayoutCache(const Device &device) : m_device(device) {}
+DescriptorSetLayoutCache::DescriptorSetLayoutCache(const core::Device &device) : m_device(device) {}
 
 DescriptorSetLayoutCache::DescriptorSetLayoutCache(DescriptorSetLayoutCache &&other) noexcept
     : m_device(other.m_device) {
@@ -77,7 +76,9 @@ bool DescriptorSetLayoutInfo::operator==(const DescriptorSetLayoutInfo &other) c
 }
 
 std::size_t DescriptorSetLayoutInfo::hash() const {
-    assert(!bindings.empty());
+    if (bindings.empty()) {
+        throw tools::InexorException("Error: Cannot hash empty descriptor set layout bindings!");
+    }
     std::size_t result = std::hash<std::size_t>()(bindings.size());
     for (const auto &binding : bindings) {
         // Pack binding data into 64 bits

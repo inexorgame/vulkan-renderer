@@ -7,10 +7,10 @@
 #include <array>
 #include <vector>
 
-namespace inexor::vulkan_renderer::wrapper {
+namespace inexor::vulkan_renderer::wrapper::core {
 // Forward declaration
 class Device;
-} // namespace inexor::vulkan_renderer::wrapper
+} // namespace inexor::vulkan_renderer::wrapper::core
 
 namespace inexor::vulkan_renderer::wrapper::descriptors {
 
@@ -25,7 +25,7 @@ class DescriptorSetAllocator {
 
 private:
     /// The device wrapper
-    const Device &m_device;
+    const core::Device &m_device;
     // The descriptor pool currently in use (handled by a DescriptorPool instance)
     VkDescriptorPool m_current_pool{VK_NULL_HANDLE};
     std::uint32_t m_current_pool_set_allocations{0};
@@ -38,7 +38,7 @@ public:
     /// Default constructor
     /// @note This is private because descriptor allocators are for internal use in rendergraph only!
     /// @param device The device wrapper
-    explicit DescriptorSetAllocator(const Device &device);
+    explicit DescriptorSetAllocator(const core::Device &device);
 
     DescriptorSetAllocator(const DescriptorSetAllocator &) = delete;
     DescriptorSetAllocator(DescriptorSetAllocator &&) noexcept;

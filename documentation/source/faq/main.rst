@@ -17,6 +17,7 @@ Please visit `inexor.org <https://inexor.org>`__ and join our `Discord server <h
 - `Will you support other rendering APIs?`_
 - `Is Vulkan API restricted to any operating system?`_
 - `Which graphics cards do you use for testing the engine?`_
+- `Why are CPU and GPU multithreading important?`_
 
 What is Inexor?
 ---------------
@@ -149,6 +150,17 @@ Can you explain Vulkan API in simple terms?
 - It offers advanced optimization techniques which can result in a lower RAM and video memory usage.
 - Using Vulkan can yield in lower and more predictable CPU usage.
 - Vulkan allows programmers to make more effective use of multiple CPU cores.
+
+Why are CPU and GPU multithreading important?
+--------------------------------------------
+
+Modern engines need to keep both the CPU and the GPU busy.
+
+- On the CPU side, task-based multithreading helps distribute simulation, culling, animation, streaming, and other preparation work across multiple cores.
+- On the GPU side, Vulkan allows command buffers to be recorded in parallel and lets graphics, compute, and transfer work overlap when the hardware supports it.
+- Together, this reduces idle time, improves throughput, and makes frame times more predictable.
+
+For a more detailed overview of engine parallelization, see :ref:`ENGINE_PARALLELIZATION_STRATEGY`.
 
 How difficult is development with Vulkan API?
 ---------------------------------------------

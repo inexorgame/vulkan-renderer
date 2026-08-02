@@ -1,4 +1,4 @@
-#include "inexor/vulkan-renderer/wrapper/instance.hpp"
+#include "inexor/vulkan-renderer/wrapper/core/instance.hpp"
 
 #include "inexor/vulkan-renderer/meta/meta.hpp"
 #include "inexor/vulkan-renderer/tools/enumerate.hpp"
@@ -10,7 +10,7 @@
 
 #include <utility>
 
-namespace inexor::vulkan_renderer::wrapper {
+namespace inexor::vulkan_renderer::wrapper::core {
 
 // Using declarations
 using tools::InexorException;
@@ -137,4 +137,4 @@ Instance::~Instance() {
     vkDestroyInstance(m_instance, nullptr);
 }
 
-} // namespace inexor::vulkan_renderer::wrapper
+} // namespace inexor::vulkan_renderer::wrapper::core

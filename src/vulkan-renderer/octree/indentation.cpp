@@ -2,14 +2,16 @@
 
 #include <algorithm>
 #include <array>
-#include <cassert>
 #include <cmath>
+#include <stdexcept>
 
 namespace inexor::vulkan_renderer::octree {
 Indentation::Indentation(const std::uint8_t start, const std::uint8_t end) noexcept : m_start(start), m_end(end) {}
 
 Indentation::Indentation(const std::uint8_t uid) noexcept {
-    assert(uid <= 44);
+    if (uid > 44) {
+        throw std::invalid_argument("Error: Indentation uid is out of range!");
+    }
     constexpr std::array<std::uint8_t, Indentation::MAX> MASKS{44, 42, 39, 35, 30, 24, 17, 9};
     for (std::uint8_t idx = 0; idx < Indentation::MAX; idx++) {
         if (MASKS[idx] <= uid) {

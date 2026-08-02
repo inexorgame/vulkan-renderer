@@ -1,18 +1,21 @@
 #include "inexor/vulkan-renderer/render-graph/graphics_pass.hpp"
 
+#include "inexor/vulkan-renderer/render-graph/buffer.hpp"
 #include "inexor/vulkan-renderer/tools/exception.hpp"
 #include "inexor/vulkan-renderer/tools/make_info.hpp"
+#include "inexor/vulkan-renderer/wrapper/descriptors/descriptor_set_layout.hpp"
+#include "inexor/vulkan-renderer/wrapper/swapchains/swapchain.hpp"
 
 #include <utility>
 
 namespace inexor::vulkan_renderer::render_graph {
 
 // Using declaration
+using tools::InexorException;
 using tools::make_info;
-using wrapper::InexorException;
 
 GraphicsPass::GraphicsPass(
-    std::string name, std::function<void(const CommandBuffer &)> on_record_cmd_buffer,
+    std::string name, std::function<void(CommandBufferBuilder &)> on_record_cmd_buffer,
     std::vector<std::weak_ptr<Buffer>> buffer_reads,
     std::vector<std::pair<std::weak_ptr<Texture>, std::optional<VkClearValue>>> texture_writes,
     std::vector<std::pair<std::weak_ptr<Swapchain>, std::optional<VkClearValue>>> swapchain_writes,
@@ -46,7 +49,7 @@ GraphicsPass::GraphicsPass(
     m_buffer_reads = std::move(buffer_reads);
     m_texture_writes = std::move(texture_writes);
     m_swapchain_writes = std::move(swapchain_writes);
-    m_debug_label_color = wrapper::get_debug_label_color(pass_debug_label_color);
+    m_debug_label_color = wrapper::core::get_debug_label_color(pass_debug_label_color);
 
     const auto texture_write_count = m_texture_writes.size();
     const auto swapchain_write_count = m_swapchain_writes.size();
@@ -84,6 +87,8 @@ GraphicsPass::GraphicsPass(GraphicsPass &&other) noexcept {
     m_scratch_current_texture_states = std::move(other.m_scratch_current_texture_states);
     m_scratch_current_swapchain_states = std::move(other.m_scratch_current_swapchain_states);
 }
+
+GraphicsPass::~GraphicsPass() = default;
 
 void GraphicsPass::reset_rendering_info() {
     m_rendering_info = make_info<VkRenderingInfo>();

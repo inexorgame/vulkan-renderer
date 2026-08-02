@@ -7,15 +7,15 @@
 #include <string>
 #include <vector>
 
-namespace inexor::vulkan_renderer::wrapper {
+namespace inexor::vulkan_renderer::wrapper::core {
 // Forward declaration
 class Instance;
-} // namespace inexor::vulkan_renderer::wrapper
+} // namespace inexor::vulkan_renderer::wrapper::core
 
 namespace inexor::vulkan_renderer::tools {
 
 // Using declaration
-using wrapper::Instance;
+using wrapper::core::Instance;
 
 /// A wrapper struct for physical device data.
 struct DeviceInfo {

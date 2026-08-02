@@ -2,7 +2,7 @@
 
 #include "inexor/vulkan-renderer/tools/exception.hpp"
 #include "inexor/vulkan-renderer/tools/make_info.hpp"
-#include "inexor/vulkan-renderer/wrapper/device.hpp"
+#include "inexor/vulkan-renderer/wrapper/core/device.hpp"
 
 #include <algorithm>
 #include <cstddef>
@@ -14,7 +14,8 @@ namespace inexor::vulkan_renderer::render_graph {
 
 using tools::make_info;
 
-StagingBuffer::StagingBuffer(const Device &device, std::string name) : m_device(device), m_name(std::move(name)) {
+StagingBuffer::StagingBuffer(const wrapper::core::Device &device, std::string name)
+    : m_device(device), m_name(std::move(name)) {
     if (m_name.empty()) {
         throw InexorException("Error: Parameter 'name' is an empty string!");
     }

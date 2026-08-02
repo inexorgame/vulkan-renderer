@@ -12,7 +12,8 @@
 #include "inexor/vulkan-renderer/tools/enumerate.hpp"
 #include "inexor/vulkan-renderer/tools/exception.hpp"
 #include "inexor/vulkan-renderer/tools/random.hpp"
-#include "inexor/vulkan-renderer/wrapper/instance.hpp"
+#include "inexor/vulkan-renderer/tools/representation.hpp"
+#include "inexor/vulkan-renderer/wrapper/core/instance.hpp"
 #include "inexor/vulkan-renderer/wrapper/windows/surface.hpp"
 #include "inexor/vulkan-renderer/wrapper/windows/window.hpp"
 
@@ -24,7 +25,10 @@
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include <spdlog/spdlog.h>
 
+#include <vk_mem_alloc.h>
+
 #include <mutex>
+#include <stdexcept>
 #include <string_view>
 #include <toml++/toml.hpp>
 #include <unordered_map>
@@ -33,6 +37,22 @@ namespace inexor::example_app {
 
 // Using declarations
 using namespace inexor::vulkan_renderer;
+
+namespace {
+
+void log_vma_statistics(const wrapper::core::Device &device, std::string_view context) {
+    char *vma_stats_string = nullptr;
+    vmaBuildStatsString(device.allocator(), &vma_stats_string, VK_TRUE);
+    if (vma_stats_string == nullptr) {
+        spdlog::warn("[{}] VMA statistics are unavailable", context);
+        return;
+    }
+
+    spdlog::info("[{}] VMA memory statistics:\n{}", context, vma_stats_string);
+    vmaFreeStatsString(device.allocator(), vma_stats_string);
+}
+
+} // namespace
 
 void ExampleApp::load_toml_configuration_file(const std::string &file_name) {
     spdlog::trace("Loading TOML configuration file: {}", file_name);
@@ -115,7 +135,9 @@ void ExampleApp::generate_octree_indices() {
     for (auto &vertex : old_vertices) {
         // TODO: Use std::unordered_map::contains() when we switch to C++ 20.
         if (vertex_map.count(vertex) == 0) {
-            assert(vertex_map.size() < std::numeric_limits<std::uint32_t>::max() && "Octree too big!");
+            if (vertex_map.size() >= std::numeric_limits<std::uint32_t>::max()) {
+                throw std::overflow_error("Octree too big!");
+            }
             vertex_map.emplace(vertex, static_cast<std::uint32_t>(vertex_map.size()));
             m_octree_vertices.push_back(vertex);
         }
@@ -203,9 +225,43 @@ ExampleApp::ExampleApp(int argc, char **argv) {
     app.add_option("--gpu", preferred_gpu);
     std::uint32_t max_fps = FPSLimiter::DEFAULT_FPS;
     app.add_option("--maxfps", max_fps);
+    std::uint32_t msaa_samples = 1;
+    app.add_option("--msaa", msaa_samples);
     app.parse(argc, argv);
 
     m_fps_limiter.set_max_fps(max_fps);
+
+    spdlog::info("MSAA samples requested: {}", msaa_samples);
+
+    // Convert MSAA sample count to VkSampleCountFlagBits
+    switch (msaa_samples) {
+    case 1:
+        m_msaa_sample_count = VK_SAMPLE_COUNT_1_BIT;
+        break;
+    case 2:
+        m_msaa_sample_count = VK_SAMPLE_COUNT_2_BIT;
+        break;
+    case 4:
+        m_msaa_sample_count = VK_SAMPLE_COUNT_4_BIT;
+        break;
+    case 8:
+        m_msaa_sample_count = VK_SAMPLE_COUNT_8_BIT;
+        break;
+    case 16:
+        m_msaa_sample_count = VK_SAMPLE_COUNT_16_BIT;
+        break;
+    default:
+        spdlog::warn("Invalid MSAA sample count: {}, defaulting to 1", msaa_samples);
+        m_msaa_sample_count = VK_SAMPLE_COUNT_1_BIT;
+        break;
+    }
+
+    spdlog::info("MSAA sample count set to: {}", static_cast<int>(m_msaa_sample_count));
+    m_msaa_text = tools::as_string(m_msaa_sample_count);
+
+    if (m_msaa_sample_count != VK_SAMPLE_COUNT_1_BIT) {
+        spdlog::trace("MSAA requested: {}x", msaa_samples);
+    }
 
     load_toml_configuration_file("assets/configuration/renderer.toml");
 
@@ -223,7 +279,7 @@ ExampleApp::ExampleApp(int argc, char **argv) {
     }
 
     // If the instance extension "VK_EXT_debug_utils" is available on the system, enable it.
-    if (wrapper::is_instance_extension_supported(VK_EXT_DEBUG_UTILS_EXTENSION_NAME)) {
+    if (wrapper::core::is_instance_extension_supported(VK_EXT_DEBUG_UTILS_EXTENSION_NAME)) {
         instance_extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
     }
 
@@ -237,7 +293,7 @@ ExampleApp::ExampleApp(int argc, char **argv) {
     spdlog::trace("Required GLFW instance extensions:");
     for (std::size_t index = 0; index < glfw_extension_count; index++) {
         // We must make sure that each instance extension that is required by glfw is available on the system.
-        if (!wrapper::is_instance_extension_supported(glfw_extensions[index])) {
+        if (!wrapper::core::is_instance_extension_supported(glfw_extensions[index])) {
             // If any of the instance extensions that is required by glfw is not available, we will fail.
             throw InexorException("Error: glfw instance extension '" + std::string(glfw_extensions[index]) +
                                   "' is not available on the system!");
@@ -247,7 +303,7 @@ ExampleApp::ExampleApp(int argc, char **argv) {
         }
     }
 
-    if (wrapper::is_instance_layer_supported("VK_LAYER_KHRONOS_validation")) {
+    if (wrapper::core::is_instance_layer_supported("VK_LAYER_KHRONOS_validation")) {
         instance_layers.push_back("VK_LAYER_KHRONOS_validation");
     } else {
         spdlog::error("Instance layer 'VK_LAYER_KHRONOS_validation' is not available on this system!");
@@ -291,6 +347,47 @@ ExampleApp::ExampleApp(int argc, char **argv) {
 
     m_device = std::make_unique<Device>(*m_instance, m_surface->surface(), physical_device, required_features,
                                         required_extensions);
+
+    // Validate MSAA sample count against depth format capabilities
+    if (m_msaa_sample_count != VK_SAMPLE_COUNT_1_BIT) {
+        // Query supported sample counts for the depth format
+        VkImageFormatProperties image_format_props;
+        const VkResult result = vkGetPhysicalDeviceImageFormatProperties(
+            physical_device, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_IMAGE_TYPE_2D, VK_IMAGE_TILING_OPTIMAL,
+            VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, 0, &image_format_props);
+
+        if (result != VK_SUCCESS) {
+            spdlog::error("Failed to query image format properties for depth format");
+            m_msaa_sample_count = VK_SAMPLE_COUNT_1_BIT;
+        } else {
+            const VkSampleCountFlags supported_samples = image_format_props.sampleCounts;
+
+            // Check if the requested sample count is supported
+            if (!(supported_samples & m_msaa_sample_count)) {
+                // Clamp to the highest supported sample count
+                VkSampleCountFlagBits clamped = VK_SAMPLE_COUNT_1_BIT;
+                if (supported_samples & VK_SAMPLE_COUNT_64_BIT) {
+                    clamped = VK_SAMPLE_COUNT_64_BIT;
+                } else if (supported_samples & VK_SAMPLE_COUNT_32_BIT) {
+                    clamped = VK_SAMPLE_COUNT_32_BIT;
+                } else if (supported_samples & VK_SAMPLE_COUNT_16_BIT) {
+                    clamped = VK_SAMPLE_COUNT_16_BIT;
+                } else if (supported_samples & VK_SAMPLE_COUNT_8_BIT) {
+                    clamped = VK_SAMPLE_COUNT_8_BIT;
+                } else if (supported_samples & VK_SAMPLE_COUNT_4_BIT) {
+                    clamped = VK_SAMPLE_COUNT_4_BIT;
+                } else if (supported_samples & VK_SAMPLE_COUNT_2_BIT) {
+                    clamped = VK_SAMPLE_COUNT_2_BIT;
+                }
+                spdlog::warn("Requested MSAA sample count not supported by depth format, clamping from {} to {}",
+                             static_cast<int>(m_msaa_sample_count), static_cast<int>(clamped));
+                m_msaa_sample_count = clamped;
+            } else {
+                spdlog::info("MSAA sample count {} is supported by depth format",
+                             static_cast<int>(m_msaa_sample_count));
+            }
+        }
+    }
 
     m_swapchain = std::make_shared<Swapchain>(*m_device, "m_swapchain", m_surface->surface());
 
@@ -350,15 +447,29 @@ void ExampleApp::setup_render_graph() {
     // Create a depth buffer for octree rendering (ImGui pass does not require it)
     m_depth_buffer = m_render_graph->add_texture("m_depth_buffer", TextureUsage::DEPTH_ATTACHMENT,
                                                  VK_FORMAT_D32_SFLOAT_S8_UINT, m_swapchain->extent().width,
-                                                 m_swapchain->extent().height, 1, VK_SAMPLE_COUNT_1_BIT, [&]() {
+                                                 m_swapchain->extent().height, 1, m_msaa_sample_count, [&]() {
                                                      if (const auto depth_buffer = m_depth_buffer.lock()) {
                                                          const auto extent = m_swapchain->extent();
                                                          depth_buffer->request_resize(extent.width, extent.height);
                                                      }
                                                  });
 
+    // Create MSAA color buffer if MSAA is enabled
+    if (m_msaa_sample_count != VK_SAMPLE_COUNT_1_BIT) {
+        spdlog::info("Creating MSAA color buffer with {} samples", static_cast<int>(m_msaa_sample_count));
+        m_color_buffer = m_render_graph->add_texture("m_color_buffer", TextureUsage::COLOR_ATTACHMENT,
+                                                     m_swapchain->image_format(), m_swapchain->extent().width,
+                                                     m_swapchain->extent().height, 4, m_msaa_sample_count, [&]() {
+                                                         if (const auto color_buffer = m_color_buffer.lock()) {
+                                                             const auto extent = m_swapchain->extent();
+                                                             color_buffer->request_resize(extent.width, extent.height);
+                                                         }
+                                                     });
+    }
+
     // Initialize the octree renderer
-    m_octree_renderer = std::make_unique<OctreeRenderer>(m_render_graph, m_swapchain, m_depth_buffer, m_camera);
+    m_octree_renderer =
+        std::make_unique<OctreeRenderer>(m_render_graph, m_swapchain, m_depth_buffer, m_camera, m_color_buffer);
 
     // Initialize the ImGui renderer
     m_imgui_renderer = std::make_unique<ImGuiRenderer>(m_render_graph, m_swapchain, [&]() {
@@ -389,9 +500,11 @@ void ExampleApp::update_imgui_overlay() {
                  ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
     ImGui::Text("%s", m_device->gpu_name().c_str());
     ImGui::Text("Engine version %s (git SHA %s)", ENGINE_VERSION_STR, BUILD_GIT);
-    ImGui::Text("Vulkan API %d.%d.%d", VK_API_VERSION_MAJOR(Instance::REQUIRED_VK_API_VERSION),
+    ImGui::Text("Vulkan API %d.%d.%d, %s", VK_API_VERSION_MAJOR(Instance::REQUIRED_VK_API_VERSION),
                 VK_API_VERSION_MINOR(Instance::REQUIRED_VK_API_VERSION),
-                VK_API_VERSION_PATCH(Instance::REQUIRED_VK_API_VERSION));
+                VK_API_VERSION_PATCH(Instance::REQUIRED_VK_API_VERSION), m_msaa_text.data());
+    ImGui::Text("Press N to regenerate octree");
+    ImGui::Text("Press V for VMA memory statistics");
     const auto cam_pos = m_camera->position();
     ImGui::Text("Camera position (%.2f, %.2f, %.2f)", cam_pos.x, cam_pos.y, cam_pos.z);
     const auto cam_rot = m_camera->rotation();
@@ -476,6 +589,9 @@ void ExampleApp::run() {
                 load_octree_geometry(false);
                 generate_octree_indices();
                 m_octree_renderer->set_vertices_and_indices(m_octree_vertices, m_octree_indices);
+            }
+            if (m_input->kbm_data().was_key_pressed_once(GLFW_KEY_V)) {
+                log_vma_statistics(*m_device, "Manual VMA statistics");
             }
             check_octree_collisions();
         }

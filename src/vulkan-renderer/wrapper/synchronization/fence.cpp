@@ -2,7 +2,7 @@
 
 #include "inexor/vulkan-renderer/tools/exception.hpp"
 #include "inexor/vulkan-renderer/tools/make_info.hpp"
-#include "inexor/vulkan-renderer/wrapper/device.hpp"
+#include "inexor/vulkan-renderer/wrapper/core/device.hpp"
 
 #include <cassert>
 #include <limits>
@@ -10,7 +10,10 @@
 
 namespace inexor::vulkan_renderer::wrapper::synchronization {
 
-Fence::Fence(const Device &device, const std::string &name) : m_device(device), m_name(name) {
+// Using declaration
+using tools::VulkanException;
+
+Fence::Fence(const core::Device &device, const std::string &name) : m_device(device), m_name(name) {
     if (name.empty()) {
         throw std::invalid_argument("Error: Parameter 'name' is empty!");
     }

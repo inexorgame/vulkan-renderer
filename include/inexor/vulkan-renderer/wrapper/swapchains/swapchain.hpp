@@ -1,7 +1,8 @@
 #pragma once
 
-#include "inexor/vulkan-renderer/wrapper/commands/command_buffer.hpp"
 #include "inexor/vulkan-renderer/wrapper/synchronization/semaphore.hpp"
+
+#include <volk.h>
 
 #include <cstdint>
 #include <limits>
@@ -10,27 +11,23 @@
 #include <span>
 #include <vector>
 
-namespace inexor::vulkan_renderer::wrapper {
+namespace inexor::vulkan_renderer::wrapper::core {
 // Forward declaration
 class Device;
-} // namespace inexor::vulkan_renderer::wrapper
+} // namespace inexor::vulkan_renderer::wrapper::core
 
 namespace inexor::vulkan_renderer::wrapper::commands {
 // Forward declaration
 class CommandBuffer;
+class CommandBufferBuilder;
 } // namespace inexor::vulkan_renderer::wrapper::commands
-
-namespace inexor::vulkan_renderer::wrapper::synchronization {
-// Forward declaration
-class Semaphore;
-} // namespace inexor::vulkan_renderer::wrapper::synchronization
 
 namespace inexor::vulkan_renderer::wrapper::swapchains {
 
 // Using declaration
 using synchronization::Semaphore;
-using wrapper::Device;
-using wrapper::commands::CommandBuffer;
+using wrapper::commands::CommandBufferBuilder;
+using wrapper::core::Device;
 
 /// RAII wrapper class for swapchains
 class Swapchain {
@@ -76,11 +73,11 @@ public:
 
     /// Change the image layout with a pipeline barrier to prepare for rendering
     /// @param cmd_buf The command buffer used for recording
-    void change_image_layout_to_prepare_for_rendering(const CommandBuffer &cmd_buf);
+    void change_image_layout_to_prepare_for_rendering(CommandBufferBuilder &cmd_buf);
 
     /// Change the image layout with a pipeline barrier to prepare to call vkQueuePresentKHR
     /// @param cmd_buf The command buffer used for recording
-    void change_image_layout_to_prepare_for_presenting(const CommandBuffer &cmd_buf);
+    void change_image_layout_to_prepare_for_presenting(CommandBufferBuilder &cmd_buf);
 
     [[nodiscard]] auto current_swapchain_image_view() const {
         return m_current_swapchain_img_view;

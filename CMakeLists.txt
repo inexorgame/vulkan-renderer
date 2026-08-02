@@ -6,7 +6,7 @@ set(CMAKE_DISABLE_IN_SOURCE_BUILD ON)
 # Options
 option(INEXOR_BUILD_BENCHMARKS "Build benchmarks" OFF)
 option(INEXOR_BUILD_DOCUMENTATION "Build documentation" OFF)
-option(INEXOR_BUILD_EXAMPLE "Build example" OFF)
+option(INEXOR_BUILD_EXAMPLE "Build example" ON)
 option(INEXOR_BUILD_TESTS "Build tests" OFF)
 
 message(STATUS "INEXOR_BUILD_BENCHMARKS = ${INEXOR_BUILD_BENCHMARKS}")

@@ -1,14 +1,16 @@
 #include "inexor/vulkan-renderer/tools/file.hpp"
 
 #include <algorithm>
-#include <cassert>
 #include <filesystem>
 #include <fstream>
+#include <stdexcept>
 
 namespace inexor::vulkan_renderer::tools {
 
 std::string get_file_extension_lowercase(const std::string &file_name) {
-    assert(!file_name.empty());
+    if (file_name.empty()) {
+        throw std::invalid_argument("Error: Parameter 'file_name' is empty!");
+    }
 
     // Extract the file extension
     std::string file_extension = std::filesystem::path(file_name).extension().string();

@@ -4,7 +4,7 @@
 #include "inexor/vulkan-renderer/tools/exception.hpp"
 #include "inexor/vulkan-renderer/tools/make_info.hpp"
 #include "inexor/vulkan-renderer/wrapper/commands/command_buffer.hpp"
-#include "inexor/vulkan-renderer/wrapper/device.hpp"
+#include "inexor/vulkan-renderer/wrapper/core/device.hpp"
 
 #include <spdlog/spdlog.h>
 
@@ -17,8 +17,8 @@
 
 namespace inexor::vulkan_renderer::render_graph {
 
-Buffer::Buffer(const Device &device, std::string buffer_name, BufferType buffer_type, std::function<void()> on_update,
-               const BufferUpdateMode update_mode)
+Buffer::Buffer(const wrapper::core::Device &device, std::string buffer_name, BufferType buffer_type,
+               std::function<void()> on_update, const BufferUpdateMode update_mode)
     : m_device(device), m_name(std::move(buffer_name)), m_on_check_for_update(std::move(on_update)),
       m_buffer_type(buffer_type), m_update_mode(update_mode) {
     if (m_name.empty()) {

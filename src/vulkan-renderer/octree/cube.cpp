@@ -4,6 +4,7 @@
 #include "inexor/vulkan-renderer/tools/random.hpp"
 
 #include <functional>
+#include <stdexcept>
 #include <utility>
 
 void swap(inexor::vulkan_renderer::octree::Cube &lhs, inexor::vulkan_renderer::octree::Cube &rhs) noexcept {
@@ -43,12 +44,16 @@ Cube &Cube::operator=(Cube rhs) {
 }
 
 std::shared_ptr<Cube> Cube::operator[](std::size_t idx) {
-    assert(idx <= SUB_CUBES);
+    if (idx >= SUB_CUBES) {
+        throw std::out_of_range("Error: Child index is out of range!");
+    }
     return m_children[idx];
 }
 
 std::shared_ptr<const Cube> Cube::operator[](std::size_t idx) const {
-    assert(idx <= SUB_CUBES);
+    if (idx >= SUB_CUBES) {
+        throw std::out_of_range("Error: Child index is out of range!");
+    }
     return m_children[idx];
 }
 
@@ -138,7 +143,9 @@ void Cube::indent(const std::uint8_t edge_id, const bool positive_direction, con
     if (m_type != Type::NORMAL) {
         return;
     }
-    assert(edge_id <= Cube::EDGES);
+    if (edge_id >= Cube::EDGES) {
+        throw std::out_of_range("Error: Edge index is out of range!");
+    }
     if (positive_direction) {
         m_indentations[edge_id].indent_start(steps);
     } else {
@@ -182,7 +189,7 @@ std::vector<PolygonCache> Cube::polygons(const bool update_invalid) const {
     return polygons;
 }
 
-std::shared_ptr<Cube> Cube::neighbor(const NeighborAxis axis, const NeighborDirection direction) {
+std::shared_ptr<Cube> Cube::neighbor(const Axis axis, const NeighborDirection direction) {
     if (is_root()) {
         return nullptr;
     }
@@ -387,7 +394,9 @@ void Cube::set_indent(const std::uint8_t edge_id, Indentation indentation) {
     if (m_type != Type::NORMAL) {
         return;
     }
-    assert(edge_id <= Cube::EDGES);
+    if (edge_id >= Cube::EDGES) {
+        throw std::out_of_range("Error: Edge index is out of range!");
+    }
     m_indentations[edge_id] = indentation;
 }
 
@@ -496,11 +505,13 @@ void Cube::update_polygon_cache() const {
         return;
     }
     // This point should not be reached.
-    assert(false);
+    throw std::logic_error("Error: Invalid cube type encountered while updating polygon cache!");
 }
 
-std::array<glm::vec3, 8> Cube::vertices() const noexcept {
-    assert(m_type == Type::SOLID || m_type == Type::NORMAL);
+std::array<glm::vec3, 8> Cube::vertices() const {
+    if (m_type != Type::SOLID && m_type != Type::NORMAL) {
+        throw std::logic_error("Error: vertices() can only be called on geometry cubes!");
+    }
 
     const glm::vec3 pos = m_position;
     const glm::vec3 max = {m_position.x + m_size, m_position.y + m_size, m_position.z + m_size};

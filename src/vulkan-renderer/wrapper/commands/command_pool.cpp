@@ -4,7 +4,7 @@
 #include "inexor/vulkan-renderer/tools/make_info.hpp"
 #include "inexor/vulkan-renderer/tools/representation.hpp"
 #include "inexor/vulkan-renderer/wrapper/commands/command_buffer.hpp"
-#include "inexor/vulkan-renderer/wrapper/device.hpp"
+#include "inexor/vulkan-renderer/wrapper/core/device.hpp"
 
 #include <spdlog/spdlog.h>
 
@@ -14,8 +14,8 @@
 
 namespace inexor::vulkan_renderer::wrapper::commands {
 
-CommandPool::CommandPool(const Device &device, const VkQueueFlagBits queue_type, const std::uint32_t queue_family_index,
-                         std::string name)
+CommandPool::CommandPool(const core::Device &device, const VkQueueFlagBits queue_type,
+                         const std::uint32_t queue_family_index, std::string name)
     : m_device(device), m_name(std::move(name)), m_queue_type(queue_type) {
 
     const auto cmd_pool_ci = tools::make_info<VkCommandPoolCreateInfo>({
@@ -30,7 +30,7 @@ CommandPool::CommandPool(const Device &device, const VkQueueFlagBits queue_type,
 
     if (const auto result = vkCreateCommandPool(m_device.device(), &cmd_pool_ci, nullptr, &m_cmd_pool);
         result != VK_SUCCESS) {
-        throw VulkanException("Error: vkCreateCommandPool failed!", result, m_name);
+        throw tools::VulkanException("Error: vkCreateCommandPool failed!", result, m_name);
     }
     m_device.set_debug_name(m_cmd_pool, m_name);
 }

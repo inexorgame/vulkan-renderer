@@ -1,13 +1,13 @@
 #include "inexor/vulkan-renderer/wrapper/images/image.hpp"
 
 #include "inexor/vulkan-renderer/tools/exception.hpp"
-#include "inexor/vulkan-renderer/wrapper/device.hpp"
+#include "inexor/vulkan-renderer/wrapper/core/device.hpp"
 
 #include <utility>
 
 namespace inexor::vulkan_renderer::wrapper::images {
 
-Image::Image(const Device &device, std::string name) : m_device(device), m_name(std::move(name)) {}
+Image::Image(const core::Device &device, std::string name) : m_device(device), m_name(std::move(name)) {}
 
 Image::Image(Image &&other) noexcept : m_device(other.m_device) {
     m_name = std::move(other.m_name);
@@ -35,6 +35,8 @@ void Image::create(VkImageCreateInfo img_ci, VkImageViewCreateInfo img_view_ci) 
         .usage = VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE,
         .priority = priority,
     };
+
+    using tools::VulkanException;
 
     // Create the image
     if (const auto result = vmaCreateImage(m_device.allocator(), &m_img_ci, &alloc_ci, &m_img, &m_alloc, &m_alloc_info);

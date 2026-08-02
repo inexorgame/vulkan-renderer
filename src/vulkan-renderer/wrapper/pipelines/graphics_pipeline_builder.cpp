@@ -2,7 +2,7 @@
 
 namespace inexor::vulkan_renderer::wrapper::pipelines {
 
-GraphicsPipelineBuilder::GraphicsPipelineBuilder(const Device &device) : m_device(device) {
+GraphicsPipelineBuilder::GraphicsPipelineBuilder(const core::Device &device) : m_device(device) {
     reset();
 }
 
