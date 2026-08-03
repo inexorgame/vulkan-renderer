@@ -70,6 +70,7 @@ set(INEXOR_SOURCE_FILES
     vulkan-renderer/wrapper/pipelines/pipeline_layout.cpp
 
     vulkan-renderer/wrapper/shaders/shader.cpp
+    vulkan-renderer/wrapper/shaders/spirv-reflect.cpp
 
     vulkan-renderer/wrapper/swapchains/swapchain_utils.cpp
     vulkan-renderer/wrapper/swapchains/swapchain.cpp
@@ -155,6 +156,7 @@ FetchContent_MakeAvailable(volk)
 FetchContent_MakeAvailable(vma)
 FetchContent_MakeAvailable(glfw)
 FetchContent_MakeAvailable(glm)
+FetchContent_MakeAvailable(SPIRVReflect)
 FetchContent_MakeAvailable(tinygltf)
 FetchContent_MakeAvailable(imgui)
 add_library(imgui

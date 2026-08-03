@@ -3,16 +3,19 @@
 #include "inexor/vulkan-renderer/tools/exception.hpp"
 #include "inexor/vulkan-renderer/tools/file.hpp"
 #include "inexor/vulkan-renderer/tools/make_info.hpp"
+#include "inexor/vulkan-renderer/tools/representation.hpp"
 #include "inexor/vulkan-renderer/wrapper/core/device.hpp"
+#include "inexor/vulkan-renderer/wrapper/shaders/spirv-reflect.hpp"
 
 #include <cassert>
+#include <span>
+#include <spdlog/spdlog.h>
 #include <utility>
 
 namespace inexor::vulkan_renderer::wrapper::shaders {
 
-Shader::Shader(const core::Device &device, const VkShaderStageFlagBits shader_stage,
-               const std::string &shader_file_name, const std::string &entry_point)
-    : m_device(device), m_shader_stage(shader_stage), m_name(shader_file_name), m_entry_point(entry_point) {
+Shader::Shader(const core::Device &device, const std::string &shader_file_name)
+    : m_device(device), m_name(shader_file_name) {
     if (shader_file_name.empty()) {
         throw std::invalid_argument("Error: Parameter 'shader_file_name' is an empty string!");
     }
@@ -21,6 +24,8 @@ Shader::Shader(const core::Device &device, const VkShaderStageFlagBits shader_st
     if (shader_code.empty()) {
         throw std::runtime_error("Error: read_file_binary_data(shader_file_name) returned an empty array!");
     }
+    m_shader_stage = get_shader_stage(std::span<const char>(shader_code.data(), shader_code.size()));
+    spdlog::trace("Loading shader '{}' [stage={}]", shader_file_name, tools::as_string(m_shader_stage));
 
     const auto shader_module_ci = tools::make_info<VkShaderModuleCreateInfo>({
         .codeSize = shader_code.size(),
@@ -40,7 +45,6 @@ Shader::Shader(const core::Device &device, const VkShaderStageFlagBits shader_st
 Shader::Shader(Shader &&other) noexcept : m_device(other.m_device) {
     m_shader_stage = other.m_shader_stage;
     m_name = std::move(other.m_name);
-    m_entry_point = std::move(other.m_entry_point);
     m_shader_module = std::exchange(other.m_shader_module, nullptr);
 }
 

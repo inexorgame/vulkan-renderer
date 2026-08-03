@@ -49,10 +49,8 @@ ImGuiRenderer::ImGuiRenderer(std::shared_ptr<RenderGraph> render_graph, std::wea
     io.FontGlobalScale = 1.0f;
 
     spdlog::trace("Loading ImGUI shaders");
-    m_vertex_shader =
-        std::make_shared<Shader>(render_graph->device(), VK_SHADER_STAGE_VERTEX_BIT, "shaders/ui.vert.spv");
-    m_fragment_shader =
-        std::make_shared<Shader>(render_graph->device(), VK_SHADER_STAGE_FRAGMENT_BIT, "shaders/ui.frag.spv");
+    m_vertex_shader = std::make_shared<Shader>(render_graph->device(), "shaders/ui.vert.spv");
+    m_fragment_shader = std::make_shared<Shader>(render_graph->device(), "shaders/ui.frag.spv");
 
     // Load font texture
 

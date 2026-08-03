@@ -82,6 +82,19 @@ FetchContent_Declare(spdlog SYSTEM
     FIND_PACKAGE_ARGS 1.15.3
 )
 
+# SPIR-V shader reflection
+set(SPIRV_REFLECT_EXECUTABLE OFF CACHE BOOL "" FORCE)
+set(SPIRV_REFLECT_STATIC_LIB ON CACHE BOOL "" FORCE)
+set(SPIRV_REFLECT_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+set(SPIRV_REFLECT_INSTALL OFF CACHE BOOL "" FORCE)
+
+FetchContent_Declare(SPIRVReflect SYSTEM
+    GIT_REPOSITORY https://github.com/KhronosGroup/SPIRV-Reflect.git
+    GIT_TAG main # Prefer pinning to a commit hash
+    GIT_SHALLOW ON
+    GIT_PROGRESS ON
+)
+
 # Required for loading textures in various formats
 FetchContent_Declare(stb SYSTEM
     GIT_REPOSITORY https://github.com/nothings/stb.git
