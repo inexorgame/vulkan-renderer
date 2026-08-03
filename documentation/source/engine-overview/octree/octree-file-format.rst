@@ -3,6 +3,17 @@ Octree File Format
 
 The Inexor octree format describes the structure of the maps (and even models) created in Inexor.
 
+Terminology
+-----------
+
+To keep the documentation consistent, we use the following terms:
+
+- ``World``: the full scene or map that is loaded by the engine.
+- ``Octree``: one tree-shaped voxel structure inside a world.
+- ``Cube``: one node inside an octree. A cube can be empty, solid, indented, or split into 8 octants.
+
+When this page refers to a ``cube``, it always means the octree node and not the whole world.
+
 Octree
 ------
 
