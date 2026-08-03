@@ -1,14 +1,13 @@
 name: Commit Naming
 on:
-  push:
   pull_request:
-    types: [opened]
+    types: [opened, synchronize, reopened]
 
 jobs:
   naming:
     name: Commit Naming
     runs-on: ubuntu-latest
-    if: ${{ github.event_name == 'pull_request' && github.event.action == 'opened' && !github.event.pull_request.merged || github.event_name == 'push' }}
+    if: ${{ github.event_name == 'pull_request' && !github.event.pull_request.merged }}
     steps:
       - uses: IceflowRE/gitcc@v2
         with:
