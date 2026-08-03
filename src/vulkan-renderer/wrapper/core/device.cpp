@@ -474,4 +474,53 @@ void Device::wait_idle(const VkQueue queue) const {
     }
 }
 
+void Device::log_vma_statistics(const char *context) const {
+    VmaTotalStatistics total_statistics{};
+    vmaCalculateStatistics(m_allocator, &total_statistics);
+
+    const auto log_statistics = [context](const char *label, const VmaStatistics &statistics) {
+        spdlog::info("[{}] {}: blockCount={}, allocationCount={}, blockBytes={}, allocationBytes={}", context, label,
+                     statistics.blockCount, statistics.allocationCount, statistics.blockBytes,
+                     statistics.allocationBytes);
+    };
+
+    const auto log_detailed_statistics = [&log_statistics, context](const char *label,
+                                                                    const VmaDetailedStatistics &statistics) {
+        log_statistics(label, statistics.statistics);
+        spdlog::info("[{}] {}: unusedRangeCount={}, allocationSizeMin={}, allocationSizeMax={}, "
+                     "unusedRangeSizeMin={}, unusedRangeSizeMax={}",
+                     context, label, statistics.unusedRangeCount, statistics.allocationSizeMin,
+                     statistics.allocationSizeMax, statistics.unusedRangeSizeMin, statistics.unusedRangeSizeMax);
+    };
+
+    log_detailed_statistics("VmaDetailedStatistics", total_statistics.total);
+    log_detailed_statistics("VmaTotalStatistics.total", total_statistics.total);
+
+    for (std::size_t memory_type_index = 0; memory_type_index < VK_MAX_MEMORY_TYPES; ++memory_type_index) {
+        const auto &memory_type_statistics = total_statistics.memoryType[memory_type_index];
+        if (memory_type_statistics.statistics.blockCount == 0 &&
+            memory_type_statistics.statistics.allocationCount == 0 &&
+            memory_type_statistics.statistics.blockBytes == 0 &&
+            memory_type_statistics.statistics.allocationBytes == 0) {
+            continue;
+        }
+
+        const auto label = std::string("VmaTotalStatistics.memoryType[") + std::to_string(memory_type_index) + "]";
+        log_detailed_statistics(label.c_str(), memory_type_statistics);
+    }
+
+    for (std::size_t memory_heap_index = 0; memory_heap_index < VK_MAX_MEMORY_HEAPS; ++memory_heap_index) {
+        const auto &memory_heap_statistics = total_statistics.memoryHeap[memory_heap_index];
+        if (memory_heap_statistics.statistics.blockCount == 0 &&
+            memory_heap_statistics.statistics.allocationCount == 0 &&
+            memory_heap_statistics.statistics.blockBytes == 0 &&
+            memory_heap_statistics.statistics.allocationBytes == 0) {
+            continue;
+        }
+
+        const auto label = std::string("VmaTotalStatistics.memoryHeap[") + std::to_string(memory_heap_index) + "]";
+        log_detailed_statistics(label.c_str(), memory_heap_statistics);
+    }
+}
+
 } // namespace inexor::vulkan_renderer::wrapper::core

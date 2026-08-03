@@ -25,8 +25,6 @@
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include <spdlog/spdlog.h>
 
-#include <vk_mem_alloc.h>
-
 #include <mutex>
 #include <stdexcept>
 #include <string_view>
@@ -38,21 +36,7 @@ namespace inexor::example_app {
 // Using declarations
 using namespace inexor::vulkan_renderer;
 
-namespace {
-
-void log_vma_statistics(const wrapper::core::Device &device, std::string_view context) {
-    char *vma_stats_string = nullptr;
-    vmaBuildStatsString(device.allocator(), &vma_stats_string, VK_TRUE);
-    if (vma_stats_string == nullptr) {
-        spdlog::warn("[{}] VMA statistics are unavailable", context);
-        return;
-    }
-
-    spdlog::info("[{}] VMA memory statistics:\n{}", context, vma_stats_string);
-    vmaFreeStatsString(device.allocator(), vma_stats_string);
-}
-
-} // namespace
+namespace {} // namespace
 
 void ExampleApp::load_toml_configuration_file(const std::string &file_name) {
     spdlog::trace("Loading TOML configuration file: {}", file_name);
@@ -591,7 +575,7 @@ void ExampleApp::run() {
                 m_octree_renderer->set_vertices_and_indices(m_octree_vertices, m_octree_indices);
             }
             if (m_input->kbm_data().was_key_pressed_once(GLFW_KEY_V)) {
-                log_vma_statistics(*m_device, "Manual VMA statistics");
+                m_device->log_vma_statistics("Manual VMA statistics");
             }
             check_octree_collisions();
         }
