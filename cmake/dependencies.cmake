@@ -110,16 +110,16 @@ FetchContent_Declare(tomlplusplus SYSTEM
 # Vulkan Memory Allocator library
 FetchContent_Declare(vma SYSTEM
     GIT_REPOSITORY https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator.git
-    GIT_TAG v3.1.0
+    GIT_TAG v3.3.0
     GIT_SHALLOW ON
     GIT_PROGRESS ON
-    FIND_PACKAGE_ARGS 3.1.0
+    FIND_PACKAGE_ARGS 3.3.0
 )
 
 # Meta-loader for the Vulkan API that dynamically loads function pointers at runtime, avoiding the need for static linking
 FetchContent_Declare(volk SYSTEM
     GIT_REPOSITORY https://github.com/zeux/volk
-    GIT_TAG 1.3.270
+    GIT_TAG 1.4.350
     GIT_SHALLOW ON
     GIT_PROGRESS ON
     # Do not specify FIND_PACKAGE_ARGS here because this will fail Linux build!

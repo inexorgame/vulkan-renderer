@@ -7,8 +7,6 @@
 #include "inexor/vulkan-renderer/wrapper/commands/command_buffer_builder.hpp"
 #include "inexor/vulkan-renderer/wrapper/commands/command_pool.hpp"
 
-#include <vk_mem_alloc.h>
-
 #include <array>
 #include <functional>
 #include <memory>
@@ -345,6 +343,10 @@ public:
     /// @exception VulkanException `vkDeviceWaitIdle` call failed.
     /// @exception VulkanException `vkQueueWaitIdle` call failed.
     void wait_idle(VkQueue queue = VK_NULL_HANDLE) const;
+
+    /// Log VMA (Vulkan Memory Allocator) statistics
+    /// @param context A context string to identify where the statistics are being logged from
+    void log_vma_statistics(const char *context) const;
 };
 
 } // namespace inexor::vulkan_renderer::wrapper::core

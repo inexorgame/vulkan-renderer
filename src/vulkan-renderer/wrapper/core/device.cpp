@@ -10,6 +10,9 @@
 
 #define VMA_DEBUG_MARGIN 16
 #define VMA_DEBUG_DETECT_CORRUPTION 1
+// By specifying this, we tell VMA that we will load the Vulkan functions ourselves through volk!
+#define VMA_DYNAMIC_VULKAN_FUNCTIONS 0
+#define VMA_STATIC_VULKAN_FUNCTIONS 0
 #define VMA_IMPLEMENTATION
 #include <vk_mem_alloc.h>
 
@@ -222,7 +225,7 @@ Device::Device(const Instance &inst, const VkSurfaceKHR surface, const VkPhysica
         vkGetDeviceQueue(m_device, m_compute_queue_family_index.value(), 0, &m_compute_queue);
         set_debug_name(m_compute_queue, "m_compute_queue");
     }
-    // Do we have any queue for compute?
+    // Do we have any queue for transfer?
     if (m_transfer_queue_family_index) {
         vkGetDeviceQueue(m_device, m_transfer_queue_family_index.value(), 0, &m_transfer_queue);
         set_debug_name(m_transfer_queue, "m_transfer_queue");
@@ -233,10 +236,9 @@ Device::Device(const Instance &inst, const VkSurfaceKHR surface, const VkPhysica
         set_debug_name(m_sparse_binding_queue, "m_sparse_binding_queue");
     }
 
-    VmaVulkanFunctions vma_vk_functions{
-        .vkGetInstanceProcAddr = vkGetInstanceProcAddr,
-        .vkGetDeviceProcAddr = vkGetDeviceProcAddr,
-    };
+    // This will be filled with the help of volk metaloader
+    // It will contain all function pointers for device-level functions that are not part of the Vulkan core API
+    VmaVulkanFunctions vma_vk_functions{};
 
     auto vma_ci = VmaAllocatorCreateInfo{
         .physicalDevice = m_physical_device,
@@ -245,6 +247,15 @@ Device::Device(const Instance &inst, const VkSurfaceKHR surface, const VkPhysica
         .instance = inst.instance(),
         .vulkanApiVersion = Instance::REQUIRED_VK_API_VERSION,
     };
+
+    // Load the function pointers for VMA through volk metaloader
+    if (const auto result = vmaImportVulkanFunctionsFromVolk(&vma_ci, &vma_vk_functions); result != VK_SUCCESS) {
+        throw VulkanException("Error: vmaImportVulkanFunctionsFromVolk failed!", result);
+    }
+
+    // Check if the memory priority extension is supported and enabled, and if so, set the function pointer for it
+    // The memory priority feature allows us to set a priority for memory allocations, which can help improve
+    // performance in certain scenarios.
     if (memory_priority_supported) {
         vma_ci.flags |= VMA_ALLOCATOR_CREATE_EXT_MEMORY_PRIORITY_BIT;
     }
@@ -256,6 +267,7 @@ Device::Device(const Instance &inst, const VkSurfaceKHR surface, const VkPhysica
         throw VulkanException("Error: vmaCreateAllocator failed!", result);
     }
 
+    // Create a Vuklan pipeline cache to speed up pipeline creation
     m_pipeline_cache = std::make_unique<PipelineCache>(*this);
 
     // Create command pools at here instead of allocating them lazily at first request during runtime
@@ -268,7 +280,6 @@ Device::Device(const Instance &inst, const VkSurfaceKHR surface, const VkPhysica
 Device::~Device() {
     std::scoped_lock locker(m_mutex);
     // Wait for the device to complete ongoing work
-    spdlog::trace("Device::~Device begin");
     wait_idle();
     // Because the device handle must be valid for the destruction of the command pools in the CommandPool destructor,
     // we must destroy the command pools manually here in order to ensure the right order of destruction
@@ -281,13 +292,11 @@ Device::~Device() {
         vmaFreeStatsString(m_allocator, vma_stats_string);
     }
     // Now that we destroyed the command pools, we can destroy the allocator and finally the device itself
-    spdlog::trace("Device::~Device destroying VMA allocator");
     vmaDestroyAllocator(m_allocator);
     // Shutdown pipeline cache
     m_pipeline_cache.reset();
     // Destroy the device
     vkDestroyDevice(m_device, nullptr);
-    spdlog::trace("Device::~Device end");
 }
 
 bool Device::is_presentation_supported(const VkSurfaceKHR surface, const std::uint32_t queue_family_index) const {
@@ -471,6 +480,55 @@ void Device::wait_idle(const VkQueue queue) const {
         if (const auto result = vkQueueWaitIdle(queue); result != VK_SUCCESS) {
             throw VulkanException("Error: vkQueueWaitIdle failed!", result);
         }
+    }
+}
+
+void Device::log_vma_statistics(const char *context) const {
+    VmaTotalStatistics total_statistics{};
+    vmaCalculateStatistics(m_allocator, &total_statistics);
+
+    const auto log_statistics = [context](const char *label, const VmaStatistics &statistics) {
+        spdlog::info("[{}] {}: blockCount={}, allocationCount={}, blockBytes={}, allocationBytes={}", context, label,
+                     statistics.blockCount, statistics.allocationCount, statistics.blockBytes,
+                     statistics.allocationBytes);
+    };
+
+    const auto log_detailed_statistics = [&log_statistics, context](const char *label,
+                                                                    const VmaDetailedStatistics &statistics) {
+        log_statistics(label, statistics.statistics);
+        spdlog::info("[{}] {}: unusedRangeCount={}, allocationSizeMin={}, allocationSizeMax={}, "
+                     "unusedRangeSizeMin={}, unusedRangeSizeMax={}",
+                     context, label, statistics.unusedRangeCount, statistics.allocationSizeMin,
+                     statistics.allocationSizeMax, statistics.unusedRangeSizeMin, statistics.unusedRangeSizeMax);
+    };
+
+    log_detailed_statistics("VmaDetailedStatistics", total_statistics.total);
+    log_detailed_statistics("VmaTotalStatistics.total", total_statistics.total);
+
+    for (std::size_t memory_type_index = 0; memory_type_index < VK_MAX_MEMORY_TYPES; ++memory_type_index) {
+        const auto &memory_type_statistics = total_statistics.memoryType[memory_type_index];
+        if (memory_type_statistics.statistics.blockCount == 0 &&
+            memory_type_statistics.statistics.allocationCount == 0 &&
+            memory_type_statistics.statistics.blockBytes == 0 &&
+            memory_type_statistics.statistics.allocationBytes == 0) {
+            continue;
+        }
+
+        const auto label = std::string("VmaTotalStatistics.memoryType[") + std::to_string(memory_type_index) + "]";
+        log_detailed_statistics(label.c_str(), memory_type_statistics);
+    }
+
+    for (std::size_t memory_heap_index = 0; memory_heap_index < VK_MAX_MEMORY_HEAPS; ++memory_heap_index) {
+        const auto &memory_heap_statistics = total_statistics.memoryHeap[memory_heap_index];
+        if (memory_heap_statistics.statistics.blockCount == 0 &&
+            memory_heap_statistics.statistics.allocationCount == 0 &&
+            memory_heap_statistics.statistics.blockBytes == 0 &&
+            memory_heap_statistics.statistics.allocationBytes == 0) {
+            continue;
+        }
+
+        const auto label = std::string("VmaTotalStatistics.memoryHeap[") + std::to_string(memory_heap_index) + "]";
+        log_detailed_statistics(label.c_str(), memory_heap_statistics);
     }
 }
 

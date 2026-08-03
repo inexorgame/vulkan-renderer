@@ -122,7 +122,7 @@ Instance::Instance(const std::span<const char *> instance_layers, const std::spa
     spdlog::trace("Loading Vulkan instance-level function pointers with volkLoadInstanceOnly");
     volkLoadInstanceOnly(m_instance);
 
-    // vkDestroyInstance is loaded by volkLoadInstanceOnly.
+    // We can only do the error check here because vkDestroyInstance is loaded by volkLoadInstanceOnly
     if (vkDestroyInstance == nullptr) {
         // This should practically be impossible, but let's just be sure.
         throw InexorException("Error: Function pointer 'vkDestroyInstance' is not available!");
