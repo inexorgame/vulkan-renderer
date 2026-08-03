@@ -48,11 +48,8 @@ OctreeRenderer::OctreeRenderer(std::shared_ptr<RenderGraph> render_graph, std::w
     // @TODO Maybe it is a good idea to let rendergraph load shaders and to abstract shader loading in it?
 
     // Load vertex and fragment shader for octree rendering
-    // @TODO Use spirv-cross to load shaders and determine type automatically
-    m_vertex_shader =
-        std::make_shared<Shader>(render_graph->device(), VK_SHADER_STAGE_VERTEX_BIT, "shaders/main.vert.spv");
-    m_fragment_shader =
-        std::make_shared<Shader>(render_graph->device(), VK_SHADER_STAGE_FRAGMENT_BIT, "shaders/main.frag.spv");
+    m_vertex_shader = std::make_shared<Shader>(render_graph->device(), "shaders/main.vert.spv");
+    m_fragment_shader = std::make_shared<Shader>(render_graph->device(), "shaders/main.frag.spv");
 
     m_mvp_matrix = render_graph->add_buffer(
         "model/view/proj", BufferType::UNIFORM_BUFFER,

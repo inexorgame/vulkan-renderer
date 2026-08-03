@@ -53,6 +53,33 @@ std::string_view as_string(const VkColorSpaceKHR color_space) {
     }
 }
 
+/// Convert a VkShaderStageFlagBits into the corresponding std::string_view.
+/// @param shader_stage The shader stage flag bit.
+/// @return A std::string_view which contains the shader stage flag bit.
+template <>
+std::string_view as_string(const VkShaderStageFlagBits shader_stage) {
+    switch (shader_stage) {
+    case VK_SHADER_STAGE_VERTEX_BIT:
+        return "VK_SHADER_STAGE_VERTEX_BIT";
+    case VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT:
+        return "VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT";
+    case VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT:
+        return "VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT";
+    case VK_SHADER_STAGE_GEOMETRY_BIT:
+        return "VK_SHADER_STAGE_GEOMETRY_BIT";
+    case VK_SHADER_STAGE_FRAGMENT_BIT:
+        return "VK_SHADER_STAGE_FRAGMENT_BIT";
+    case VK_SHADER_STAGE_COMPUTE_BIT:
+        return "VK_SHADER_STAGE_COMPUTE_BIT";
+    case VK_SHADER_STAGE_TASK_BIT_NV:
+        return "VK_SHADER_STAGE_TASK_BIT_NV";
+    case VK_SHADER_STAGE_MESH_BIT_NV:
+        return "VK_SHADER_STAGE_MESH_BIT_NV";
+    default:
+        return "Unknown VkShaderStageFlagBits";
+    }
+}
+
 /// Convert a VkCompositeAlphaFlagBitsKHR into the corresponding std::string_view
 /// @param flag The composite alpha flag bit
 /// @return A std::string_view which contains the composite alpha flag bit

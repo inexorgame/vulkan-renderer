@@ -16,18 +16,14 @@ namespace inexor::vulkan_renderer::wrapper::shaders {
 class Shader {
     const core::Device &m_device;
     std::string m_name;
-    std::string m_entry_point;
     VkShaderStageFlagBits m_shader_stage;
     VkShaderModule m_shader_module{VK_NULL_HANDLE};
 
 public:
     /// Construct a shader module from a SPIR-V file.
     /// @param device The const reference to a device RAII wrapper instance.
-    /// @param shader_stage The shader type.
     /// @param shader_file_name The name of the SPIR-V shader file to load.
-    /// @param entry_point The name of the entry point, "main" by default.
-    Shader(const core::Device &m_device, VkShaderStageFlagBits shader_stage, const std::string &shader_file_name,
-           const std::string &entry_point = "main");
+    Shader(const core::Device &m_device, const std::string &shader_file_name);
 
     Shader(const Shader &) = delete;
     Shader(Shader &&) noexcept;
@@ -36,10 +32,6 @@ public:
 
     Shader &operator=(const Shader &) = delete;
     Shader &operator=(Shader &&) = delete;
-
-    [[nodiscard]] const std::string &entry_point() const {
-        return m_entry_point;
-    }
 
     [[nodiscard]] const std::string &name() const {
         return m_name;
