@@ -86,15 +86,14 @@ protected:
     std::unique_ptr<VulkanDebugUtilsCallback> m_dbg_callback;
 
     std::unique_ptr<Device> m_device;
+    std::shared_ptr<Camera> m_camera;
+    std::unique_ptr<Window> m_window;
 
     std::unique_ptr<WindowSurface> m_surface;
     std::shared_ptr<Swapchain> m_swapchain;
     std::shared_ptr<RenderGraph> m_render_graph;
     std::weak_ptr<Texture> m_depth_buffer;
     std::weak_ptr<Texture> m_color_buffer;
-
-    std::shared_ptr<Camera> m_camera;
-    std::unique_ptr<Window> m_window;
 
     std::unique_ptr<ImGuiRenderer> m_imgui_renderer;
     std::unique_ptr<OctreeRenderer> m_octree_renderer;
