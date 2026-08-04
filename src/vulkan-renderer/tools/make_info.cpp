@@ -53,6 +53,12 @@ VkCommandBufferInheritanceRenderingInfo make_info(VkCommandBufferInheritanceRend
 }
 
 template <>
+VkCommandBufferSubmitInfo make_info(VkCommandBufferSubmitInfo info) {
+    info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_SUBMIT_INFO;
+    return info;
+}
+
+template <>
 VkCommandPoolCreateInfo make_info(VkCommandPoolCreateInfo info) {
     info.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
     return info;
@@ -143,6 +149,12 @@ VkFenceCreateInfo make_info(VkFenceCreateInfo info) {
 }
 
 template <>
+VkFormatProperties2 make_info(VkFormatProperties2 info) {
+    info.sType = VK_STRUCTURE_TYPE_FORMAT_PROPERTIES_2;
+    return info;
+}
+
+template <>
 VkFramebufferCreateInfo make_info(VkFramebufferCreateInfo info) {
     info.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
     return info;
@@ -191,8 +203,44 @@ VkMemoryBarrier make_info(VkMemoryBarrier info) {
 }
 
 template <>
+VkMemoryBarrier2 make_info(VkMemoryBarrier2 info) {
+    info.sType = VK_STRUCTURE_TYPE_MEMORY_BARRIER_2;
+    return info;
+}
+
+template <>
 VkPhysicalDeviceDynamicRenderingFeaturesKHR make_info(VkPhysicalDeviceDynamicRenderingFeaturesKHR info) {
     info.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DYNAMIC_RENDERING_FEATURES;
+    return info;
+}
+
+template <>
+VkPhysicalDeviceFeatures2 make_info(VkPhysicalDeviceFeatures2 info) {
+    info.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
+    return info;
+}
+
+template <>
+VkPhysicalDeviceMemoryPriorityFeaturesEXT make_info(VkPhysicalDeviceMemoryPriorityFeaturesEXT info) {
+    info.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MEMORY_PRIORITY_FEATURES_EXT;
+    return info;
+}
+
+template <>
+VkPhysicalDeviceMemoryProperties2 make_info(VkPhysicalDeviceMemoryProperties2 info) {
+    info.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MEMORY_PROPERTIES_2;
+    return info;
+}
+
+template <>
+VkPhysicalDeviceProperties2 make_info(VkPhysicalDeviceProperties2 info) {
+    info.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2;
+    return info;
+}
+
+template <>
+VkPhysicalDeviceSynchronization2Features make_info(VkPhysicalDeviceSynchronization2Features info) {
+    info.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SYNCHRONIZATION_2_FEATURES;
     return info;
 }
 
@@ -281,6 +329,12 @@ VkPresentInfoKHR make_info(VkPresentInfoKHR info) {
 }
 
 template <>
+VkQueueFamilyProperties2 make_info(VkQueueFamilyProperties2 info) {
+    info.sType = VK_STRUCTURE_TYPE_QUEUE_FAMILY_PROPERTIES_2;
+    return info;
+}
+
+template <>
 VkQueryPoolCreateInfo make_info(VkQueryPoolCreateInfo info) {
     info.sType = VK_STRUCTURE_TYPE_QUERY_POOL_CREATE_INFO;
     return info;
@@ -323,6 +377,12 @@ VkSemaphoreCreateInfo make_info(VkSemaphoreCreateInfo info) {
 }
 
 template <>
+VkSemaphoreSubmitInfo make_info(VkSemaphoreSubmitInfo info) {
+    info.sType = VK_STRUCTURE_TYPE_SEMAPHORE_SUBMIT_INFO;
+    return info;
+}
+
+template <>
 VkShaderModuleCreateInfo make_info(VkShaderModuleCreateInfo info) {
     info.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
     return info;
@@ -331,6 +391,12 @@ VkShaderModuleCreateInfo make_info(VkShaderModuleCreateInfo info) {
 template <>
 VkSubmitInfo make_info(VkSubmitInfo info) {
     info.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+    return info;
+}
+
+template <>
+VkSubmitInfo2 make_info(VkSubmitInfo2 info) {
+    info.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO_2;
     return info;
 }
 

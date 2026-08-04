@@ -134,8 +134,8 @@ private:
 
     void synchronize_frame_context();
 
-    void mark_graphics_pass_secondary_cmd_buffers_dirty();
-    void mark_graphics_passes_using_texture_dirty(const Texture &texture);
+    void invalidate_graphics_pass_secondary_cmd_buffers();
+    void invalidate_graphics_passes_using_texture(const Texture &texture);
 
     /// --------------------------------------------------------------------------------------------------
 

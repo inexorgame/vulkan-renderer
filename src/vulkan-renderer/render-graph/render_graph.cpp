@@ -72,7 +72,7 @@ void RenderGraph::synchronize_frame_context() {
                                              m_frame_sync_manager.frame_slot_submission_fences());
 
     m_resource_descriptors.set_frame_context(m_frame_slot_count, m_current_frame_slot);
-    mark_graphics_pass_secondary_cmd_buffers_dirty();
+    invalidate_graphics_pass_secondary_cmd_buffers();
     m_staging_buffer.set_frame_context(m_frame_slot_count, m_current_frame_slot);
     m_buffer_copy_batch_builder.reset();
     m_texture_copy_batch_builder.reset();
@@ -111,7 +111,7 @@ std::weak_ptr<PerFrameDescriptorSets> RenderGraph::add_resource_descriptor(
     ResourceDescriptorManager::OnBuildWriteDescriptorSet on_build_write_descriptor_set) {
     auto resource = m_resource_descriptors.add_resource_descriptor(
         std::move(name), std::move(on_build_descriptor_set_layout), std::move(on_build_write_descriptor_set));
-    mark_graphics_pass_secondary_cmd_buffers_dirty();
+    invalidate_graphics_pass_secondary_cmd_buffers();
     return resource;
 }
 
@@ -124,7 +124,6 @@ std::weak_ptr<PerFrameDescriptorSets> RenderGraph::add_resource_descriptor(std::
     if (resource_ref->type() != BufferType::UNIFORM_BUFFER) {
         throw InexorException("Error: Automatic buffer descriptors currently only support uniform buffers!");
     }
-
     const auto descriptor_name = resource_ref->name();
     auto build_descriptor_set_layout = [stage, descriptor_name](DescriptorSetLayoutBuilder &builder) {
         return builder.add(DescriptorType::UNIFORM_BUFFER, stage).build(descriptor_name);
@@ -133,7 +132,6 @@ std::weak_ptr<PerFrameDescriptorSets> RenderGraph::add_resource_descriptor(std::
                                                  const VkDescriptorSet descriptor_set) {
         return builder.add(descriptor_set, resource, 0).build();
     };
-
     return add_resource_descriptor(resource_ref->name(), std::move(build_descriptor_set_layout),
                                    std::move(build_write_descriptor_set));
 }
@@ -144,16 +142,16 @@ std::weak_ptr<PerFrameDescriptorSets> RenderGraph::add_resource_descriptor(std::
     if (!resource_ref) {
         throw InexorException("Error: Parameter 'resource' is invalid!");
     }
-
     const auto descriptor_name = resource_ref->name();
     auto build_descriptor_set_layout = [stage, descriptor_name](DescriptorSetLayoutBuilder &builder) {
         return builder.add(DescriptorType::COMBINED_IMAGE_SAMPLER, stage).build(descriptor_name);
     };
     auto build_write_descriptor_set = [resource](WriteDescriptorSetBuilder &builder,
                                                  const VkDescriptorSet descriptor_set) {
+        // @TODO Destination bindung must be exposed as parameter to this function,
+        // otherwise we cannot support multiple textures in a single descriptor set!
         return builder.add(descriptor_set, resource, 0).build();
     };
-
     return add_resource_descriptor(resource_ref->name(), std::move(build_descriptor_set_layout),
                                    std::move(build_write_descriptor_set));
 }
@@ -168,11 +166,13 @@ std::weak_ptr<Texture> RenderGraph::add_texture(std::string name, const TextureU
                                                              channels, sample_count, std::move(on_update)));
 }
 
-void RenderGraph::mark_graphics_pass_secondary_cmd_buffers_dirty() {
+void RenderGraph::invalidate_graphics_pass_secondary_cmd_buffers() {
     m_command_buffer_cache.invalidate_all_secondary_command_buffers();
 }
 
-void RenderGraph::mark_graphics_passes_using_texture_dirty(const Texture &texture) {
+void RenderGraph::invalidate_graphics_passes_using_texture(const Texture &texture) {
+    // @TODO We could do this at compile time and store a map of texture to graphics passes
+    // which use it, but this is a premature optimization for now
     for (const auto &pass : m_graphics_passes) {
         bool uses_texture = false;
         for (const auto &write_attachment : pass->m_texture_writes) {
@@ -182,7 +182,6 @@ void RenderGraph::mark_graphics_passes_using_texture_dirty(const Texture &textur
                 break;
             }
         }
-
         if (uses_texture) {
             pass->m_rendering_info_dirty = true;
         }
@@ -192,6 +191,7 @@ void RenderGraph::mark_graphics_passes_using_texture_dirty(const Texture &textur
 void RenderGraph::create_graphics_pipelines() {
     m_resource_descriptors.create_descriptor_set_layouts();
     spdlog::trace("Creating {} graphics pipelines", m_graphics_pipeline_create_functions.size());
+    // @TODO Mark graphics pipeline builder as thread_local and create graphics pipelines in parallel
     for (const auto &create_func : m_graphics_pipeline_create_functions) {
         std::invoke(create_func, m_graphics_pipeline_builder);
     }
@@ -207,14 +207,13 @@ void RenderGraph::compile() {
     sort_graphics_passes_by_order();
     synchronize_frame_context();
     create_graphics_pipelines();
-    mark_graphics_pass_secondary_cmd_buffers_dirty();
+    invalidate_graphics_pass_secondary_cmd_buffers();
 }
 
 void RenderGraph::rebuild_graphics_pass_texture_rendering_info(GraphicsPass &pass) {
     if (!pass.m_rendering_info_dirty) {
         return;
     }
-
     auto clear_values_equal = [](const std::optional<VkClearValue> &lhs, const std::optional<VkClearValue> &rhs) {
         if (lhs.has_value() != rhs.has_value()) {
             return false;
@@ -367,7 +366,6 @@ void RenderGraph::rebuild_graphics_pass_texture_rendering_info(GraphicsPass &pas
     if (pass.m_swapchain_writes.empty()) {
         pass.m_cached_color_attachment_formats = cached_texture_color_attachment_formats;
     }
-
     pass.reset_rendering_info();
     pass.m_color_attachments.clear();
     pass.m_color_attachments.reserve(color_texture_attachment_count + pass.m_swapchain_writes.size());
@@ -417,7 +415,6 @@ void RenderGraph::refresh_graphics_pass_swapchain_rendering_info(GraphicsPass &p
     if (pass.m_swapchain_writes.empty()) {
         return;
     }
-
     auto make_rendering_attachment_info = [](const VkImageView image_view, const VkImageLayout image_layout,
                                              const std::optional<VkClearValue> &clear_value,
                                              const VkImageView resolve_image_view = VK_NULL_HANDLE,
@@ -434,11 +431,9 @@ void RenderGraph::refresh_graphics_pass_swapchain_rendering_info(GraphicsPass &p
             .clearValue = clear_value.value_or(VkClearValue{}),
         });
     };
-
     auto &current_swapchain_states = pass.m_scratch_current_swapchain_states;
     current_swapchain_states.clear();
     current_swapchain_states.reserve(pass.m_swapchain_writes.size());
-
     VkExtent2D render_extent = pass.m_cached_texture_render_extent.value_or(VkExtent2D{});
     bool render_extent_initialized = pass.m_cached_texture_render_extent.has_value();
 
@@ -451,9 +446,7 @@ void RenderGraph::refresh_graphics_pass_swapchain_rendering_info(GraphicsPass &p
         if (!swapchain) {
             throw std::runtime_error("Error: Graphics pass swapchain attachment expired!");
         }
-
         const auto extent = swapchain->extent();
-
         current_swapchain_states.push_back({
             .image_view = swapchain->current_swapchain_image_view(),
             .resolve_image_view = VK_NULL_HANDLE,
@@ -476,14 +469,12 @@ void RenderGraph::refresh_graphics_pass_swapchain_rendering_info(GraphicsPass &p
     if (!render_extent_initialized || render_extent.width == 0 || render_extent.height == 0) {
         throw std::runtime_error("Error: Render pass extent is invalid after attachment resize!");
     }
-
     pass.m_cached_swapchain_attachment_states = current_swapchain_states;
 
     // Swapchain images always have 1 sample.
     if (!resolve_to_swapchain) {
         pass.m_cached_sample_count = VK_SAMPLE_COUNT_1_BIT;
     }
-
     auto &cached_color_attachment_formats = pass.m_cached_color_attachment_formats;
     cached_color_attachment_formats.clear();
     cached_color_attachment_formats.reserve(pass.m_cached_texture_color_attachment_formats.size() +
@@ -501,7 +492,6 @@ void RenderGraph::refresh_graphics_pass_swapchain_rendering_info(GraphicsPass &p
         if (attachment_state.usage != TextureUsage::COLOR_ATTACHMENT) {
             continue;
         }
-
         if (resolve_to_swapchain) {
             for (const auto &write_swapchain : pass.m_swapchain_writes) {
                 const auto swapchain = write_swapchain.first.lock();
@@ -512,21 +502,18 @@ void RenderGraph::refresh_graphics_pass_swapchain_rendering_info(GraphicsPass &p
                 break;
             }
         }
-
         pass.m_color_attachments.push_back(
             make_rendering_attachment_info(attachment_state.image_view, attachment_state.image_layout,
                                            attachment_state.clear_value, attachment_state.resolve_image_view,
                                            attachment_state.usage == TextureUsage::COLOR_ATTACHMENT &&
                                                attachment_state.resolve_image_view != VK_NULL_HANDLE));
     }
-
     if (!resolve_to_swapchain) {
         for (const auto &attachment_state : current_swapchain_states) {
             pass.m_color_attachments.push_back(make_rendering_attachment_info(
                 attachment_state.image_view, attachment_state.image_layout, attachment_state.clear_value));
         }
     }
-
     if (!resolve_to_swapchain) {
         for (const auto &write_swapchain : pass.m_swapchain_writes) {
             const auto swapchain = write_swapchain.first.lock();
@@ -536,7 +523,6 @@ void RenderGraph::refresh_graphics_pass_swapchain_rendering_info(GraphicsPass &p
             cached_color_attachment_formats.push_back(swapchain->image_format());
         }
     }
-
     pass.m_cached_render_extent = render_extent;
     pass.m_rendering_info = make_info<VkRenderingInfo>({
         .renderArea =
@@ -580,13 +566,10 @@ void RenderGraph::record_command_buffer_for_pass(const CommandBuffer &cmd_buf, G
 
 void RenderGraph::render() {
     m_frame_sync_manager.process_deferred_releases(false);
-
     m_swapchain_manager.collect_frame_swapchains(m_graphics_passes);
-
     if (!m_swapchain_manager.acquire_next_images()) {
         return;
     }
-
     m_swapchain_manager.synchronize_frame_context();
     synchronize_frame_context();
     update_resources();
@@ -613,7 +596,7 @@ void RenderGraph::render() {
 
     if (m_resource_descriptors.descriptor_sets_dirty()) {
         if (m_resource_descriptors.update_write_descriptor_sets()) {
-            mark_graphics_pass_secondary_cmd_buffers_dirty();
+            invalidate_graphics_pass_secondary_cmd_buffers();
         }
     }
 
@@ -624,11 +607,9 @@ void RenderGraph::render() {
                 builder.reset_query_pool(*m_query_pool);
                 builder.write_timestamp(*m_query_pool, 0, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT);
             }
-
             if (m_inline_update_commands) {
                 m_inline_update_commands(builder);
             }
-
             // Acquire ownership of any buffers/images that were uploaded on a transfer queue whose family differs
             // from the graphics queue family, before they are read by any pass below.
             m_pending_queue_ownership_acquire_barriers.flush_if_not_empty(builder);
@@ -646,7 +627,6 @@ void RenderGraph::render() {
         render_wait_semaphores, m_swapchain_manager.rendering_finished_semaphores());
 
     m_upload_submission_pending = false;
-
     if (!m_inline_update_pending_releases.empty()) {
         std::vector<VkFence> release_wait_fences = m_frame_sync_manager.frame_slot_submission_fences();
         release_wait_fences.push_back(render_submit_fence);
@@ -666,14 +646,11 @@ void RenderGraph::log_gpu_frame_time() const {
     if (!m_query_pool) {
         return;
     }
-
     m_device.wait_idle();
-
     const auto results = m_query_pool->get_results();
     if (results.size() < 2) {
         return;
     }
-
     const auto elapsed_ticks = results[1] - results[0];
     const double elapsed_ms =
         static_cast<double>(elapsed_ticks) * static_cast<double>(m_timestamp_period) / 1'000'000.0;
@@ -705,7 +682,7 @@ void RenderGraph::reset_graph() {
     m_scratch_pending_releases.clear();
     m_scratch_color_attachment_formats.clear();
     m_resource_descriptors.mark_descriptor_sets_dirty();
-    mark_graphics_pass_secondary_cmd_buffers_dirty();
+    invalidate_graphics_pass_secondary_cmd_buffers();
 }
 
 void RenderGraph::sort_graphics_passes_by_order() {
@@ -768,14 +745,12 @@ void RenderGraph::update_resources() {
             }
         }
     }
-
     if (!any_buffer_update_required && !any_texture_update_required) {
         return;
     }
 
     auto &pending_releases = m_scratch_pending_releases;
     pending_releases.clear();
-
     for (auto *buffer : pending_direct_buffer_updates) {
         buffer->update_without_command_buffer();
     }
@@ -784,10 +759,9 @@ void RenderGraph::update_resources() {
         if (!texture->current_frame_resources().m_image ||
             texture->current_frame_resources().m_image->image() == VK_NULL_HANDLE) {
             m_resource_descriptors.mark_descriptor_sets_dirty();
-            mark_graphics_passes_using_texture_dirty(*texture);
+            invalidate_graphics_passes_using_texture(*texture);
         }
     }
-
     if (!any_buffer_gpu_update_required && !any_texture_update_required) {
         return;
     }
@@ -803,7 +777,6 @@ void RenderGraph::update_resources() {
             required_upload_bytes += align_up(buffer->m_src_data_size, upload_alignment);
         }
     }
-
     for (const auto *texture : pending_texture_updates) {
         if (texture->m_src_texture_data_size > 0) {
             for (std::size_t slot_index = 0; slot_index < texture->m_per_frame_texture_resources.size(); ++slot_index) {
@@ -841,7 +814,7 @@ void RenderGraph::update_resources() {
         buffer->create(m_scratch_pending_buffer_copies, m_staging_buffer, upload_offset, pending_releases);
         if (buffer->m_descriptor_resource_changed) {
             m_resource_descriptors.mark_descriptor_sets_dirty();
-            mark_graphics_pass_secondary_cmd_buffers_dirty();
+            invalidate_graphics_pass_secondary_cmd_buffers();
         }
     }
 
@@ -856,8 +829,8 @@ void RenderGraph::update_resources() {
         }
         if (texture_was_created) {
             texture->prepare_initial_layout_barriers(pre_copy_barriers);
-            mark_graphics_passes_using_texture_dirty(*texture);
-            mark_graphics_pass_secondary_cmd_buffers_dirty();
+            invalidate_graphics_passes_using_texture(*texture);
+            invalidate_graphics_pass_secondary_cmd_buffers();
         }
         texture->prepare_update_barriers(pre_copy_barriers);
         texture->collect_update_copies(m_staging_buffer, upload_offset, pending_releases,
@@ -881,11 +854,9 @@ void RenderGraph::update_resources() {
                                        std::move(post_copy_barriers)](CommandBufferBuilder &cmd_buf) mutable {
         // Phase 1: Emit all pre-copy transitions at once.
         pre_copy_barriers.flush_if_not_empty(cmd_buf);
-
         if (any_buffer_gpu_update_required) {
             m_buffer_copy_batch_builder.flush(cmd_buf, post_copy_barriers, m_pending_queue_ownership_acquire_barriers);
         }
-
         if (any_texture_update_required) {
             m_texture_copy_batch_builder.flush(cmd_buf, post_copy_barriers, m_pending_queue_ownership_acquire_barriers);
         }
@@ -912,7 +883,6 @@ void RenderGraph::update_resources() {
         }
         return;
     }
-
     // Same-queue path: merge update recording into the main render submission to avoid an extra submit.
     m_inline_update_commands = std::move(record_update_commands);
     m_inline_update_pending_releases = std::move(pending_releases);

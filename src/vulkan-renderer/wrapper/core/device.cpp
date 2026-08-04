@@ -98,8 +98,7 @@ Device::Device(const Instance &inst, const VkSurfaceKHR surface, const VkPhysica
     }
 
     // Get the device properties
-    VkPhysicalDeviceProperties2 device_properties2{};
-    device_properties2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2;
+    auto device_properties2 = tools::make_info<VkPhysicalDeviceProperties2>();
     vkGetPhysicalDeviceProperties2(m_physical_device, &device_properties2);
     std::memcpy(m_pipeline_cache_uuid.data(), device_properties2.properties.pipelineCacheUUID, VK_UUID_SIZE);
 
@@ -130,14 +129,10 @@ Device::Device(const Instance &inst, const VkSurfaceKHR surface, const VkPhysica
         tools::is_extension_supported(available_extensions, VK_EXT_MEMORY_PRIORITY_EXTENSION_NAME);
     bool memory_priority_feature_supported = false;
     if (memory_priority_ext_supported) {
-        VkPhysicalDeviceMemoryPriorityFeaturesEXT memory_priority_features{};
-        memory_priority_features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MEMORY_PRIORITY_FEATURES_EXT;
-
-        VkPhysicalDeviceFeatures2 features2{};
-        features2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
+        auto memory_priority_features = tools::make_info<VkPhysicalDeviceMemoryPriorityFeaturesEXT>();
+        auto features2 = tools::make_info<VkPhysicalDeviceFeatures2>();
         features2.pNext = &memory_priority_features;
         vkGetPhysicalDeviceFeatures2(m_physical_device, &features2);
-
         memory_priority_feature_supported = (memory_priority_features.memoryPriority == VK_TRUE);
     }
 
@@ -151,14 +146,10 @@ Device::Device(const Instance &inst, const VkSurfaceKHR surface, const VkPhysica
     }
 
     // We want to use synchronization2 for vkCmdPipelineBarrier2.
-    VkPhysicalDeviceSynchronization2Features sync2_feature{};
-    sync2_feature.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SYNCHRONIZATION_2_FEATURES;
-    sync2_feature.pNext = nullptr;
+    auto sync2_feature = tools::make_info<VkPhysicalDeviceSynchronization2Features>();
     sync2_feature.synchronization2 = VK_TRUE;
 
-    VkPhysicalDeviceMemoryPriorityFeaturesEXT memory_priority_feature{};
-    memory_priority_feature.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MEMORY_PRIORITY_FEATURES_EXT;
-    memory_priority_feature.pNext = nullptr;
+    auto memory_priority_feature = tools::make_info<VkPhysicalDeviceMemoryPriorityFeaturesEXT>();
     memory_priority_feature.memoryPriority = memory_priority_supported ? VK_TRUE : VK_FALSE;
 
     sync2_feature.pNext = memory_priority_supported ? &memory_priority_feature : nullptr;
