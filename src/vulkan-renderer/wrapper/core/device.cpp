@@ -488,17 +488,17 @@ void Device::log_vma_statistics() const {
     vmaCalculateStatistics(m_allocator, &total_statistics);
 
     const auto log_statistics = [](const char *label, const VmaStatistics &statistics) {
-        spdlog::info("{}: blockCount={}, allocationCount={}, blockBytes={}, allocationBytes={}", label,
-                     statistics.blockCount, statistics.allocationCount, statistics.blockBytes,
-                     statistics.allocationBytes);
+        spdlog::trace("{}: blockCount={}, allocationCount={}, blockBytes={}, allocationBytes={}", label,
+                      statistics.blockCount, statistics.allocationCount, statistics.blockBytes,
+                      statistics.allocationBytes);
     };
 
     const auto log_detailed_statistics = [&log_statistics](const char *label, const VmaDetailedStatistics &statistics) {
         log_statistics(label, statistics.statistics);
-        spdlog::info("{}: unusedRangeCount={}, allocationSizeMin={}, allocationSizeMax={}, "
-                     "unusedRangeSizeMin={}, unusedRangeSizeMax={}",
-                     label, statistics.unusedRangeCount, statistics.allocationSizeMin, statistics.allocationSizeMax,
-                     statistics.unusedRangeSizeMin, statistics.unusedRangeSizeMax);
+        spdlog::trace("{}: unusedRangeCount={}, allocationSizeMin={}, allocationSizeMax={}, "
+                      "unusedRangeSizeMin={}, unusedRangeSizeMax={}",
+                      label, statistics.unusedRangeCount, statistics.allocationSizeMin, statistics.allocationSizeMax,
+                      statistics.unusedRangeSizeMin, statistics.unusedRangeSizeMax);
     };
 
     log_detailed_statistics("VmaDetailedStatistics", total_statistics.total);
