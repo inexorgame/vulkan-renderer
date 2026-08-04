@@ -214,7 +214,7 @@ ExampleApp::ExampleApp(int argc, char **argv) {
 
     m_fps_limiter.set_max_fps(max_fps);
 
-    spdlog::info("MSAA samples requested: {}", msaa_samples);
+    spdlog::trace("MSAA samples requested: {}", msaa_samples);
 
     // Convert MSAA sample count to VkSampleCountFlagBits
     switch (msaa_samples) {
@@ -239,7 +239,7 @@ ExampleApp::ExampleApp(int argc, char **argv) {
         break;
     }
 
-    spdlog::info("MSAA sample count set to: {}", static_cast<int>(m_msaa_sample_count));
+    spdlog::trace("MSAA sample count set to: {}", static_cast<int>(m_msaa_sample_count));
     m_msaa_text = tools::as_string(m_msaa_sample_count);
 
     if (m_msaa_sample_count != VK_SAMPLE_COUNT_1_BIT) {
@@ -362,7 +362,7 @@ ExampleApp::ExampleApp(int argc, char **argv) {
                 } else if (supported_samples & VK_SAMPLE_COUNT_2_BIT) {
                     clamped = VK_SAMPLE_COUNT_2_BIT;
                 }
-                spdlog::warn("Requested MSAA sample count not supported by depth format, clamping from {} to {}",
+                spdlog::warn("Requested MSAA sample count {} not supported by depth format, clamping to {}",
                              static_cast<int>(m_msaa_sample_count), static_cast<int>(clamped));
                 m_msaa_sample_count = clamped;
             } else {
@@ -437,7 +437,7 @@ void ExampleApp::setup_render_graph() {
 
     // Create MSAA color buffer if MSAA is enabled
     if (m_msaa_sample_count != VK_SAMPLE_COUNT_1_BIT) {
-        spdlog::info("Creating MSAA color buffer with {} samples", static_cast<int>(m_msaa_sample_count));
+        spdlog::trace("Creating MSAA color buffer with {} samples", static_cast<int>(m_msaa_sample_count));
         m_color_buffer = m_render_graph->add_texture("m_color_buffer", TextureUsage::COLOR_ATTACHMENT,
                                                      m_swapchain->image_format(), m_swapchain->extent().width,
                                                      m_swapchain->extent().height, 4, m_msaa_sample_count, [&]() {
@@ -486,6 +486,7 @@ void ExampleApp::update_imgui_overlay() {
                 VK_API_VERSION_PATCH(Instance::REQUIRED_VK_API_VERSION), m_msaa_text.data());
     ImGui::Text("Press N to regenerate octree");
     ImGui::Text("Press V for VMA memory statistics");
+    ImGui::Text("Press P to log gpu frame time");
     const auto cam_pos = m_camera->position();
     ImGui::Text("Camera position (%.2f, %.2f, %.2f)", cam_pos.x, cam_pos.y, cam_pos.z);
     const auto cam_rot = m_camera->rotation();
