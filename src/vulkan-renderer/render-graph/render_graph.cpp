@@ -171,20 +171,8 @@ void RenderGraph::invalidate_graphics_pass_secondary_cmd_buffers() {
 }
 
 void RenderGraph::invalidate_graphics_passes_using_texture(const Texture &texture) {
-    // @TODO We could do this at compile time and store a map of texture to graphics passes
-    // which use it, but this is a premature optimization for now
-    for (const auto &pass : m_graphics_passes) {
-        bool uses_texture = false;
-        for (const auto &write_attachment : pass->m_texture_writes) {
-            const auto attachment = write_attachment.first.lock();
-            if (attachment && attachment.get() == &texture) {
-                uses_texture = true;
-                break;
-            }
-        }
-        if (uses_texture) {
-            pass->m_rendering_info_dirty = true;
-        }
+    for (auto *pass : texture.m_graphics_passes_using_texture) {
+        pass->m_rendering_info_dirty = true;
     }
 }
 
@@ -206,8 +194,27 @@ void RenderGraph::compile() {
     check_for_cycles();
     sort_graphics_passes_by_order();
     synchronize_frame_context();
+    build_texture_graphics_pass_dependencies();
     create_graphics_pipelines();
     invalidate_graphics_pass_secondary_cmd_buffers();
+}
+
+void RenderGraph::build_texture_graphics_pass_dependencies() {
+    // Clear all previous graphics pass dependencies for all textures
+    for (const auto &texture : m_textures) {
+        texture->m_graphics_passes_using_texture.clear();
+    }
+    // Build new graphics pass dependencies for all textures
+    for (const auto &pass : m_graphics_passes) {
+        for (const auto &write_attachment : pass->m_texture_writes) {
+            const auto attachment = write_attachment.first.lock();
+            if (attachment) {
+                // At runtime, we can simply look up the graphics passes that write to a texture and then find the
+                // graphics passes that read from that texture
+                attachment->m_graphics_passes_using_texture.insert(pass.get());
+            }
+        }
+    }
 }
 
 void RenderGraph::rebuild_graphics_pass_texture_rendering_info(GraphicsPass &pass) {
