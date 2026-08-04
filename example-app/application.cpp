@@ -14,6 +14,7 @@
 #include "inexor/vulkan-renderer/tools/random.hpp"
 #include "inexor/vulkan-renderer/tools/representation.hpp"
 #include "inexor/vulkan-renderer/wrapper/core/instance.hpp"
+#include "inexor/vulkan-renderer/wrapper/queries/query_pool.hpp"
 #include "inexor/vulkan-renderer/wrapper/windows/surface.hpp"
 #include "inexor/vulkan-renderer/wrapper/windows/window.hpp"
 
@@ -421,8 +422,6 @@ void ExampleApp::recreate_swapchain() {
     m_swapchain->setup_swapchain(
         VkExtent2D{static_cast<std::uint32_t>(window_width), static_cast<std::uint32_t>(window_height)},
         m_vsync_enabled);
-
-    // @TODO Update or recreate all swapchain or image attachments!
 }
 
 void ExampleApp::setup_render_graph() {
@@ -573,7 +572,10 @@ void ExampleApp::run() {
                 m_octree_renderer->set_vertices_and_indices(m_octree_vertices, m_octree_indices);
             }
             if (m_input->kbm_data().was_key_pressed_once(GLFW_KEY_V)) {
-                m_device->log_vma_statistics("Manual VMA statistics");
+                m_device->log_vma_statistics();
+            }
+            if (m_input->kbm_data().was_key_pressed_once(GLFW_KEY_P)) {
+                m_render_graph->log_gpu_frame_time();
             }
             check_octree_collisions();
         }

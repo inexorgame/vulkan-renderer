@@ -281,6 +281,12 @@ VkPresentInfoKHR make_info(VkPresentInfoKHR info) {
 }
 
 template <>
+VkQueryPoolCreateInfo make_info(VkQueryPoolCreateInfo info) {
+    info.sType = VK_STRUCTURE_TYPE_QUERY_POOL_CREATE_INFO;
+    return info;
+}
+
+template <>
 VkRenderingAttachmentInfo make_info(VkRenderingAttachmentInfo info) {
     info.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
     return info;

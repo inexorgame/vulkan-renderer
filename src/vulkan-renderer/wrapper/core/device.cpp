@@ -483,23 +483,22 @@ void Device::wait_idle(const VkQueue queue) const {
     }
 }
 
-void Device::log_vma_statistics(const char *context) const {
+void Device::log_vma_statistics() const {
     VmaTotalStatistics total_statistics{};
     vmaCalculateStatistics(m_allocator, &total_statistics);
 
-    const auto log_statistics = [context](const char *label, const VmaStatistics &statistics) {
-        spdlog::info("[{}] {}: blockCount={}, allocationCount={}, blockBytes={}, allocationBytes={}", context, label,
+    const auto log_statistics = [](const char *label, const VmaStatistics &statistics) {
+        spdlog::info("{}: blockCount={}, allocationCount={}, blockBytes={}, allocationBytes={}", label,
                      statistics.blockCount, statistics.allocationCount, statistics.blockBytes,
                      statistics.allocationBytes);
     };
 
-    const auto log_detailed_statistics = [&log_statistics, context](const char *label,
-                                                                    const VmaDetailedStatistics &statistics) {
+    const auto log_detailed_statistics = [&log_statistics](const char *label, const VmaDetailedStatistics &statistics) {
         log_statistics(label, statistics.statistics);
-        spdlog::info("[{}] {}: unusedRangeCount={}, allocationSizeMin={}, allocationSizeMax={}, "
+        spdlog::info("{}: unusedRangeCount={}, allocationSizeMin={}, allocationSizeMax={}, "
                      "unusedRangeSizeMin={}, unusedRangeSizeMax={}",
-                     context, label, statistics.unusedRangeCount, statistics.allocationSizeMin,
-                     statistics.allocationSizeMax, statistics.unusedRangeSizeMin, statistics.unusedRangeSizeMax);
+                     label, statistics.unusedRangeCount, statistics.allocationSizeMin, statistics.allocationSizeMax,
+                     statistics.unusedRangeSizeMin, statistics.unusedRangeSizeMax);
     };
 
     log_detailed_statistics("VmaDetailedStatistics", total_statistics.total);
