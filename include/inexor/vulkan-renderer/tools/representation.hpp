@@ -13,47 +13,6 @@ namespace inexor::vulkan_renderer::tools {
 template <typename T>
 [[nodiscard]] std::string_view as_string(T);
 
-/// Convert a Vulkan sample count into a textual representation.
-[[nodiscard]] constexpr std::string_view as_string(const VkSampleCountFlagBits sample_count) noexcept {
-    switch (sample_count) {
-    case VK_SAMPLE_COUNT_2_BIT:
-        return "2xMSAA";
-    case VK_SAMPLE_COUNT_4_BIT:
-        return "4xMSAA";
-    case VK_SAMPLE_COUNT_8_BIT:
-        return "8xMSAA";
-    case VK_SAMPLE_COUNT_16_BIT:
-        return "16xMSAA";
-    case VK_SAMPLE_COUNT_1_BIT:
-    default:
-        return "No MSAA";
-    }
-}
-
-/// Convert a Vulkan shader stage into a textual representation.
-[[nodiscard]] constexpr std::string_view as_string(const VkShaderStageFlagBits shader_stage) noexcept {
-    switch (shader_stage) {
-    case VK_SHADER_STAGE_VERTEX_BIT:
-        return "VK_SHADER_STAGE_VERTEX_BIT";
-    case VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT:
-        return "VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT";
-    case VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT:
-        return "VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT";
-    case VK_SHADER_STAGE_GEOMETRY_BIT:
-        return "VK_SHADER_STAGE_GEOMETRY_BIT";
-    case VK_SHADER_STAGE_FRAGMENT_BIT:
-        return "VK_SHADER_STAGE_FRAGMENT_BIT";
-    case VK_SHADER_STAGE_COMPUTE_BIT:
-        return "VK_SHADER_STAGE_COMPUTE_BIT";
-    case VK_SHADER_STAGE_TASK_BIT_NV:
-        return "VK_SHADER_STAGE_TASK_BIT_NV";
-    case VK_SHADER_STAGE_MESH_BIT_NV:
-        return "VK_SHADER_STAGE_MESH_BIT_NV";
-    default:
-        return "Unknown VkShaderStageFlagBits";
-    }
-}
-
 /// Get a feature description of a ``VkBool32`` value in the ``VkPhysicalDeviceFeatures`` struct by index.
 /// @param index The index of the ``VkBool32`` value in the ``VkPhysicalDeviceFeatures`` struct.
 /// @note If the index is out of bounds, no exception will be thrown, but an empty description will be returned instead.
