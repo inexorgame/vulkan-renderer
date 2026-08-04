@@ -36,8 +36,6 @@ namespace inexor::example_app {
 // Using declarations
 using namespace inexor::vulkan_renderer;
 
-namespace {} // namespace
-
 void ExampleApp::load_toml_configuration_file(const std::string &file_name) {
     spdlog::trace("Loading TOML configuration file: {}", file_name);
 
