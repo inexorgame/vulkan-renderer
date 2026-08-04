@@ -2,6 +2,7 @@
 
 #include "inexor/vulkan-renderer/tools/enumerate.hpp"
 #include "inexor/vulkan-renderer/tools/exception.hpp"
+#include "inexor/vulkan-renderer/tools/make_info.hpp"
 #include "inexor/vulkan-renderer/tools/representation.hpp"
 #include "inexor/vulkan-renderer/wrapper/core/instance.hpp"
 
@@ -12,18 +13,15 @@
 namespace inexor::vulkan_renderer::tools {
 
 DeviceInfo build_device_info(const VkPhysicalDevice physical_device, const VkSurfaceKHR surface) {
-    VkPhysicalDeviceProperties2 properties2{};
-    properties2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2;
+    auto properties2 = tools::make_info<VkPhysicalDeviceProperties2>({});
     vkGetPhysicalDeviceProperties2(physical_device, &properties2);
     const auto &properties = properties2.properties;
 
-    VkPhysicalDeviceMemoryProperties2 memory_properties2{};
-    memory_properties2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MEMORY_PROPERTIES_2;
+    auto memory_properties2 = tools::make_info<VkPhysicalDeviceMemoryProperties2>({});
     vkGetPhysicalDeviceMemoryProperties2(physical_device, &memory_properties2);
     const auto &memory_properties = memory_properties2.memoryProperties;
 
-    VkPhysicalDeviceFeatures2 features2{};
-    features2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
+    auto features2 = tools::make_info<VkPhysicalDeviceFeatures2>({});
     vkGetPhysicalDeviceFeatures2(physical_device, &features2);
     const auto &features = features2.features;
 
@@ -102,8 +100,7 @@ std::string get_physical_device_name(const VkPhysicalDevice physical_device) {
     if (!physical_device) {
         throw InexorException("Error: Parameter 'physical_device' is invalid!");
     }
-    VkPhysicalDeviceProperties2 properties2{};
-    properties2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2;
+    auto properties2 = tools::make_info<VkPhysicalDeviceProperties2>();
     vkGetPhysicalDeviceProperties2(physical_device, &properties2);
     return properties2.properties.deviceName;
 }

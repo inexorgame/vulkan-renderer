@@ -197,7 +197,7 @@ void Swapchain::setup_swapchain(const VkExtent2D requested_extent, const bool vs
     const auto available_present_modes = tools::get_surface_present_modes(m_device.physical_device(), m_surface);
     const VkSwapchainKHR old_swapchain = m_swapchain;
 
-    VkFormatProperties2 format_props{.sType = VK_STRUCTURE_TYPE_FORMAT_PROPERTIES_2};
+    auto format_props = tools::make_info<VkFormatProperties2>();
     vkGetPhysicalDeviceFormatProperties2(m_device.physical_device(), m_surface_format.format, &format_props);
 
     const auto swapchain_ci = make_info<VkSwapchainCreateInfoKHR>({

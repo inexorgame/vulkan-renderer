@@ -233,8 +233,7 @@ const CommandBuffer &CommandBuffer::change_image_layout(const VkImage image, con
         throw std::invalid_argument("Error: old_layout and new_layout must differ!");
     }
 
-    auto barrier = VkImageMemoryBarrier2{
-        .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2,
+    auto barrier = make_info<VkImageMemoryBarrier2>({
         .srcStageMask = static_cast<VkPipelineStageFlags2>(src_mask),
         .dstStageMask = static_cast<VkPipelineStageFlags2>(dst_mask),
         .oldLayout = old_layout,
@@ -243,7 +242,7 @@ const CommandBuffer &CommandBuffer::change_image_layout(const VkImage image, con
         .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
         .image = image,
         .subresourceRange = subres_range,
-    };
+    });
 
     switch (old_layout) {
     case VK_IMAGE_LAYOUT_UNDEFINED:
@@ -484,36 +483,33 @@ const CommandBuffer &CommandBuffer::pipeline_memory_barrier(const VkMemoryBarrie
 }
 
 const CommandBuffer &CommandBuffer::barrier_transfer_write_to_shader_read() const {
-    return pipeline_memory_barrier({
-        .sType = VK_STRUCTURE_TYPE_MEMORY_BARRIER_2,
+    return pipeline_memory_barrier(tools::make_info<VkMemoryBarrier2>({
         .srcStageMask = VK_PIPELINE_STAGE_2_TRANSFER_BIT,
         .srcAccessMask = VK_ACCESS_2_TRANSFER_WRITE_BIT,
         .dstStageMask = VK_PIPELINE_STAGE_2_VERTEX_SHADER_BIT | VK_PIPELINE_STAGE_2_FRAGMENT_SHADER_BIT |
                         VK_PIPELINE_STAGE_2_COMPUTE_SHADER_BIT,
         .dstAccessMask = VK_ACCESS_2_SHADER_READ_BIT,
-    });
+    }));
 }
 
 const CommandBuffer &CommandBuffer::barrier_color_attachment_write_to_shader_read() const {
-    return pipeline_memory_barrier({
-        .sType = VK_STRUCTURE_TYPE_MEMORY_BARRIER_2,
+    return pipeline_memory_barrier(tools::make_info<VkMemoryBarrier2>({
         .srcStageMask = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT,
         .srcAccessMask = VK_ACCESS_2_COLOR_ATTACHMENT_WRITE_BIT,
         .dstStageMask = VK_PIPELINE_STAGE_2_VERTEX_SHADER_BIT | VK_PIPELINE_STAGE_2_FRAGMENT_SHADER_BIT |
                         VK_PIPELINE_STAGE_2_COMPUTE_SHADER_BIT,
         .dstAccessMask = VK_ACCESS_2_SHADER_READ_BIT,
-    });
+    }));
 }
 
 const CommandBuffer &CommandBuffer::barrier_depth_stencil_write_to_shader_read() const {
-    return pipeline_memory_barrier({
-        .sType = VK_STRUCTURE_TYPE_MEMORY_BARRIER_2,
+    return pipeline_memory_barrier(tools::make_info<VkMemoryBarrier2>({
         .srcStageMask = VK_PIPELINE_STAGE_2_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_2_LATE_FRAGMENT_TESTS_BIT,
         .srcAccessMask = VK_ACCESS_2_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
         .dstStageMask = VK_PIPELINE_STAGE_2_VERTEX_SHADER_BIT | VK_PIPELINE_STAGE_2_FRAGMENT_SHADER_BIT |
                         VK_PIPELINE_STAGE_2_COMPUTE_SHADER_BIT,
         .dstAccessMask = VK_ACCESS_2_SHADER_READ_BIT,
-    });
+    }));
 }
 
 const CommandBuffer &CommandBuffer::blit_image(VkImage src_image, VkImageLayout src_layout, VkImage dst_image,
@@ -564,21 +560,18 @@ const CommandBuffer &CommandBuffer::set_viewport(const VkViewport viewport) cons
 void CommandBuffer::submit(const VkQueueFlagBits queue_type,
                            const std::span<const VkSemaphoreSubmitInfo> wait_semaphore_infos,
                            const std::span<const VkSemaphoreSubmitInfo> signal_semaphore_infos) const {
-    const auto command_buffer_info = VkCommandBufferSubmitInfo{
-        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_SUBMIT_INFO,
+    const auto command_buffer_info = tools::make_info<VkCommandBufferSubmitInfo>({
         .commandBuffer = m_cmd_buf,
         .deviceMask = 0,
-    };
-
-    const auto submit_info = VkSubmitInfo2{
-        .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO_2,
+    });
+    const auto submit_info = tools::make_info<VkSubmitInfo2>({
         .waitSemaphoreInfoCount = static_cast<std::uint32_t>(wait_semaphore_infos.size()),
         .pWaitSemaphoreInfos = wait_semaphore_infos.empty() ? nullptr : wait_semaphore_infos.data(),
         .commandBufferInfoCount = 1,
         .pCommandBufferInfos = &command_buffer_info,
         .signalSemaphoreInfoCount = static_cast<std::uint32_t>(signal_semaphore_infos.size()),
         .pSignalSemaphoreInfos = signal_semaphore_infos.empty() ? nullptr : signal_semaphore_infos.data(),
-    };
+    });
 
     auto get_queue = [&]() {
         switch (queue_type) {
@@ -621,11 +614,10 @@ void CommandBuffer::submit(const VkQueueFlagBits queue_type,
 
     m_signal_submit_infos_scratch.resize(signal_semaphores.size());
     for (std::size_t index = 0; index < signal_semaphores.size(); ++index) {
-        m_signal_submit_infos_scratch[index] = VkSemaphoreSubmitInfo{
-            .sType = VK_STRUCTURE_TYPE_SEMAPHORE_SUBMIT_INFO,
+        m_signal_submit_infos_scratch[index] = tools::make_info<VkSemaphoreSubmitInfo>({
             .semaphore = signal_semaphores[index],
             .stageMask = stage_mask,
-        };
+        });
     }
 
     submit(queue_type, wait_semaphore_infos, m_signal_submit_infos_scratch);
@@ -648,11 +640,10 @@ void CommandBuffer::submit(const VkQueueFlagBits queue_type, const std::span<con
 
     m_wait_submit_infos_scratch.resize(wait_semaphores.size());
     for (std::size_t index = 0; index < wait_semaphores.size(); ++index) {
-        m_wait_submit_infos_scratch[index] = VkSemaphoreSubmitInfo{
-            .sType = VK_STRUCTURE_TYPE_SEMAPHORE_SUBMIT_INFO,
+        m_wait_submit_infos_scratch[index] = tools::make_info<VkSemaphoreSubmitInfo>({
             .semaphore = wait_semaphores[index],
             .stageMask = default_wait_stage_mask,
-        };
+        });
     }
 
     submit(queue_type, m_wait_submit_infos_scratch, signal_semaphore_infos);
@@ -675,13 +666,11 @@ void CommandBuffer::submit(const VkQueueFlagBits queue_type, const std::span<con
 
     m_wait_submit_infos_scratch.resize(wait_semaphores.size());
     for (std::size_t index = 0; index < wait_semaphores.size(); ++index) {
-        m_wait_submit_infos_scratch[index] = VkSemaphoreSubmitInfo{
-            .sType = VK_STRUCTURE_TYPE_SEMAPHORE_SUBMIT_INFO,
+        m_wait_submit_infos_scratch[index] = tools::make_info<VkSemaphoreSubmitInfo>({
             .semaphore = wait_semaphores[index],
             .stageMask = default_wait_stage_mask,
-        };
+        });
     }
-
     submit(queue_type, m_wait_submit_infos_scratch, signal_semaphores);
 }
 
@@ -691,13 +680,11 @@ void CommandBuffer::submit(const VkQueueFlagBits queue_type,
     m_wait_submit_infos_scratch.resize(wait_semaphores.size());
     for (std::size_t index = 0; index < wait_semaphores.size(); ++index) {
         const auto &wait_semaphore = wait_semaphores[index];
-        m_wait_submit_infos_scratch[index] = VkSemaphoreSubmitInfo{
-            .sType = VK_STRUCTURE_TYPE_SEMAPHORE_SUBMIT_INFO,
+        m_wait_submit_infos_scratch[index] = tools::make_info<VkSemaphoreSubmitInfo>({
             .semaphore = wait_semaphore.semaphore,
             .stageMask = wait_semaphore.stage_mask,
-        };
+        });
     }
-
     submit(queue_type, m_wait_submit_infos_scratch, signal_semaphores);
 }
 
@@ -707,13 +694,11 @@ void CommandBuffer::submit(const VkQueueFlagBits queue_type,
     m_wait_submit_infos_scratch.resize(wait_semaphores.size());
     for (std::size_t index = 0; index < wait_semaphores.size(); ++index) {
         const auto &wait_semaphore = wait_semaphores[index];
-        m_wait_submit_infos_scratch[index] = VkSemaphoreSubmitInfo{
-            .sType = VK_STRUCTURE_TYPE_SEMAPHORE_SUBMIT_INFO,
+        m_wait_submit_infos_scratch[index] = tools::make_info<VkSemaphoreSubmitInfo>({
             .semaphore = wait_semaphore.semaphore,
             .stageMask = wait_semaphore.stage_mask,
-        };
+        });
     }
-
     submit(queue_type, m_wait_submit_infos_scratch, signal_semaphore_infos);
 }
 
