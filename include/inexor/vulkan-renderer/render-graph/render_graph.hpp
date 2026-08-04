@@ -21,7 +21,9 @@
 #include <span>
 #include <string>
 #include <tuple>
+#include <type_traits>
 #include <unordered_map>
+#include <variant>
 #include <vector>
 
 namespace inexor::vulkan_renderer::wrapper::core {
@@ -117,11 +119,10 @@ private:
     PipelineBarrierBatchBuilder m_pending_queue_ownership_acquire_barriers;
     BufferCopyBatchBuilder m_buffer_copy_batch_builder;
     TextureCopyBatchBuilder m_texture_copy_batch_builder;
+    StagingBuffer m_staging_buffer;
     FrameSyncManager m_frame_sync_manager;
     std::size_t m_frame_slot_count{1};
     std::size_t m_current_frame_slot{0};
-
-    StagingBuffer m_staging_buffer;
 
     std::vector<PendingBufferCopy> m_scratch_pending_buffer_copies;
     std::vector<PendingTextureCopy> m_scratch_pending_texture_copies;
@@ -215,22 +216,17 @@ public:
     /// make object lifetime even more complex, which we should avoid at all cost.
     void add_graphics_pipeline(OnBuildGraphicsPipeline on_build_graphics_pipeline);
 
-    /// Add a resource descriptor to the rendergraph
-    /// @param name
-    /// @param on_build_descriptor_set_layout Builds and returns the descriptor set layout
-    /// @param on_build_write_descriptor_set Builds the write descriptor sets for one frame slot
+    /// Add a descriptor-backed render-graph resource and create the matching descriptor set layout/write updates
+    /// @param resource The buffer or texture resource to bind
+    /// @param stage The shader stage flag for the descriptor binding
+    /// @param dst_binding The destination binding for the descriptors
+    /// @return A weak pointer to the created
+    /// per-frame descriptor set wrapper
+    /// @note Buffer resources must be uniform buffers
+    /// @note Texture resources are bound as combined image samplers
     [[nodiscard]] std::weak_ptr<PerFrameDescriptorSets>
-    add_resource_descriptor(std::string name,
-                            ResourceDescriptorManager::OnBuildDescriptorSetLayout on_build_descriptor_set_layout,
-                            ResourceDescriptorManager::OnBuildWriteDescriptorSet on_build_write_descriptor_set);
-
-    /// Add a buffer resource descriptor with an inferred layout and descriptor write.
-    [[nodiscard]] std::weak_ptr<PerFrameDescriptorSets> add_resource_descriptor(std::weak_ptr<Buffer> resource,
-                                                                                VkShaderStageFlags stage);
-
-    /// Add a texture resource descriptor with an inferred layout and descriptor write.
-    [[nodiscard]] std::weak_ptr<PerFrameDescriptorSets> add_resource_descriptor(std::weak_ptr<Texture> resource,
-                                                                                VkShaderStageFlags stage);
+    add_resource_descriptor(std::variant<std::weak_ptr<Buffer>, std::weak_ptr<Texture>> resource,
+                            VkShaderStageFlags stage, std::uint32_t dst_binding = 0);
 
     /// Add a texture to the rendergraph
     /// @param name The texture name
@@ -249,7 +245,8 @@ public:
                                                      std::optional<std::function<void()>> on_update = std::nullopt);
 
     /// Compile the rendergraph
-    /// Ideally, this should only be done once at startup and all changes in the system will be reported to rendergraph.
+    /// Ideally, this should only be done once at startup and all changes in the system will be reported to
+    /// rendergraph.
     void compile();
 
     /// Since we need to pass the rendergraph to every render module anyways,

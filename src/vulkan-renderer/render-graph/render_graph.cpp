@@ -21,10 +21,9 @@
 
 namespace inexor::vulkan_renderer::render_graph {
 
-using wrapper::commands::CommandBufferBuilder;
-
 // Using declaration
 using tools::make_info;
+using wrapper::commands::CommandBufferBuilder;
 using wrapper::descriptors::DescriptorSetLayoutBuilder;
 using wrapper::descriptors::DescriptorType;
 using wrapper::descriptors::PerFrameDescriptorSets;
@@ -85,6 +84,44 @@ void RenderGraph::synchronize_frame_context() {
     }
 }
 
+std::weak_ptr<PerFrameDescriptorSets>
+RenderGraph::add_resource_descriptor(const std::variant<std::weak_ptr<Buffer>, std::weak_ptr<Texture>> resource,
+                                     const VkShaderStageFlags stage, const std::uint32_t dst_binding) {
+    invalidate_graphics_pass_secondary_cmd_buffers();
+    return std::visit(
+        [&](const auto &weak_resource) {
+            // Get the resource type (Buffer or Texture) and add it to the resource descriptors
+            using Resource = typename std::decay_t<decltype(weak_resource)>::element_type;
+            const auto shared_resource = weak_resource.lock();
+            if (!shared_resource) {
+                throw tools::InexorException("Invalid resource!");
+            }
+            // @TODO Add support for other descriptor types
+            if constexpr (std::same_as<Resource, Buffer>) {
+                if (shared_resource->type() != BufferType::UNIFORM_BUFFER) {
+                    throw tools::InexorException("Automatic buffer descriptors only support uniform buffers!");
+                }
+            }
+            // Distinguish between buffer and texture resources and add the appropriate descriptor
+            constexpr DescriptorType descriptor_type = std::same_as<Resource, Buffer>
+                                                           ? DescriptorType::UNIFORM_BUFFER
+                                                           : DescriptorType::COMBINED_IMAGE_SAMPLER;
+            const auto name = shared_resource->name();
+            // Add the resource descriptor to the resource descriptor manager
+            return m_resource_descriptors.add_resource_descriptor(
+                name,
+                [=](DescriptorSetLayoutBuilder &builder) {
+                    // Add the descriptor to the layout builder
+                    return builder.add(descriptor_type, stage).build(name);
+                },
+                [=](WriteDescriptorSetBuilder &builder, VkDescriptorSet descriptor_set) {
+                    // Add the descriptor to the write descriptor set builder
+                    return builder.add(descriptor_set, weak_resource, dst_binding).build();
+                });
+        },
+        resource);
+}
+
 std::weak_ptr<Buffer> RenderGraph::add_buffer(std::string name, const BufferType type, std::function<void()> on_update,
                                               const BufferUpdateMode update_mode) {
     // Create a shared pointer for the new buffer inside of rendergraph and return a weak pointer to external code
@@ -106,56 +143,6 @@ void RenderGraph::add_graphics_pipeline(OnBuildGraphicsPipeline on_build_graphic
     m_graphics_pipeline_create_functions.emplace_back(std::move(on_build_graphics_pipeline));
 }
 
-std::weak_ptr<PerFrameDescriptorSets> RenderGraph::add_resource_descriptor(
-    std::string name, ResourceDescriptorManager::OnBuildDescriptorSetLayout on_build_descriptor_set_layout,
-    ResourceDescriptorManager::OnBuildWriteDescriptorSet on_build_write_descriptor_set) {
-    auto resource = m_resource_descriptors.add_resource_descriptor(
-        std::move(name), std::move(on_build_descriptor_set_layout), std::move(on_build_write_descriptor_set));
-    invalidate_graphics_pass_secondary_cmd_buffers();
-    return resource;
-}
-
-std::weak_ptr<PerFrameDescriptorSets> RenderGraph::add_resource_descriptor(std::weak_ptr<Buffer> resource,
-                                                                           const VkShaderStageFlags stage) {
-    const auto resource_ref = resource.lock();
-    if (!resource_ref) {
-        throw InexorException("Error: Parameter 'resource' is invalid!");
-    }
-    if (resource_ref->type() != BufferType::UNIFORM_BUFFER) {
-        throw InexorException("Error: Automatic buffer descriptors currently only support uniform buffers!");
-    }
-    const auto descriptor_name = resource_ref->name();
-    auto build_descriptor_set_layout = [stage, descriptor_name](DescriptorSetLayoutBuilder &builder) {
-        return builder.add(DescriptorType::UNIFORM_BUFFER, stage).build(descriptor_name);
-    };
-    auto build_write_descriptor_set = [resource](WriteDescriptorSetBuilder &builder,
-                                                 const VkDescriptorSet descriptor_set) {
-        return builder.add(descriptor_set, resource, 0).build();
-    };
-    return add_resource_descriptor(resource_ref->name(), std::move(build_descriptor_set_layout),
-                                   std::move(build_write_descriptor_set));
-}
-
-std::weak_ptr<PerFrameDescriptorSets> RenderGraph::add_resource_descriptor(std::weak_ptr<Texture> resource,
-                                                                           const VkShaderStageFlags stage) {
-    const auto resource_ref = resource.lock();
-    if (!resource_ref) {
-        throw InexorException("Error: Parameter 'resource' is invalid!");
-    }
-    const auto descriptor_name = resource_ref->name();
-    auto build_descriptor_set_layout = [stage, descriptor_name](DescriptorSetLayoutBuilder &builder) {
-        return builder.add(DescriptorType::COMBINED_IMAGE_SAMPLER, stage).build(descriptor_name);
-    };
-    auto build_write_descriptor_set = [resource](WriteDescriptorSetBuilder &builder,
-                                                 const VkDescriptorSet descriptor_set) {
-        // @TODO Destination bindung must be exposed as parameter to this function,
-        // otherwise we cannot support multiple textures in a single descriptor set!
-        return builder.add(descriptor_set, resource, 0).build();
-    };
-    return add_resource_descriptor(resource_ref->name(), std::move(build_descriptor_set_layout),
-                                   std::move(build_write_descriptor_set));
-}
-
 std::weak_ptr<Texture> RenderGraph::add_texture(std::string name, const TextureUsage usage, const VkFormat format,
                                                 const std::uint32_t width, const std::uint32_t height,
                                                 const std::uint32_t channels, const VkSampleCountFlagBits sample_count,
@@ -171,6 +158,8 @@ void RenderGraph::invalidate_graphics_pass_secondary_cmd_buffers() {
 }
 
 void RenderGraph::invalidate_graphics_passes_using_texture(const Texture &texture) {
+    // Iterate through all graphics passes which use this texture and mark the
+    // rendering info as dirty so that the graphics pass will be rebuilt next frame
     for (auto *pass : texture.m_graphics_passes_using_texture) {
         pass->m_rendering_info_dirty = true;
     }
