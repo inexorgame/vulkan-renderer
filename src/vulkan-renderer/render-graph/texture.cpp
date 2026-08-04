@@ -40,6 +40,7 @@ Texture::Texture(Texture &&other) noexcept : m_device(other.m_device), m_usage(o
     m_per_frame_texture_resources = std::move(other.m_per_frame_texture_resources);
     m_frame_slot_count = other.m_frame_slot_count;
     m_current_frame_slot = other.m_current_frame_slot;
+    m_graphics_passes_using_texture = std::move(other.m_graphics_passes_using_texture);
 }
 
 Texture::~Texture() {

@@ -148,6 +148,9 @@ private:
     /// Create the graphics pipelines
     void create_graphics_pipelines();
 
+    /// Build the cached texture-to-graphics-pass dependencies used for invalidation.
+    void build_texture_graphics_pass_dependencies();
+
     /// Ensure that rendergraph is a directed acyclic graph (DAG)
     void check_for_cycles();
 
