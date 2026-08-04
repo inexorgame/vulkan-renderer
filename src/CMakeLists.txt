@@ -174,6 +174,7 @@ target_link_libraries(inexor-vulkan-renderer-core-lib PUBLIC
     glm::glm
     imgui
     spdlog::spdlog_header_only
+    spirv-reflect-static
     tinygltf
     tomlplusplus::tomlplusplus
     volk::volk
