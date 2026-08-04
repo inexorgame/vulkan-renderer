@@ -11,6 +11,7 @@
 #include "inexor/vulkan-renderer/wrapper/commands/command_buffer_cache.hpp"
 #include "inexor/vulkan-renderer/wrapper/pipelines/graphics_pipeline_builder.hpp"
 #include "inexor/vulkan-renderer/wrapper/pipelines/pipeline_cache.hpp"
+#include "inexor/vulkan-renderer/wrapper/queries/query_pool.hpp"
 #include "inexor/vulkan-renderer/wrapper/synchronization/pipeline_barrier_batch_builder.hpp"
 
 #include <functional>
@@ -101,6 +102,8 @@ private:
 
     SwapchainManager m_swapchain_manager;
     CommandBufferCache m_command_buffer_cache;
+    std::unique_ptr<wrapper::queries::QueryPool> m_query_pool;
+    float m_timestamp_period{0.0f};
     std::unique_ptr<wrapper::synchronization::Semaphore> m_upload_finished;
     bool m_upload_submission_pending{false};
     VkPipelineStageFlags2 m_upload_wait_stage_mask{VK_PIPELINE_STAGE_2_NONE};
@@ -254,6 +257,9 @@ public:
 
     /// Render a frame while dealing automatically with all frames in flight internally
     void render();
+
+    /// Log the most recently recorded GPU frame time.
+    void log_gpu_frame_time() const;
 
     /// Reset the entire rendergraph
     /// @note We avoid to name it reset() because this would be ambiguous with smart pointer methods

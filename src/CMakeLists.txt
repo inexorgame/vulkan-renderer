@@ -69,6 +69,8 @@ set(INEXOR_SOURCE_FILES
     vulkan-renderer/wrapper/pipelines/pipeline_cache.cpp
     vulkan-renderer/wrapper/pipelines/pipeline_layout.cpp
 
+    vulkan-renderer/wrapper/queries/query_pool.cpp
+
     vulkan-renderer/wrapper/shaders/shader.cpp
     vulkan-renderer/wrapper/shaders/spirv-reflect.cpp
 

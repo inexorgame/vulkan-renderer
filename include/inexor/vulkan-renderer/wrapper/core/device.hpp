@@ -343,8 +343,7 @@ public:
     void wait_idle(VkQueue queue = VK_NULL_HANDLE) const;
 
     /// Log VMA (Vulkan Memory Allocator) statistics
-    /// @param context A context string to identify where the statistics are being logged from
-    void log_vma_statistics(const char *context) const;
+    void log_vma_statistics() const;
 };
 
 } // namespace inexor::vulkan_renderer::wrapper::core

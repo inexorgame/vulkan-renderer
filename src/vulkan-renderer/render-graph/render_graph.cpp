@@ -7,6 +7,7 @@
 #include "inexor/vulkan-renderer/tools/make_info.hpp"
 #include "inexor/vulkan-renderer/wrapper/core/device.hpp"
 #include "inexor/vulkan-renderer/wrapper/descriptors/per_frame_descriptor_sets.hpp"
+#include "inexor/vulkan-renderer/wrapper/queries/query_pool.hpp"
 #include "inexor/vulkan-renderer/wrapper/synchronization/pipeline_barrier_batch_builder.hpp"
 #include "inexor/vulkan-renderer/wrapper/synchronization/semaphore.hpp"
 
@@ -17,8 +18,6 @@
 #include <functional>
 #include <stdexcept>
 #include <utility>
-
-namespace {} // namespace
 
 namespace inexor::vulkan_renderer::render_graph {
 
@@ -35,8 +34,13 @@ using wrapper::synchronization::Semaphore;
 RenderGraph::RenderGraph(Device &device, const bool use_secondary_command_buffers)
     : m_device(device), m_resource_descriptors(device), m_graphics_pipeline_builder(device),
       m_swapchain_manager(device), m_command_buffer_cache(device, use_secondary_command_buffers),
+      m_query_pool(std::make_unique<wrapper::queries::QueryPool>(device, 2)),
       m_upload_finished(std::make_unique<Semaphore>(device, "render_graph_upload_finished")),
-      m_frame_sync_manager(device), m_staging_buffer(device, "render_graph_upload_arena") {}
+      m_frame_sync_manager(device), m_staging_buffer(device, "render_graph_upload_arena") {
+    VkPhysicalDeviceProperties physical_device_properties{};
+    vkGetPhysicalDeviceProperties(m_device.physical_device(), &physical_device_properties);
+    m_timestamp_period = physical_device_properties.limits.timestampPeriod;
+}
 
 RenderGraph::~RenderGraph() {
     try {
@@ -47,7 +51,7 @@ RenderGraph::~RenderGraph() {
         }
         m_inline_update_pending_releases.clear();
         m_inline_update_commands = {};
-        m_device.log_vma_statistics("RenderGraph shutdown");
+        m_device.log_vma_statistics();
         m_graphics_passes.clear();
         m_buffers.clear();
         m_textures.clear();
@@ -616,6 +620,11 @@ void RenderGraph::render() {
     const auto render_submit_fence = m_device.execute(
         VK_QUEUE_GRAPHICS_BIT, DebugLabelColor::CYAN,
         [&](CommandBufferBuilder &builder) {
+            if (m_query_pool) {
+                builder.reset_query_pool(*m_query_pool);
+                builder.write_timestamp(*m_query_pool, 0, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT);
+            }
+
             if (m_inline_update_commands) {
                 m_inline_update_commands(builder);
             }
@@ -629,6 +638,10 @@ void RenderGraph::render() {
                 record_command_buffer_for_pass(builder.command_buffer(), *pass);
             }
             m_swapchain_manager.prepare_swapchains_for_presenting(builder);
+
+            if (m_query_pool) {
+                builder.write_timestamp(*m_query_pool, 1, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT);
+            }
         },
         render_wait_semaphores, m_swapchain_manager.rendering_finished_semaphores());
 
@@ -647,6 +660,24 @@ void RenderGraph::render() {
     m_frame_sync_manager.mark_frame_slot_submission_fence(render_submit_fence);
     m_swapchain_manager.mark_frame_swapchains_in_flight(render_submit_fence);
     m_swapchain_manager.present(m_swapchain_manager.rendering_finished_semaphores());
+}
+
+void RenderGraph::log_gpu_frame_time() const {
+    if (!m_query_pool) {
+        return;
+    }
+
+    m_device.wait_idle();
+
+    const auto results = m_query_pool->get_results();
+    if (results.size() < 2) {
+        return;
+    }
+
+    const auto elapsed_ticks = results[1] - results[0];
+    const double elapsed_ms =
+        static_cast<double>(elapsed_ticks) * static_cast<double>(m_timestamp_period) / 1'000'000.0;
+    spdlog::trace("GPU frame time: {:.3f} ms [ticks={}]", elapsed_ms, elapsed_ticks);
 }
 
 void RenderGraph::reset_graph() {
