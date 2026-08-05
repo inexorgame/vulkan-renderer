@@ -105,7 +105,7 @@ bool ResourceDescriptorManager::update_write_descriptor_sets() {
                                                     descriptor.descriptor_set_layout));
             slot_resource_dirty[descriptor_index] = true;
             any_descriptor_changes = true;
-            spdlog::trace("Descriptor set allocated [{}, slot={}]", descriptor.name, slot_index);
+            spdlog::trace("Descriptor set allocated [name={}, slot={}]", descriptor.name, slot_index);
         }
 
         if (!slot_resource_dirty[descriptor_index]) {
@@ -116,7 +116,7 @@ bool ResourceDescriptorManager::update_write_descriptor_sets() {
             std::invoke(descriptor.on_build_write_descriptor_sets, m_write_descriptor_set_builder,
                         descriptor.resource->descriptor_set(slot_index));
 
-        spdlog::trace("Descriptor writes built [{}, slot={}, writes={}]", descriptor.name, slot_index,
+        spdlog::trace("Descriptor writes built [name={}, slot={}, writes={}]", descriptor.name, slot_index,
                       write_descriptor_sets.size());
 
         std::move(write_descriptor_sets.begin(), write_descriptor_sets.end(),

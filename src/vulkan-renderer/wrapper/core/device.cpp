@@ -176,7 +176,7 @@ Device::Device(const Instance &inst, const VkSurfaceKHR surface, const VkPhysica
         return index ? std::to_string(index.value()) : std::string("NONE");
     };
 
-    spdlog::trace("Selected queue family indices: [graphics: {}, compute: {}, transfer: {}, sparse binding: {}]",
+    spdlog::trace("Selected queue family indices: [graphics={}, compute={}, transfer={}, sparse binding={}]",
                   print_queue_family_index(m_graphics_queue_family_index),
                   print_queue_family_index(m_compute_queue_family_index),
                   print_queue_family_index(m_transfer_queue_family_index),
