@@ -100,8 +100,6 @@ private:
     /// The graphics passes registered to the rendergraph
     std::vector<std::shared_ptr<GraphicsPass>> m_graphics_passes;
 
-    /// --------------------------------------------------------------------------------------------------
-
     SwapchainManager m_swapchain_manager;
     CommandBufferCache m_command_buffer_cache;
     std::unique_ptr<wrapper::queries::QueryPool> m_query_pool;
@@ -136,9 +134,8 @@ private:
     void synchronize_frame_context();
 
     void invalidate_graphics_pass_secondary_cmd_buffers();
-    void invalidate_graphics_passes_using_texture(const Texture &texture);
 
-    /// --------------------------------------------------------------------------------------------------
+    void invalidate_graphics_passes_using_texture(const Texture &texture);
 
     /// @TODO Implement!
     void sort_graphics_passes_by_order();
