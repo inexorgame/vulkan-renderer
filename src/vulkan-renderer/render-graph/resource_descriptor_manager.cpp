@@ -90,7 +90,7 @@ bool ResourceDescriptorManager::update_write_descriptor_sets() {
         }
     }
 
-    spdlog::trace("Updating descriptor sets [slot={} total={} dirty={}]", slot_index, m_resource_descriptors.size(),
+    spdlog::trace("Updating descriptor sets [slot={}, total={}, dirty={}]", slot_index, m_resource_descriptors.size(),
                   dirty_descriptor_count);
 
     bool any_descriptor_changes = false;
@@ -127,7 +127,7 @@ bool ResourceDescriptorManager::update_write_descriptor_sets() {
     }
 
     if (!m_write_descriptor_sets.empty()) {
-        spdlog::trace("Descriptor writes submitted [slot={} writes={}]", slot_index, m_write_descriptor_sets.size());
+        spdlog::trace("Descriptor writes submitted [slot={}, writes={}]", slot_index, m_write_descriptor_sets.size());
         m_device.update_descriptor_sets(m_write_descriptor_sets);
     }
 

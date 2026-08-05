@@ -26,7 +26,7 @@ CommandPool::CommandPool(const core::Device &device, const VkQueueFlagBits queue
     // Converting the thread ID to std::string is more complicated than you might think, we need a stringstream.
     std::ostringstream oss;
     oss << std::this_thread::get_id();
-    spdlog::trace("Creating command pool [thread ID: {}, type: {}]", oss.str(), tools::as_string(queue_type));
+    spdlog::trace("Creating command pool [thread={}, type={}]", oss.str(), tools::as_string(queue_type));
 
     if (const auto result = vkCreateCommandPool(m_device.device(), &cmd_pool_ci, nullptr, &m_cmd_pool);
         result != VK_SUCCESS) {
