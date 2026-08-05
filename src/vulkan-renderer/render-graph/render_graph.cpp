@@ -63,16 +63,18 @@ RenderGraph::~RenderGraph() {
 }
 
 void RenderGraph::synchronize_frame_context() {
+    // Get the frame slot count and the current frame slot index from the swapchain manager
     m_frame_slot_count = m_swapchain_manager.frame_slot_count();
     m_current_frame_slot = m_swapchain_manager.current_frame_slot();
 
+    m_staging_buffer.set_frame_context(m_frame_slot_count, m_current_frame_slot);
     m_frame_sync_manager.set_frame_context(m_frame_slot_count, m_current_frame_slot);
+    m_resource_descriptors.set_frame_context(m_frame_slot_count, m_current_frame_slot);
     m_command_buffer_cache.set_frame_context(m_frame_slot_count, m_current_frame_slot,
                                              m_frame_sync_manager.frame_slot_submission_fences());
 
-    m_resource_descriptors.set_frame_context(m_frame_slot_count, m_current_frame_slot);
     invalidate_graphics_pass_secondary_cmd_buffers();
-    m_staging_buffer.set_frame_context(m_frame_slot_count, m_current_frame_slot);
+
     m_buffer_copy_batch_builder.reset();
     m_texture_copy_batch_builder.reset();
 
@@ -168,7 +170,7 @@ void RenderGraph::invalidate_graphics_passes_using_texture(const Texture &textur
 void RenderGraph::create_graphics_pipelines() {
     m_resource_descriptors.create_descriptor_set_layouts();
     spdlog::trace("Creating {} graphics pipelines", m_graphics_pipeline_create_functions.size());
-    // @TODO Mark graphics pipeline builder as thread_local and create graphics pipelines in parallel
+    // @TODO Mark graphics pipeline builder as static thread_local and create graphics pipelines in parallel
     for (const auto &create_func : m_graphics_pipeline_create_functions) {
         std::invoke(create_func, m_graphics_pipeline_builder);
     }
@@ -424,9 +426,11 @@ void RenderGraph::refresh_graphics_pass_swapchain_rendering_info(GraphicsPass &p
             .resolveImageLayout = has_resolve ? image_layout : VK_IMAGE_LAYOUT_UNDEFINED,
             .loadOp = clear_value ? VK_ATTACHMENT_LOAD_OP_CLEAR : VK_ATTACHMENT_LOAD_OP_LOAD,
             .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
+            // @TODO Expose clear value as parameter
             .clearValue = clear_value.value_or(VkClearValue{}),
         });
     };
+
     auto &current_swapchain_states = pass.m_scratch_current_swapchain_states;
     current_swapchain_states.clear();
     current_swapchain_states.reserve(pass.m_swapchain_writes.size());
@@ -574,6 +578,7 @@ void RenderGraph::render() {
     render_wait_semaphores.clear();
     render_wait_semaphores.reserve(m_swapchain_manager.image_available_semaphores().size() +
                                    (m_upload_submission_pending ? 1u : 0u));
+
     for (const auto semaphore : m_swapchain_manager.image_available_semaphores()) {
         render_wait_semaphores.push_back({
             .semaphore = semaphore,
@@ -589,7 +594,6 @@ void RenderGraph::render() {
             .stage_mask = upload_wait_stage_mask,
         });
     }
-
     if (m_resource_descriptors.descriptor_sets_dirty()) {
         if (m_resource_descriptors.update_write_descriptor_sets()) {
             invalidate_graphics_pass_secondary_cmd_buffers();
@@ -614,8 +618,8 @@ void RenderGraph::render() {
             for (const auto &pass : m_graphics_passes) {
                 record_command_buffer_for_pass(builder.command_buffer(), *pass);
             }
-            m_swapchain_manager.prepare_swapchains_for_presenting(builder);
 
+            m_swapchain_manager.prepare_swapchains_for_presenting(builder);
             if (m_query_pool) {
                 builder.write_timestamp(*m_query_pool, 1, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT);
             }
@@ -623,6 +627,7 @@ void RenderGraph::render() {
         render_wait_semaphores, m_swapchain_manager.rendering_finished_semaphores());
 
     m_upload_submission_pending = false;
+
     if (!m_inline_update_pending_releases.empty()) {
         std::vector<VkFence> release_wait_fences = m_frame_sync_manager.frame_slot_submission_fences();
         release_wait_fences.push_back(render_submit_fence);
@@ -631,8 +636,8 @@ void RenderGraph::render() {
         }
         m_inline_update_pending_releases.clear();
     }
-    m_inline_update_commands = {};
 
+    m_inline_update_commands = {};
     m_frame_sync_manager.mark_frame_slot_submission_fence(render_submit_fence);
     m_swapchain_manager.mark_frame_swapchains_in_flight(render_submit_fence);
     m_swapchain_manager.present(m_swapchain_manager.rendering_finished_semaphores());
