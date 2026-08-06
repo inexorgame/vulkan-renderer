@@ -128,10 +128,10 @@ ImGuiRenderer::ImGuiRenderer(std::shared_ptr<RenderGraph> render_graph, std::wea
         render_graph::BufferUpdateMode::PER_FRAME_HOST_VISIBLE);
 
     // Add the ImGui graphics pipeline to rendergraph
-    render_graph->add_graphics_pipeline([&](GraphicsPipelineBuilder &builder) {
+    render_graph->add_graphics_pipeline([&](GraphicsPipelineBuilder &pipeline_builder) {
         const auto swapchain = m_swapchain.lock();
         const auto descriptor_set = m_descriptor_set.lock();
-        m_imgui_pipeline = builder
+        m_imgui_pipeline = pipeline_builder
                                .set_vertex_input_bindings({
                                    {
                                        .binding = 0,
@@ -171,8 +171,8 @@ ImGuiRenderer::ImGuiRenderer(std::shared_ptr<RenderGraph> render_graph, std::wea
     using render_graph::GraphicsPassBuilder;
 
     // Add the ImGui graphics pass to rendergraph
-    m_imgui_pass = render_graph->add_graphics_pass([&](GraphicsPassBuilder &builder) {
-        return builder.writes_to(swapchain)
+    m_imgui_pass = render_graph->add_graphics_pass([&](GraphicsPassBuilder &pass_builder) {
+        return pass_builder.writes_to(swapchain)
             .reads_from(m_vertex_buffer)
             .reads_from(m_index_buffer)
             .set_on_record([&](wrapper::commands::CommandBufferBuilder &cmd_buf) {

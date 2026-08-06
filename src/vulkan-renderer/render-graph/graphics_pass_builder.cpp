@@ -34,6 +34,18 @@ std::shared_ptr<GraphicsPass> GraphicsPassBuilder::build(std::string name, const
     return graphics_pass;
 }
 
+GraphicsPassBuilder &GraphicsPassBuilder::conditionally_reads_from(std::weak_ptr<Buffer> buffer, bool condition) {
+    // If the condition is true, we add the buffer to the list of buffer reads
+    return condition ? reads_from(buffer) : *this;
+}
+
+GraphicsPassBuilder &GraphicsPassBuilder::conditionally_writes_to(const TextureOrSwapchain write_attachment,
+                                                                  bool condition,
+                                                                  const std::optional<VkClearValue> clear_value) {
+    // If the condition is true, we add the write attachment to the list of attachments to write to
+    return condition ? writes_to(write_attachment, clear_value) : *this;
+}
+
 GraphicsPassBuilder &GraphicsPassBuilder::reads_from(std::weak_ptr<Buffer> buffer) {
     if (buffer.expired()) {
         throw InexorException("Error: Parameter 'buffer' is an invalid pointer!");
@@ -64,9 +76,8 @@ GraphicsPassBuilder &GraphicsPassBuilder::writes_to(std::weak_ptr<Buffer> buffer
     return *this;
 }
 
-GraphicsPassBuilder &
-GraphicsPassBuilder::writes_to(std::variant<std::weak_ptr<Texture>, std::weak_ptr<Swapchain>> write_attachment,
-                               std::optional<VkClearValue> clear_value) {
+GraphicsPassBuilder &GraphicsPassBuilder::writes_to(TextureOrSwapchain write_attachment,
+                                                    std::optional<VkClearValue> clear_value) {
     // Check if this is a std::weak_ptr<Texture>
     if (std::holds_alternative<std::weak_ptr<Texture>>(write_attachment)) {
         // This is a std::weak_ptr<Texture>, but we need to check if it's a valid pointer
