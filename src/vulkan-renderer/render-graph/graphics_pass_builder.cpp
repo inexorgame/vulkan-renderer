@@ -86,6 +86,12 @@ GraphicsPassBuilder &GraphicsPassBuilder::writes_to(TextureOrSwapchain write_att
         if (texture.expired()) {
             throw InexorException("Error: Parameter 'write_attachment' is an invalid pointer!");
         }
+        // If no clear value was provided, we set the default clear value for the depth buffer
+        if (!clear_value && texture.lock()->usage() == TextureUsage::DEPTH_ATTACHMENT) {
+            clear_value = VkClearValue{
+                .depthStencil = {.depth = 1.0f, .stencil = 0},
+            };
+        }
         // It's a std::weak_ptr<Texture> and the memory is valid
         m_texture_writes.emplace_back(std::move(texture), std::move(clear_value));
     } else {
