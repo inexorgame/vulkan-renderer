@@ -97,6 +97,7 @@ public:
     /// Specify that this graphics pass writes to an either a std::weak_ptr<Texture> or a std::weak_ptr<Swapchain>
     /// @param attachment The attachment (either a std::weak_ptr<Texture> or a std::weak_ptr<Swapchain>)
     /// @param clear_value The optional clear value of the attachment (``std::nullopt`` by default)
+    /// If no clear value for a depth buffer is provided, a default value will be chosen
     /// @return A const reference to the this pointer (allowing method calls to be chained)
     [[nodiscard]] GraphicsPassBuilder &writes_to(TextureOrSwapchain write_attachment,
                                                  std::optional<VkClearValue> clear_value = std::nullopt);

@@ -144,7 +144,7 @@ OctreeRenderer::OctreeRenderer(std::shared_ptr<RenderGraph> render_graph, std::w
             // Otherwise render directly to swapchain
             .writes_to(m_swapchain,
                        m_color_buffer.expired() ? std::make_optional<VkClearValue>({0.0f, 0.0f, 0.0f}) : std::nullopt)
-            .writes_to(m_depth_buffer, VkClearValue{.depthStencil = {.depth = 1.0f, .stencil = 0}})
+            .writes_to(m_depth_buffer)
             .reads_from(m_vertex_buffer)
             .writes_to(m_index_buffer)
             .reads_from(m_index_buffer)
