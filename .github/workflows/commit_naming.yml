@@ -1,14 +1,17 @@
 name: Commit Naming
 on:
+  push:
   pull_request:
     types: [opened, synchronize, reopened]
 
 jobs:
   naming:
     name: Commit Naming
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
     if: ${{ github.event_name == 'pull_request' && !github.event.pull_request.merged }}
     steps:
-      - uses: IceflowRE/gitcc@v2
+      - uses: IceflowRE/gitcc@v3
         with:
-          validator_file: .github/helper/commit_validator.mjs
+          validator: "regex"
+          options: |
+            summary: "^[A-Z0-9]\S*(?:\s\S*)+[^.!?,\s]$"

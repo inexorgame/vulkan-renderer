@@ -19,12 +19,6 @@ Commit Naming Convention
 
 The commit naming convention will be checked by our continuous integration. In order to be valid, the following rules must all be fulfilled:
 
-- The commit message must begin with a category in square brackets which describes the code part that was changed
-- The commit category must not be empty 
-- A commit category must contain at least two characters. Allowed characters are: letters ``a-z``, numbers ``0-9``, and ``-``. For example ``[gpu-texture]``
-- If two code parts are affected, separate the categories using ``|``, for example ``[gpu-texture|gpu-info]``
-- If three or more code parts are affected, use ``[*]`` as category
-- Leave one space after the commit category
 - The commit message itself must consist of the following characters: letters ``a-z``, numbers ``0-9``
 - The commit message must begin with a capital letter
 - The commit message must exist and it must not be empty
@@ -32,12 +26,12 @@ The commit naming convention will be checked by our continuous integration. In o
 
 **Examples**
 
-- ``[docs] Explain commit naming convention``
-- ``[gpu-info] Don't display empty gpu info queries as error``
-- ``[gpu-info|representation] Cleanup``
-- ``[ci] Add commit naming check``
-- ``[*] Move GPU info to vk tools``
+- ``Explain commit naming convention``
+- ``Don't display empty gpu info queries as error``
+- ``Cleanup octree vertices and indices``
+- ``Add commit naming check``
+- ``Move GPU info to vk tools``
 
 **Additional Information**
 
-The regex pattern for the commit category is ``\*|(?:[a-z0-9]{2,}[\s|-]?)+``, the pattern for the message is ``[A-Z0-9].+[^.!?,\s]``
+The Regex pattern for the message is ``^[A-Z0-9]\S*(?:\s\S*)+[^.!?,\s]$``
