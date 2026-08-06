@@ -29,8 +29,8 @@ private:
     // The descriptor pool currently in use (handled by a DescriptorPool instance)
     VkDescriptorPool m_current_pool{VK_NULL_HANDLE};
     std::uint32_t m_current_pool_set_allocations{0};
+    std::uint32_t m_max_descriptor_count;
 
-    static constexpr std::uint32_t MAX_DESCRIPTOR_SETS_PER_POOL = 4096;
     /// The descriptor pool allocator
     DescriptorPoolAllocator m_descriptor_pool_allocator;
 
@@ -38,7 +38,10 @@ public:
     /// Default constructor
     /// @note This is private because descriptor allocators are for internal use in rendergraph only!
     /// @param device The device wrapper
-    explicit DescriptorSetAllocator(const core::Device &device);
+    /// @param pool_sizes The default descriptor pool sizes to use when creating a new pool
+    /// @param max_descriptor_count The maximum number of descriptor sets that can be allocated from a single pool
+    explicit DescriptorSetAllocator(const core::Device &device, std::vector<VkDescriptorPoolSize> pool_sizes = {},
+                                    std::uint32_t max_descriptor_count = 4096);
 
     DescriptorSetAllocator(const DescriptorSetAllocator &) = delete;
     DescriptorSetAllocator(DescriptorSetAllocator &&) noexcept;

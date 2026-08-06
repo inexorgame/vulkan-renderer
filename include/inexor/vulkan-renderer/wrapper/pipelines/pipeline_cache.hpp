@@ -46,6 +46,10 @@ public:
     /// Default constructor
     /// @param cache_file_name The name of the pipeline cache file to load
     PipelineCache(const Device &device);
+    PipelineCache(const PipelineCache &) = delete;
+    PipelineCache(PipelineCache &&) = delete;
+    PipelineCache &operator=(const PipelineCache &) = delete;
+    PipelineCache &operator=(PipelineCache &&) = delete;
 
     /// Write the Vulkan pipeline cache to file and destroy it with vkDestroyPipelineCache
     ~PipelineCache();

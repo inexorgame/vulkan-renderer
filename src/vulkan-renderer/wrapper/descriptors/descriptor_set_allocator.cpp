@@ -13,8 +13,10 @@ namespace inexor::vulkan_renderer::wrapper::descriptors {
 using tools::InexorException;
 using tools::VulkanException;
 
-DescriptorSetAllocator::DescriptorSetAllocator(const core::Device &device)
-    : m_device(device), m_descriptor_pool_allocator(device) {
+DescriptorSetAllocator::DescriptorSetAllocator(const core::Device &device, std::vector<VkDescriptorPoolSize> pool_sizes,
+                                               std::uint32_t max_descriptor_count)
+    : m_device(device), m_max_descriptor_count(max_descriptor_count),
+      m_descriptor_pool_allocator(device, std::move(pool_sizes), max_descriptor_count) {
     m_current_pool = m_descriptor_pool_allocator.request_new_descriptor_pool();
     if (m_current_pool == VK_NULL_HANDLE) {
         throw InexorException("Error: Failed to create descriptor pool!");
@@ -23,7 +25,8 @@ DescriptorSetAllocator::DescriptorSetAllocator(const core::Device &device)
 }
 
 DescriptorSetAllocator::DescriptorSetAllocator(DescriptorSetAllocator &&other) noexcept
-    : m_device(other.m_device), m_descriptor_pool_allocator(std::move(other.m_descriptor_pool_allocator)) {
+    : m_device(other.m_device), m_max_descriptor_count(other.m_max_descriptor_count),
+      m_descriptor_pool_allocator(std::move(other.m_descriptor_pool_allocator)) {
     m_current_pool = std::exchange(other.m_current_pool, VK_NULL_HANDLE);
 }
 
@@ -33,7 +36,7 @@ VkDescriptorSet DescriptorSetAllocator::allocate(const std::string &name,
         throw InexorException("Error: Parameter 'descriptor_set_layout' is invalid!");
     }
 
-    if (m_current_pool_set_allocations >= MAX_DESCRIPTOR_SETS_PER_POOL) {
+    if (m_current_pool_set_allocations >= m_max_descriptor_count) {
         m_current_pool = m_descriptor_pool_allocator.request_new_descriptor_pool();
         m_current_pool_set_allocations = 0;
     }

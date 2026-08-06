@@ -435,7 +435,29 @@ void Cube::set_type(const Type new_type) {
     }
     m_polygon_cache_valid = false;
     m_type = new_type;
-    // TODO: clean up if whole octant is empty, etc.
+    // If the cube is now EMPTY or SOLID, notify the parent to evaluate if it can be simplified.
+    if ((m_type == Type::EMPTY || m_type == Type::SOLID) && !is_root()) {
+        if (auto parent = m_parent.lock()) {
+            parent->simplify();
+        }
+    }
+}
+
+void Cube::simplify() {
+    if (m_type != Type::OCTANT) {
+        return;
+    }
+    const Type first_child_type = m_children[0]->type();
+    if (first_child_type != Type::EMPTY && first_child_type != Type::SOLID) {
+        return;
+    }
+    for (const auto &child : m_children) {
+        if (!child || child->type() != first_child_type) {
+            return;
+        }
+    }
+    // All children are identical and collapsable (EMPTY or SOLID).
+    set_type(first_child_type);
 }
 
 Cube::Type Cube::type() const noexcept {

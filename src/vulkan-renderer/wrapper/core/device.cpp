@@ -419,10 +419,10 @@ CommandPool &Device::get_thread_command_pool(const VkQueueFlagBits queue_type) c
         return *thread_compute_cmd_pool;
     }
     case VK_QUEUE_TRANSFER_BIT: {
+        if (!has_any_transfer_queue()) {
+            return get_thread_command_pool(VK_QUEUE_GRAPHICS_BIT);
+        }
         if (thread_transfer_cmd_pool == nullptr) {
-            if (!has_any_transfer_queue()) {
-                throw std::runtime_error("Error: GPU '" + m_gpu_name + "' has no transfer queue!");
-            }
             auto cmd_pool = std::make_unique<CommandPool>(*this, queue_type, m_transfer_queue_family_index.value(),
                                                           "thread_transfer_cmd_pool");
             std::unique_lock lock(m_mutex);

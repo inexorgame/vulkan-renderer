@@ -179,6 +179,9 @@ public:
         return m_size;
     }
 
+    /// Simplify this octant if all children are of the same homogeneous type (EMPTY or SOLID).
+    void simplify();
+
     /// Get type.
     [[nodiscard]] Type type() const noexcept;
 
