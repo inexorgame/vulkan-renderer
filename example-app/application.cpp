@@ -475,7 +475,7 @@ void ExampleApp::update_imgui_overlay() {
     ImGui::NewFrame();
     ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0);
     ImGui::SetNextWindowPos(ImVec2(10, 10));
-    ImGui::SetNextWindowSize(ImVec2(330, 0));
+    ImGui::SetNextWindowSize(ImVec2(396, 0));
     using namespace vulkan_renderer::meta;
     ImGui::Begin(APP_NAME, nullptr,
                  ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);

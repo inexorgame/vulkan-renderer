@@ -89,6 +89,11 @@ void RenderGraph::synchronize_frame_context() {
 std::weak_ptr<PerFrameDescriptorSets>
 RenderGraph::add_resource_descriptor(const std::variant<std::weak_ptr<Buffer>, std::weak_ptr<Texture>> resource,
                                      const VkShaderStageFlags stage, const std::uint32_t dst_binding) {
+    // Since resource descriptors have changed, we also need to invalidate the graphics pass secondary command buffers
+    // @TODO Only invalidate the graphics pass secondary command buffers that use this resource descriptor
+    // @TODO Strictly speaking, this function can only be called before the render graph is built, otherwise we would
+    // need to rebuild the render graph (it could be called only after reset_graph() has been called)
+    // We therefore should store the rendergraph state in an enum
     invalidate_graphics_pass_secondary_cmd_buffers();
     return std::visit(
         [&](const auto &weak_resource) {
@@ -109,7 +114,8 @@ RenderGraph::add_resource_descriptor(const std::variant<std::weak_ptr<Buffer>, s
                                                            ? DescriptorType::UNIFORM_BUFFER
                                                            : DescriptorType::COMBINED_IMAGE_SAMPLER;
             const auto name = shared_resource->name();
-            // Add the resource descriptor to the resource descriptor manager
+            // @TODO Expose the underlying builder patterns so that the user can customize the descriptor set layout and
+            // write descriptor set creation, e.g. add multiple bindings, arrayed descriptors, etc.
             return m_resource_descriptors.add_resource_descriptor(
                 name,
                 [=](DescriptorSetLayoutBuilder &builder) {
