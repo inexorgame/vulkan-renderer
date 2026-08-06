@@ -32,6 +32,9 @@ using wrapper::commands::CommandBufferBuilder;
 using wrapper::core::DebugLabelColor;
 using wrapper::swapchains::Swapchain;
 
+// Using declaration
+using TextureOrSwapchain = std::variant<std::weak_ptr<Texture>, std::weak_ptr<Swapchain>>;
+
 /// A builder class for graphics passes in the rendergraph
 class GraphicsPassBuilder {
 private:
@@ -61,6 +64,20 @@ public:
     /// @return The graphics pass that was just created
     [[nodiscard]] std::shared_ptr<GraphicsPass> build(std::string name, DebugLabelColor color);
 
+    /// Conditionally reads from a buffer
+    /// @param read_buffer The buffer which is read by this graphics pass
+    /// @param condition The condition that must be true for the read to happen
+    /// @return A const reference to the this pointer (allowing method calls to be chained)
+    [[nodiscard]] GraphicsPassBuilder &conditionally_reads_from(std::weak_ptr<Buffer> buffer, bool condition);
+
+    /// Conditionally writes to a texture or swapchain
+    /// @param write_attachment The texture or swapchain to which this graphics pass writes to
+    /// @param condition The condition that must be true for the write to happen
+    /// @param clear_value The clear value to use for this attachment (if any)
+    /// @return A const reference to the this pointer (allowing method calls to be chained)
+    [[nodiscard]] GraphicsPassBuilder &conditionally_writes_to(TextureOrSwapchain write_attachment, bool condition,
+                                                               std::optional<VkClearValue> clear_value = std::nullopt);
+
     /// Specify that this graphics pass reads from a buffer
     /// @param buffer The buffer which is read by this graphics pass
     /// @return A const reference to the this pointer (allowing method calls to be chained)
@@ -80,10 +97,10 @@ public:
     /// Specify that this graphics pass writes to an either a std::weak_ptr<Texture> or a std::weak_ptr<Swapchain>
     /// @param attachment The attachment (either a std::weak_ptr<Texture> or a std::weak_ptr<Swapchain>)
     /// @param clear_value The optional clear value of the attachment (``std::nullopt`` by default)
+    /// If no clear value for a depth buffer is provided, a default value will be chosen
     /// @return A const reference to the this pointer (allowing method calls to be chained)
-    [[nodiscard]] GraphicsPassBuilder &
-    writes_to(std::variant<std::weak_ptr<Texture>, std::weak_ptr<Swapchain>> write_attachment,
-              std::optional<VkClearValue> clear_value = std::nullopt);
+    [[nodiscard]] GraphicsPassBuilder &writes_to(TextureOrSwapchain write_attachment,
+                                                 std::optional<VkClearValue> clear_value = std::nullopt);
 };
 
 } // namespace inexor::vulkan_renderer::render_graph

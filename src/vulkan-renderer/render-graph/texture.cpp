@@ -40,6 +40,7 @@ Texture::Texture(Texture &&other) noexcept : m_device(other.m_device), m_usage(o
     m_per_frame_texture_resources = std::move(other.m_per_frame_texture_resources);
     m_frame_slot_count = other.m_frame_slot_count;
     m_current_frame_slot = other.m_current_frame_slot;
+    m_graphics_passes_using_texture = std::move(other.m_graphics_passes_using_texture);
 }
 
 Texture::~Texture() {
@@ -105,27 +106,25 @@ void Texture::collect_update_copies(StagingBuffer &staging_buffer, std::size_t &
                     .imageOffset = {0, 0, 0},
                     .imageExtent = {m_width, m_height, 1},
                 },
-            .post_copy_barrier =
-                {
-                    .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2,
-                    .srcStageMask = VK_PIPELINE_STAGE_2_TRANSFER_BIT,
-                    .srcAccessMask = VK_ACCESS_2_TRANSFER_WRITE_BIT,
-                    .dstStageMask = VK_PIPELINE_STAGE_2_FRAGMENT_SHADER_BIT,
-                    .dstAccessMask = VK_ACCESS_2_SHADER_READ_BIT,
-                    .oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-                    .newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-                    .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
-                    .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
-                    .image = slot.m_image->m_img,
-                    .subresourceRange =
-                        {
-                            .aspectMask = aspect_mask,
-                            .baseMipLevel = 0,
-                            .levelCount = 1,
-                            .baseArrayLayer = 0,
-                            .layerCount = 1,
-                        },
-                },
+            .post_copy_barrier = tools::make_info<VkImageMemoryBarrier2>({
+                .srcStageMask = VK_PIPELINE_STAGE_2_TRANSFER_BIT,
+                .srcAccessMask = VK_ACCESS_2_TRANSFER_WRITE_BIT,
+                .dstStageMask = VK_PIPELINE_STAGE_2_FRAGMENT_SHADER_BIT,
+                .dstAccessMask = VK_ACCESS_2_SHADER_READ_BIT,
+                .oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+                .newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+                .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+                .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+                .image = slot.m_image->m_img,
+                .subresourceRange =
+                    {
+                        .aspectMask = aspect_mask,
+                        .baseMipLevel = 0,
+                        .levelCount = 1,
+                        .baseArrayLayer = 0,
+                        .layerCount = 1,
+                    },
+            }),
         });
 
         slot.m_descriptor_img_info = {

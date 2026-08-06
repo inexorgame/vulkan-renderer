@@ -13,23 +13,6 @@ namespace inexor::vulkan_renderer::tools {
 template <typename T>
 [[nodiscard]] std::string_view as_string(T);
 
-/// Convert a Vulkan sample count into a textual representation.
-[[nodiscard]] constexpr std::string_view as_string(const VkSampleCountFlagBits sample_count) noexcept {
-    switch (sample_count) {
-    case VK_SAMPLE_COUNT_2_BIT:
-        return "2xMSAA";
-    case VK_SAMPLE_COUNT_4_BIT:
-        return "4xMSAA";
-    case VK_SAMPLE_COUNT_8_BIT:
-        return "8xMSAA";
-    case VK_SAMPLE_COUNT_16_BIT:
-        return "16xMSAA";
-    case VK_SAMPLE_COUNT_1_BIT:
-    default:
-        return "No MSAA";
-    }
-}
-
 /// Get a feature description of a ``VkBool32`` value in the ``VkPhysicalDeviceFeatures`` struct by index.
 /// @param index The index of the ``VkBool32`` value in the ``VkPhysicalDeviceFeatures`` struct.
 /// @note If the index is out of bounds, no exception will be thrown, but an empty description will be returned instead.

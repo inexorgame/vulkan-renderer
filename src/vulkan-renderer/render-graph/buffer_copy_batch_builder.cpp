@@ -105,7 +105,6 @@ void BufferCopyBatchBuilder::flush(
         if (batch.regions.empty()) {
             continue;
         }
-
         cmd_buf.copy_buffer(key.src_buffer, key.dst_buffer, batch.regions);
 
         const auto dst_stage_mask = batch.dst_stage_mask | VK_PIPELINE_STAGE_2_COPY_BIT;
@@ -114,10 +113,10 @@ void BufferCopyBatchBuilder::flush(
             continue;
         }
 
+        using tools::make_info;
         const auto barrier_size = batch.max_end - batch.min_offset;
         if (m_needs_queue_family_ownership_transfer) {
-            post_copy_barriers.add(VkBufferMemoryBarrier2{
-                .sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER_2,
+            post_copy_barriers.add(make_info<VkBufferMemoryBarrier2>({
                 .srcStageMask = VK_PIPELINE_STAGE_2_COPY_BIT,
                 .srcAccessMask = VK_ACCESS_2_TRANSFER_WRITE_BIT,
                 .dstStageMask = VK_PIPELINE_STAGE_2_NONE,
@@ -127,10 +126,8 @@ void BufferCopyBatchBuilder::flush(
                 .buffer = key.dst_buffer,
                 .offset = batch.min_offset,
                 .size = barrier_size,
-            });
-
-            queue_family_acquire_barriers.add(VkBufferMemoryBarrier2{
-                .sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER_2,
+            }));
+            queue_family_acquire_barriers.add(VkBufferMemoryBarrier2({
                 .srcStageMask = VK_PIPELINE_STAGE_2_NONE,
                 .srcAccessMask = VK_ACCESS_2_NONE,
                 .dstStageMask = dst_stage_mask,
@@ -140,10 +137,9 @@ void BufferCopyBatchBuilder::flush(
                 .buffer = key.dst_buffer,
                 .offset = batch.min_offset,
                 .size = barrier_size,
-            });
+            }));
         } else {
-            post_copy_barriers.add(VkBufferMemoryBarrier2{
-                .sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER_2,
+            post_copy_barriers.add(make_info<VkBufferMemoryBarrier2>({
                 .srcStageMask = VK_PIPELINE_STAGE_2_COPY_BIT,
                 .srcAccessMask = VK_ACCESS_2_TRANSFER_WRITE_BIT,
                 .dstStageMask = dst_stage_mask,
@@ -153,10 +149,9 @@ void BufferCopyBatchBuilder::flush(
                 .buffer = key.dst_buffer,
                 .offset = batch.min_offset,
                 .size = barrier_size,
-            });
+            }));
         }
     }
-
     reset();
 }
 

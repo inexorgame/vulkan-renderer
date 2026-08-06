@@ -4,6 +4,7 @@
 #include "inexor/vulkan-renderer/tools/make_info.hpp"
 #include "inexor/vulkan-renderer/wrapper/commands/command_buffer.hpp"
 #include "inexor/vulkan-renderer/wrapper/descriptors/per_frame_descriptor_sets.hpp"
+#include "inexor/vulkan-renderer/wrapper/queries/query_pool.hpp"
 
 #include <array>
 #include <cstddef>
@@ -57,6 +58,34 @@ public:
             .color = {color[0], color[1], color[2], color[3]},
         });
         vkCmdInsertDebugUtilsLabelEXT(command_buffer_handle(), &label);
+        return *this;
+    }
+
+    [[nodiscard]] CommandBufferBuilder &reset_query_pool(const queries::QueryPool &query_pool,
+                                                         std::uint32_t first_query = 0, std::uint32_t query_count = 0) {
+        if (query_pool.query_pool() == VK_NULL_HANDLE) {
+            throw InexorException("Error: Parameter 'query_pool' is invalid!");
+        }
+        if (first_query >= query_pool.query_count()) {
+            throw std::out_of_range("Error: Parameter 'first_query' is out of range!");
+        }
+        const auto actual_query_count = query_count == 0 ? query_pool.query_count() - first_query : query_count;
+        if (actual_query_count == 0 || first_query + actual_query_count > query_pool.query_count()) {
+            throw std::out_of_range("Error: Query range is out of range!");
+        }
+        vkCmdResetQueryPool(command_buffer_handle(), query_pool.query_pool(), first_query, actual_query_count);
+        return *this;
+    }
+
+    [[nodiscard]] CommandBufferBuilder &write_timestamp(const queries::QueryPool &query_pool, std::uint32_t query_index,
+                                                        VkPipelineStageFlagBits stage_mask) {
+        if (query_pool.query_pool() == VK_NULL_HANDLE) {
+            throw InexorException("Error: Parameter 'query_pool' is invalid!");
+        }
+        if (query_index >= query_pool.query_count()) {
+            throw std::out_of_range("Error: Parameter 'query_index' is out of range!");
+        }
+        vkCmdWriteTimestamp(command_buffer_handle(), stage_mask, query_pool.query_pool(), query_index);
         return *this;
     }
 

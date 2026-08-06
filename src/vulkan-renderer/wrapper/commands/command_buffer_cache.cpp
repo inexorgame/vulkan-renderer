@@ -31,11 +31,9 @@ void CommandBufferCache::set_frame_context(const std::size_t frame_slot_count, c
     if (m_frame_slot_submission_fences.size() != m_frame_slot_count) {
         m_frame_slot_submission_fences.resize(m_frame_slot_count, VK_NULL_HANDLE);
     }
-
     if (!frame_slot_count_changed) {
         return;
     }
-
     for (auto &[_, state] : m_secondary_command_buffers) {
         state.dirty_by_frame_slot.assign(m_frame_slot_count, true);
     }

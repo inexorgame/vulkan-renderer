@@ -13,6 +13,7 @@ namespace inexor::vulkan_renderer::render_modules::imgui {
 // Using declarations for types only used in the implementation
 using render_graph::BufferType;
 using render_graph::DebugLabelColor;
+using render_graph::GraphicsPassBuilder;
 using render_graph::GraphicsPipelineBuilder;
 using wrapper::commands::CommandBuffer;
 using wrapper::core::Device;
@@ -49,10 +50,8 @@ ImGuiRenderer::ImGuiRenderer(std::shared_ptr<RenderGraph> render_graph, std::wea
     io.FontGlobalScale = 1.0f;
 
     spdlog::trace("Loading ImGUI shaders");
-    m_vertex_shader =
-        std::make_shared<Shader>(render_graph->device(), VK_SHADER_STAGE_VERTEX_BIT, "shaders/ui.vert.spv");
-    m_fragment_shader =
-        std::make_shared<Shader>(render_graph->device(), VK_SHADER_STAGE_FRAGMENT_BIT, "shaders/ui.frag.spv");
+    m_vertex_shader = std::make_shared<Shader>(render_graph->device(), "shaders/ui.vert.spv");
+    m_fragment_shader = std::make_shared<Shader>(render_graph->device(), "shaders/ui.frag.spv");
 
     // Load font texture
 
@@ -130,10 +129,10 @@ ImGuiRenderer::ImGuiRenderer(std::shared_ptr<RenderGraph> render_graph, std::wea
         render_graph::BufferUpdateMode::PER_FRAME_HOST_VISIBLE);
 
     // Add the ImGui graphics pipeline to rendergraph
-    render_graph->add_graphics_pipeline([&](GraphicsPipelineBuilder &builder) {
+    render_graph->add_graphics_pipeline([&](GraphicsPipelineBuilder &pipeline_builder) {
         const auto swapchain = m_swapchain.lock();
         const auto descriptor_set = m_descriptor_set.lock();
-        m_imgui_pipeline = builder
+        m_imgui_pipeline = pipeline_builder
                                .set_vertex_input_bindings({
                                    {
                                        .binding = 0,
@@ -170,11 +169,9 @@ ImGuiRenderer::ImGuiRenderer(std::shared_ptr<RenderGraph> render_graph, std::wea
                                .build("ImGui");
     });
 
-    using render_graph::GraphicsPassBuilder;
-
     // Add the ImGui graphics pass to rendergraph
-    m_imgui_pass = render_graph->add_graphics_pass([&](GraphicsPassBuilder &builder) {
-        return builder.writes_to(swapchain)
+    m_imgui_pass = render_graph->add_graphics_pass([&](GraphicsPassBuilder &pass_builder) {
+        return pass_builder.writes_to(swapchain)
             .reads_from(m_vertex_buffer)
             .reads_from(m_index_buffer)
             .set_on_record([&](wrapper::commands::CommandBufferBuilder &cmd_buf) {
@@ -182,7 +179,6 @@ ImGuiRenderer::ImGuiRenderer(std::shared_ptr<RenderGraph> render_graph, std::wea
                 if (draw_data == nullptr || draw_data->TotalVtxCount == 0 || draw_data->TotalIdxCount == 0) {
                     return;
                 }
-
                 const auto vertex_buffer = m_vertex_buffer.lock();
                 const auto index_buffer = m_index_buffer.lock();
                 if (!vertex_buffer || !index_buffer || vertex_buffer->buffer() == VK_NULL_HANDLE ||
@@ -191,7 +187,6 @@ ImGuiRenderer::ImGuiRenderer(std::shared_ptr<RenderGraph> render_graph, std::wea
                     // but GPU buffers are not uploaded yet. Skip recording in that case.
                     return;
                 }
-
                 const ImGuiIO &io = ImGui::GetIO();
                 m_push_const_block.scale = glm::vec2(2.0f / io.DisplaySize.x, 2.0f / io.DisplaySize.y);
 

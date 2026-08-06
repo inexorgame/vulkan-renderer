@@ -29,6 +29,7 @@ OctreeRenderer::OctreeRenderer(std::shared_ptr<RenderGraph> render_graph, std::w
     using tools::InexorException;
     using tools::make_info;
     using wrapper::commands::CommandBuffer;
+    using wrapper::commands::CommandBufferBuilder;
     using wrapper::core::DebugLabelColor;
     using wrapper::pipelines::GraphicsPipelineBuilder;
 
@@ -45,14 +46,9 @@ OctreeRenderer::OctreeRenderer(std::shared_ptr<RenderGraph> render_graph, std::w
         throw InexorException("Error: Parameter 'camera' is invalid!");
     }
 
-    // @TODO Maybe it is a good idea to let rendergraph load shaders and to abstract shader loading in it?
-
     // Load vertex and fragment shader for octree rendering
-    // @TODO Use spirv-cross to load shaders and determine type automatically
-    m_vertex_shader =
-        std::make_shared<Shader>(render_graph->device(), VK_SHADER_STAGE_VERTEX_BIT, "shaders/main.vert.spv");
-    m_fragment_shader =
-        std::make_shared<Shader>(render_graph->device(), VK_SHADER_STAGE_FRAGMENT_BIT, "shaders/main.frag.spv");
+    m_vertex_shader = std::make_shared<Shader>(render_graph->device(), "shaders/main.vert.spv");
+    m_fragment_shader = std::make_shared<Shader>(render_graph->device(), "shaders/main.frag.spv");
 
     m_mvp_matrix = render_graph->add_buffer(
         "model/view/proj", BufferType::UNIFORM_BUFFER,
@@ -92,14 +88,13 @@ OctreeRenderer::OctreeRenderer(std::shared_ptr<RenderGraph> render_graph, std::w
     });
 
     // Add the graphics pipeline for the octree renderer
-    render_graph->add_graphics_pipeline([&](GraphicsPipelineBuilder &builder) {
+    render_graph->add_graphics_pipeline([&](GraphicsPipelineBuilder &pipeline_builder) {
         const auto pipeline_extent = m_swapchain.lock()->extent();
         const auto descriptor_set = m_descriptor_set.lock();
-
         // The octree graphics pipeline is stored in the octree renderer
         // It is being build in this lambda by reference capture
         m_octree_pipeline =
-            builder.add_shader(m_vertex_shader)
+            pipeline_builder.add_shader(m_vertex_shader)
                 .add_shader(m_fragment_shader)
                 .set_vertex_input_bindings({{
                     .binding = 0,
@@ -140,24 +135,18 @@ OctreeRenderer::OctreeRenderer(std::shared_ptr<RenderGraph> render_graph, std::w
     });
 
     // Add the graphics pass for the octree renderer
-    m_octree_pass = render_graph->add_graphics_pass([&](GraphicsPassBuilder &builder) {
-        // When MSAA is enabled, render to color buffer which will auto-resolve to swapchain
-        // Otherwise render directly to swapchain
-        if (!m_color_buffer.expired()) {
-            // MSAA path: write to MSAA color buffer
-            builder.writes_to(m_color_buffer, VkClearValue{0.0f, 0.0f, 0.0f});
-            // Keep the swapchain in the pass so render-graph can resolve into it
-            builder.writes_to(m_swapchain, std::nullopt);
-        } else {
-            // Non-MSAA path: write directly to swapchain
-            builder.writes_to(m_swapchain, VkClearValue{0.0f, 0.0f, 0.0f});
-        }
-
-        return builder.writes_to(m_depth_buffer, VkClearValue{.depthStencil = {.depth = 1.0f, .stencil = 0}})
+    m_octree_pass = render_graph->add_graphics_pass([&](GraphicsPassBuilder &pass_builder) {
+        return pass_builder
+            .conditionally_writes_to(m_color_buffer, !m_color_buffer.expired())
+            // When MSAA is enabled, render to color buffer which will auto-resolve to swapchain
+            // Otherwise render directly to swapchain
+            .writes_to(m_swapchain,
+                       m_color_buffer.expired() ? std::make_optional<VkClearValue>({0.0f, 0.0f, 0.0f}) : std::nullopt)
+            .writes_to(m_depth_buffer)
             .reads_from(m_vertex_buffer)
             .writes_to(m_index_buffer)
             .reads_from(m_index_buffer)
-            .set_on_record([&](wrapper::commands::CommandBufferBuilder &cmd_buf) {
+            .set_on_record([&](CommandBufferBuilder &cmd_buf) {
                 const auto vertex_buffer = m_vertex_buffer.lock();
                 const auto index_buffer = m_index_buffer.lock();
                 const auto swapchain = m_swapchain.lock();
@@ -189,7 +178,6 @@ void OctreeRenderer::set_vertices_and_indices(std::vector<OctreeVertex> vertices
     if (m_octree_vertices == vertices && m_octree_indices == indices) {
         return;
     }
-
     m_octree_vertices = std::move(vertices);
     m_octree_indices = std::move(indices);
     m_geometry_updated = true;

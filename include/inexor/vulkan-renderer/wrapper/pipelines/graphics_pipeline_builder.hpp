@@ -108,7 +108,7 @@ public:
         m_data.shader_stages.emplace_back(tools::make_info<VkPipelineShaderStageCreateInfo>({
             .stage = shader.lock()->shader_stage(),
             .module = shader.lock()->shader_module(),
-            .pName = shader.lock()->entry_point().c_str(),
+            .pName = "main",
         }));
         return *this;
     }

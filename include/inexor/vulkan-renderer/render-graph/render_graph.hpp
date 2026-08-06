@@ -11,6 +11,7 @@
 #include "inexor/vulkan-renderer/wrapper/commands/command_buffer_cache.hpp"
 #include "inexor/vulkan-renderer/wrapper/pipelines/graphics_pipeline_builder.hpp"
 #include "inexor/vulkan-renderer/wrapper/pipelines/pipeline_cache.hpp"
+#include "inexor/vulkan-renderer/wrapper/queries/query_pool.hpp"
 #include "inexor/vulkan-renderer/wrapper/synchronization/pipeline_barrier_batch_builder.hpp"
 
 #include <functional>
@@ -20,7 +21,9 @@
 #include <span>
 #include <string>
 #include <tuple>
+#include <type_traits>
 #include <unordered_map>
+#include <variant>
 #include <vector>
 
 namespace inexor::vulkan_renderer::wrapper::core {
@@ -97,10 +100,10 @@ private:
     /// The graphics passes registered to the rendergraph
     std::vector<std::shared_ptr<GraphicsPass>> m_graphics_passes;
 
-    /// --------------------------------------------------------------------------------------------------
-
     SwapchainManager m_swapchain_manager;
     CommandBufferCache m_command_buffer_cache;
+    std::unique_ptr<wrapper::queries::QueryPool> m_query_pool;
+    float m_timestamp_period{0.0f};
     std::unique_ptr<wrapper::synchronization::Semaphore> m_upload_finished;
     bool m_upload_submission_pending{false};
     VkPipelineStageFlags2 m_upload_wait_stage_mask{VK_PIPELINE_STAGE_2_NONE};
@@ -114,11 +117,10 @@ private:
     PipelineBarrierBatchBuilder m_pending_queue_ownership_acquire_barriers;
     BufferCopyBatchBuilder m_buffer_copy_batch_builder;
     TextureCopyBatchBuilder m_texture_copy_batch_builder;
+    StagingBuffer m_staging_buffer;
     FrameSyncManager m_frame_sync_manager;
     std::size_t m_frame_slot_count{1};
     std::size_t m_current_frame_slot{0};
-
-    StagingBuffer m_staging_buffer;
 
     std::vector<PendingBufferCopy> m_scratch_pending_buffer_copies;
     std::vector<PendingTextureCopy> m_scratch_pending_texture_copies;
@@ -131,10 +133,9 @@ private:
 
     void synchronize_frame_context();
 
-    void mark_graphics_pass_secondary_cmd_buffers_dirty();
-    void mark_graphics_passes_using_texture_dirty(const Texture &texture);
+    void invalidate_graphics_pass_secondary_cmd_buffers();
 
-    /// --------------------------------------------------------------------------------------------------
+    void invalidate_graphics_passes_using_texture(const Texture &texture);
 
     /// @TODO Implement!
     void sort_graphics_passes_by_order();
@@ -144,6 +145,9 @@ private:
 
     /// Create the graphics pipelines
     void create_graphics_pipelines();
+
+    /// Build the cached texture-to-graphics-pass dependencies used for invalidation.
+    void build_texture_graphics_pass_dependencies();
 
     /// Ensure that rendergraph is a directed acyclic graph (DAG)
     void check_for_cycles();
@@ -209,22 +213,17 @@ public:
     /// make object lifetime even more complex, which we should avoid at all cost.
     void add_graphics_pipeline(OnBuildGraphicsPipeline on_build_graphics_pipeline);
 
-    /// Add a resource descriptor to the rendergraph
-    /// @param name
-    /// @param on_build_descriptor_set_layout Builds and returns the descriptor set layout
-    /// @param on_build_write_descriptor_set Builds the write descriptor sets for one frame slot
+    /// Add a descriptor-backed render-graph resource and create the matching descriptor set layout/write updates
+    /// @param resource The buffer or texture resource to bind
+    /// @param stage The shader stage flag for the descriptor binding
+    /// @param dst_binding The destination binding for the descriptors
+    /// @return A weak pointer to the created
+    /// per-frame descriptor set wrapper
+    /// @note Buffer resources must be uniform buffers
+    /// @note Texture resources are bound as combined image samplers
     [[nodiscard]] std::weak_ptr<PerFrameDescriptorSets>
-    add_resource_descriptor(std::string name,
-                            ResourceDescriptorManager::OnBuildDescriptorSetLayout on_build_descriptor_set_layout,
-                            ResourceDescriptorManager::OnBuildWriteDescriptorSet on_build_write_descriptor_set);
-
-    /// Add a buffer resource descriptor with an inferred layout and descriptor write.
-    [[nodiscard]] std::weak_ptr<PerFrameDescriptorSets> add_resource_descriptor(std::weak_ptr<Buffer> resource,
-                                                                                VkShaderStageFlags stage);
-
-    /// Add a texture resource descriptor with an inferred layout and descriptor write.
-    [[nodiscard]] std::weak_ptr<PerFrameDescriptorSets> add_resource_descriptor(std::weak_ptr<Texture> resource,
-                                                                                VkShaderStageFlags stage);
+    add_resource_descriptor(std::variant<std::weak_ptr<Buffer>, std::weak_ptr<Texture>> resource,
+                            VkShaderStageFlags stage, std::uint32_t dst_binding = 0);
 
     /// Add a texture to the rendergraph
     /// @param name The texture name
@@ -243,7 +242,8 @@ public:
                                                      std::optional<std::function<void()>> on_update = std::nullopt);
 
     /// Compile the rendergraph
-    /// Ideally, this should only be done once at startup and all changes in the system will be reported to rendergraph.
+    /// Ideally, this should only be done once at startup and all changes in the system will be reported to
+    /// rendergraph.
     void compile();
 
     /// Since we need to pass the rendergraph to every render module anyways,
@@ -254,6 +254,9 @@ public:
 
     /// Render a frame while dealing automatically with all frames in flight internally
     void render();
+
+    /// Log the most recently recorded GPU frame time.
+    void log_gpu_frame_time() const;
 
     /// Reset the entire rendergraph
     /// @note We avoid to name it reset() because this would be ambiguous with smart pointer methods

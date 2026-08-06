@@ -69,7 +69,10 @@ set(INEXOR_SOURCE_FILES
     vulkan-renderer/wrapper/pipelines/pipeline_cache.cpp
     vulkan-renderer/wrapper/pipelines/pipeline_layout.cpp
 
+    vulkan-renderer/wrapper/queries/query_pool.cpp
+
     vulkan-renderer/wrapper/shaders/shader.cpp
+    vulkan-renderer/wrapper/shaders/spirv-reflect.cpp
 
     vulkan-renderer/wrapper/swapchains/swapchain_utils.cpp
     vulkan-renderer/wrapper/swapchains/swapchain.cpp
@@ -155,6 +158,7 @@ FetchContent_MakeAvailable(volk)
 FetchContent_MakeAvailable(vma)
 FetchContent_MakeAvailable(glfw)
 FetchContent_MakeAvailable(glm)
+FetchContent_MakeAvailable(SPIRVReflect)
 FetchContent_MakeAvailable(tinygltf)
 FetchContent_MakeAvailable(imgui)
 add_library(imgui
@@ -172,6 +176,7 @@ target_link_libraries(inexor-vulkan-renderer-core-lib PUBLIC
     glm::glm
     imgui
     spdlog::spdlog_header_only
+    spirv-reflect-static
     tinygltf
     tomlplusplus::tomlplusplus
     volk::volk
