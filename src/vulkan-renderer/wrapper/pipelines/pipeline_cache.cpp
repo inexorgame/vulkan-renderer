@@ -76,9 +76,11 @@ PipelineCache::PipelineCache(const core::Device &device) : m_device(device) {
 }
 
 PipelineCache::~PipelineCache() {
-    // @TODO Bug: The destructor is invoked twice? Why?
     save_cache_data_to_disk();
-    vkDestroyPipelineCache(m_device.device(), m_pipeline_cache, nullptr);
+    if (m_pipeline_cache != VK_NULL_HANDLE) {
+        vkDestroyPipelineCache(m_device.device(), m_pipeline_cache, nullptr);
+        m_pipeline_cache = VK_NULL_HANDLE;
+    }
 }
 
 std::vector<uint8_t> PipelineCache::read_cache_data_from_disk() {

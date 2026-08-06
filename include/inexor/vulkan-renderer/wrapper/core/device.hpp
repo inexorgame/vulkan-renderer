@@ -102,8 +102,6 @@ private:
     /// @note This method will create a command pool for the thread if it doesn't already exist.
     CommandPool &get_thread_command_pool(VkQueueFlagBits queue_type) const;
 
-    // @TODO Implement get_thread_command_pool with "transfer if available, graphics otherwise" for copy operations.
-
 public:
     /// Default constructor
     /// @param inst The Vulkan instance
