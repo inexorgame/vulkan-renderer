@@ -62,7 +62,10 @@ PipelineCache::PipelineCache(const core::Device &device) : m_device(device) {
 
     const auto pipeline_cache_data = read_cache_data_from_disk();
 
-    // TODO: Do we need to set flag VK_PIPELINE_CACHE_CREATE_EXTERNALLY_SYNCHRONIZED_BIT?
+    // Note: We do not set VK_PIPELINE_CACHE_CREATE_EXTERNALLY_SYNCHRONIZED_BIT here.
+    // Vulkan guarantees that pipeline caches are internally synchronized by the driver,
+    // which allows us to safely create pipelines concurrently across multiple threads
+    // without introducing our own lock overhead here.
     const auto pipeline_cache_ci = tools::make_info<VkPipelineCacheCreateInfo>({
         .initialDataSize = pipeline_cache_data.size(),
         .pInitialData = pipeline_cache_data.data(),
