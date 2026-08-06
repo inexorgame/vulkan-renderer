@@ -18,8 +18,6 @@ using tools::VulkanException;
 GraphicsPipeline::GraphicsPipeline(const core::Device &device, GraphicsPipelineSetupData setup_data, std::string name)
     : m_device(device), m_name(std::move(name)) {
 
-    spdlog::trace("   - Building graphics pipeline [{}]", m_name);
-
     // NOTE: It's important to fill VkGraphicsPipelineCreateInfo in the constructor of GraphicsPipeline!
     // GraphicsPipeline wrapper is responsible for keeping the memory alive which is in VkGraphicsPipelineCreateInfo!
     // If we would store GraphicsPipelineSetupData in the graphics pipeline builder, the created graphics pipeline would
