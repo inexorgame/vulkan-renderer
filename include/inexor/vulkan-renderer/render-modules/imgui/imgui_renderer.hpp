@@ -4,9 +4,12 @@
 #include <imgui.h>
 #include <volk.h>
 
+#include <cstdint>
 #include <functional>
 #include <memory>
 #include <vector>
+
+#include "inexor/vulkan-renderer/render-graph/render_module.hpp"
 
 namespace inexor::vulkan_renderer::wrapper::shaders {
 // Forward declaration
@@ -47,6 +50,7 @@ namespace inexor::vulkan_renderer::render_modules::imgui {
 using render_graph::Buffer;
 using render_graph::GraphicsPass;
 using render_graph::RenderGraph;
+using render_graph::RenderModule;
 using render_graph::Texture;
 using wrapper::descriptors::PerFrameDescriptorSets;
 using wrapper::pipelines::GraphicsPipeline;
@@ -61,6 +65,7 @@ private:
     std::weak_ptr<GraphicsPass> m_imgui_pass;
     std::weak_ptr<Texture> m_imgui_texture;
     std::shared_ptr<GraphicsPipeline> m_imgui_pipeline;
+    std::unique_ptr<RenderModule> m_imgui_module;
     std::weak_ptr<Swapchain> m_swapchain;
     std::weak_ptr<PerFrameDescriptorSets> m_descriptor_set;
 

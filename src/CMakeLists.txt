@@ -17,6 +17,7 @@ set(INEXOR_SOURCE_FILES
     vulkan-renderer/render-graph/graphics_pass_builder.cpp
     vulkan-renderer/render-graph/graphics_pass.cpp
     vulkan-renderer/render-graph/render_graph.cpp
+    vulkan-renderer/render-graph/render_module.cpp
     vulkan-renderer/render-graph/resource_descriptor_manager.cpp
     vulkan-renderer/render-graph/staging_buffer.cpp
     vulkan-renderer/render-graph/swapchain_manager.cpp

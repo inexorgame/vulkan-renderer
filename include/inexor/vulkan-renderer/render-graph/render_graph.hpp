@@ -50,13 +50,14 @@ using wrapper::commands::CommandBufferCache;
 using wrapper::core::DebugLabelColor;
 using wrapper::core::Device;
 using wrapper::descriptors::PerFrameDescriptorSets;
-using wrapper::pipelines::GraphicsPipelineBuilder;
 using wrapper::pipelines::PipelineCache;
 using wrapper::synchronization::PipelineBarrierBuilder;
 
 // @TODO How to handle optional texture update depending on texture type?
 // @TODO By implementing textures which are not updated, but only initliazed, we could save memory!
 class RenderGraph {
+    friend class RenderModule;
+
 private:
     // The device wrapper
     Device &m_device;
@@ -83,9 +84,10 @@ private:
     /// --------------------------------------------------------------------------------------------------
 
     /// The graphics pipeline builder
-    GraphicsPipelineBuilder m_graphics_pipeline_builder;
+    ::inexor::vulkan_renderer::wrapper::pipelines::GraphicsPipelineBuilder m_graphics_pipeline_builder;
     /// A using declaration for graphics pipeline create functions
-    using OnBuildGraphicsPipeline = std::function<void(GraphicsPipelineBuilder &)>;
+    using OnBuildGraphicsPipeline =
+        std::function<void(::inexor::vulkan_renderer::wrapper::pipelines::GraphicsPipelineBuilder &)>;
     /// The graphics pipeline create functions registered to the rendergraph
     std::vector<OnBuildGraphicsPipeline> m_graphics_pipeline_create_functions;
 
@@ -192,6 +194,7 @@ public:
     [[nodiscard]] std::weak_ptr<Buffer> add_buffer(std::string name, BufferType type, std::function<void()> on_update,
                                                    BufferUpdateMode update_mode = BufferUpdateMode::DEVICE_LOCAL);
 
+private:
     /// Add a graphics pass to the rendergraph
     /// @param graphics_pass The graphics pass which was created
     /// @note There is no name parameter here because the OnBuildGraphicsPass callback will use GraphicsPassBuilder to
@@ -213,6 +216,7 @@ public:
     /// make object lifetime even more complex, which we should avoid at all cost.
     void add_graphics_pipeline(OnBuildGraphicsPipeline on_build_graphics_pipeline);
 
+public:
     /// Add a descriptor-backed render-graph resource and create the matching descriptor set layout/write updates
     /// @param resource The buffer or texture resource to bind
     /// @param stage The shader stage flag for the descriptor binding

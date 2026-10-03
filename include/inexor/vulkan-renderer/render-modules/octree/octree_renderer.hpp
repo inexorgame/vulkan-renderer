@@ -6,6 +6,8 @@
 
 #include <memory>
 
+#include "inexor/vulkan-renderer/render-graph/render_module.hpp"
+
 namespace inexor::vulkan_renderer::render_graph {
 // Forward declarations
 class Buffer;
@@ -45,6 +47,7 @@ namespace inexor::vulkan_renderer::render_modules::octree {
 using render_graph::Buffer;
 using render_graph::GraphicsPass;
 using render_graph::RenderGraph;
+using render_graph::RenderModule;
 using render_graph::Texture;
 using vulkan_renderer::tools::Camera;
 using wrapper::descriptors::PerFrameDescriptorSets;
@@ -77,6 +80,8 @@ private:
 
     // The graphics pipeline for octree rendering
     std::shared_ptr<GraphicsPipeline> m_octree_pipeline;
+
+    std::unique_ptr<RenderModule> m_octree_module;
 
     // The graphics pass for octree rendering
     std::weak_ptr<GraphicsPass> m_octree_pass;
