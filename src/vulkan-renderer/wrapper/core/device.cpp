@@ -322,11 +322,11 @@ VkFence Device::execute(const VkQueueFlagBits queue_type, const DebugLabelColor 
                         const std::source_location source_location) const {
     const auto &cmd_buf = get_thread_command_pool(queue_type).request_command_buffer(source_location.function_name());
     CommandBufferBuilder builder(cmd_buf);
-    builder.begin_debug_label_region(source_location.function_name(), get_debug_label_color(dbg_label_color));
-    std::invoke(on_record, builder);
-    builder.end_debug_label_region();
-    cmd_buf.end_command_buffer();
-    cmd_buf.submit(queue_type, wait_semaphores, signal_semaphores);
+    builder.begin_debug_label_region(source_location.function_name(), get_debug_label_color(dbg_label_color))
+        .invoke(on_record)
+        .end_debug_label_region()
+        .end_command_buffer()
+        .submit(queue_type, wait_semaphores, signal_semaphores);
     return cmd_buf.submission_fence();
 }
 
@@ -337,11 +337,11 @@ VkFence Device::execute(const VkQueueFlagBits queue_type, const DebugLabelColor 
                         const std::source_location source_location) const {
     const auto &cmd_buf = get_thread_command_pool(queue_type).request_command_buffer(source_location.function_name());
     CommandBufferBuilder builder(cmd_buf);
-    builder.begin_debug_label_region(source_location.function_name(), get_debug_label_color(dbg_label_color));
-    std::invoke(on_record, builder);
-    builder.end_debug_label_region();
-    cmd_buf.end_command_buffer();
-    cmd_buf.submit(queue_type, wait_semaphores, signal_semaphore_infos);
+    builder.begin_debug_label_region(source_location.function_name(), get_debug_label_color(dbg_label_color))
+        .invoke(on_record)
+        .end_debug_label_region()
+        .end_command_buffer()
+        .submit(queue_type, wait_semaphores, signal_semaphore_infos);
     return cmd_buf.submission_fence();
 }
 
@@ -352,12 +352,11 @@ VkFence Device::execute(const VkQueueFlagBits queue_type, const DebugLabelColor 
                         const std::source_location source_location) const {
     const auto &cmd_buf = get_thread_command_pool(queue_type).request_command_buffer(source_location.function_name());
     CommandBufferBuilder builder(cmd_buf);
-    builder.begin_debug_label_region(source_location.function_name(), get_debug_label_color(dbg_label_color));
-    std::invoke(on_record, builder);
-    builder.end_debug_label_region();
-    cmd_buf.end_command_buffer();
-
-    cmd_buf.submit(queue_type, wait_semaphores, signal_semaphores);
+    builder.begin_debug_label_region(source_location.function_name(), get_debug_label_color(dbg_label_color))
+        .invoke(on_record)
+        .end_debug_label_region()
+        .end_command_buffer()
+        .submit(queue_type, wait_semaphores, signal_semaphores);
     return cmd_buf.submission_fence();
 }
 
@@ -368,12 +367,12 @@ VkFence Device::execute(const VkQueueFlagBits queue_type, const DebugLabelColor 
                         const std::source_location source_location) const {
     const auto &cmd_buf = get_thread_command_pool(queue_type).request_command_buffer(source_location.function_name());
     CommandBufferBuilder builder(cmd_buf);
-    builder.begin_debug_label_region(source_location.function_name(), get_debug_label_color(dbg_label_color));
-    std::invoke(on_record, builder);
-    builder.end_debug_label_region();
-    cmd_buf.end_command_buffer();
+    builder.begin_debug_label_region(source_location.function_name(), get_debug_label_color(dbg_label_color))
+        .invoke(on_record)
+        .end_debug_label_region()
+        .end_command_buffer()
+        .submit(queue_type, wait_semaphores, signal_semaphore_infos);
 
-    cmd_buf.submit(queue_type, wait_semaphores, signal_semaphore_infos);
     return cmd_buf.submission_fence();
 }
 

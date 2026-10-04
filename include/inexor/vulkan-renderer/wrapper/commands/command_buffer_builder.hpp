@@ -9,6 +9,7 @@
 #include <array>
 #include <cstddef>
 #include <cstdint>
+#include <functional>
 #include <span>
 #include <stdexcept>
 #include <string>
@@ -32,7 +33,73 @@ public:
         return m_command_buffer;
     }
 
-    [[nodiscard]] CommandBufferBuilder &begin_debug_label_region(const std::string &name, std::array<float, 4> color) {
+    CommandBufferBuilder &
+    begin_command_buffer(VkCommandBufferUsageFlags flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT) {
+        m_command_buffer.begin_command_buffer(flags);
+        return *this;
+    }
+
+    CommandBufferBuilder &
+    begin_secondary_command_buffer(const VkCommandBufferInheritanceInfo &inheritance_info,
+                                   VkCommandBufferUsageFlags flags = VK_COMMAND_BUFFER_USAGE_RENDER_PASS_CONTINUE_BIT) {
+        m_command_buffer.begin_secondary_command_buffer(inheritance_info, flags);
+        return *this;
+    }
+
+    CommandBufferBuilder &reset_recording() {
+        m_command_buffer.reset_recording();
+        return *this;
+    }
+
+    CommandBufferBuilder &end_recording() {
+        m_command_buffer.end_recording();
+        return *this;
+    }
+
+    CommandBufferBuilder &end_command_buffer() {
+        m_command_buffer.end_command_buffer();
+        return *this;
+    }
+
+    CommandBufferBuilder &submit(VkQueueFlagBits queue_type,
+                                 std::span<const VkSemaphoreSubmitInfo> wait_semaphore_infos,
+                                 std::span<const VkSemaphoreSubmitInfo> signal_semaphore_infos) {
+        m_command_buffer.submit(queue_type, wait_semaphore_infos, signal_semaphore_infos);
+        return *this;
+    }
+
+    CommandBufferBuilder &submit(VkQueueFlagBits queue_type,
+                                 std::span<const VkSemaphoreSubmitInfo> wait_semaphore_infos,
+                                 std::span<const VkSemaphore> signal_semaphores = {}) {
+        m_command_buffer.submit(queue_type, wait_semaphore_infos, signal_semaphores);
+        return *this;
+    }
+
+    CommandBufferBuilder &submit(VkQueueFlagBits queue_type, std::span<const VkSemaphore> wait_semaphores,
+                                 std::span<const VkSemaphoreSubmitInfo> signal_semaphore_infos) {
+        m_command_buffer.submit(queue_type, wait_semaphores, signal_semaphore_infos);
+        return *this;
+    }
+
+    CommandBufferBuilder &submit(VkQueueFlagBits queue_type, std::span<const VkSemaphore> wait_semaphores = {},
+                                 std::span<const VkSemaphore> signal_semaphores = {}) {
+        m_command_buffer.submit(queue_type, wait_semaphores, signal_semaphores);
+        return *this;
+    }
+
+    CommandBufferBuilder &submit(VkQueueFlagBits queue_type, std::span<const QueueSemaphoreWait> wait_semaphores,
+                                 std::span<const VkSemaphore> signal_semaphores = {}) {
+        m_command_buffer.submit(queue_type, wait_semaphores, signal_semaphores);
+        return *this;
+    }
+
+    CommandBufferBuilder &submit(VkQueueFlagBits queue_type, std::span<const QueueSemaphoreWait> wait_semaphores,
+                                 std::span<const VkSemaphoreSubmitInfo> signal_semaphore_infos) {
+        m_command_buffer.submit(queue_type, wait_semaphores, signal_semaphore_infos);
+        return *this;
+    }
+
+    CommandBufferBuilder &begin_debug_label_region(const std::string &name, std::array<float, 4> color) {
         if (name.empty()) {
             throw InexorException("Error: Parameter 'name' is empty!");
         }
@@ -44,12 +111,18 @@ public:
         return *this;
     }
 
-    [[nodiscard]] CommandBufferBuilder &end_debug_label_region() {
+    template <typename Callable, typename... Args>
+    CommandBufferBuilder &invoke(Callable &&callable, Args &&...args) {
+        std::invoke(std::forward<Callable>(callable), *this, std::forward<Args>(args)...);
+        return *this;
+    }
+
+    CommandBufferBuilder &end_debug_label_region() {
         vkCmdEndDebugUtilsLabelEXT(command_buffer_handle());
         return *this;
     }
 
-    [[nodiscard]] CommandBufferBuilder &insert_debug_label(const std::string &name, std::array<float, 4> color) {
+    CommandBufferBuilder &insert_debug_label(const std::string &name, std::array<float, 4> color) {
         if (name.empty()) {
             throw InexorException("Error: Parameter 'name' is an empty string!");
         }
@@ -61,8 +134,8 @@ public:
         return *this;
     }
 
-    [[nodiscard]] CommandBufferBuilder &reset_query_pool(const queries::QueryPool &query_pool,
-                                                         std::uint32_t first_query = 0, std::uint32_t query_count = 0) {
+    CommandBufferBuilder &reset_query_pool(const queries::QueryPool &query_pool, std::uint32_t first_query = 0,
+                                           std::uint32_t query_count = 0) {
         if (query_pool.query_pool() == VK_NULL_HANDLE) {
             throw InexorException("Error: Parameter 'query_pool' is invalid!");
         }
@@ -77,8 +150,8 @@ public:
         return *this;
     }
 
-    [[nodiscard]] CommandBufferBuilder &write_timestamp(const queries::QueryPool &query_pool, std::uint32_t query_index,
-                                                        VkPipelineStageFlagBits stage_mask) {
+    CommandBufferBuilder &write_timestamp(const queries::QueryPool &query_pool, std::uint32_t query_index,
+                                          VkPipelineStageFlagBits stage_mask) {
         if (query_pool.query_pool() == VK_NULL_HANDLE) {
             throw InexorException("Error: Parameter 'query_pool' is invalid!");
         }
@@ -89,8 +162,8 @@ public:
         return *this;
     }
 
-    [[nodiscard]] CommandBufferBuilder &bind_descriptor_set(VkDescriptorSet descriptor_set,
-                                                            std::weak_ptr<GraphicsPipeline> pipeline) {
+    CommandBufferBuilder &bind_descriptor_set(VkDescriptorSet descriptor_set,
+                                              std::weak_ptr<GraphicsPipeline> pipeline) {
         if (!descriptor_set) {
             throw InexorException("Error: Parameter 'descriptor_set' is invalid!");
         }
@@ -103,8 +176,7 @@ public:
         return *this;
     }
 
-    [[nodiscard]] CommandBufferBuilder &
-    bind_descriptor_set(std::weak_ptr<descriptors::PerFrameDescriptorSets> descriptor_sets) {
+    CommandBufferBuilder &bind_descriptor_set(std::weak_ptr<descriptors::PerFrameDescriptorSets> descriptor_sets) {
         const auto desc_sets = descriptor_sets.lock();
         if (!desc_sets) {
             throw InexorException("Error: Parameter 'descriptor_set' is an invalid pointer!");
@@ -124,9 +196,8 @@ public:
         return *this;
     }
 
-    [[nodiscard]] CommandBufferBuilder &
-    bind_descriptor_set(std::weak_ptr<descriptors::PerFrameDescriptorSets> descriptor_sets,
-                        std::weak_ptr<GraphicsPipeline> pipeline) {
+    CommandBufferBuilder &bind_descriptor_set(std::weak_ptr<descriptors::PerFrameDescriptorSets> descriptor_sets,
+                                              std::weak_ptr<GraphicsPipeline> pipeline) {
         const auto descriptor_sets_ref = descriptor_sets.lock();
         if (!descriptor_sets_ref) {
             throw InexorException("Error: Parameter 'descriptor_set' is an invalid pointer!");
@@ -134,10 +205,10 @@ public:
         return bind_descriptor_set(descriptor_sets_ref->current_descriptor_set(), pipeline);
     }
 
-    [[nodiscard]] CommandBufferBuilder &
-    bind_descriptor_sets(std::span<const VkDescriptorSet> desc_sets, VkPipelineLayout layout,
-                         VkPipelineBindPoint bind_point = VK_PIPELINE_BIND_POINT_GRAPHICS, std::uint32_t first_set = 0,
-                         std::span<const std::uint32_t> dyn_offsets = {}) {
+    CommandBufferBuilder &bind_descriptor_sets(std::span<const VkDescriptorSet> desc_sets, VkPipelineLayout layout,
+                                               VkPipelineBindPoint bind_point = VK_PIPELINE_BIND_POINT_GRAPHICS,
+                                               std::uint32_t first_set = 0,
+                                               std::span<const std::uint32_t> dyn_offsets = {}) {
         if (!layout) {
             throw std::invalid_argument("Error: Parameter 'layout' is invalid!");
         }
@@ -150,9 +221,8 @@ public:
         return *this;
     }
 
-    [[nodiscard]] CommandBufferBuilder &bind_index_buffer(std::weak_ptr<Buffer> buffer,
-                                                          VkIndexType index_type = VK_INDEX_TYPE_UINT32,
-                                                          VkDeviceSize offset = 0) {
+    CommandBufferBuilder &bind_index_buffer(std::weak_ptr<Buffer> buffer, VkIndexType index_type = VK_INDEX_TYPE_UINT32,
+                                            VkDeviceSize offset = 0) {
         const auto buffer_ref = buffer.lock();
         if (!buffer_ref) {
             throw InexorException("Error: Parameter 'buffer' is an invalid pointer!");
@@ -165,8 +235,8 @@ public:
         return *this;
     }
 
-    [[nodiscard]] CommandBufferBuilder &bind_index_buffer(VkBuffer buf, VkIndexType index_type = VK_INDEX_TYPE_UINT32,
-                                                          VkDeviceSize offset = 0) {
+    CommandBufferBuilder &bind_index_buffer(VkBuffer buf, VkIndexType index_type = VK_INDEX_TYPE_UINT32,
+                                            VkDeviceSize offset = 0) {
         if (!buf) {
             throw std::invalid_argument("Error: Parameter 'buf' is invalid!");
         }
@@ -174,7 +244,7 @@ public:
         return *this;
     }
 
-    [[nodiscard]] CommandBufferBuilder &bind_pipeline(std::weak_ptr<GraphicsPipeline> graphics_pipeline) {
+    CommandBufferBuilder &bind_pipeline(std::weak_ptr<GraphicsPipeline> graphics_pipeline) {
         const auto pipeline_ref = graphics_pipeline.lock();
         if (!pipeline_ref) {
             throw InexorException("Error: Parameter 'pipeline' is an invalid pointer!");
@@ -182,8 +252,8 @@ public:
         return bind_pipeline(pipeline_ref->pipeline());
     }
 
-    [[nodiscard]] CommandBufferBuilder &
-    bind_pipeline(VkPipeline pipeline, VkPipelineBindPoint bind_point = VK_PIPELINE_BIND_POINT_GRAPHICS) {
+    CommandBufferBuilder &bind_pipeline(VkPipeline pipeline,
+                                        VkPipelineBindPoint bind_point = VK_PIPELINE_BIND_POINT_GRAPHICS) {
         if (!pipeline) {
             throw std::invalid_argument("Error: Parameter 'pipeline' is invalid!");
         }
@@ -191,7 +261,7 @@ public:
         return *this;
     }
 
-    [[nodiscard]] CommandBufferBuilder &bind_vertex_buffer(const std::weak_ptr<Buffer> buffer) {
+    CommandBufferBuilder &bind_vertex_buffer(const std::weak_ptr<Buffer> buffer) {
         const auto buffer_ref = buffer.lock();
         if (!buffer_ref) {
             throw InexorException("Error: Parameter 'buffer' is an invalid pointer!");
@@ -206,9 +276,8 @@ public:
         return *this;
     }
 
-    [[nodiscard]] CommandBufferBuilder &bind_vertex_buffers(std::span<const VkBuffer> bufs,
-                                                            std::uint32_t first_binding = 0,
-                                                            std::span<const VkDeviceSize> offsets = {}) {
+    CommandBufferBuilder &bind_vertex_buffers(std::span<const VkBuffer> bufs, std::uint32_t first_binding = 0,
+                                              std::span<const VkDeviceSize> offsets = {}) {
         if (bufs.empty()) {
             throw std::invalid_argument("Error: Parameter 'bufs' is empty!");
         }
@@ -227,11 +296,10 @@ public:
         return *this;
     }
 
-    [[nodiscard]] CommandBufferBuilder &
-    change_image_layout(VkImage image, VkImageLayout old_layout, VkImageLayout new_layout,
-                        VkImageSubresourceRange subres_range,
-                        VkPipelineStageFlags src_mask = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
-                        VkPipelineStageFlags dst_mask = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT) {
+    CommandBufferBuilder &change_image_layout(VkImage image, VkImageLayout old_layout, VkImageLayout new_layout,
+                                              VkImageSubresourceRange subres_range,
+                                              VkPipelineStageFlags src_mask = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
+                                              VkPipelineStageFlags dst_mask = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT) {
         if (image == VK_NULL_HANDLE) {
             throw std::invalid_argument("Error: Parameter 'image' is an invalid pointer!");
         }
@@ -303,12 +371,12 @@ public:
         return pipeline_image_memory_barrier(barrier);
     }
 
-    [[nodiscard]] CommandBufferBuilder &
-    change_image_layout(VkImage image, VkFormat format, VkImageLayout old_layout, VkImageLayout new_layout,
-                        std::uint32_t mip_level_count = 1, std::uint32_t array_layer_count = 1,
-                        std::uint32_t base_mip_level = 0, std::uint32_t base_array_layer = 0,
-                        VkPipelineStageFlags src_mask = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
-                        VkPipelineStageFlags dst_mask = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT) {
+    CommandBufferBuilder &change_image_layout(VkImage image, VkFormat format, VkImageLayout old_layout,
+                                              VkImageLayout new_layout, std::uint32_t mip_level_count = 1,
+                                              std::uint32_t array_layer_count = 1, std::uint32_t base_mip_level = 0,
+                                              std::uint32_t base_array_layer = 0,
+                                              VkPipelineStageFlags src_mask = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
+                                              VkPipelineStageFlags dst_mask = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT) {
         auto deduce_aspect_mask = [&]() -> VkImageAspectFlags {
             switch (format) {
             case VK_FORMAT_D16_UNORM:
@@ -335,13 +403,11 @@ public:
                                    src_mask, dst_mask);
     }
 
-    [[nodiscard]] CommandBufferBuilder &copy_buffer(VkBuffer src_buf, VkBuffer dst_buf,
-                                                    const VkBufferCopy &copy_region) {
+    CommandBufferBuilder &copy_buffer(VkBuffer src_buf, VkBuffer dst_buf, const VkBufferCopy &copy_region) {
         return copy_buffer(src_buf, dst_buf, {&copy_region, 1});
     }
 
-    [[nodiscard]] CommandBufferBuilder &copy_buffer(VkBuffer src_buf, VkBuffer dst_buf,
-                                                    std::span<const VkBufferCopy> copy_regions) {
+    CommandBufferBuilder &copy_buffer(VkBuffer src_buf, VkBuffer dst_buf, std::span<const VkBufferCopy> copy_regions) {
         if (!src_buf) {
             throw std::invalid_argument("Error: Parameter 'src_buf' is invalid!");
         }
@@ -356,12 +422,12 @@ public:
         return *this;
     }
 
-    [[nodiscard]] CommandBufferBuilder &copy_buffer(VkBuffer src_buf, VkBuffer dst_buf, VkDeviceSize src_buf_size) {
+    CommandBufferBuilder &copy_buffer(VkBuffer src_buf, VkBuffer dst_buf, VkDeviceSize src_buf_size) {
         return copy_buffer(src_buf, dst_buf, {.size = src_buf_size});
     }
 
-    [[nodiscard]] CommandBufferBuilder &copy_buffer_to_image(VkBuffer src_buf, VkImage dst_img,
-                                                             std::span<const VkBufferImageCopy> copy_regions) {
+    CommandBufferBuilder &copy_buffer_to_image(VkBuffer src_buf, VkImage dst_img,
+                                               std::span<const VkBufferImageCopy> copy_regions) {
         if (!src_buf) {
             throw std::invalid_argument("Error: Parameter 'src_buf' is invalid!");
         }
@@ -376,8 +442,8 @@ public:
         return *this;
     }
 
-    [[nodiscard]] CommandBufferBuilder &copy_buffer_to_image(VkBuffer src_buf, VkImage dst_img,
-                                                             const VkBufferImageCopy &copy_region) {
+    CommandBufferBuilder &copy_buffer_to_image(VkBuffer src_buf, VkImage dst_img,
+                                               const VkBufferImageCopy &copy_region) {
         if (!src_buf) {
             throw std::invalid_argument("Error: Parameter 'src_buf' is invalid!");
         }
@@ -389,7 +455,7 @@ public:
         return *this;
     }
 
-    [[nodiscard]] CommandBufferBuilder &copy_buffer_to_image(VkBuffer buffer, VkImage img, VkExtent3D extent) {
+    CommandBufferBuilder &copy_buffer_to_image(VkBuffer buffer, VkImage img, VkExtent3D extent) {
         return copy_buffer_to_image(buffer, img,
                                     {
                                         .imageSubresource =
@@ -406,7 +472,7 @@ public:
                                     });
     }
 
-    [[nodiscard]] CommandBufferBuilder &copy_buffer_to_image(VkBuffer src_buf, std::weak_ptr<Image> img) {
+    CommandBufferBuilder &copy_buffer_to_image(VkBuffer src_buf, std::weak_ptr<Image> img) {
         const auto image = img.lock();
         if (!image) {
             throw InexorException("Error: Parameter 'img' is an invalid pointer!");
@@ -419,26 +485,25 @@ public:
                                     });
     }
 
-    [[nodiscard]] CommandBufferBuilder &draw(std::uint32_t vert_count, std::uint32_t inst_count = 1,
-                                             std::uint32_t first_vert = 0, std::uint32_t first_inst = 0) {
+    CommandBufferBuilder &draw(std::uint32_t vert_count, std::uint32_t inst_count = 1, std::uint32_t first_vert = 0,
+                               std::uint32_t first_inst = 0) {
         vkCmdDraw(command_buffer_handle(), vert_count, inst_count, first_vert, first_inst);
         return *this;
     }
 
-    [[nodiscard]] CommandBufferBuilder &draw_indexed(std::uint32_t index_count, std::uint32_t inst_count = 1,
-                                                     std::uint32_t first_index = 0, std::int32_t vert_offset = 0,
-                                                     std::uint32_t first_inst = 0) {
+    CommandBufferBuilder &draw_indexed(std::uint32_t index_count, std::uint32_t inst_count = 1,
+                                       std::uint32_t first_index = 0, std::int32_t vert_offset = 0,
+                                       std::uint32_t first_inst = 0) {
         vkCmdDrawIndexed(command_buffer_handle(), index_count, inst_count, first_index, vert_offset, first_inst);
         return *this;
     }
 
-    [[nodiscard]] CommandBufferBuilder &begin_rendering(const VkRenderingInfo &rendering_info) {
+    CommandBufferBuilder &begin_rendering(const VkRenderingInfo &rendering_info) {
         vkCmdBeginRendering(command_buffer_handle(), &rendering_info);
         return *this;
     }
 
-    [[nodiscard]] CommandBufferBuilder &
-    execute_secondary_command_buffers(std::span<const VkCommandBuffer> secondary_cmd_buffers) {
+    CommandBufferBuilder &execute_secondary_command_buffers(std::span<const VkCommandBuffer> secondary_cmd_buffers) {
         if (secondary_cmd_buffers.empty()) {
             throw std::invalid_argument("Error: Parameter 'secondary_cmd_buffers' is empty!");
         }
@@ -447,18 +512,17 @@ public:
         return *this;
     }
 
-    [[nodiscard]] CommandBufferBuilder &end_rendering() {
+    CommandBufferBuilder &end_rendering() {
         vkCmdEndRendering(command_buffer_handle());
         return *this;
     }
 
-    [[nodiscard]] CommandBufferBuilder &pipeline_barrier(const VkDependencyInfo &dependency_info) {
+    CommandBufferBuilder &pipeline_barrier(const VkDependencyInfo &dependency_info) {
         vkCmdPipelineBarrier2(command_buffer_handle(), &dependency_info);
         return *this;
     }
 
-    [[nodiscard]] CommandBufferBuilder &
-    pipeline_buffer_memory_barrier(const VkBufferMemoryBarrier2 &buffer_mem_barrier) {
+    CommandBufferBuilder &pipeline_buffer_memory_barrier(const VkBufferMemoryBarrier2 &buffer_mem_barrier) {
         const auto dependency_info = tools::make_info<VkDependencyInfo>({
             .bufferMemoryBarrierCount = 1,
             .pBufferMemoryBarriers = &buffer_mem_barrier,
@@ -466,7 +530,7 @@ public:
         return pipeline_barrier(dependency_info);
     }
 
-    [[nodiscard]] CommandBufferBuilder &pipeline_image_memory_barrier(const VkImageMemoryBarrier2 &img_barrier) {
+    CommandBufferBuilder &pipeline_image_memory_barrier(const VkImageMemoryBarrier2 &img_barrier) {
         const auto dependency_info = tools::make_info<VkDependencyInfo>({
             .imageMemoryBarrierCount = 1,
             .pImageMemoryBarriers = &img_barrier,
@@ -474,7 +538,7 @@ public:
         return pipeline_barrier(dependency_info);
     }
 
-    [[nodiscard]] CommandBufferBuilder &pipeline_memory_barrier(const VkMemoryBarrier2 &mem_barrier) {
+    CommandBufferBuilder &pipeline_memory_barrier(const VkMemoryBarrier2 &mem_barrier) {
         const auto dependency_info = tools::make_info<VkDependencyInfo>({
             .memoryBarrierCount = 1,
             .pMemoryBarriers = &mem_barrier,
@@ -482,7 +546,7 @@ public:
         return pipeline_barrier(dependency_info);
     }
 
-    [[nodiscard]] CommandBufferBuilder &barrier_transfer_write_to_shader_read() {
+    CommandBufferBuilder &barrier_transfer_write_to_shader_read() {
         return pipeline_memory_barrier({
             .sType = VK_STRUCTURE_TYPE_MEMORY_BARRIER_2,
             .srcStageMask = VK_PIPELINE_STAGE_2_TRANSFER_BIT,
@@ -493,7 +557,7 @@ public:
         });
     }
 
-    [[nodiscard]] CommandBufferBuilder &barrier_color_attachment_write_to_shader_read() {
+    CommandBufferBuilder &barrier_color_attachment_write_to_shader_read() {
         return pipeline_memory_barrier({
             .sType = VK_STRUCTURE_TYPE_MEMORY_BARRIER_2,
             .srcStageMask = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT,
@@ -504,7 +568,7 @@ public:
         });
     }
 
-    [[nodiscard]] CommandBufferBuilder &barrier_depth_stencil_write_to_shader_read() {
+    CommandBufferBuilder &barrier_depth_stencil_write_to_shader_read() {
         return pipeline_memory_barrier({
             .sType = VK_STRUCTURE_TYPE_MEMORY_BARRIER_2,
             .srcStageMask = VK_PIPELINE_STAGE_2_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_2_LATE_FRAGMENT_TESTS_BIT,
@@ -515,15 +579,15 @@ public:
         });
     }
 
-    [[nodiscard]] CommandBufferBuilder &blit_image(VkImage src_image, VkImageLayout src_layout, VkImage dst_image,
-                                                   VkImageLayout dst_layout, const VkImageBlit &blit,
-                                                   VkFilter filter = VK_FILTER_LINEAR) {
+    CommandBufferBuilder &blit_image(VkImage src_image, VkImageLayout src_layout, VkImage dst_image,
+                                     VkImageLayout dst_layout, const VkImageBlit &blit,
+                                     VkFilter filter = VK_FILTER_LINEAR) {
         vkCmdBlitImage(command_buffer_handle(), src_image, src_layout, dst_image, dst_layout, 1, &blit, filter);
         return *this;
     }
 
-    [[nodiscard]] CommandBufferBuilder &push_constants(VkPipelineLayout layout, VkShaderStageFlags stage,
-                                                       std::uint32_t size, const void *data, VkDeviceSize offset = 0) {
+    CommandBufferBuilder &push_constants(VkPipelineLayout layout, VkShaderStageFlags stage, std::uint32_t size,
+                                         const void *data, VkDeviceSize offset = 0) {
         if (!layout) {
             throw std::invalid_argument("Error: Parameter 'layout' is invalid!");
         }
@@ -538,14 +602,14 @@ public:
     }
 
     template <typename T>
-    [[nodiscard]] CommandBufferBuilder &push_constant(const VkPipelineLayout layout, const T &data,
-                                                      const VkShaderStageFlags stage, const VkDeviceSize offset = 0) {
+    CommandBufferBuilder &push_constant(const VkPipelineLayout layout, const T &data, const VkShaderStageFlags stage,
+                                        const VkDeviceSize offset = 0) {
         return push_constants(layout, stage, sizeof(data), &data, offset);
     }
 
     template <typename T>
-    [[nodiscard]] CommandBufferBuilder &push_constant(const std::weak_ptr<GraphicsPipeline> pipeline, const T &data,
-                                                      const VkShaderStageFlags stage, const VkDeviceSize offset = 0) {
+    CommandBufferBuilder &push_constant(const std::weak_ptr<GraphicsPipeline> pipeline, const T &data,
+                                        const VkShaderStageFlags stage, const VkDeviceSize offset = 0) {
         const auto pipeline_ref = pipeline.lock();
         if (!pipeline_ref) {
             throw InexorException("Error: Parameter 'pipeline' is an invalid pointer!");
@@ -553,12 +617,12 @@ public:
         return push_constants(pipeline_ref->pipeline_layout(), stage, sizeof(data), &data, offset);
     }
 
-    [[nodiscard]] CommandBufferBuilder &set_scissor(VkRect2D scissor) {
+    CommandBufferBuilder &set_scissor(VkRect2D scissor) {
         vkCmdSetScissor(command_buffer_handle(), 0, 1, &scissor);
         return *this;
     }
 
-    [[nodiscard]] CommandBufferBuilder &set_viewport(VkViewport viewport) {
+    CommandBufferBuilder &set_viewport(VkViewport viewport) {
         vkCmdSetViewport(command_buffer_handle(), 0, 1, &viewport);
         return *this;
     }

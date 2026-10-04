@@ -612,11 +612,11 @@ void RenderGraph::render() {
         VK_QUEUE_GRAPHICS_BIT, DebugLabelColor::CYAN,
         [&](CommandBufferBuilder &builder) {
             if (m_query_pool) {
-                builder.reset_query_pool(*m_query_pool);
-                builder.write_timestamp(*m_query_pool, 0, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT);
+                builder.reset_query_pool(*m_query_pool)
+                    .write_timestamp(*m_query_pool, 0, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT);
             }
             if (m_inline_update_commands) {
-                m_inline_update_commands(builder);
+                builder.invoke(m_inline_update_commands);
             }
             // Acquire ownership of any buffers/images that were uploaded on a transfer queue whose family differs
             // from the graphics queue family, before they are read by any pass below.

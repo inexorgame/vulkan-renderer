@@ -17,6 +17,11 @@ class Device;
 struct QueueSemaphoreWait;
 } // namespace inexor::vulkan_renderer::wrapper::core
 
+namespace inexor::vulkan_renderer::wrapper::commands {
+// Forward declaration
+class CommandBufferBuilder;
+} // namespace inexor::vulkan_renderer::wrapper::commands
+
 namespace inexor::vulkan_renderer::wrapper::synchronization {
 // Forward declaration
 class Fence;
@@ -62,6 +67,7 @@ class CommandBuffer {
     // The Device wrapper must be able to call begin_command_buffer and end_command_buffer
     friend class core::Device;
     friend class CommandPool;
+    friend class CommandBufferBuilder;
 
 private:
     VkCommandBuffer m_cmd_buf{VK_NULL_HANDLE};
