@@ -22,6 +22,7 @@ class GraphicsPass;
 class RenderGraph;
 
 class RenderModule {
+    friend class RenderGraph;
 
 private:
     std::shared_ptr<RenderGraph> m_render_graph;
@@ -36,6 +37,7 @@ public:
             ::inexor::vulkan_renderer::wrapper::pipelines::GraphicsPipelineBuilder &)>;
 
     RenderModule(std::shared_ptr<RenderGraph> render_graph, std::string name);
+    ~RenderModule();
 
     [[nodiscard]] std::weak_ptr<GraphicsPass> add_graphics_pass(OnBuildGraphicsPass on_build_graphics_pass);
 

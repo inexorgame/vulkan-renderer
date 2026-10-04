@@ -13,6 +13,13 @@ RenderModule::RenderModule(std::shared_ptr<RenderGraph> render_graph, std::strin
     if (!m_render_graph) {
         throw tools::InexorException("Error: Parameter 'render_graph' is invalid!");
     }
+    m_render_graph->register_render_module(*this);
+}
+
+RenderModule::~RenderModule() {
+    if (m_render_graph) {
+        m_render_graph->unregister_render_module(*this);
+    }
 }
 
 std::weak_ptr<GraphicsPass> RenderModule::add_graphics_pass(OnBuildGraphicsPass on_build_graphics_pass) {

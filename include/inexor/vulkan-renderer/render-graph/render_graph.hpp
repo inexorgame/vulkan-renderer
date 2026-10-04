@@ -40,6 +40,7 @@ namespace inexor::vulkan_renderer::render_graph {
 // Forward declarations
 class Buffer;
 class GraphicsPass;
+class RenderModule;
 class Texture;
 } // namespace inexor::vulkan_renderer::render_graph
 
@@ -93,6 +94,8 @@ private:
     std::vector<OnBuildGraphicsPipeline> m_graphics_pipeline_create_functions;
     /// The graphics pipelines registered to the rendergraph
     std::vector<std::shared_ptr<::inexor::vulkan_renderer::wrapper::pipelines::GraphicsPipeline>> m_graphics_pipelines;
+    /// The render modules registered to the rendergraph
+    std::vector<RenderModule *> m_render_modules;
 
     /// --------------------------------------------------------------------------------------------------
     /// GRAPHICS PASSES
@@ -139,6 +142,11 @@ private:
     void synchronize_frame_context();
 
     void invalidate_graphics_pass_secondary_cmd_buffers();
+
+    void register_render_module(RenderModule &render_module);
+    void unregister_render_module(RenderModule &render_module);
+
+    void log_render_graph_overview() const;
 
     void invalidate_graphics_passes_using_texture(const Texture &texture);
 

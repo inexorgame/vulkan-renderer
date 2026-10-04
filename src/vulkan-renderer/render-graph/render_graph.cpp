@@ -2,11 +2,13 @@
 
 #include "inexor/vulkan-renderer/render-graph/buffer.hpp"
 #include "inexor/vulkan-renderer/render-graph/graphics_pass.hpp"
+#include "inexor/vulkan-renderer/render-graph/render_module.hpp"
 #include "inexor/vulkan-renderer/render-graph/texture.hpp"
 #include "inexor/vulkan-renderer/tools/exception.hpp"
 #include "inexor/vulkan-renderer/tools/make_info.hpp"
 #include "inexor/vulkan-renderer/wrapper/core/device.hpp"
 #include "inexor/vulkan-renderer/wrapper/descriptors/per_frame_descriptor_sets.hpp"
+#include "inexor/vulkan-renderer/wrapper/pipelines/graphics_pipeline.hpp"
 #include "inexor/vulkan-renderer/wrapper/queries/query_pool.hpp"
 #include "inexor/vulkan-renderer/wrapper/synchronization/pipeline_barrier_batch_builder.hpp"
 #include "inexor/vulkan-renderer/wrapper/synchronization/semaphore.hpp"
@@ -151,6 +153,15 @@ void RenderGraph::add_graphics_pipeline(OnBuildGraphicsPipeline on_build_graphic
     m_graphics_pipeline_create_functions.emplace_back(std::move(on_build_graphics_pipeline));
 }
 
+void RenderGraph::register_render_module(RenderModule &render_module) {
+    m_render_modules.emplace_back(&render_module);
+}
+
+void RenderGraph::unregister_render_module(RenderModule &render_module) {
+    const auto it = std::remove(m_render_modules.begin(), m_render_modules.end(), &render_module);
+    m_render_modules.erase(it, m_render_modules.end());
+}
+
 std::weak_ptr<Texture> RenderGraph::add_texture(std::string name, const TextureUsage usage, const VkFormat format,
                                                 const std::uint32_t width, const std::uint32_t height,
                                                 const std::uint32_t channels, const VkSampleCountFlagBits sample_count,
@@ -185,6 +196,70 @@ void RenderGraph::create_graphics_pipelines() {
     m_resource_descriptors.mark_descriptor_sets_dirty();
 }
 
+void RenderGraph::log_render_graph_overview() const {
+    spdlog::info("RenderGraph overview: {} module(s)", m_render_modules.size());
+    for (const auto *module : m_render_modules) {
+        if (!module) {
+            continue;
+        }
+        spdlog::info("  Module: {}", module->m_name);
+
+        spdlog::info("    Graphics passes: {}", module->m_graphics_passes.size());
+        for (const auto &pass_weak : module->m_graphics_passes) {
+            const auto pass = pass_weak.lock();
+            if (!pass) {
+                spdlog::info("      <expired pass>");
+                continue;
+            }
+
+            spdlog::info("      Pass: {}", pass->m_name);
+
+            const auto print_resources = [](const char *label, const auto &resources) {
+                std::string names;
+                for (const auto &resource : resources) {
+                    const auto locked = resource.lock();
+                    names += locked ? std::string(locked->name()) : std::string("<expired>");
+                    names += ", ";
+                }
+                if (!names.empty()) {
+                    names.erase(names.size() - 2);
+                }
+                spdlog::info("        {}: {}", label, names.empty() ? std::string{"<none>"} : names);
+            };
+
+            print_resources("Reads buffers", pass->m_buffer_reads);
+
+            {
+                std::vector<std::weak_ptr<Texture>> written_textures;
+                written_textures.reserve(pass->m_texture_writes.size());
+                for (const auto &write_texture : pass->m_texture_writes) {
+                    written_textures.emplace_back(write_texture.first);
+                }
+                print_resources("Writes textures", written_textures);
+            }
+
+            {
+                std::vector<std::weak_ptr<wrapper::swapchains::Swapchain>> written_swapchains;
+                written_swapchains.reserve(pass->m_swapchain_writes.size());
+                for (const auto &write_swapchain : pass->m_swapchain_writes) {
+                    written_swapchains.emplace_back(write_swapchain.first);
+                }
+                print_resources("Writes swapchains", written_swapchains);
+            }
+        }
+
+        spdlog::info("    Graphics pipelines: {}", module->m_graphics_pipelines.size());
+        for (const auto &pipeline_weak : module->m_graphics_pipelines) {
+            const auto pipeline = pipeline_weak.lock();
+            if (!pipeline) {
+                spdlog::info("      <expired pipeline>");
+                continue;
+            }
+            spdlog::info("      Pipeline: {}", pipeline->name());
+        }
+    }
+}
+
 void RenderGraph::check_for_cycles() {
     // @TODO Implement!
 }
@@ -195,6 +270,7 @@ void RenderGraph::compile() {
     synchronize_frame_context();
     build_texture_graphics_pass_dependencies();
     create_graphics_pipelines();
+    log_render_graph_overview();
     invalidate_graphics_pass_secondary_cmd_buffers();
 }
 
