@@ -8,7 +8,7 @@
 namespace inexor::vulkan_renderer::octree {
 Indentation::Indentation(const std::uint8_t start, const std::uint8_t end) noexcept : m_start(start), m_end(end) {}
 
-Indentation::Indentation(const std::uint8_t uid) noexcept {
+Indentation::Indentation(const std::uint8_t uid) {
     if (uid > 44) {
         throw std::invalid_argument("Error: Indentation uid is out of range!");
     }
