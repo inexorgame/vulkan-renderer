@@ -109,10 +109,6 @@ RenderGraph::add_resource_descriptor(const std::variant<std::weak_ptr<Buffer>, s
                     throw tools::InexorException("Automatic buffer descriptors only support uniform buffers!");
                 }
             }
-            // Distinguish between buffer and texture resources and add the appropriate descriptor
-            constexpr DescriptorType descriptor_type = std::same_as<Resource, Buffer>
-                                                           ? DescriptorType::UNIFORM_BUFFER
-                                                           : DescriptorType::COMBINED_IMAGE_SAMPLER;
             const auto name = shared_resource->name();
             // @TODO Expose the underlying builder patterns so that the user can customize the descriptor set layout and
             // write descriptor set creation, e.g. add multiple bindings, arrayed descriptors, etc.
@@ -120,7 +116,11 @@ RenderGraph::add_resource_descriptor(const std::variant<std::weak_ptr<Buffer>, s
                 name,
                 [=](DescriptorSetLayoutBuilder &builder) {
                     // Add the descriptor to the layout builder
-                    return builder.add(descriptor_type, stage).build(name);
+                    if constexpr (std::same_as<Resource, Buffer>) {
+                        return builder.add(DescriptorType::UNIFORM_BUFFER, stage).build(name);
+                    } else {
+                        return builder.add(DescriptorType::COMBINED_IMAGE_SAMPLER, stage).build(name);
+                    }
                 },
                 [=](WriteDescriptorSetBuilder &builder, VkDescriptorSet descriptor_set) {
                     // Add the descriptor to the write descriptor set builder
@@ -501,14 +501,12 @@ void RenderGraph::refresh_graphics_pass_swapchain_rendering_info(GraphicsPass &p
             continue;
         }
         if (resolve_to_swapchain) {
-            for (const auto &write_swapchain : pass.m_swapchain_writes) {
-                const auto swapchain = write_swapchain.first.lock();
-                if (!swapchain) {
-                    throw std::runtime_error("Error: Graphics pass swapchain attachment expired!");
-                }
-                attachment_state.resolve_image_view = swapchain->current_swapchain_image_view();
-                break;
+            const auto &write_swapchain = pass.m_swapchain_writes.front();
+            const auto swapchain = write_swapchain.first.lock();
+            if (!swapchain) {
+                throw std::runtime_error("Error: Graphics pass swapchain attachment expired!");
             }
+            attachment_state.resolve_image_view = swapchain->current_swapchain_image_view();
         }
         pass.m_color_attachments.push_back(
             make_rendering_attachment_info(attachment_state.image_view, attachment_state.image_layout,

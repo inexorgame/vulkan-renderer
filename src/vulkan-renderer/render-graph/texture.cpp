@@ -48,7 +48,7 @@ Texture::~Texture() {
 }
 
 void Texture::collect_update_copies(StagingBuffer &staging_buffer, std::size_t &upload_offset,
-                                    std::vector<std::function<void()>> &pending_releases,
+                                    std::vector<std::function<void()>> &,
                                     std::vector<PendingTextureCopy> &pending_texture_copies) {
     if (m_src_texture_data_size == 0) {
         m_update_requested = false;

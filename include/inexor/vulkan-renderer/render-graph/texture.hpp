@@ -131,7 +131,7 @@ private:
     /// @param upload_offset Current write offset inside the shared upload arena buffer
     /// @param pending_texture_copies Collected copy jobs and image barriers
     void collect_update_copies(StagingBuffer &staging_buffer, std::size_t &upload_offset,
-                               std::vector<std::function<void()>> &pending_releases,
+                               std::vector<std::function<void()>> &,
                                std::vector<PendingTextureCopy> &pending_texture_copies);
 
     /// Record the barriers that prepare the texture image for upload.

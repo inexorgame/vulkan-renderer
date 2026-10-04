@@ -75,7 +75,6 @@ ImGuiRenderer::ImGuiRenderer(std::shared_ptr<RenderGraph> render_graph, std::wea
 
         // Our font textures always have 4 channels and a single mip level by definition.
         constexpr int FONT_TEXTURE_CHANNELS{4};
-        constexpr int FONT_MIP_LEVELS{1};
 
         m_upload_size = static_cast<VkDeviceSize>(m_font_texture_width) *
                         static_cast<VkDeviceSize>(m_font_texture_height) *
@@ -107,7 +106,7 @@ ImGuiRenderer::ImGuiRenderer(std::shared_ptr<RenderGraph> render_graph, std::wea
             }
             m_vertex_data.clear();
             m_index_data.clear();
-            for (std::size_t i = 0; i < imgui_draw_data->CmdListsCount; i++) {
+            for (int i = 0; i < imgui_draw_data->CmdListsCount; i++) {
                 const ImDrawList *cmd_list = imgui_draw_data->CmdLists[i];
                 m_vertex_data.insert(m_vertex_data.end(), cmd_list->VtxBuffer.Data,
                                      cmd_list->VtxBuffer.Data + cmd_list->VtxBuffer.Size);
@@ -207,9 +206,9 @@ ImGuiRenderer::ImGuiRenderer(std::shared_ptr<RenderGraph> render_graph, std::wea
 
                 std::uint32_t index_offset = 0;
                 std::int32_t vertex_offset = 0;
-                for (std::size_t i = 0; i < draw_data->CmdListsCount; i++) {
+                for (int i = 0; i < draw_data->CmdListsCount; i++) {
                     const ImDrawList *cmd_list = draw_data->CmdLists[i];
-                    for (std::int32_t j = 0; j < cmd_list->CmdBuffer.Size; j++) {
+                    for (int j = 0; j < cmd_list->CmdBuffer.Size; j++) {
                         const ImDrawCmd &draw_cmd = cmd_list->CmdBuffer[j];
                         cmd_buf
                             .set_scissor({

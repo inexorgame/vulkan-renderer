@@ -6,8 +6,8 @@
 
 namespace inexor::vulkan_renderer::input {
 
-struct GamepadInputData;
-struct KeyboardMouseInputData;
+class GamepadInputData;
+class KeyboardMouseInputData;
 
 class Input {
 private:

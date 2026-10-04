@@ -118,8 +118,8 @@ std::shared_ptr<Cube> create_random_world(std::uint32_t max_depth, const glm::ve
             if (ty < 100) {
                 child->set_type(Cube::Type::NORMAL);
                 for (int i = 0; i < 12; i++) {
-                    std::uint8_t indent_value = tools::generate_random_number(0, 44, seed);
-                    child->set_indent(i, Indentation(indent_value));
+                    const auto indent_value = static_cast<std::uint8_t>(tools::generate_random_number(0, 44, seed));
+                    child->set_indent(static_cast<std::uint8_t>(i), Indentation(indent_value));
                 }
                 continue;
             }
