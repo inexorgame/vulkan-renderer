@@ -87,9 +87,12 @@ private:
     ::inexor::vulkan_renderer::wrapper::pipelines::GraphicsPipelineBuilder m_graphics_pipeline_builder;
     /// A using declaration for graphics pipeline create functions
     using OnBuildGraphicsPipeline =
-        std::function<void(::inexor::vulkan_renderer::wrapper::pipelines::GraphicsPipelineBuilder &)>;
+        std::function<std::shared_ptr<::inexor::vulkan_renderer::wrapper::pipelines::GraphicsPipeline>(
+            ::inexor::vulkan_renderer::wrapper::pipelines::GraphicsPipelineBuilder &)>;
     /// The graphics pipeline create functions registered to the rendergraph
     std::vector<OnBuildGraphicsPipeline> m_graphics_pipeline_create_functions;
+    /// The graphics pipelines registered to the rendergraph
+    std::vector<std::shared_ptr<::inexor::vulkan_renderer::wrapper::pipelines::GraphicsPipeline>> m_graphics_pipelines;
 
     /// --------------------------------------------------------------------------------------------------
     /// GRAPHICS PASSES

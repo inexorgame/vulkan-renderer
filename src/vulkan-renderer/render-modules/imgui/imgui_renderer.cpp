@@ -134,41 +134,42 @@ ImGuiRenderer::ImGuiRenderer(std::shared_ptr<RenderGraph> render_graph, std::wea
         [&](inexor::vulkan_renderer::wrapper::pipelines::GraphicsPipelineBuilder &pipeline_builder) {
             const auto swapchain = m_swapchain.lock();
             const auto descriptor_set = m_descriptor_set.lock();
-            m_imgui_pipeline = pipeline_builder
-                                   .set_vertex_input_bindings({
-                                       {
-                                           .binding = 0,
-                                           .stride = sizeof(ImDrawVert),
-                                           .inputRate = VK_VERTEX_INPUT_RATE_VERTEX,
-                                       },
-                                   })
-                                   .set_vertex_input_attributes({
-                                       {
-                                           .location = 0,
-                                           .format = VK_FORMAT_R32G32_SFLOAT,
-                                           .offset = offsetof(ImDrawVert, pos),
-                                       },
-                                       {
-                                           .location = 1,
-                                           .format = VK_FORMAT_R32G32_SFLOAT,
-                                           .offset = offsetof(ImDrawVert, uv),
-                                       },
-                                       {
-                                           .location = 2,
-                                           .format = VK_FORMAT_R8G8B8A8_UNORM,
-                                           .offset = offsetof(ImDrawVert, col),
-                                       },
-                                   })
-                                   .add_standard_alpha_blend_attachment()
-                                   .add_color_attachment_format(swapchain->image_format())
-                                   .set_dynamic_scissor()
-                                   .set_dynamic_viewport()
-                                   .add_shader(m_vertex_shader)
-                                   .add_shader(m_fragment_shader)
-                                   .set_descriptor_set_layout(descriptor_set->layout())
-                                   .add_descriptor_set(m_descriptor_set)
-                                   .add_push_constant_range(VK_SHADER_STAGE_VERTEX_BIT, sizeof(m_push_const_block))
-                                   .build("ImGui");
+            return m_imgui_pipeline =
+                       pipeline_builder
+                           .set_vertex_input_bindings({
+                               {
+                                   .binding = 0,
+                                   .stride = sizeof(ImDrawVert),
+                                   .inputRate = VK_VERTEX_INPUT_RATE_VERTEX,
+                               },
+                           })
+                           .set_vertex_input_attributes({
+                               {
+                                   .location = 0,
+                                   .format = VK_FORMAT_R32G32_SFLOAT,
+                                   .offset = offsetof(ImDrawVert, pos),
+                               },
+                               {
+                                   .location = 1,
+                                   .format = VK_FORMAT_R32G32_SFLOAT,
+                                   .offset = offsetof(ImDrawVert, uv),
+                               },
+                               {
+                                   .location = 2,
+                                   .format = VK_FORMAT_R8G8B8A8_UNORM,
+                                   .offset = offsetof(ImDrawVert, col),
+                               },
+                           })
+                           .add_standard_alpha_blend_attachment()
+                           .add_color_attachment_format(swapchain->image_format())
+                           .set_dynamic_scissor()
+                           .set_dynamic_viewport()
+                           .add_shader(m_vertex_shader)
+                           .add_shader(m_fragment_shader)
+                           .set_descriptor_set_layout(descriptor_set->layout())
+                           .add_descriptor_set(m_descriptor_set)
+                           .add_push_constant_range(VK_SHADER_STAGE_VERTEX_BIT, sizeof(m_push_const_block))
+                           .build("ImGui");
         });
 
     // Add the ImGui graphics pass to rendergraph

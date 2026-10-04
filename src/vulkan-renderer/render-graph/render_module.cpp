@@ -16,11 +16,19 @@ RenderModule::RenderModule(std::shared_ptr<RenderGraph> render_graph, std::strin
 }
 
 std::weak_ptr<GraphicsPass> RenderModule::add_graphics_pass(OnBuildGraphicsPass on_build_graphics_pass) {
-    return m_render_graph->add_graphics_pass(std::move(on_build_graphics_pass));
+    const auto graphics_pass = m_render_graph->add_graphics_pass(std::move(on_build_graphics_pass));
+    m_graphics_passes.emplace_back(graphics_pass);
+    return graphics_pass;
 }
 
 void RenderModule::add_graphics_pipeline(OnBuildGraphicsPipeline on_build_graphics_pipeline) {
-    m_render_graph->add_graphics_pipeline(std::move(on_build_graphics_pipeline));
+    m_render_graph->add_graphics_pipeline(
+        [this, on_build_graphics_pipeline = std::move(on_build_graphics_pipeline)](
+            ::inexor::vulkan_renderer::wrapper::pipelines::GraphicsPipelineBuilder &pipeline_builder) {
+            const auto graphics_pipeline = on_build_graphics_pipeline(pipeline_builder);
+            m_graphics_pipelines.emplace_back(graphics_pipeline);
+            return graphics_pipeline;
+        });
 }
 
 } // namespace inexor::vulkan_renderer::render_graph

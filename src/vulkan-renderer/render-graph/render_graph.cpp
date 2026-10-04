@@ -177,8 +177,10 @@ void RenderGraph::create_graphics_pipelines() {
     m_resource_descriptors.create_descriptor_set_layouts();
     spdlog::trace("Creating {} graphics pipelines", m_graphics_pipeline_create_functions.size());
     // @TODO Mark graphics pipeline builder as static thread_local and create graphics pipelines in parallel
+    m_graphics_pipelines.clear();
+    m_graphics_pipelines.reserve(m_graphics_pipeline_create_functions.size());
     for (const auto &create_func : m_graphics_pipeline_create_functions) {
-        std::invoke(create_func, m_graphics_pipeline_builder);
+        m_graphics_pipelines.emplace_back(std::invoke(create_func, m_graphics_pipeline_builder));
     }
     m_resource_descriptors.mark_descriptor_sets_dirty();
 }
