@@ -161,6 +161,8 @@ ImGuiRenderer::ImGuiRenderer(std::shared_ptr<RenderGraph> render_graph, std::wea
                            })
                            .add_standard_alpha_blend_attachment()
                            .add_color_attachment_format(swapchain->image_format())
+                           // ImGui line geometry contains both triangle windings.
+                           .set_culling_mode(VK_FALSE)
                            .set_dynamic_scissor()
                            .set_dynamic_viewport()
                            .add_shader(m_vertex_shader)

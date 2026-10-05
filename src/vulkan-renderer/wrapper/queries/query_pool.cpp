@@ -42,4 +42,20 @@ std::vector<std::uint64_t> QueryPool::get_results() const {
     return results;
 }
 
+std::optional<std::vector<std::uint64_t>> QueryPool::try_get_results() const {
+    std::vector<std::uint64_t> results(m_query_count * 2, 0);
+
+    const auto result = vkGetQueryPoolResults(
+        m_device.device(), m_query_pool, 0, m_query_count, sizeof(std::uint64_t) * results.size(), results.data(),
+        sizeof(std::uint64_t) * 2, VK_QUERY_RESULT_64_BIT | VK_QUERY_RESULT_WITH_AVAILABILITY_BIT);
+    if (result == VK_NOT_READY) {
+        return std::nullopt;
+    }
+    if (result != VK_SUCCESS && result != VK_INCOMPLETE) {
+        throw tools::VulkanException("Error: vkGetQueryPoolResults failed!", result);
+    }
+
+    return results;
+}
+
 } // namespace inexor::vulkan_renderer::wrapper::queries

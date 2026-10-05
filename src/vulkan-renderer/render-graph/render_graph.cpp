@@ -740,6 +740,27 @@ void RenderGraph::log_gpu_frame_time() const {
     spdlog::trace("GPU frame time: {:.3f} ms [ticks={}]", elapsed_ms, elapsed_ticks);
 }
 
+std::optional<double> RenderGraph::try_get_gpu_frame_time_ms() const {
+    if (!m_query_pool) {
+        return std::nullopt;
+    }
+
+    const auto results = m_query_pool->try_get_results();
+    if (!results || results->size() < 4) {
+        return std::nullopt;
+    }
+
+    const auto &values = *results;
+    const bool start_available = values[1] != 0;
+    const bool end_available = values[3] != 0;
+    if (!start_available || !end_available) {
+        return std::nullopt;
+    }
+
+    const auto elapsed_ticks = values[2] - values[0];
+    return static_cast<double>(elapsed_ticks) * static_cast<double>(m_timestamp_period) / 1'000'000.0;
+}
+
 void RenderGraph::reset_graph() {
     m_frame_sync_manager.process_deferred_releases(true);
     m_staging_buffer.reset();

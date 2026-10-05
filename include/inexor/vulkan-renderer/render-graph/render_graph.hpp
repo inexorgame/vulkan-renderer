@@ -273,6 +273,9 @@ public:
     /// Log the most recently recorded GPU frame time.
     void log_gpu_frame_time() const;
 
+    /// Returns the most recently recorded GPU frame time in milliseconds if the query results are available.
+    [[nodiscard]] std::optional<double> try_get_gpu_frame_time_ms() const;
+
     /// Reset the entire rendergraph
     /// @note We avoid to name it reset() because this would be ambiguous with smart pointer methods
     void reset_graph();

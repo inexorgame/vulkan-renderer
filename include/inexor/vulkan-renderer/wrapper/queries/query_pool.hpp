@@ -3,6 +3,7 @@
 #include <volk.h>
 
 #include <cstdint>
+#include <optional>
 #include <vector>
 
 namespace inexor::vulkan_renderer::wrapper::core {
@@ -35,6 +36,8 @@ public:
     }
 
     [[nodiscard]] std::vector<std::uint64_t> get_results() const;
+
+    [[nodiscard]] std::optional<std::vector<std::uint64_t>> try_get_results() const;
 };
 
 } // namespace inexor::vulkan_renderer::wrapper::queries
