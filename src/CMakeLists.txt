@@ -194,6 +194,7 @@ if(MSVC)
         glm
         imgui
         spdlog
+        spirv-reflect-static
         tinygltf
         volk
         VulkanMemoryAllocator
