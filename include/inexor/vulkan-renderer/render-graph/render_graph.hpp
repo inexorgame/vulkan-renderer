@@ -111,6 +111,7 @@ private:
     SwapchainManager m_swapchain_manager;
     CommandBufferCache m_command_buffer_cache;
     std::unique_ptr<wrapper::queries::QueryPool> m_query_pool;
+    bool m_query_pool_has_results{false};
     float m_timestamp_period{0.0f};
     std::unique_ptr<wrapper::synchronization::Semaphore> m_upload_finished;
     bool m_upload_submission_pending{false};

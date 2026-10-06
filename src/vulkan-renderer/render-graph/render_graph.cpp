@@ -708,6 +708,10 @@ void RenderGraph::render() {
         },
         render_wait_semaphores, m_swapchain_manager.rendering_finished_semaphores());
 
+    if (m_query_pool) {
+        m_query_pool_has_results = true;
+    }
+
     m_upload_submission_pending = false;
 
     if (!m_inline_update_pending_releases.empty()) {
@@ -726,7 +730,7 @@ void RenderGraph::render() {
 }
 
 void RenderGraph::log_gpu_frame_time() const {
-    if (!m_query_pool) {
+    if (!m_query_pool || !m_query_pool_has_results) {
         return;
     }
     m_device.wait_idle();
@@ -741,7 +745,7 @@ void RenderGraph::log_gpu_frame_time() const {
 }
 
 std::optional<double> RenderGraph::try_get_gpu_frame_time_ms() const {
-    if (!m_query_pool) {
+    if (!m_query_pool || !m_query_pool_has_results) {
         return std::nullopt;
     }
 
@@ -776,6 +780,7 @@ void RenderGraph::reset_graph() {
     m_inline_update_commands = {};
     m_inline_update_pending_releases.clear();
     m_pending_queue_ownership_acquire_barriers.reset();
+    m_query_pool_has_results = false;
     m_frame_sync_manager.clear();
     m_frame_slot_count = 1;
     m_current_frame_slot = 0;
