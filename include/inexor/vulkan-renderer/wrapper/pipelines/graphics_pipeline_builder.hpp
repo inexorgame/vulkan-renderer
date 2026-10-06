@@ -143,9 +143,6 @@ public:
     /// @param culling_enabled ``true`` if culling is enabled
     /// @return A const reference to the ``this`` pointer, which allows method calls to be chained
     [[nodiscard]] auto &set_culling_mode(const VkBool32 culling_enabled) {
-        if (culling_enabled == VK_FALSE) {
-            spdlog::warn("Culling is disabled, which could have negative effects on the performance!");
-        }
         m_data.rasterization_sci.cullMode = culling_enabled == VK_TRUE ? VK_CULL_MODE_BACK_BIT : VK_CULL_MODE_NONE;
         return *this;
     }
