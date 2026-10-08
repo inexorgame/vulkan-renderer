@@ -114,7 +114,6 @@ private:
 
     SwapchainManager m_swapchain_manager;
     CommandBufferCache m_command_buffer_cache;
-    tf::Executor m_taskflow_executor;
     tf::Taskflow m_recording_tasks;
     bool m_recording_tasks_dirty{true};
     std::string m_frame_slot_suffix;

@@ -72,7 +72,10 @@ const CommandBuffer &CommandPool::request_command_buffer(const std::string &name
         const auto cmd_pool_name = get_pool_name(m_queue_type);
         std::string cmd_buf_name = "[" + cmd_pool_name + "] Command Buffer " + cmd_buffer_number;
         m_cmd_bufs.emplace_back(std::make_unique<CommandBuffer>(m_device, m_cmd_pool, cmd_buf_name));
-        spdlog::trace("Creating command buffer [type=primary, index={}, pool={}]", cmd_buffer_number, cmd_pool_name);
+        std::ostringstream oss;
+        oss << std::this_thread::get_id();
+        spdlog::trace("Creating command buffer [thread={}, type=primary, index={}, pool={}]", oss.str(),
+                      cmd_buffer_number, cmd_pool_name);
         m_cmd_bufs.back()->set_debug_name(name);
         m_cmd_bufs.back()->begin_command_buffer();
         return *m_cmd_bufs.back();
@@ -98,7 +101,10 @@ const CommandBuffer &CommandPool::request_named_command_buffer(const std::string
         auto cmd_buf = std::make_unique<CommandBuffer>(m_device, m_cmd_pool, cmd_buf_name);
         cmd_buf->set_debug_name(name);
         it = m_named_cmd_bufs.emplace(name, std::move(cmd_buf)).first;
-        spdlog::trace("Creating named command buffer [type=primary, name={}, pool={}]", name, cmd_pool_name);
+        std::ostringstream oss;
+        oss << std::this_thread::get_id();
+        spdlog::trace("Creating named command buffer [thread={}, type=primary, name={}, pool={}]", oss.str(), name,
+                      cmd_pool_name);
     } else {
         auto &cmd_buf = *it->second;
         if (cmd_buf.was_submitted()) {
@@ -126,7 +132,10 @@ const CommandBuffer &CommandPool::request_secondary_command_buffer(const std::st
     const auto cmd_pool_name = get_pool_name(m_queue_type);
     std::string cmd_buf_name = "[" + cmd_pool_name + "] Secondary Command Buffer " + cmd_buffer_number;
     m_secondary_cmd_bufs.emplace_back(m_device, m_cmd_pool, cmd_buf_name, VK_COMMAND_BUFFER_LEVEL_SECONDARY);
-    spdlog::trace("Creating command buffer [type=secondary, index={}, pool={}]", cmd_buffer_number, cmd_pool_name);
+    std::ostringstream oss;
+    oss << std::this_thread::get_id();
+    spdlog::trace("Creating command buffer [thread={}, type=secondary, index={}, pool={}]", oss.str(),
+                  cmd_buffer_number, cmd_pool_name);
     m_secondary_cmd_bufs.back().set_debug_name(name);
     return m_secondary_cmd_bufs.back();
 }

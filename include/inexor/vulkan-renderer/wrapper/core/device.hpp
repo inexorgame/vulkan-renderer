@@ -7,6 +7,8 @@
 #include "inexor/vulkan-renderer/wrapper/commands/command_buffer_builder.hpp"
 #include "inexor/vulkan-renderer/wrapper/commands/command_pool.hpp"
 
+#include <taskflow/taskflow.hpp>
+
 #include <array>
 #include <functional>
 #include <memory>
@@ -97,6 +99,9 @@ private:
     mutable std::vector<std::unique_ptr<CommandPool>> m_cmd_pools;
     mutable std::shared_mutex m_mutex;
 
+    /// Shared worker pool for all task graphs using this device.
+    tf::Executor m_taskflow_executor;
+
     /// Get the thread_local command pool.
     /// @param queue_type The Vulkan queue type
     /// @note This method will create a command pool for the thread if it doesn't already exist.
@@ -122,6 +127,11 @@ public:
 
     [[nodiscard]] auto device() const {
         return m_device;
+    }
+
+    /// The shared Taskflow executor. Task graphs must outlive their submitted work.
+    [[nodiscard]] tf::Executor &taskflow_executor() {
+        return m_taskflow_executor;
     }
 
     /// Call `vkGetPhysicalDeviceSurfaceCapabilitiesKHR`.

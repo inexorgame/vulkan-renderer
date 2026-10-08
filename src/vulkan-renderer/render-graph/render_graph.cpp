@@ -827,7 +827,7 @@ void RenderGraph::render() {
         }
 
         m_scratch_primary_command_buffers.resize(m_graphics_passes.size());
-        m_taskflow_executor.run(m_recording_tasks).get();
+        m_device.taskflow_executor().run(m_recording_tasks).get();
 
         const auto &frame_end_command_buffer = m_device.request_named_command_buffer(
             VK_QUEUE_GRAPHICS_BIT, "render_graph_frame_end" + m_frame_slot_suffix);
@@ -878,7 +878,7 @@ void RenderGraph::render() {
                 }
 
                 m_scratch_secondary_command_buffers.resize(m_graphics_passes.size());
-                m_taskflow_executor.run(m_recording_tasks).get();
+                m_device.taskflow_executor().run(m_recording_tasks).get();
 
                 for (std::size_t i = 0; i < m_graphics_passes.size(); ++i) {
                     const auto &pass = *m_graphics_passes[i];

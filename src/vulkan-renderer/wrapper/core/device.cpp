@@ -267,9 +267,12 @@ Device::Device(const Instance &inst, const VkSurfaceKHR surface, const VkPhysica
     get_thread_command_pool(VK_QUEUE_TRANSFER_BIT);
     get_thread_command_pool(VK_QUEUE_COMPUTE_BIT);
     get_thread_command_pool(VK_QUEUE_SPARSE_BINDING_BIT);
+    spdlog::info("Taskflow executor created [worker_threads={}]", m_taskflow_executor.num_workers());
 }
 
 Device::~Device() {
+    // Finish CPU tasks before taking the mutex they may need or destroying Vulkan resources.
+    m_taskflow_executor.wait_for_all();
     std::scoped_lock locker(m_mutex);
     // Wait for the device to complete ongoing work
     wait_idle();
