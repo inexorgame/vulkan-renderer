@@ -15,6 +15,8 @@
 
 #include <spdlog/spdlog.h>
 
+#include <algorithm>
+#include <chrono>
 #include <cstdint>
 #include <cstring>
 #include <functional>
@@ -691,12 +693,54 @@ void RenderGraph::record_command_buffer_for_pass(const CommandBuffer &cmd_buf, G
                                                            pass.m_rendering_info, pass.m_on_record_cmd_buffer);
 }
 
+void RenderGraph::record_cpu_frame_stats(const CpuPhaseDurations &durations) {
+    auto &stats = m_cpu_frame_stats;
+    ++stats.frames;
+    std::uint64_t frame_ns = 0;
+    for (std::size_t i = 0; i < durations.size(); ++i) {
+        frame_ns += durations[i];
+        stats.phase_total_ns[i] += durations[i];
+        stats.phase_max_ns[i] = std::max(stats.phase_max_ns[i], durations[i]);
+    }
+    stats.total_ns += frame_ns;
+    stats.max_frame_ns = std::max(stats.max_frame_ns, frame_ns);
+
+    if (stats.frames < 1024) {
+        return;
+    }
+
+    const auto average_us = [&](const CpuPhase phase) {
+        return static_cast<double>(stats.phase_total_ns[static_cast<std::size_t>(phase)]) / (1000.0 * stats.frames);
+    };
+    const auto peak_us = [&](const CpuPhase phase) {
+        return stats.phase_max_ns[static_cast<std::size_t>(phase)] / 1000.0;
+    };
+    spdlog::debug("RenderGraph CPU ({} frames, us): total avg={:.2f} max={:.2f}; house={:.2f}, "
+                  "acquire={:.2f}, context={:.2f}, resources={:.2f}, descriptors={:.2f}, "
+                  "record={:.2f}, submit={:.2f}, finalize={:.2f}, present={:.2f}",
+                  stats.frames, static_cast<double>(stats.total_ns) / (1000.0 * stats.frames),
+                  stats.max_frame_ns / 1000.0, average_us(CpuPhase::Housekeeping), average_us(CpuPhase::Acquire),
+                  average_us(CpuPhase::FrameContext), average_us(CpuPhase::Resources),
+                  average_us(CpuPhase::Descriptors), average_us(CpuPhase::Recording), average_us(CpuPhase::Submit),
+                  average_us(CpuPhase::Finalize), average_us(CpuPhase::Present));
+    spdlog::debug("RenderGraph CPU peaks (us): acquire={:.2f}, context={:.2f}, resources={:.2f}, "
+                  "record={:.2f}, submit={:.2f}, present={:.2f}",
+                  peak_us(CpuPhase::Acquire), peak_us(CpuPhase::FrameContext), peak_us(CpuPhase::Resources),
+                  peak_us(CpuPhase::Recording), peak_us(CpuPhase::Submit), peak_us(CpuPhase::Present));
+    stats = {};
+}
+
 void RenderGraph::render() {
+    using Clock = std::chrono::steady_clock;
+    const bool collect_cpu_stats = spdlog::get_level() <= spdlog::level::debug;
+    const auto frame_start = collect_cpu_stats ? Clock::now() : Clock::time_point{};
     m_frame_sync_manager.process_deferred_releases(false);
+    const auto housekeeping_end = collect_cpu_stats ? Clock::now() : Clock::time_point{};
     m_swapchain_manager.collect_frame_swapchains(m_graphics_passes);
     if (!m_swapchain_manager.acquire_next_images()) {
         return;
     }
+    const auto acquire_end = collect_cpu_stats ? Clock::now() : Clock::time_point{};
     m_swapchain_manager.synchronize_frame_context();
     synchronize_frame_context();
     // Batched primaries do not have individual submission fences. Wait for the previous use of
@@ -712,7 +756,9 @@ void RenderGraph::render() {
             }
         }
     }
+    const auto frame_context_end = collect_cpu_stats ? Clock::now() : Clock::time_point{};
     update_resources();
+    const auto resources_end = collect_cpu_stats ? Clock::now() : Clock::time_point{};
 
     auto &render_wait_semaphores = m_scratch_render_wait_semaphores;
     render_wait_semaphores.clear();
@@ -753,8 +799,10 @@ void RenderGraph::render() {
     if (m_recording_tasks_dirty) {
         rebuild_recording_tasks();
     }
+    const auto descriptors_end = collect_cpu_stats ? Clock::now() : Clock::time_point{};
 
     VkFence render_submit_fence = VK_NULL_HANDLE;
+    Clock::time_point submit_start{};
     if (!m_command_buffer_cache.uses_secondary_command_buffers()) {
         m_frame_slot_suffix = "[slot " + std::to_string(m_current_frame_slot) + "]";
         const auto &frame_start_command_buffer = m_device.request_named_command_buffer(
@@ -800,6 +848,9 @@ void RenderGraph::render() {
         batch.push_back(&frame_start_command_buffer);
         batch.insert(batch.end(), m_scratch_primary_command_buffers.begin(), m_scratch_primary_command_buffers.end());
         batch.push_back(&frame_end_command_buffer);
+        if (collect_cpu_stats) {
+            submit_start = Clock::now();
+        }
         render_submit_fence = m_device.submit_graphics_command_buffers(
             batch, render_wait_semaphores, m_swapchain_manager.rendering_finished_semaphores());
         if (m_primary_batch_fences.size() <= m_current_frame_slot) {
@@ -840,9 +891,13 @@ void RenderGraph::render() {
                 if (m_query_pool) {
                     builder.write_timestamp(*m_query_pool, 1, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT);
                 }
+                if (collect_cpu_stats) {
+                    submit_start = Clock::now();
+                }
             },
             render_wait_semaphores, m_swapchain_manager.rendering_finished_semaphores());
     }
+    const auto submit_end = collect_cpu_stats ? Clock::now() : Clock::time_point{};
 
     if (m_query_pool) {
         m_query_pool_has_results = true;
@@ -862,7 +917,26 @@ void RenderGraph::render() {
     m_inline_update_commands = {};
     m_frame_sync_manager.mark_frame_slot_submission_fence(render_submit_fence);
     m_swapchain_manager.mark_frame_swapchains_in_flight(render_submit_fence);
+    const auto finalize_end = collect_cpu_stats ? Clock::now() : Clock::time_point{};
     m_swapchain_manager.present(m_swapchain_manager.rendering_finished_semaphores());
+    if (collect_cpu_stats) {
+        const auto frame_end = Clock::now();
+        const auto elapsed_ns = [](const Clock::time_point start, const Clock::time_point end) {
+            return static_cast<std::uint64_t>(
+                std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count());
+        };
+        CpuPhaseDurations durations{};
+        durations[static_cast<std::size_t>(CpuPhase::Housekeeping)] = elapsed_ns(frame_start, housekeeping_end);
+        durations[static_cast<std::size_t>(CpuPhase::Acquire)] = elapsed_ns(housekeeping_end, acquire_end);
+        durations[static_cast<std::size_t>(CpuPhase::FrameContext)] = elapsed_ns(acquire_end, frame_context_end);
+        durations[static_cast<std::size_t>(CpuPhase::Resources)] = elapsed_ns(frame_context_end, resources_end);
+        durations[static_cast<std::size_t>(CpuPhase::Descriptors)] = elapsed_ns(resources_end, descriptors_end);
+        durations[static_cast<std::size_t>(CpuPhase::Recording)] = elapsed_ns(descriptors_end, submit_start);
+        durations[static_cast<std::size_t>(CpuPhase::Submit)] = elapsed_ns(submit_start, submit_end);
+        durations[static_cast<std::size_t>(CpuPhase::Finalize)] = elapsed_ns(submit_end, finalize_end);
+        durations[static_cast<std::size_t>(CpuPhase::Present)] = elapsed_ns(finalize_end, frame_end);
+        record_cpu_frame_stats(durations);
+    }
 }
 
 void RenderGraph::log_gpu_frame_time() const {
@@ -903,6 +977,7 @@ std::optional<double> RenderGraph::try_get_gpu_frame_time_ms() const {
 
 void RenderGraph::reset_graph() {
     m_frame_sync_manager.process_deferred_releases(true);
+    m_cpu_frame_stats = {};
     m_staging_buffer.reset();
     m_recording_tasks.clear();
     m_recording_tasks_dirty = true;

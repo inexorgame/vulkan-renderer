@@ -14,6 +14,8 @@
 #include "inexor/vulkan-renderer/wrapper/queries/query_pool.hpp"
 #include "inexor/vulkan-renderer/wrapper/synchronization/pipeline_barrier_batch_builder.hpp"
 
+#include <array>
+#include <cstdint>
 #include <functional>
 #include <limits>
 #include <memory>
@@ -148,6 +150,30 @@ private:
     /// Reused scratch storage for render() to avoid a heap allocation every frame
     std::vector<wrapper::core::QueueSemaphoreWait> m_scratch_render_wait_semaphores;
     std::vector<const wrapper::commands::CommandBuffer *> m_scratch_primary_batch_command_buffers;
+
+    enum class CpuPhase : std::size_t {
+        Housekeeping,
+        Acquire,
+        FrameContext,
+        Resources,
+        Descriptors,
+        Recording,
+        Submit,
+        Finalize,
+        Present,
+        Count,
+    };
+    static constexpr std::size_t cpu_phase_count = static_cast<std::size_t>(CpuPhase::Count);
+    using CpuPhaseDurations = std::array<std::uint64_t, cpu_phase_count>;
+    struct CpuFrameStats {
+        std::uint32_t frames{0};
+        std::uint64_t total_ns{0};
+        std::uint64_t max_frame_ns{0};
+        CpuPhaseDurations phase_total_ns{};
+        CpuPhaseDurations phase_max_ns{};
+    } m_cpu_frame_stats;
+
+    void record_cpu_frame_stats(const CpuPhaseDurations &durations);
 
     void defer_release(std::span<const VkFence> fences, std::function<void()> release);
 
