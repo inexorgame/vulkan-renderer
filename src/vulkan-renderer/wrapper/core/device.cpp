@@ -20,6 +20,7 @@
 
 #include <algorithm>
 #include <functional>
+#include <stdexcept>
 #include <string_view>
 #include <utility>
 
@@ -460,6 +461,57 @@ VkFence Device::submit_command_buffer(const CommandBuffer &command_buffer, const
                                       const std::span<const VkSemaphore> signal_semaphores) const {
     command_buffer.submit(queue_type, wait_semaphores, signal_semaphores);
     return command_buffer.submission_fence();
+}
+
+VkFence Device::submit_graphics_command_buffers(const std::span<const CommandBuffer *const> command_buffers,
+                                                const std::span<const QueueSemaphoreWait> wait_semaphores,
+                                                const std::span<const VkSemaphore> signal_semaphores) const {
+    if (command_buffers.empty()) {
+        throw std::invalid_argument("Cannot submit an empty command buffer batch");
+    }
+
+    std::vector<VkCommandBufferSubmitInfo> buffer_infos;
+    buffer_infos.reserve(command_buffers.size());
+    for (const auto *command_buffer : command_buffers) {
+        buffer_infos.push_back(tools::make_info<VkCommandBufferSubmitInfo>({
+            .commandBuffer = command_buffer->command_buffer(),
+        }));
+    }
+
+    std::vector<VkSemaphoreSubmitInfo> wait_infos;
+    wait_infos.reserve(wait_semaphores.size());
+    for (const auto &wait : wait_semaphores) {
+        wait_infos.push_back(tools::make_info<VkSemaphoreSubmitInfo>({
+            .semaphore = wait.semaphore,
+            .stageMask = wait.stage_mask,
+        }));
+    }
+
+    std::vector<VkSemaphoreSubmitInfo> signal_infos;
+    signal_infos.reserve(signal_semaphores.size());
+    for (const auto semaphore : signal_semaphores) {
+        signal_infos.push_back(tools::make_info<VkSemaphoreSubmitInfo>({
+            .semaphore = semaphore,
+            .stageMask = VK_PIPELINE_STAGE_2_ALL_GRAPHICS_BIT,
+        }));
+    }
+
+    const auto submit_info = tools::make_info<VkSubmitInfo2>({
+        .waitSemaphoreInfoCount = static_cast<std::uint32_t>(wait_infos.size()),
+        .pWaitSemaphoreInfos = wait_infos.empty() ? nullptr : wait_infos.data(),
+        .commandBufferInfoCount = static_cast<std::uint32_t>(buffer_infos.size()),
+        .pCommandBufferInfos = buffer_infos.data(),
+        .signalSemaphoreInfoCount = static_cast<std::uint32_t>(signal_infos.size()),
+        .pSignalSemaphoreInfos = signal_infos.empty() ? nullptr : signal_infos.data(),
+    });
+
+    const auto &last_command_buffer = *command_buffers.back();
+    if (const auto result = vkQueueSubmit2(m_graphics_queue, 1, &submit_info, last_command_buffer.submission_fence());
+        result != VK_SUCCESS) {
+        throw VulkanException("Error: vkQueueSubmit2 failed!", result, last_command_buffer.name());
+    }
+    last_command_buffer.m_has_been_submitted = true;
+    return last_command_buffer.submission_fence();
 }
 
 void Device::wait_for_submissions(const VkQueueFlagBits queue_type) const {

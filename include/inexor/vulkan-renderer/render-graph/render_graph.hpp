@@ -133,6 +133,8 @@ private:
     FrameSyncManager m_frame_sync_manager;
     std::size_t m_frame_slot_count{1};
     std::size_t m_current_frame_slot{0};
+    /// Batch fences outlive frame-context resets; each slot's primary buffers share its final buffer's fence.
+    std::vector<VkFence> m_primary_batch_fences;
 
     std::vector<PendingBufferCopy> m_scratch_pending_buffer_copies;
     std::vector<PendingTextureCopy> m_scratch_pending_texture_copies;
@@ -140,6 +142,7 @@ private:
     std::vector<VkFormat> m_scratch_color_attachment_formats;
     /// Reused scratch storage for render() to avoid a heap allocation every frame
     std::vector<wrapper::core::QueueSemaphoreWait> m_scratch_render_wait_semaphores;
+    std::vector<const wrapper::commands::CommandBuffer *> m_scratch_primary_batch_command_buffers;
 
     void defer_release(std::span<const VkFence> fences, std::function<void()> release);
 

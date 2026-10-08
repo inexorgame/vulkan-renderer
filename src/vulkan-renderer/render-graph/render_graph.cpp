@@ -18,6 +18,7 @@
 #include <cstdint>
 #include <cstring>
 #include <functional>
+#include <limits>
 #include <stdexcept>
 #include <utility>
 
@@ -656,6 +657,19 @@ void RenderGraph::render() {
     }
     m_swapchain_manager.synchronize_frame_context();
     synchronize_frame_context();
+    // Batched primaries do not have individual submission fences. Wait for the previous use of
+    // this slot even if a swapchain has been recreated and lost its own in-flight tracking.
+    if (!m_command_buffer_cache.uses_secondary_command_buffers() &&
+        m_current_frame_slot < m_primary_batch_fences.size()) {
+        const auto previous_fence = m_primary_batch_fences[m_current_frame_slot];
+        if (previous_fence != VK_NULL_HANDLE) {
+            if (const auto result = vkWaitForFences(m_device.device(), 1, &previous_fence, VK_TRUE,
+                                                    std::numeric_limits<std::uint64_t>::max());
+                result != VK_SUCCESS) {
+                throw tools::VulkanException("Error: waiting for batched graphics frame failed!", result);
+            }
+        }
+    }
     update_resources();
 
     auto &render_wait_semaphores = m_scratch_render_wait_semaphores;
@@ -750,13 +764,20 @@ void RenderGraph::render() {
         }
         frame_end_builder.end_debug_label_region().end_command_buffer();
 
-        // Queue submissions are externally synchronized and deliberately submitted in render-graph order.
-        m_device.submit_command_buffer(frame_start_command_buffer, VK_QUEUE_GRAPHICS_BIT, render_wait_semaphores);
-        for (const auto *command_buffer : primary_command_buffers) {
-            m_device.submit_command_buffer(*command_buffer, VK_QUEUE_GRAPHICS_BIT);
+        // Only the final buffer owns a submission fence. Acquiring the frame slot above protects all
+        // buffers in this batch from being rerecorded while a previous use is still in flight.
+        auto &batch = m_scratch_primary_batch_command_buffers;
+        batch.clear();
+        batch.reserve(primary_command_buffers.size() + 2);
+        batch.push_back(&frame_start_command_buffer);
+        batch.insert(batch.end(), primary_command_buffers.begin(), primary_command_buffers.end());
+        batch.push_back(&frame_end_command_buffer);
+        render_submit_fence = m_device.submit_graphics_command_buffers(
+            batch, render_wait_semaphores, m_swapchain_manager.rendering_finished_semaphores());
+        if (m_primary_batch_fences.size() <= m_current_frame_slot) {
+            m_primary_batch_fences.resize(m_current_frame_slot + 1, VK_NULL_HANDLE);
         }
-        render_submit_fence = m_device.submit_command_buffer(frame_end_command_buffer, VK_QUEUE_GRAPHICS_BIT, {},
-                                                             m_swapchain_manager.rendering_finished_semaphores());
+        m_primary_batch_fences[m_current_frame_slot] = render_submit_fence;
     } else {
         render_submit_fence = m_device.execute(
             VK_QUEUE_GRAPHICS_BIT, DebugLabelColor::CYAN,

@@ -307,6 +307,12 @@ public:
                                                 std::span<const QueueSemaphoreWait> wait_semaphores = {},
                                                 std::span<const VkSemaphore> signal_semaphores = {}) const;
 
+    /// Submit multiple graphics command buffers in order with one fence owned by the final command buffer.
+    /// Earlier buffers must not be reused until that fence has completed (e.g. via their frame slot).
+    [[nodiscard]] VkFence submit_graphics_command_buffers(std::span<const CommandBuffer *const> command_buffers,
+                                                          std::span<const QueueSemaphoreWait> wait_semaphores = {},
+                                                          std::span<const VkSemaphore> signal_semaphores = {}) const;
+
     /// Wait until all submitted command buffers in the current thread's pool for a queue type are complete.
     void wait_for_submissions(VkQueueFlagBits queue_type) const;
 
