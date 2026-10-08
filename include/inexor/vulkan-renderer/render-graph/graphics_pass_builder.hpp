@@ -40,6 +40,7 @@ class GraphicsPassBuilder {
 private:
     /// The command buffer recording function
     std::function<void(CommandBufferBuilder &)> m_on_record_cmd_buffer;
+    bool m_cache_secondary_command_buffer{false};
     /// The textures to which this graphics pass writes to
     std::vector<std::pair<std::weak_ptr<Texture>, std::optional<VkClearValue>>> m_texture_writes;
     /// The swapchains to which this graphics pass writes to
@@ -87,6 +88,11 @@ public:
     /// @param on_record_cmd_buffer The command buffer recording function
     /// @return A const reference to the this pointer (allowing method calls to be chained)
     [[nodiscard]] GraphicsPassBuilder &set_on_record(std::function<void(CommandBufferBuilder &)> on_record_cmd_buffer);
+
+    /// Reuse the recorded secondary command buffer for each frame slot until resources or render extent change.
+    /// Use only if changes to commands (including draw counts and push constants) trigger graph invalidation.
+    /// Dynamic passes must leave this disabled (the default).
+    [[nodiscard]] GraphicsPassBuilder &cache_secondary_command_buffer(bool enabled = true);
 
     /// Specify that this graphics pass writes to a buffer
     /// @brief buffer The buffer that is written to

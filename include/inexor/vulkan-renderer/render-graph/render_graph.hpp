@@ -26,6 +26,8 @@
 #include <variant>
 #include <vector>
 
+#include <taskflow/taskflow.hpp>
+
 namespace inexor::vulkan_renderer::wrapper::core {
 // Forward declaration
 class Device;
@@ -110,6 +112,7 @@ private:
 
     SwapchainManager m_swapchain_manager;
     CommandBufferCache m_command_buffer_cache;
+    tf::Executor m_taskflow_executor;
     std::unique_ptr<wrapper::queries::QueryPool> m_query_pool;
     bool m_query_pool_has_results{false};
     float m_timestamp_period{0.0f};
@@ -173,6 +176,8 @@ private:
     /// Refresh the per-frame swapchain attachment part of VkRenderingInfo for a graphics pass.
     /// @param pass The graphics pass
     void refresh_graphics_pass_swapchain_rendering_info(GraphicsPass &pass);
+
+    void prepare_graphics_pass_for_recording(GraphicsPass &pass);
 
     /// Record the command buffer of a pass. After a lot of discussions about the API design of rendergraph, we came to
     /// the conclusion that it's the full responsibility of the programmer to manually bind pipelines, descriptors sets,

@@ -112,6 +112,15 @@ FetchContent_Declare(tinygltf SYSTEM
     FIND_PACKAGE_ARGS 2.9.2
 )
 
+# Task-based parallelism library for command buffer recording
+FetchContent_Declare(taskflow SYSTEM
+    GIT_REPOSITORY https://github.com/taskflow/taskflow.git
+    GIT_TAG v3.10.0
+    GIT_SHALLOW ON
+    GIT_PROGRESS ON
+    FIND_PACKAGE_ARGS 3.10.0
+)
+
 # Library for TOML configuration files
 FetchContent_Declare(tomlplusplus SYSTEM
     GIT_REPOSITORY https://github.com/marzer/tomlplusplus.git

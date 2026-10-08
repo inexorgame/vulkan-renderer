@@ -40,6 +40,7 @@ CommandPool::CommandPool(CommandPool &&other) noexcept : m_device(other.m_device
     m_cmd_pool = std::exchange(other.m_cmd_pool, nullptr);
     m_queue_type = other.m_queue_type;
     m_cmd_bufs = std::move(other.m_cmd_bufs);
+    m_named_cmd_bufs = std::move(other.m_named_cmd_bufs);
     m_secondary_cmd_bufs = std::move(other.m_secondary_cmd_bufs);
     m_next_reuse_index = other.m_next_reuse_index;
     m_next_secondary_reuse_index = other.m_next_secondary_reuse_index;
@@ -86,6 +87,30 @@ const CommandBuffer &CommandPool::request_command_buffer(const std::string &name
     cmd_buf->begin_command_buffer();
     m_next_reuse_index = (m_next_reuse_index + 1) % m_cmd_bufs.size();
     return *cmd_buf;
+}
+
+const CommandBuffer &CommandPool::request_named_command_buffer(const std::string &name) {
+    auto it = m_named_cmd_bufs.find(name);
+    if (it == m_named_cmd_bufs.end()) {
+        const auto cmd_buffer_number = std::to_string(m_named_cmd_bufs.size());
+        const auto cmd_pool_name = get_pool_name(m_queue_type);
+        std::string cmd_buf_name = "[" + cmd_pool_name + "] Named Command Buffer " + cmd_buffer_number;
+        auto cmd_buf = std::make_unique<CommandBuffer>(m_device, m_cmd_pool, cmd_buf_name);
+        cmd_buf->set_debug_name(name);
+        it = m_named_cmd_bufs.emplace(name, std::move(cmd_buf)).first;
+        spdlog::trace("Creating named command buffer [type=primary, name={}, pool={}]", name, cmd_pool_name);
+    } else {
+        auto &cmd_buf = *it->second;
+        if (cmd_buf.was_submitted()) {
+            cmd_buf.wait_fence();
+            cmd_buf.reset_fence();
+        }
+        cmd_buf.set_debug_name(name);
+        cmd_buf.reset();
+    }
+
+    it->second->begin_command_buffer();
+    return *it->second;
 }
 
 const CommandBuffer &CommandPool::request_secondary_command_buffer(const std::string &name) {

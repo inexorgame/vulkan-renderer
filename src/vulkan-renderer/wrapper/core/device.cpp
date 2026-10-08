@@ -446,9 +446,20 @@ const CommandBuffer &Device::request_command_buffer(const VkQueueFlagBits queue_
     return get_thread_command_pool(queue_type).request_command_buffer(name);
 }
 
+const CommandBuffer &Device::request_named_command_buffer(const VkQueueFlagBits queue_type, const std::string &name) {
+    return get_thread_command_pool(queue_type).request_named_command_buffer(name);
+}
+
 const CommandBuffer &Device::request_secondary_command_buffer(const VkQueueFlagBits queue_type,
                                                               const std::string &name) {
     return get_thread_command_pool(queue_type).request_secondary_command_buffer(name);
+}
+
+VkFence Device::submit_command_buffer(const CommandBuffer &command_buffer, const VkQueueFlagBits queue_type,
+                                      const std::span<const QueueSemaphoreWait> wait_semaphores,
+                                      const std::span<const VkSemaphore> signal_semaphores) const {
+    command_buffer.submit(queue_type, wait_semaphores, signal_semaphores);
+    return command_buffer.submission_fence();
 }
 
 void Device::wait_for_submissions(const VkQueueFlagBits queue_type) const {

@@ -75,8 +75,6 @@ void RenderGraph::synchronize_frame_context() {
     m_command_buffer_cache.set_frame_context(m_frame_slot_count, m_current_frame_slot,
                                              m_frame_sync_manager.frame_slot_submission_fences());
 
-    invalidate_graphics_pass_secondary_cmd_buffers();
-
     m_buffer_copy_batch_builder.reset();
     m_texture_copy_batch_builder.reset();
 
@@ -620,13 +618,17 @@ void RenderGraph::refresh_graphics_pass_swapchain_rendering_info(GraphicsPass &p
     });
 }
 
-void RenderGraph::record_command_buffer_for_pass(const CommandBuffer &cmd_buf, GraphicsPass &pass) {
+void RenderGraph::prepare_graphics_pass_for_recording(GraphicsPass &pass) {
     if (pass.m_rendering_info_dirty) {
         rebuild_graphics_pass_texture_rendering_info(pass);
     }
     if (!pass.m_swapchain_writes.empty()) {
         refresh_graphics_pass_swapchain_rendering_info(pass);
     }
+}
+
+void RenderGraph::record_command_buffer_for_pass(const CommandBuffer &cmd_buf, GraphicsPass &pass) {
+    prepare_graphics_pass_for_recording(pass);
 
     const auto inheritance_rendering_info = make_info<VkCommandBufferInheritanceRenderingInfo>({
         .colorAttachmentCount = static_cast<std::uint32_t>(pass.m_cached_color_attachment_formats.size()),
@@ -681,32 +683,140 @@ void RenderGraph::render() {
             invalidate_graphics_pass_secondary_cmd_buffers();
         }
     }
+    bool cached_recording_invalidated = false;
+    for (const auto &pass : m_graphics_passes) {
+        if (pass->m_cached_recording_invalidated) {
+            cached_recording_invalidated = true;
+            pass->m_cached_recording_invalidated = false;
+        }
+    }
+    if (cached_recording_invalidated) {
+        invalidate_graphics_pass_secondary_cmd_buffers();
+    }
 
-    const auto render_submit_fence = m_device.execute(
-        VK_QUEUE_GRAPHICS_BIT, DebugLabelColor::CYAN,
-        [&](CommandBufferBuilder &builder) {
-            if (m_query_pool) {
-                builder.reset_query_pool(*m_query_pool)
-                    .write_timestamp(*m_query_pool, 0, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT);
-            }
-            if (m_inline_update_commands) {
-                builder.invoke(m_inline_update_commands);
-            }
-            // Acquire ownership of any buffers/images that were uploaded on a transfer queue whose family differs
-            // from the graphics queue family, before they are read by any pass below.
-            m_pending_queue_ownership_acquire_barriers.flush_if_not_empty(builder);
+    VkFence render_submit_fence = VK_NULL_HANDLE;
+    if (!m_command_buffer_cache.uses_secondary_command_buffers()) {
+        const auto frame_slot_suffix = "[slot " + std::to_string(m_current_frame_slot) + "]";
+        const auto &frame_start_command_buffer = m_device.request_named_command_buffer(
+            VK_QUEUE_GRAPHICS_BIT, "render_graph_frame_start" + frame_slot_suffix);
+        CommandBufferBuilder frame_start_builder(frame_start_command_buffer);
+        frame_start_builder.begin_debug_label_region("RenderGraph frame start",
+                                                     wrapper::core::get_debug_label_color(DebugLabelColor::CYAN));
+        if (m_query_pool) {
+            frame_start_builder.reset_query_pool(*m_query_pool)
+                .write_timestamp(*m_query_pool, 0, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT);
+        }
+        if (m_inline_update_commands) {
+            frame_start_builder.invoke(m_inline_update_commands);
+        }
+        // Acquire ownership of resources uploaded on a transfer queue before recording any pass that reads them.
+        m_pending_queue_ownership_acquire_barriers.flush_if_not_empty(frame_start_builder);
+        m_swapchain_manager.prepare_swapchains_for_rendering(frame_start_builder);
+        frame_start_builder.end_debug_label_region().end_command_buffer();
 
-            m_swapchain_manager.prepare_swapchains_for_rendering(builder);
-            for (const auto &pass : m_graphics_passes) {
-                record_command_buffer_for_pass(builder.command_buffer(), *pass);
-            }
+        for (const auto &pass : m_graphics_passes) {
+            prepare_graphics_pass_for_recording(*pass);
+        }
 
-            m_swapchain_manager.prepare_swapchains_for_presenting(builder);
-            if (m_query_pool) {
-                builder.write_timestamp(*m_query_pool, 1, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT);
-            }
-        },
-        render_wait_semaphores, m_swapchain_manager.rendering_finished_semaphores());
+        std::vector<const wrapper::commands::CommandBuffer *> primary_command_buffers(m_graphics_passes.size(),
+                                                                                      nullptr);
+        tf::Taskflow recording_tasks;
+        for (std::size_t i = 0; i < m_graphics_passes.size(); ++i) {
+            const auto *pass = m_graphics_passes[i].get();
+            recording_tasks.emplace([this, pass, &primary_command_buffers, frame_slot_suffix, i] {
+                const auto command_buffer_name = "render_graph_pass[" + std::to_string(i) + "]" + frame_slot_suffix;
+                const auto &command_buffer =
+                    m_device.request_named_command_buffer(VK_QUEUE_GRAPHICS_BIT, command_buffer_name);
+                CommandBufferBuilder builder(command_buffer);
+                builder.begin_debug_label_region(pass->m_name, pass->m_debug_label_color)
+                    .begin_rendering(pass->m_rendering_info)
+                    .invoke(pass->m_on_record_cmd_buffer)
+                    .end_rendering()
+                    .end_debug_label_region()
+                    .end_command_buffer();
+                primary_command_buffers[i] = &command_buffer;
+            });
+        }
+        m_taskflow_executor.run(recording_tasks).get();
+
+        const auto &frame_end_command_buffer =
+            m_device.request_named_command_buffer(VK_QUEUE_GRAPHICS_BIT, "render_graph_frame_end" + frame_slot_suffix);
+        CommandBufferBuilder frame_end_builder(frame_end_command_buffer);
+        frame_end_builder.begin_debug_label_region("RenderGraph frame end",
+                                                   wrapper::core::get_debug_label_color(DebugLabelColor::CYAN));
+        m_swapchain_manager.prepare_swapchains_for_presenting(frame_end_builder);
+        if (m_query_pool) {
+            frame_end_builder.write_timestamp(*m_query_pool, 1, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT);
+        }
+        frame_end_builder.end_debug_label_region().end_command_buffer();
+
+        // Queue submissions are externally synchronized and deliberately submitted in render-graph order.
+        m_device.submit_command_buffer(frame_start_command_buffer, VK_QUEUE_GRAPHICS_BIT, render_wait_semaphores);
+        for (const auto *command_buffer : primary_command_buffers) {
+            m_device.submit_command_buffer(*command_buffer, VK_QUEUE_GRAPHICS_BIT);
+        }
+        render_submit_fence = m_device.submit_command_buffer(frame_end_command_buffer, VK_QUEUE_GRAPHICS_BIT, {},
+                                                             m_swapchain_manager.rendering_finished_semaphores());
+    } else {
+        render_submit_fence = m_device.execute(
+            VK_QUEUE_GRAPHICS_BIT, DebugLabelColor::CYAN,
+            [&](CommandBufferBuilder &builder) {
+                if (m_query_pool) {
+                    builder.reset_query_pool(*m_query_pool)
+                        .write_timestamp(*m_query_pool, 0, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT);
+                }
+                if (m_inline_update_commands) {
+                    builder.invoke(m_inline_update_commands);
+                }
+                // Acquire ownership of any buffers/images that were uploaded on a transfer queue whose family differs
+                // from the graphics queue family, before they are read by any pass below.
+                m_pending_queue_ownership_acquire_barriers.flush_if_not_empty(builder);
+
+                m_swapchain_manager.prepare_swapchains_for_rendering(builder);
+                for (const auto &pass : m_graphics_passes) {
+                    prepare_graphics_pass_for_recording(*pass);
+                }
+
+                std::vector<VkCommandBuffer> secondary_command_buffers(m_graphics_passes.size(), VK_NULL_HANDLE);
+                tf::Taskflow recording_tasks;
+                for (std::size_t i = 0; i < m_graphics_passes.size(); ++i) {
+                    const auto *pass = m_graphics_passes[i].get();
+                    recording_tasks.emplace([this, pass, &secondary_command_buffers, i] {
+                        const auto inheritance_rendering_info = make_info<VkCommandBufferInheritanceRenderingInfo>({
+                            .colorAttachmentCount =
+                                static_cast<std::uint32_t>(pass->m_cached_color_attachment_formats.size()),
+                            .pColorAttachmentFormats = pass->m_cached_color_attachment_formats.empty()
+                                                           ? nullptr
+                                                           : pass->m_cached_color_attachment_formats.data(),
+                            .depthAttachmentFormat = pass->m_cached_depth_attachment_format,
+                            .stencilAttachmentFormat = pass->m_cached_stencil_attachment_format,
+                            .rasterizationSamples = pass->m_cached_sample_count,
+                        });
+                        const auto inheritance_info = make_info<VkCommandBufferInheritanceInfo>({
+                            .pNext = &inheritance_rendering_info,
+                        });
+
+                        secondary_command_buffers[i] = m_command_buffer_cache.record_secondary_command_buffer(
+                            pass->m_name, pass->m_cached_render_extent, inheritance_info, pass->m_on_record_cmd_buffer,
+                            pass->m_cache_secondary_command_buffer);
+                    });
+                }
+                m_taskflow_executor.run(recording_tasks).get();
+
+                for (std::size_t i = 0; i < m_graphics_passes.size(); ++i) {
+                    const auto &pass = *m_graphics_passes[i];
+                    m_command_buffer_cache.execute_secondary_command_buffer(
+                        builder.command_buffer(), pass.m_name, pass.m_debug_label_color, pass.m_rendering_info,
+                        secondary_command_buffers[i]);
+                }
+
+                m_swapchain_manager.prepare_swapchains_for_presenting(builder);
+                if (m_query_pool) {
+                    builder.write_timestamp(*m_query_pool, 1, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT);
+                }
+            },
+            render_wait_semaphores, m_swapchain_manager.rendering_finished_semaphores());
+    }
 
     if (m_query_pool) {
         m_query_pool_has_results = true;

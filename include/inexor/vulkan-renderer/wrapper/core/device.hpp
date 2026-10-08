@@ -290,6 +290,10 @@ public:
     /// @return A command buffer from the thread_local command pool.
     [[nodiscard]] const CommandBuffer &request_command_buffer(VkQueueFlagBits queue_type, const std::string &name);
 
+    /// Request a stable, name-keyed primary command buffer from the current thread's command pool.
+    [[nodiscard]] const CommandBuffer &request_named_command_buffer(VkQueueFlagBits queue_type,
+                                                                    const std::string &name);
+
     /// Request a secondary command buffer from the thread_local command pool.
     /// @param queue_type The Vulkan queue type which is required because a command pool is created with a queue family
     /// index associated with it.
@@ -297,6 +301,11 @@ public:
     /// @return A secondary command buffer from the thread_local command pool.
     [[nodiscard]] const CommandBuffer &request_secondary_command_buffer(VkQueueFlagBits queue_type,
                                                                         const std::string &name);
+
+    /// Submit a previously recorded command buffer and return its submission fence.
+    [[nodiscard]] VkFence submit_command_buffer(const CommandBuffer &command_buffer, VkQueueFlagBits queue_type,
+                                                std::span<const QueueSemaphoreWait> wait_semaphores = {},
+                                                std::span<const VkSemaphore> signal_semaphores = {}) const;
 
     /// Wait until all submitted command buffers in the current thread's pool for a queue type are complete.
     void wait_for_submissions(VkQueueFlagBits queue_type) const;

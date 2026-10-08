@@ -4,6 +4,7 @@
 
 #include <memory>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 namespace inexor::vulkan_renderer::wrapper::core {
@@ -26,6 +27,8 @@ class CommandPool {
     VkQueueFlagBits m_queue_type;
     /// The command buffers which can be requested by the current thread
     std::vector<std::unique_ptr<CommandBuffer>> m_cmd_bufs;
+    /// Stable, name-keyed primary command buffers for independently submitted render passes.
+    std::unordered_map<std::string, std::unique_ptr<CommandBuffer>> m_named_cmd_bufs;
     /// The secondary command buffers which can be requested by the current thread
     std::vector<CommandBuffer> m_secondary_cmd_bufs;
     /// Ring cursor used when all command buffers are currently in-flight.
@@ -61,6 +64,9 @@ public:
     /// @param name The internal debug name which will be assigned to this command buffer (must not be empty)
     /// @return A command buffer handle instance which allows access to the requested command buffer
     [[nodiscard]] const CommandBuffer &request_command_buffer(const std::string &name);
+
+    /// Request a reusable primary command buffer identified by name.
+    [[nodiscard]] const CommandBuffer &request_named_command_buffer(const std::string &name);
 
     /// Request a secondary command buffer
     /// @param name The internal debug name which will be assigned to this command buffer (must not be empty)

@@ -161,6 +161,17 @@ FetchContent_MakeAvailable(glfw)
 FetchContent_MakeAvailable(glm)
 FetchContent_MakeAvailable(SPIRVReflect)
 FetchContent_MakeAvailable(tinygltf)
+
+    set(_INEXOR_PREVIOUS_CMAKE_FOLDER "${CMAKE_FOLDER}")
+    set(CMAKE_FOLDER "Dependencies")
+    FetchContent_MakeAvailable(taskflow)
+    if(DEFINED _INEXOR_PREVIOUS_CMAKE_FOLDER)
+        set(CMAKE_FOLDER "${_INEXOR_PREVIOUS_CMAKE_FOLDER}")
+    else()
+        unset(CMAKE_FOLDER)
+    endif()
+    unset(_INEXOR_PREVIOUS_CMAKE_FOLDER)
+
 FetchContent_MakeAvailable(imgui)
 add_library(imgui
     ${imgui_SOURCE_DIR}/imgui.cpp
@@ -178,6 +189,7 @@ target_link_libraries(inexor-vulkan-renderer-core-lib PUBLIC
     imgui
     spdlog::spdlog_header_only
     spirv-reflect-static
+    Taskflow::Taskflow
     tinygltf
     tomlplusplus::tomlplusplus
     volk::volk

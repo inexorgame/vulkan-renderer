@@ -19,6 +19,7 @@ GraphicsPassBuilder::GraphicsPassBuilder() {
 
 GraphicsPassBuilder::GraphicsPassBuilder(GraphicsPassBuilder &&other) noexcept {
     m_on_record_cmd_buffer = std::move(other.m_on_record_cmd_buffer);
+    m_cache_secondary_command_buffer = other.m_cache_secondary_command_buffer;
     m_swapchain_writes = std::move(other.m_swapchain_writes);
     m_texture_writes = std::move(other.m_texture_writes);
     m_buffer_reads = std::move(other.m_buffer_reads);
@@ -29,6 +30,7 @@ std::shared_ptr<GraphicsPass> GraphicsPassBuilder::build(std::string name, const
     auto graphics_pass =
         std::make_shared<GraphicsPass>(std::move(name), std::move(m_on_record_cmd_buffer), std::move(m_buffer_reads),
                                        std::move(m_texture_writes), std::move(m_swapchain_writes), pass_debug_color);
+    graphics_pass->m_cache_secondary_command_buffer = m_cache_secondary_command_buffer;
     // NOTE: We could use RAII here to bind the call of reset() to some destructor call like a scope guard pattern does.
     reset();
     return graphics_pass;
@@ -56,6 +58,7 @@ GraphicsPassBuilder &GraphicsPassBuilder::reads_from(std::weak_ptr<Buffer> buffe
 
 void GraphicsPassBuilder::reset() {
     m_on_record_cmd_buffer = {};
+    m_cache_secondary_command_buffer = false;
     m_swapchain_writes.clear();
     m_texture_writes.clear();
     m_buffer_reads.clear();
@@ -65,6 +68,11 @@ void GraphicsPassBuilder::reset() {
 GraphicsPassBuilder &
 GraphicsPassBuilder::set_on_record(std::function<void(CommandBufferBuilder &)> on_record_cmd_buffer) {
     m_on_record_cmd_buffer = std::move(on_record_cmd_buffer);
+    return *this;
+}
+
+GraphicsPassBuilder &GraphicsPassBuilder::cache_secondary_command_buffer(const bool enabled) {
+    m_cache_secondary_command_buffer = enabled;
     return *this;
 }
 

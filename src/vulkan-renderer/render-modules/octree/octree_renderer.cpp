@@ -1,6 +1,7 @@
 #include "inexor/vulkan-renderer/render-modules/octree/octree_renderer.hpp"
 
 #include "inexor/vulkan-renderer/render-graph/buffer.hpp"
+#include "inexor/vulkan-renderer/render-graph/graphics_pass.hpp"
 #include "inexor/vulkan-renderer/render-graph/render_graph.hpp"
 #include "inexor/vulkan-renderer/render-graph/render_module.hpp"
 #include "inexor/vulkan-renderer/render-graph/texture.hpp"
@@ -148,6 +149,7 @@ OctreeRenderer::OctreeRenderer(std::shared_ptr<RenderGraph> render_graph, std::w
             .reads_from(m_vertex_buffer)
             .writes_to(m_index_buffer)
             .reads_from(m_index_buffer)
+            .cache_secondary_command_buffer()
             .set_on_record([&](CommandBufferBuilder &cmd_buf) {
                 const auto vertex_buffer = m_vertex_buffer.lock();
                 const auto index_buffer = m_index_buffer.lock();
@@ -183,6 +185,10 @@ void OctreeRenderer::set_vertices_and_indices(std::vector<OctreeVertex> vertices
     m_octree_vertices = std::move(vertices);
     m_octree_indices = std::move(indices);
     m_geometry_updated = true;
+    // Empty geometry does not trigger a buffer upload; invalidate the recorded draw even in that case.
+    if (const auto pass = m_octree_pass.lock()) {
+        pass->invalidate_cached_recording();
+    }
 }
 
 } // namespace inexor::vulkan_renderer::render_modules::octree

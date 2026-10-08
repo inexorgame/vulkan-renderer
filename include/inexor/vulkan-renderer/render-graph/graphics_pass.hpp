@@ -45,14 +45,18 @@ using wrapper::swapchains::Swapchain;
 /// A wrapper for graphics passes inside of rendergraph
 class GraphicsPass {
 private:
-    // Onyl rendergraph and swapchain management code are allowed to access the rendering info and related data
+    // Only rendergraph and swapchain management code are allowed to access the rendering info and related data
     friend class RenderGraph;
     friend class SwapchainManager;
+    friend class GraphicsPassBuilder;
 
     /// The name of the graphics pass
     std::string m_name;
     /// The command buffer recording function of the graphics pass
     std::function<void(CommandBufferBuilder &)> m_on_record_cmd_buffer{[](auto &) {}};
+    /// Only static recording callbacks may reuse secondary command buffers across frames.
+    bool m_cache_secondary_command_buffer{false};
+    bool m_cached_recording_invalidated{false};
     /// The descriptor set layout of the pass (this will be created by rendergraph)
     std::unique_ptr<DescriptorSetLayout> m_descriptor_set_layout;
     /// The descriptor set of the pass (this will be created by rendergraph)
@@ -132,6 +136,11 @@ public:
     GraphicsPass(const GraphicsPass &) = delete;
     GraphicsPass(GraphicsPass &&other) noexcept;
     ~GraphicsPass();
+
+    /// Request rerecording when a cached pass's draw commands change without replacing GPU resources.
+    void invalidate_cached_recording() {
+        m_cached_recording_invalidated = true;
+    }
 
     GraphicsPass &operator=(const GraphicsPass &) = delete;
     GraphicsPass &operator=(GraphicsPass &&) = delete;
