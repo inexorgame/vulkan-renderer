@@ -13,6 +13,7 @@
 
 #include <algorithm>
 #include <cassert>
+#include <chrono>
 #include <utility>
 
 namespace inexor::vulkan_renderer::wrapper::swapchains {
@@ -22,6 +23,13 @@ using tools::InexorException;
 using tools::make_info;
 using tools::VulkanException;
 using wrapper::commands::CommandBufferBuilder;
+
+namespace {
+std::uint64_t elapsed_ns(const std::chrono::steady_clock::time_point start) {
+    return static_cast<std::uint64_t>(
+        std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now() - start).count());
+}
+} // namespace
 
 Swapchain::Swapchain(const core::Device &device, std::string name, const VkSurfaceKHR surface)
     : m_device(device), m_name(std::move(name)), m_surface(surface) {
@@ -53,6 +61,25 @@ VkResult Swapchain::acquire_next_image() {
 
     const auto slot_count = static_cast<std::uint32_t>(m_img_available.size());
     auto selected_slot = m_frame_index % slot_count;
+    constexpr std::uint32_t inflight_log_interval = 1024;
+    const bool collect_stats = spdlog::get_level() <= spdlog::level::debug;
+    const bool log_inflight = ++m_inflight_stats.acquires >= inflight_log_interval;
+    std::uint32_t pending_slots = 0;
+    if (collect_stats) {
+        // Sample every acquire so the interval maximum is not just the value at the log instant.
+        for (const auto fence : m_frame_slot_submission_fences) {
+            if (fence == VK_NULL_HANDLE) {
+                continue;
+            }
+            const auto status = vkGetFenceStatus(m_device.device(), fence);
+            if (status == VK_NOT_READY) {
+                ++pending_slots;
+            } else if (status != VK_SUCCESS) {
+                throw VulkanException("Error: vkGetFenceStatus failed!", status, m_name);
+            }
+        }
+        m_inflight_stats.max_pending_slots = std::max(m_inflight_stats.max_pending_slots, pending_slots);
+    }
 
     if (!m_frame_slot_submission_fences.empty()) {
         bool found_ready_slot = false;
@@ -78,12 +105,20 @@ VkResult Swapchain::acquire_next_image() {
         }
 
         if (!found_ready_slot) {
+            ++m_inflight_stats.slot_wait_calls;
             auto &slot_fence = m_frame_slot_submission_fences[selected_slot];
             if (slot_fence != VK_NULL_HANDLE) {
+                const auto wait_start = collect_stats ? std::chrono::steady_clock::now()
+                                                      : std::chrono::steady_clock::time_point{};
                 if (const auto result = vkWaitForFences(m_device.device(), 1, &slot_fence, VK_TRUE,
                                                         std::numeric_limits<std::uint64_t>::max());
                     result != VK_SUCCESS) {
                     throw VulkanException("Error: vkWaitForFences failed!", result, m_name);
+                }
+                if (collect_stats) {
+                    const auto duration = elapsed_ns(wait_start);
+                    m_inflight_stats.slot_wait_total_ns += duration;
+                    m_inflight_stats.slot_wait_max_ns = std::max(m_inflight_stats.slot_wait_max_ns, duration);
                 }
                 slot_fence = VK_NULL_HANDLE;
             }
@@ -92,9 +127,16 @@ VkResult Swapchain::acquire_next_image() {
 
     m_current_frame_slot = selected_slot;
 
+    const auto acquire_start = collect_stats ? std::chrono::steady_clock::now()
+                                             : std::chrono::steady_clock::time_point{};
     const auto result =
         vkAcquireNextImageKHR(m_device.device(), m_swapchain, std::numeric_limits<std::uint64_t>::max(),
                               m_img_available[m_current_frame_slot]->semaphore(), VK_NULL_HANDLE, &m_current_img_index);
+    if (collect_stats) {
+        const auto duration = elapsed_ns(acquire_start);
+        m_inflight_stats.acquire_total_ns += duration;
+        m_inflight_stats.acquire_max_ns = std::max(m_inflight_stats.acquire_max_ns, duration);
+    }
     if (result == VK_ERROR_OUT_OF_DATE_KHR) {
         setup_swapchain(m_current_extent, m_vsync_enabled);
         // NOTE: After recreating the swapchain, we can't immediately attempt to acquire the next image index!
@@ -111,6 +153,25 @@ VkResult Swapchain::acquire_next_image() {
     // Store the current swapchain image and current swapchain image view!
     m_current_swapchain_img = m_imgs[m_current_img_index];
     m_current_swapchain_img_view = m_img_views[m_current_img_index];
+    if (log_inflight) {
+        if (collect_stats) {
+            const auto average_us = [](const std::uint64_t total_ns, const std::uint32_t count) {
+                return count == 0 ? 0.0 : static_cast<double>(total_ns) / (1000.0 * count);
+            };
+            spdlog::debug("Swapchain '{}' frames in flight ({} acquires): pending now={}/{}, max={}/{}, "
+                          "slot={}, image={}, slot waits={} total={:.2f}us max={:.2f}us, "
+                          "acquire avg={:.2f}us max={:.2f}us, present avg={:.2f}us max={:.2f}us ({} presents)",
+                          m_name, m_inflight_stats.acquires, pending_slots, slot_count,
+                          m_inflight_stats.max_pending_slots, slot_count, m_current_frame_slot, m_current_img_index,
+                          m_inflight_stats.slot_wait_calls, m_inflight_stats.slot_wait_total_ns / 1000.0,
+                          m_inflight_stats.slot_wait_max_ns / 1000.0,
+                          average_us(m_inflight_stats.acquire_total_ns, m_inflight_stats.acquires),
+                          m_inflight_stats.acquire_max_ns / 1000.0,
+                          average_us(m_inflight_stats.present_total_ns, m_inflight_stats.presents),
+                          m_inflight_stats.present_max_ns / 1000.0, m_inflight_stats.presents);
+        }
+        m_inflight_stats = {};
+    }
     return VK_SUCCESS;
 }
 
@@ -174,7 +235,17 @@ void Swapchain::present(const std::span<const VkSemaphore> rendering_finished) {
         .pSwapchains = &m_swapchain,
         .pImageIndices = &m_current_img_index,
     });
-    if (const auto result = vkQueuePresentKHR(m_device.graphics_queue(), &present_info); result != VK_SUCCESS) {
+    const bool collect_stats = spdlog::get_level() <= spdlog::level::debug;
+    const auto present_start = collect_stats ? std::chrono::steady_clock::now()
+                                             : std::chrono::steady_clock::time_point{};
+    const auto result = vkQueuePresentKHR(m_device.graphics_queue(), &present_info);
+    if (collect_stats) {
+        const auto duration = elapsed_ns(present_start);
+        ++m_inflight_stats.presents;
+        m_inflight_stats.present_total_ns += duration;
+        m_inflight_stats.present_max_ns = std::max(m_inflight_stats.present_max_ns, duration);
+    }
+    if (result != VK_SUCCESS) {
         if (result == VK_SUBOPTIMAL_KHR || result == VK_ERROR_OUT_OF_DATE_KHR) {
             // We need to recreate the swapchain
             setup_swapchain(m_current_extent, m_vsync_enabled);
@@ -268,6 +339,7 @@ void Swapchain::setup_swapchain(const VkExtent2D requested_extent, const bool vs
     m_frame_slot_submission_fences.assign(m_imgs.size(), VK_NULL_HANDLE);
     m_current_frame_slot = 0;
     m_frame_index = 0;
+    m_inflight_stats = {};
 
     spdlog::trace("Creating {} swapchain image views", m_imgs.size());
 

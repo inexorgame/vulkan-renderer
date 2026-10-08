@@ -57,6 +57,18 @@ private:
     [[nodiscard]] std::vector<VkImage> get_swapchain_images();
 
     std::uint32_t m_frame_index{0};
+    struct InFlightStats {
+        std::uint32_t acquires{0};
+        std::uint32_t presents{0};
+        std::uint32_t slot_wait_calls{0};
+        std::uint32_t max_pending_slots{0};
+        std::uint64_t slot_wait_total_ns{0};
+        std::uint64_t slot_wait_max_ns{0};
+        std::uint64_t acquire_total_ns{0};
+        std::uint64_t acquire_max_ns{0};
+        std::uint64_t present_total_ns{0};
+        std::uint64_t present_max_ns{0};
+    } m_inflight_stats;
 
 public:
     /// Default constructor
