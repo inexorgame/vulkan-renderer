@@ -143,6 +143,7 @@ std::weak_ptr<GraphicsPass> RenderGraph::add_graphics_pass(OnBuildGraphicsPass o
     // Invoke the graphics pipeline create lambda, insert the shared pointer into vector, and return weak pointer
     // This memory ownership models dictates that graphics passes are owned by rendergraph and not by external code!
     m_swapchain_manager.mark_swapchain_cache_dirty();
+    m_recording_tasks_dirty = true;
     return m_graphics_passes.emplace_back(std::move(on_build_graphics_pass(m_graphics_pass_builder)));
 }
 
@@ -266,11 +267,52 @@ void RenderGraph::check_for_cycles() {
 void RenderGraph::compile() {
     check_for_cycles();
     sort_graphics_passes_by_order();
+    rebuild_recording_tasks();
     synchronize_frame_context();
     build_texture_graphics_pass_dependencies();
     create_graphics_pipelines();
     log_render_graph_overview();
     invalidate_graphics_pass_secondary_cmd_buffers();
+}
+
+void RenderGraph::rebuild_recording_tasks() {
+    m_recording_tasks.clear();
+    for (std::size_t i = 0; i < m_graphics_passes.size(); ++i) {
+        m_recording_tasks.emplace([this, i] {
+            const auto &pass = *m_graphics_passes[i];
+            if (!m_command_buffer_cache.uses_secondary_command_buffers()) {
+                const auto command_buffer_name = "render_graph_pass[" + std::to_string(i) + "]" + m_frame_slot_suffix;
+                const auto &command_buffer =
+                    m_device.request_named_command_buffer(VK_QUEUE_GRAPHICS_BIT, command_buffer_name);
+                CommandBufferBuilder builder(command_buffer);
+                builder.begin_debug_label_region(pass.m_name, pass.m_debug_label_color)
+                    .begin_rendering(pass.m_rendering_info)
+                    .invoke(pass.m_on_record_cmd_buffer)
+                    .end_rendering()
+                    .end_debug_label_region()
+                    .end_command_buffer();
+                m_scratch_primary_command_buffers[i] = &command_buffer;
+                return;
+            }
+
+            const auto inheritance_rendering_info = make_info<VkCommandBufferInheritanceRenderingInfo>({
+                .colorAttachmentCount = static_cast<std::uint32_t>(pass.m_cached_color_attachment_formats.size()),
+                .pColorAttachmentFormats = pass.m_cached_color_attachment_formats.empty()
+                                               ? nullptr
+                                               : pass.m_cached_color_attachment_formats.data(),
+                .depthAttachmentFormat = pass.m_cached_depth_attachment_format,
+                .stencilAttachmentFormat = pass.m_cached_stencil_attachment_format,
+                .rasterizationSamples = pass.m_cached_sample_count,
+            });
+            const auto inheritance_info = make_info<VkCommandBufferInheritanceInfo>({
+                .pNext = &inheritance_rendering_info,
+            });
+            m_scratch_secondary_command_buffers[i] = m_command_buffer_cache.record_secondary_command_buffer(
+                pass.m_name, pass.m_cached_render_extent, inheritance_info, pass.m_on_record_cmd_buffer,
+                pass.m_cache_secondary_command_buffer);
+        });
+    }
+    m_recording_tasks_dirty = false;
 }
 
 void RenderGraph::build_texture_graphics_pass_dependencies() {
@@ -708,11 +750,15 @@ void RenderGraph::render() {
         invalidate_graphics_pass_secondary_cmd_buffers();
     }
 
+    if (m_recording_tasks_dirty) {
+        rebuild_recording_tasks();
+    }
+
     VkFence render_submit_fence = VK_NULL_HANDLE;
     if (!m_command_buffer_cache.uses_secondary_command_buffers()) {
-        const auto frame_slot_suffix = "[slot " + std::to_string(m_current_frame_slot) + "]";
+        m_frame_slot_suffix = "[slot " + std::to_string(m_current_frame_slot) + "]";
         const auto &frame_start_command_buffer = m_device.request_named_command_buffer(
-            VK_QUEUE_GRAPHICS_BIT, "render_graph_frame_start" + frame_slot_suffix);
+            VK_QUEUE_GRAPHICS_BIT, "render_graph_frame_start" + m_frame_slot_suffix);
         CommandBufferBuilder frame_start_builder(frame_start_command_buffer);
         frame_start_builder.begin_debug_label_region("RenderGraph frame start",
                                                      wrapper::core::get_debug_label_color(DebugLabelColor::CYAN));
@@ -732,29 +778,11 @@ void RenderGraph::render() {
             prepare_graphics_pass_for_recording(*pass);
         }
 
-        std::vector<const wrapper::commands::CommandBuffer *> primary_command_buffers(m_graphics_passes.size(),
-                                                                                      nullptr);
-        tf::Taskflow recording_tasks;
-        for (std::size_t i = 0; i < m_graphics_passes.size(); ++i) {
-            const auto *pass = m_graphics_passes[i].get();
-            recording_tasks.emplace([this, pass, &primary_command_buffers, frame_slot_suffix, i] {
-                const auto command_buffer_name = "render_graph_pass[" + std::to_string(i) + "]" + frame_slot_suffix;
-                const auto &command_buffer =
-                    m_device.request_named_command_buffer(VK_QUEUE_GRAPHICS_BIT, command_buffer_name);
-                CommandBufferBuilder builder(command_buffer);
-                builder.begin_debug_label_region(pass->m_name, pass->m_debug_label_color)
-                    .begin_rendering(pass->m_rendering_info)
-                    .invoke(pass->m_on_record_cmd_buffer)
-                    .end_rendering()
-                    .end_debug_label_region()
-                    .end_command_buffer();
-                primary_command_buffers[i] = &command_buffer;
-            });
-        }
-        m_taskflow_executor.run(recording_tasks).get();
+        m_scratch_primary_command_buffers.resize(m_graphics_passes.size());
+        m_taskflow_executor.run(m_recording_tasks).get();
 
-        const auto &frame_end_command_buffer =
-            m_device.request_named_command_buffer(VK_QUEUE_GRAPHICS_BIT, "render_graph_frame_end" + frame_slot_suffix);
+        const auto &frame_end_command_buffer = m_device.request_named_command_buffer(
+            VK_QUEUE_GRAPHICS_BIT, "render_graph_frame_end" + m_frame_slot_suffix);
         CommandBufferBuilder frame_end_builder(frame_end_command_buffer);
         frame_end_builder.begin_debug_label_region("RenderGraph frame end",
                                                    wrapper::core::get_debug_label_color(DebugLabelColor::CYAN));
@@ -768,9 +796,9 @@ void RenderGraph::render() {
         // buffers in this batch from being rerecorded while a previous use is still in flight.
         auto &batch = m_scratch_primary_batch_command_buffers;
         batch.clear();
-        batch.reserve(primary_command_buffers.size() + 2);
+        batch.reserve(m_scratch_primary_command_buffers.size() + 2);
         batch.push_back(&frame_start_command_buffer);
-        batch.insert(batch.end(), primary_command_buffers.begin(), primary_command_buffers.end());
+        batch.insert(batch.end(), m_scratch_primary_command_buffers.begin(), m_scratch_primary_command_buffers.end());
         batch.push_back(&frame_end_command_buffer);
         render_submit_fence = m_device.submit_graphics_command_buffers(
             batch, render_wait_semaphores, m_swapchain_manager.rendering_finished_semaphores());
@@ -798,37 +826,14 @@ void RenderGraph::render() {
                     prepare_graphics_pass_for_recording(*pass);
                 }
 
-                std::vector<VkCommandBuffer> secondary_command_buffers(m_graphics_passes.size(), VK_NULL_HANDLE);
-                tf::Taskflow recording_tasks;
-                for (std::size_t i = 0; i < m_graphics_passes.size(); ++i) {
-                    const auto *pass = m_graphics_passes[i].get();
-                    recording_tasks.emplace([this, pass, &secondary_command_buffers, i] {
-                        const auto inheritance_rendering_info = make_info<VkCommandBufferInheritanceRenderingInfo>({
-                            .colorAttachmentCount =
-                                static_cast<std::uint32_t>(pass->m_cached_color_attachment_formats.size()),
-                            .pColorAttachmentFormats = pass->m_cached_color_attachment_formats.empty()
-                                                           ? nullptr
-                                                           : pass->m_cached_color_attachment_formats.data(),
-                            .depthAttachmentFormat = pass->m_cached_depth_attachment_format,
-                            .stencilAttachmentFormat = pass->m_cached_stencil_attachment_format,
-                            .rasterizationSamples = pass->m_cached_sample_count,
-                        });
-                        const auto inheritance_info = make_info<VkCommandBufferInheritanceInfo>({
-                            .pNext = &inheritance_rendering_info,
-                        });
-
-                        secondary_command_buffers[i] = m_command_buffer_cache.record_secondary_command_buffer(
-                            pass->m_name, pass->m_cached_render_extent, inheritance_info, pass->m_on_record_cmd_buffer,
-                            pass->m_cache_secondary_command_buffer);
-                    });
-                }
-                m_taskflow_executor.run(recording_tasks).get();
+                m_scratch_secondary_command_buffers.resize(m_graphics_passes.size());
+                m_taskflow_executor.run(m_recording_tasks).get();
 
                 for (std::size_t i = 0; i < m_graphics_passes.size(); ++i) {
                     const auto &pass = *m_graphics_passes[i];
                     m_command_buffer_cache.execute_secondary_command_buffer(
                         builder.command_buffer(), pass.m_name, pass.m_debug_label_color, pass.m_rendering_info,
-                        secondary_command_buffers[i]);
+                        m_scratch_secondary_command_buffers[i]);
                 }
 
                 m_swapchain_manager.prepare_swapchains_for_presenting(builder);
@@ -899,6 +904,10 @@ std::optional<double> RenderGraph::try_get_gpu_frame_time_ms() const {
 void RenderGraph::reset_graph() {
     m_frame_sync_manager.process_deferred_releases(true);
     m_staging_buffer.reset();
+    m_recording_tasks.clear();
+    m_recording_tasks_dirty = true;
+    m_scratch_primary_command_buffers.clear();
+    m_scratch_secondary_command_buffers.clear();
     m_buffers.clear();
     m_textures.clear();
     m_graphics_passes.clear();

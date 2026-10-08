@@ -113,6 +113,11 @@ private:
     SwapchainManager m_swapchain_manager;
     CommandBufferCache m_command_buffer_cache;
     tf::Executor m_taskflow_executor;
+    tf::Taskflow m_recording_tasks;
+    bool m_recording_tasks_dirty{true};
+    std::string m_frame_slot_suffix;
+    std::vector<const wrapper::commands::CommandBuffer *> m_scratch_primary_command_buffers;
+    std::vector<VkCommandBuffer> m_scratch_secondary_command_buffers;
     std::unique_ptr<wrapper::queries::QueryPool> m_query_pool;
     bool m_query_pool_has_results{false};
     float m_timestamp_period{0.0f};
@@ -149,6 +154,9 @@ private:
     void synchronize_frame_context();
 
     void invalidate_graphics_pass_secondary_cmd_buffers();
+
+    /// Build the reusable parallel command-buffer recording tasks after the pass list changes.
+    void rebuild_recording_tasks();
 
     void register_render_module(RenderModule &render_module);
     void unregister_render_module(RenderModule &render_module);
