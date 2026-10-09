@@ -35,9 +35,10 @@ using wrapper::descriptors::PerFrameDescriptorSets;
 using wrapper::descriptors::WriteDescriptorSetBuilder;
 using wrapper::synchronization::Semaphore;
 
-RenderGraph::RenderGraph(Device &device, const bool use_secondary_command_buffers)
+RenderGraph::RenderGraph(Device &device, const bool use_secondary_command_buffers, const bool one_command_buffer)
     : m_device(device), m_resource_descriptors(device), m_graphics_pipeline_builder(device),
       m_swapchain_manager(device), m_command_buffer_cache(device, use_secondary_command_buffers),
+      m_one_command_buffer(one_command_buffer),
       m_query_pool(std::make_unique<wrapper::queries::QueryPool>(device, 4)),
       m_upload_finished(std::make_unique<Semaphore>(device, "render_graph_upload_finished")),
       m_frame_sync_manager(device), m_staging_buffer(device, "render_graph_upload_arena") {
@@ -774,7 +775,38 @@ void RenderGraph::render() {
 
     VkFence render_submit_fence = VK_NULL_HANDLE;
     Clock::time_point submit_start{};
-    if (!m_command_buffer_cache.uses_secondary_command_buffers()) {
+    if (m_one_command_buffer) {
+        render_submit_fence = submit_graphics_frame(
+            [&](CommandBufferBuilder &builder) {
+                if (m_query_pool) {
+                    builder.reset_query_pool(*m_query_pool, query_base, 2)
+                        .write_timestamp(*m_query_pool, query_base, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT);
+                }
+                if (m_inline_update_commands) {
+                    builder.invoke(m_inline_update_commands);
+                }
+                m_pending_queue_ownership_acquire_barriers.flush_if_not_empty(builder);
+                m_swapchain_manager.prepare_swapchains_for_rendering(builder);
+
+                for (const auto &pass : m_graphics_passes) {
+                    prepare_graphics_pass_for_recording(*pass);
+                    builder.begin_debug_label_region(pass->m_name, pass->m_debug_label_color)
+                        .begin_rendering(pass->m_rendering_info)
+                        .invoke(pass->m_on_record_cmd_buffer)
+                        .end_rendering()
+                        .end_debug_label_region();
+                }
+
+                m_swapchain_manager.prepare_swapchains_for_presenting(builder);
+                if (m_query_pool) {
+                    builder.write_timestamp(*m_query_pool, query_base + 1, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT);
+                }
+                if (collect_cpu_stats) {
+                    submit_start = Clock::now();
+                }
+            },
+            render_wait_semaphores, m_swapchain_manager.rendering_finished_semaphores());
+    } else if (!m_command_buffer_cache.uses_secondary_command_buffers()) {
         m_frame_slot_suffix = "[slot " + std::to_string(m_current_frame_slot) + "]";
         const auto &frame_start_command_buffer = m_device.request_named_command_buffer(
             VK_QUEUE_GRAPHICS_BIT, "render_graph_frame_start" + m_frame_slot_suffix);

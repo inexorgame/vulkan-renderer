@@ -227,6 +227,7 @@ ExampleApp::ExampleApp(int argc, char **argv) {
     argv = app.ensure_utf8(argv);
     app.add_flag("--vsync", m_vsync_enabled);
     app.add_flag("--no-cmd-buf-cache", m_no_cmd_buf_cache);
+    app.add_flag("--one-cmd-buf", m_one_cmd_buf);
     app.add_flag("--debug-vma", m_debug_vma);
     std::optional<std::uint32_t> preferred_gpu;
     app.add_option("--gpu", preferred_gpu);
@@ -405,7 +406,7 @@ ExampleApp::ExampleApp(int argc, char **argv) {
     m_camera->set_movement_speed(5.0f);
     m_camera->set_rotation_speed(0.5f);
 
-    m_render_graph = std::make_unique<RenderGraph>(*m_device, !m_no_cmd_buf_cache);
+    m_render_graph = std::make_unique<RenderGraph>(*m_device, !m_no_cmd_buf_cache, m_one_cmd_buf);
 
     load_octree_geometry(true);
     generate_octree_indices();

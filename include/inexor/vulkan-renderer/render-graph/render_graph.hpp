@@ -112,6 +112,7 @@ private:
 
     SwapchainManager m_swapchain_manager;
     CommandBufferCache m_command_buffer_cache;
+    bool m_one_command_buffer{false};
     tf::Taskflow m_recording_tasks;
     bool m_recording_tasks_dirty{true};
     std::string m_frame_slot_suffix;
@@ -240,7 +241,7 @@ public:
     /// @param device The device wrapper
     /// @param use_secondary_command_buffers Whether graphics passes should be recorded into cached secondary command
     /// buffers or directly into the primary command buffer.
-    RenderGraph(Device &device, bool use_secondary_command_buffers = true);
+    RenderGraph(Device &device, bool use_secondary_command_buffers = true, bool one_command_buffer = false);
 
     ~RenderGraph();
 
