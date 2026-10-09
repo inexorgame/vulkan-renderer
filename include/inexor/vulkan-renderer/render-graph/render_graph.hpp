@@ -119,6 +119,7 @@ private:
     std::vector<VkCommandBuffer> m_scratch_secondary_command_buffers;
     std::unique_ptr<wrapper::queries::QueryPool> m_query_pool;
     bool m_query_pool_has_results{false};
+    std::optional<std::size_t> m_last_gpu_query_frame_slot;
     float m_timestamp_period{0.0f};
     std::unique_ptr<wrapper::synchronization::Semaphore> m_upload_finished;
     bool m_upload_submission_pending{false};

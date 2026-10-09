@@ -53,6 +53,8 @@ public:
         return m_frame_slot_submission_fences;
     }
 
+    [[nodiscard]] VkFence frame_slot_submission_fence(std::size_t frame_slot) const;
+
     [[nodiscard]] std::size_t frame_slot_count() const {
         return m_frame_slot_count;
     }

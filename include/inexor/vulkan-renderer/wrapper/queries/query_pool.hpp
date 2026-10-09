@@ -35,9 +35,11 @@ public:
         return m_query_count;
     }
 
-    [[nodiscard]] std::vector<std::uint64_t> get_results() const;
+    [[nodiscard]] std::vector<std::uint64_t> get_results(std::uint32_t first_query = 0,
+                                                         std::uint32_t query_count = 0) const;
 
-    [[nodiscard]] std::optional<std::vector<std::uint64_t>> try_get_results() const;
+    [[nodiscard]] std::optional<std::vector<std::uint64_t>> try_get_results(std::uint32_t first_query = 0,
+                                                                             std::uint32_t query_count = 0) const;
 };
 
 } // namespace inexor::vulkan_renderer::wrapper::queries

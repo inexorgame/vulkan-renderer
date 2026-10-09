@@ -38,7 +38,7 @@ using wrapper::synchronization::Semaphore;
 RenderGraph::RenderGraph(Device &device, const bool use_secondary_command_buffers)
     : m_device(device), m_resource_descriptors(device), m_graphics_pipeline_builder(device),
       m_swapchain_manager(device), m_command_buffer_cache(device, use_secondary_command_buffers),
-      m_query_pool(std::make_unique<wrapper::queries::QueryPool>(device, 2)),
+      m_query_pool(std::make_unique<wrapper::queries::QueryPool>(device, 4)),
       m_upload_finished(std::make_unique<Semaphore>(device, "render_graph_upload_finished")),
       m_frame_sync_manager(device), m_staging_buffer(device, "render_graph_upload_arena") {
     VkPhysicalDeviceProperties physical_device_properties{};
@@ -770,6 +770,7 @@ void RenderGraph::render() {
         rebuild_recording_tasks();
     }
     const auto descriptors_end = collect_cpu_stats ? Clock::now() : Clock::time_point{};
+    const auto query_base = static_cast<std::uint32_t>(m_current_frame_slot * 2);
 
     VkFence render_submit_fence = VK_NULL_HANDLE;
     Clock::time_point submit_start{};
@@ -781,8 +782,8 @@ void RenderGraph::render() {
         frame_start_builder.begin_debug_label_region("RenderGraph frame start",
                                                      wrapper::core::get_debug_label_color(DebugLabelColor::CYAN));
         if (m_query_pool) {
-            frame_start_builder.reset_query_pool(*m_query_pool)
-                .write_timestamp(*m_query_pool, 0, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT);
+            frame_start_builder.reset_query_pool(*m_query_pool, query_base, 2)
+                .write_timestamp(*m_query_pool, query_base, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT);
         }
         if (m_inline_update_commands) {
             frame_start_builder.invoke(m_inline_update_commands);
@@ -806,7 +807,7 @@ void RenderGraph::render() {
                                                    wrapper::core::get_debug_label_color(DebugLabelColor::CYAN));
         m_swapchain_manager.prepare_swapchains_for_presenting(frame_end_builder);
         if (m_query_pool) {
-            frame_end_builder.write_timestamp(*m_query_pool, 1, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT);
+            frame_end_builder.write_timestamp(*m_query_pool, query_base + 1, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT);
         }
         frame_end_builder.end_debug_label_region().end_command_buffer();
 
@@ -827,8 +828,8 @@ void RenderGraph::render() {
         render_submit_fence = submit_graphics_frame(
             [&](CommandBufferBuilder &builder) {
                 if (m_query_pool) {
-                    builder.reset_query_pool(*m_query_pool)
-                        .write_timestamp(*m_query_pool, 0, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT);
+                        builder.reset_query_pool(*m_query_pool, query_base, 2)
+                        .write_timestamp(*m_query_pool, query_base, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT);
                 }
                 if (m_inline_update_commands) {
                     builder.invoke(m_inline_update_commands);
@@ -854,7 +855,7 @@ void RenderGraph::render() {
 
                 m_swapchain_manager.prepare_swapchains_for_presenting(builder);
                 if (m_query_pool) {
-                    builder.write_timestamp(*m_query_pool, 1, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT);
+                    builder.write_timestamp(*m_query_pool, query_base + 1, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT);
                 }
                 if (collect_cpu_stats) {
                     submit_start = Clock::now();
@@ -881,6 +882,7 @@ void RenderGraph::render() {
 
     m_inline_update_commands = {};
     register_frame_submission(render_submit_fence);
+    m_last_gpu_query_frame_slot = m_current_frame_slot;
     const auto finalize_end = collect_cpu_stats ? Clock::now() : Clock::time_point{};
     m_swapchain_manager.present(m_swapchain_manager.rendering_finished_semaphores());
     if (collect_cpu_stats) {
@@ -903,26 +905,43 @@ void RenderGraph::render() {
 }
 
 void RenderGraph::log_gpu_frame_time() const {
-    if (!m_query_pool || !m_query_pool_has_results) {
+    if (!m_query_pool || !m_query_pool_has_results || !m_last_gpu_query_frame_slot) {
         return;
     }
-    m_device.wait_idle();
-    const auto results = m_query_pool->get_results();
-    if (results.size() < 2) {
+    const auto fence = m_frame_sync_manager.frame_slot_submission_fence(*m_last_gpu_query_frame_slot);
+    if (fence == VK_NULL_HANDLE || vkGetFenceStatus(m_device.device(), fence) != VK_SUCCESS) {
+        spdlog::trace("GPU frame time is not ready yet");
         return;
     }
-    const auto elapsed_ticks = results[1] - results[0];
+
+    const auto results = m_query_pool->try_get_results(static_cast<std::uint32_t>(*m_last_gpu_query_frame_slot * 2), 2);
+    if (!results) {
+        return;
+    }
+    if (results->size() < 4) {
+        return;
+    }
+    const auto &values = *results;
+    if (values[1] == 0 || values[3] == 0) {
+        return;
+    }
+    const auto elapsed_ticks = values[2] - values[0];
     const double elapsed_ms =
         static_cast<double>(elapsed_ticks) * static_cast<double>(m_timestamp_period) / 1'000'000.0;
     spdlog::trace("GPU frame time: {:.3f} ms [ticks={}]", elapsed_ms, elapsed_ticks);
 }
 
 std::optional<double> RenderGraph::try_get_gpu_frame_time_ms() const {
-    if (!m_query_pool || !m_query_pool_has_results) {
+    if (!m_query_pool || !m_query_pool_has_results || !m_last_gpu_query_frame_slot) {
         return std::nullopt;
     }
 
-    const auto results = m_query_pool->try_get_results();
+    const auto fence = m_frame_sync_manager.frame_slot_submission_fence(*m_last_gpu_query_frame_slot);
+    if (fence == VK_NULL_HANDLE || vkGetFenceStatus(m_device.device(), fence) != VK_SUCCESS) {
+        return std::nullopt;
+    }
+
+    const auto results = m_query_pool->try_get_results(static_cast<std::uint32_t>(*m_last_gpu_query_frame_slot * 2), 2);
     if (!results || results->size() < 4) {
         return std::nullopt;
     }
@@ -941,6 +960,7 @@ std::optional<double> RenderGraph::try_get_gpu_frame_time_ms() const {
 void RenderGraph::reset_graph() {
     m_frame_sync_manager.process_deferred_releases(true);
     m_cpu_frame_stats = {};
+    m_last_gpu_query_frame_slot.reset();
     m_staging_buffer.reset();
     m_recording_tasks.clear();
     m_recording_tasks_dirty = true;

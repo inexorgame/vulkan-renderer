@@ -51,6 +51,11 @@ void FrameSyncManager::mark_frame_slot_submission_fence(const VkFence fence) {
     m_frame_slot_submission_fences.at(m_current_frame_slot) = fence;
 }
 
+VkFence FrameSyncManager::frame_slot_submission_fence(const std::size_t frame_slot) const {
+    return frame_slot < m_frame_slot_submission_fences.size() ? m_frame_slot_submission_fences[frame_slot]
+                                                               : VK_NULL_HANDLE;
+}
+
 void FrameSyncManager::defer_release(const std::span<const VkFence> fences, std::function<void()> release) {
     if (!release) {
         return;
