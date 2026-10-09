@@ -690,25 +690,13 @@ void RenderGraph::render() {
     m_frame_sync_manager.process_deferred_releases(false);
     const auto housekeeping_end = collect_cpu_stats ? Clock::now() : Clock::time_point{};
     m_swapchain_manager.collect_frame_swapchains(m_graphics_passes);
+    m_swapchain_manager.synchronize_frame_context();
+    synchronize_frame_context();
+    m_frame_sync_manager.wait_for_current_frame_slot();
     if (!m_swapchain_manager.acquire_next_images()) {
         return;
     }
     const auto acquire_end = collect_cpu_stats ? Clock::now() : Clock::time_point{};
-    m_swapchain_manager.synchronize_frame_context();
-    synchronize_frame_context();
-    // Batched primaries do not have individual submission fences. Wait for the previous use of
-    // this slot even if a swapchain has been recreated and lost its own in-flight tracking.
-    if (!m_command_buffer_cache.uses_secondary_command_buffers() &&
-        m_current_frame_slot < m_primary_batch_fences.size()) {
-        const auto previous_fence = m_primary_batch_fences[m_current_frame_slot];
-        if (previous_fence != VK_NULL_HANDLE) {
-            if (const auto result = vkWaitForFences(m_device.device(), 1, &previous_fence, VK_TRUE,
-                                                    std::numeric_limits<std::uint64_t>::max());
-                result != VK_SUCCESS) {
-                throw tools::VulkanException("Error: waiting for batched graphics frame failed!", result);
-            }
-        }
-    }
     const auto frame_context_end = collect_cpu_stats ? Clock::now() : Clock::time_point{};
     update_resources();
     const auto resources_end = collect_cpu_stats ? Clock::now() : Clock::time_point{};
@@ -806,10 +794,6 @@ void RenderGraph::render() {
         }
         render_submit_fence = m_device.submit_graphics_command_buffers(
             batch, render_wait_semaphores, m_swapchain_manager.rendering_finished_semaphores());
-        if (m_primary_batch_fences.size() <= m_current_frame_slot) {
-            m_primary_batch_fences.resize(m_current_frame_slot + 1, VK_NULL_HANDLE);
-        }
-        m_primary_batch_fences[m_current_frame_slot] = render_submit_fence;
     } else {
         render_submit_fence = m_device.execute(
             VK_QUEUE_GRAPHICS_BIT, DebugLabelColor::CYAN,
@@ -880,8 +864,8 @@ void RenderGraph::render() {
         };
         CpuPhaseDurations durations{};
         durations[static_cast<std::size_t>(CpuPhase::Housekeeping)] = elapsed_ns(frame_start, housekeeping_end);
-        durations[static_cast<std::size_t>(CpuPhase::Acquire)] = elapsed_ns(housekeeping_end, acquire_end);
-        durations[static_cast<std::size_t>(CpuPhase::FrameContext)] = elapsed_ns(acquire_end, frame_context_end);
+        durations[static_cast<std::size_t>(CpuPhase::FrameContext)] = elapsed_ns(housekeeping_end, frame_context_end);
+        durations[static_cast<std::size_t>(CpuPhase::Acquire)] = elapsed_ns(frame_context_end, acquire_end);
         durations[static_cast<std::size_t>(CpuPhase::Resources)] = elapsed_ns(frame_context_end, resources_end);
         durations[static_cast<std::size_t>(CpuPhase::Descriptors)] = elapsed_ns(resources_end, descriptors_end);
         durations[static_cast<std::size_t>(CpuPhase::Recording)] = elapsed_ns(descriptors_end, submit_start);

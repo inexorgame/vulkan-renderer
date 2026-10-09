@@ -24,6 +24,24 @@ void FrameSyncManager::set_frame_context(const std::size_t frame_slot_count, con
     }
 }
 
+void FrameSyncManager::wait_for_current_frame_slot() {
+    if (m_frame_slot_submission_fences.size() != m_frame_slot_count) {
+        m_frame_slot_submission_fences.resize(m_frame_slot_count, VK_NULL_HANDLE);
+    }
+
+    auto &fence = m_frame_slot_submission_fences.at(m_current_frame_slot);
+    if (fence == VK_NULL_HANDLE) {
+        return;
+    }
+
+    if (const auto result = vkWaitForFences(m_device.device(), 1, &fence, VK_TRUE,
+                                            std::numeric_limits<std::uint64_t>::max());
+        result != VK_SUCCESS) {
+        throw VulkanException("Error: waiting for current frame slot failed!", result,
+                              "FrameSyncManager::wait_for_current_frame_slot");
+    }
+}
+
 void FrameSyncManager::mark_frame_slot_submission_fence(const VkFence fence) {
     if (m_frame_slot_submission_fences.size() != m_frame_slot_count) {
         m_frame_slot_submission_fences.resize(m_frame_slot_count, VK_NULL_HANDLE);

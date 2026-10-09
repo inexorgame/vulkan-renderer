@@ -59,69 +59,9 @@ VkResult Swapchain::acquire_next_image() {
         throw std::runtime_error("Error: Swapchain has no image-available semaphores!");
     }
 
-    const auto slot_count = static_cast<std::uint32_t>(m_img_available.size());
+    const auto slot_count = MAX_FRAMES_IN_FLIGHT;
     auto selected_slot = m_frame_index % slot_count;
     const bool collect_stats = spdlog::get_level() <= spdlog::level::debug;
-    std::uint32_t pending_slots = 0;
-    if (collect_stats) {
-        // Sample every acquire so the interval maximum is not just the value at the log instant.
-        for (const auto fence : m_frame_slot_submission_fences) {
-            if (fence == VK_NULL_HANDLE) {
-                continue;
-            }
-            const auto status = vkGetFenceStatus(m_device.device(), fence);
-            if (status == VK_NOT_READY) {
-                ++pending_slots;
-            } else if (status != VK_SUCCESS) {
-                throw VulkanException("Error: vkGetFenceStatus failed!", status, m_name);
-            }
-        }
-        m_inflight_stats.max_pending_slots = std::max(m_inflight_stats.max_pending_slots, pending_slots);
-    }
-
-    if (!m_frame_slot_submission_fences.empty()) {
-        bool found_ready_slot = false;
-        for (std::uint32_t offset = 0; offset < slot_count; ++offset) {
-            const auto slot = (selected_slot + offset) % slot_count;
-            auto &slot_fence = m_frame_slot_submission_fences[slot];
-            if (slot_fence == VK_NULL_HANDLE) {
-                selected_slot = slot;
-                found_ready_slot = true;
-                break;
-            }
-
-            const auto status = vkWaitForFences(m_device.device(), 1, &slot_fence, VK_TRUE, 0);
-            if (status == VK_SUCCESS) {
-                slot_fence = VK_NULL_HANDLE;
-                selected_slot = slot;
-                found_ready_slot = true;
-                break;
-            }
-            if (status != VK_TIMEOUT) {
-                throw VulkanException("Error: vkWaitForFences failed!", status, m_name);
-            }
-        }
-
-        if (!found_ready_slot) {
-            ++m_inflight_stats.slot_wait_calls;
-            auto &slot_fence = m_frame_slot_submission_fences[selected_slot];
-            if (slot_fence != VK_NULL_HANDLE) {
-                const auto wait_start =
-                    collect_stats ? std::chrono::steady_clock::now() : std::chrono::steady_clock::time_point{};
-                if (const auto result = vkWaitForFences(m_device.device(), 1, &slot_fence, VK_TRUE,
-                                                        std::numeric_limits<std::uint64_t>::max());
-                    result != VK_SUCCESS) {
-                    throw VulkanException("Error: vkWaitForFences failed!", result, m_name);
-                }
-                if (collect_stats) {
-                    const auto duration = elapsed_ns(wait_start);
-                    m_inflight_stats.slot_wait_total_ns += duration;
-                    m_inflight_stats.slot_wait_max_ns = std::max(m_inflight_stats.slot_wait_max_ns, duration);
-                }
-                slot_fence = VK_NULL_HANDLE;
-            }
-        }
-    }
 
     m_current_frame_slot = selected_slot;
 
@@ -167,16 +107,6 @@ void Swapchain::wait_for_current_image_if_in_flight() const {
 
 void Swapchain::mark_current_image_in_flight(const VkFence fence) {
     m_imgs_in_flight[m_current_img_index] = fence;
-}
-
-void Swapchain::mark_current_frame_slot_in_flight(const VkFence fence) {
-    if (m_img_available.empty()) {
-        return;
-    }
-    if (m_frame_slot_submission_fences.size() != m_img_available.size()) {
-        m_frame_slot_submission_fences.assign(m_img_available.size(), VK_NULL_HANDLE);
-    }
-    m_frame_slot_submission_fences[m_current_frame_slot] = fence;
 }
 
 // @TODO Move to inside of rendergraph
@@ -233,9 +163,7 @@ void Swapchain::present(const std::span<const VkSemaphore> rendering_finished) {
             throw VulkanException("Error: vkQueuePresentKHR failed!", result);
         }
     }
-    if (!m_img_available.empty()) {
-        m_frame_index = (m_current_frame_slot + 1) % static_cast<std::uint32_t>(m_img_available.size());
-    }
+    m_frame_index = (m_current_frame_slot + 1) % MAX_FRAMES_IN_FLIGHT;
 }
 
 void Swapchain::setup_swapchain(const VkExtent2D requested_extent, const bool vsync_enabled) {
@@ -302,20 +230,24 @@ void Swapchain::setup_swapchain(const VkExtent2D requested_extent, const bool vs
 
     m_rendering_finished.clear();
     m_img_available.clear();
-    for (std::size_t img_index = 0; img_index < m_imgs.size(); img_index++) {
-        // Create one "rendering finished" semaphore for this swapchain image
+    for (std::size_t img_index = 0; img_index < m_imgs.size(); ++img_index) {
+        // A present operation may retain this semaphore until the image is acquired again.
         m_rendering_finished.emplace_back(
-            std::make_unique<Semaphore>(m_device, "m_rendering_finished[" + std::to_string(img_index) + "]"));
-        // Create one "swapchain image available" semaphore for this swapchain image
+            std::make_unique<Semaphore>(m_device, "m_rendering_finished[image " + std::to_string(img_index) + "]"));
+    }
+    for (std::uint32_t frame_slot = 0; frame_slot < MAX_FRAMES_IN_FLIGHT; ++frame_slot) {
+        // Image-available semaphores belong to the reusable frame context.
         m_img_available.emplace_back(
-            std::make_unique<Semaphore>(m_device, "m_img_available[" + std::to_string(img_index) + "]"));
+            std::make_unique<Semaphore>(m_device, "m_img_available[slot " + std::to_string(frame_slot) + "]"));
+    }
+
+    for (std::size_t img_index = 0; img_index < m_imgs.size(); img_index++) {
         // Name this swapchain image
         m_device.set_debug_name(m_imgs[img_index], m_name + "::m_imgs[" + std::to_string(img_index) + "]");
     }
 
     // Reset per-image ownership tracking after (re)creating the swapchain.
     m_imgs_in_flight.assign(m_imgs.size(), VK_NULL_HANDLE);
-    m_frame_slot_submission_fences.assign(m_imgs.size(), VK_NULL_HANDLE);
     m_current_frame_slot = 0;
     m_frame_index = 0;
     m_inflight_stats = {};

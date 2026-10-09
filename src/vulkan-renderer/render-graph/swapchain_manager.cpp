@@ -101,7 +101,7 @@ void SwapchainManager::synchronize_frame_context() {
 
     for (const auto &swapchain : m_frame_swapchains) {
         const auto swapchain_slot_count = static_cast<std::size_t>(swapchain->frame_slot_count());
-        const auto swapchain_frame_slot = static_cast<std::size_t>(swapchain->current_frame_slot());
+        const auto swapchain_frame_slot = static_cast<std::size_t>(swapchain->next_frame_slot());
 
         if (first_swapchain) {
             frame_slot_count = std::max<std::size_t>(1, swapchain_slot_count);
@@ -134,7 +134,6 @@ void SwapchainManager::prepare_swapchains_for_presenting(CommandBufferBuilder &c
 void SwapchainManager::mark_frame_swapchains_in_flight(const VkFence fence) const {
     for (const auto &swapchain : m_frame_swapchains) {
         swapchain->mark_current_image_in_flight(fence);
-        swapchain->mark_current_frame_slot_in_flight(fence);
     }
 }
 

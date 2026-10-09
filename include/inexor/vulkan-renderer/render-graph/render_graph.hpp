@@ -135,9 +135,6 @@ private:
     FrameSyncManager m_frame_sync_manager;
     std::size_t m_frame_slot_count{1};
     std::size_t m_current_frame_slot{0};
-    /// Batch fences outlive frame-context resets; each slot's primary buffers share its final buffer's fence.
-    std::vector<VkFence> m_primary_batch_fences;
-
     std::vector<PendingBufferCopy> m_scratch_pending_buffer_copies;
     std::vector<PendingTextureCopy> m_scratch_pending_texture_copies;
     std::vector<std::function<void()>> m_scratch_pending_releases;
