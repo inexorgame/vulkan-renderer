@@ -196,23 +196,20 @@ void RenderGraph::create_graphics_pipelines() {
 }
 
 void RenderGraph::log_render_graph_overview() const {
-    spdlog::info("RenderGraph overview: {} module(s)", m_render_modules.size());
+    spdlog::trace("RenderGraph overview: {} module(s)", m_render_modules.size());
     for (const auto *module : m_render_modules) {
         if (!module) {
             continue;
         }
-        spdlog::info("  Module: {}", module->m_name);
-
-        spdlog::info("    Graphics passes: {}", module->m_graphics_passes.size());
+        spdlog::trace("  Module: {}", module->m_name);
+        spdlog::trace("    Graphics passes: {}", module->m_graphics_passes.size());
         for (const auto &pass_weak : module->m_graphics_passes) {
             const auto pass = pass_weak.lock();
             if (!pass) {
-                spdlog::info("      <expired pass>");
+                spdlog::trace("      <expired pass>");
                 continue;
             }
-
-            spdlog::info("      Pass: {}", pass->m_name);
-
+            spdlog::trace("      Pass: {}", pass->m_name);
             const auto print_resources = [](const char *label, const auto &resources) {
                 std::string names;
                 for (const auto &resource : resources) {
@@ -223,11 +220,9 @@ void RenderGraph::log_render_graph_overview() const {
                 if (!names.empty()) {
                     names.erase(names.size() - 2);
                 }
-                spdlog::info("        {}: {}", label, names.empty() ? std::string{"<none>"} : names);
+                spdlog::trace("        {}: {}", label, names.empty() ? std::string{"<none>"} : names);
             };
-
             print_resources("Reads buffers", pass->m_buffer_reads);
-
             {
                 std::vector<std::weak_ptr<Texture>> written_textures;
                 written_textures.reserve(pass->m_texture_writes.size());
@@ -236,7 +231,6 @@ void RenderGraph::log_render_graph_overview() const {
                 }
                 print_resources("Writes textures", written_textures);
             }
-
             {
                 std::vector<std::weak_ptr<wrapper::swapchains::Swapchain>> written_swapchains;
                 written_swapchains.reserve(pass->m_swapchain_writes.size());
@@ -246,15 +240,14 @@ void RenderGraph::log_render_graph_overview() const {
                 print_resources("Writes swapchains", written_swapchains);
             }
         }
-
-        spdlog::info("    Graphics pipelines: {}", module->m_graphics_pipelines.size());
+        spdlog::trace("    Graphics pipelines: {}", module->m_graphics_pipelines.size());
         for (const auto &pipeline_weak : module->m_graphics_pipelines) {
             const auto pipeline = pipeline_weak.lock();
             if (!pipeline) {
-                spdlog::info("      <expired pipeline>");
+                spdlog::trace("      <expired pipeline>");
                 continue;
             }
-            spdlog::info("      Pipeline: {}", pipeline->name());
+            spdlog::trace("      Pipeline: {}", pipeline->name());
         }
     }
 }
