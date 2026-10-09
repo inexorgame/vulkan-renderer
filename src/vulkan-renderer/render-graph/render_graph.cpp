@@ -97,6 +97,24 @@ void RenderGraph::register_frame_submission(const VkFence submission_fence) {
     m_swapchain_manager.mark_frame_swapchains_in_flight(submission_fence);
 }
 
+VkFence RenderGraph::submit_graphics_frame(
+    const std::span<const wrapper::commands::CommandBuffer *const> command_buffers,
+    const std::span<const wrapper::core::QueueSemaphoreWait> wait_semaphores,
+    const std::span<const VkSemaphore> signal_semaphores) const {
+    if (command_buffers.empty()) {
+        throw tools::InexorException("Error: Graphics submission contains no command buffers!");
+    }
+    return m_device.submit_graphics_command_buffers(command_buffers, wait_semaphores, signal_semaphores);
+}
+
+VkFence RenderGraph::submit_graphics_frame(
+    const std::function<void(wrapper::commands::CommandBufferBuilder &)> &record,
+    const std::span<const wrapper::core::QueueSemaphoreWait> wait_semaphores,
+    const std::span<const VkSemaphore> signal_semaphores) const {
+    return m_device.execute(VK_QUEUE_GRAPHICS_BIT, DebugLabelColor::CYAN, record, wait_semaphores,
+                            signal_semaphores);
+}
+
 std::weak_ptr<PerFrameDescriptorSets>
 RenderGraph::add_resource_descriptor(const std::variant<std::weak_ptr<Buffer>, std::weak_ptr<Texture>> resource,
                                      const VkShaderStageFlags stage, const std::uint32_t dst_binding) {
@@ -803,11 +821,10 @@ void RenderGraph::render() {
         if (collect_cpu_stats) {
             submit_start = Clock::now();
         }
-        render_submit_fence = m_device.submit_graphics_command_buffers(
+        render_submit_fence = submit_graphics_frame(
             batch, render_wait_semaphores, m_swapchain_manager.rendering_finished_semaphores());
     } else {
-        render_submit_fence = m_device.execute(
-            VK_QUEUE_GRAPHICS_BIT, DebugLabelColor::CYAN,
+        render_submit_fence = submit_graphics_frame(
             [&](CommandBufferBuilder &builder) {
                 if (m_query_pool) {
                     builder.reset_query_pool(*m_query_pool)
