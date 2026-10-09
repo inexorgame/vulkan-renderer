@@ -72,7 +72,7 @@ void SwapchainManager::collect_frame_swapchains(const std::vector<std::shared_pt
     }
 }
 
-bool SwapchainManager::acquire_next_images() {
+bool SwapchainManager::acquire_next_images(const VkFence already_waited_frame_fence) {
     m_swapchains_imgs_available.clear();
     m_swapchain_rendering_finished.clear();
     m_swapchains_imgs_available.reserve(m_frame_swapchains.size());
@@ -86,7 +86,7 @@ bool SwapchainManager::acquire_next_images() {
             return false;
         }
 
-        swapchain->wait_for_current_image_if_in_flight();
+        swapchain->wait_for_current_image_if_in_flight(already_waited_frame_fence);
         m_swapchains_imgs_available.emplace_back(swapchain->image_available_semaphore());
         m_swapchain_rendering_finished.emplace_back(swapchain->rendering_finished_semaphore());
     }

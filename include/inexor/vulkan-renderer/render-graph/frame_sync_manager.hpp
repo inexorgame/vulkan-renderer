@@ -37,7 +37,7 @@ public:
     void set_frame_context(std::size_t frame_slot_count, std::size_t current_frame_slot);
 
     /// Wait until the current frame slot is no longer used by a previous submission.
-    void wait_for_current_frame_slot();
+    [[nodiscard]] VkFence wait_for_current_frame_slot();
 
     void mark_frame_slot_submission_fence(VkFence fence);
 

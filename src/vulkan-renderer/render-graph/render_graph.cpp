@@ -703,8 +703,8 @@ void RenderGraph::render() {
     m_swapchain_manager.collect_frame_swapchains(m_graphics_passes);
     m_swapchain_manager.synchronize_frame_context();
     synchronize_frame_context();
-    m_frame_sync_manager.wait_for_current_frame_slot();
-    if (!m_swapchain_manager.acquire_next_images()) {
+    const auto waited_frame_fence = m_frame_sync_manager.wait_for_current_frame_slot();
+    if (!m_swapchain_manager.acquire_next_images(waited_frame_fence)) {
         return;
     }
     const auto acquire_end = collect_cpu_stats ? Clock::now() : Clock::time_point{};

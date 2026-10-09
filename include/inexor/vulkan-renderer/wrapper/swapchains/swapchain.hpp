@@ -119,7 +119,7 @@ public:
     }
 
     /// Wait for the fence associated with the currently acquired swapchain image, if any.
-    void wait_for_current_image_if_in_flight() const;
+    void wait_for_current_image_if_in_flight(VkFence already_waited_fence = VK_NULL_HANDLE) const;
 
     /// Mark the currently acquired swapchain image as owned by the given submission fence.
     void mark_current_image_in_flight(VkFence fence);

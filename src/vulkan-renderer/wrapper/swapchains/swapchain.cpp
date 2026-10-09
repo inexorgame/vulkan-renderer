@@ -94,9 +94,9 @@ VkResult Swapchain::acquire_next_image() {
     return VK_SUCCESS;
 }
 
-void Swapchain::wait_for_current_image_if_in_flight() const {
+void Swapchain::wait_for_current_image_if_in_flight(const VkFence already_waited_fence) const {
     const auto in_flight_fence = m_imgs_in_flight[m_current_img_index];
-    if (in_flight_fence != VK_NULL_HANDLE) {
+    if (in_flight_fence != VK_NULL_HANDLE && in_flight_fence != already_waited_fence) {
         if (const auto result = vkWaitForFences(m_device.device(), 1, &in_flight_fence, VK_TRUE,
                                                 std::numeric_limits<std::uint64_t>::max());
             result != VK_SUCCESS) {

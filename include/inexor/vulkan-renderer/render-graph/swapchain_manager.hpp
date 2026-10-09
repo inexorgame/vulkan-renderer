@@ -44,7 +44,7 @@ public:
 
     void collect_frame_swapchains(const std::vector<std::shared_ptr<GraphicsPass>> &graphics_passes);
 
-    [[nodiscard]] bool acquire_next_images();
+    [[nodiscard]] bool acquire_next_images(VkFence already_waited_frame_fence = VK_NULL_HANDLE);
 
     void synchronize_frame_context();
 
