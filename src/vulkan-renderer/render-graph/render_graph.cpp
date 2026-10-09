@@ -78,9 +78,6 @@ void RenderGraph::synchronize_frame_context() {
     m_command_buffer_cache.set_frame_context(m_frame_slot_count, m_current_frame_slot,
                                              m_frame_sync_manager.frame_slot_submission_fences());
 
-    m_buffer_copy_batch_builder.reset();
-    m_texture_copy_batch_builder.reset();
-
     for (const auto &buffer : m_buffers) {
         buffer->set_frame_context(m_frame_slot_count, m_current_frame_slot);
     }
@@ -1001,8 +998,6 @@ void RenderGraph::reset_graph() {
     m_current_frame_slot = 0;
     m_scratch_pending_buffer_copies.clear();
     m_scratch_pending_texture_copies.clear();
-    m_buffer_copy_batch_builder.reset();
-    m_texture_copy_batch_builder.reset();
     m_scratch_pending_releases.clear();
     m_scratch_color_attachment_formats.clear();
     m_resource_descriptors.mark_descriptor_sets_dirty();
@@ -1126,12 +1121,6 @@ void RenderGraph::update_resources() {
     wrapper::synchronization::PipelineBarrierBatchBuilder post_copy_barriers;
     m_scratch_pending_buffer_copies.clear();
     m_scratch_pending_texture_copies.clear();
-    m_buffer_copy_batch_builder.reset();
-    m_texture_copy_batch_builder.reset();
-    m_buffer_copy_batch_builder.set_queue_family_ownership_transfer(needs_queue_family_ownership_transfer,
-                                                                    transfer_family_index, graphics_family_index);
-    m_texture_copy_batch_builder.set_queue_family_ownership_transfer(needs_queue_family_ownership_transfer,
-                                                                     transfer_family_index, graphics_family_index);
     std::size_t upload_offset = 0;
 
     for (auto *buffer : pending_gpu_buffer_updates) {
@@ -1141,8 +1130,6 @@ void RenderGraph::update_resources() {
             invalidate_graphics_pass_secondary_cmd_buffers();
         }
     }
-
-    m_buffer_copy_batch_builder.add(m_scratch_pending_buffer_copies);
 
     for (auto *texture : pending_texture_updates) {
         bool texture_was_created = false;
@@ -1161,8 +1148,6 @@ void RenderGraph::update_resources() {
                                        m_scratch_pending_texture_copies);
     }
 
-    m_texture_copy_batch_builder.add(m_scratch_pending_texture_copies);
-
     VkPipelineStageFlags2 upload_wait_stage_mask = VK_PIPELINE_STAGE_2_NONE;
     for (const auto &copy_request : m_scratch_pending_buffer_copies) {
         upload_wait_stage_mask |= copy_request.dst_stage_mask;
@@ -1171,23 +1156,86 @@ void RenderGraph::update_resources() {
         upload_wait_stage_mask |= copy_request.post_copy_barrier.dstStageMask;
     }
 
-    auto record_update_commands = [this, any_buffer_gpu_update_required, any_texture_update_required,
-                                   needs_queue_family_ownership_transfer, transfer_family_index, graphics_family_index,
-                                   pre_copy_barriers = std::move(pre_copy_barriers),
-                                   post_copy_barriers =
-                                       std::move(post_copy_barriers)](CommandBufferBuilder &cmd_buf) mutable {
-        // Phase 1: Emit all pre-copy transitions at once.
-        pre_copy_barriers.flush_if_not_empty(cmd_buf);
-        if (any_buffer_gpu_update_required) {
-            m_buffer_copy_batch_builder.flush(cmd_buf, post_copy_barriers, m_pending_queue_ownership_acquire_barriers);
-        }
-        if (any_texture_update_required) {
-            m_texture_copy_batch_builder.flush(cmd_buf, post_copy_barriers, m_pending_queue_ownership_acquire_barriers);
-        }
+    auto record_update_commands =
+        [this, any_buffer_gpu_update_required, any_texture_update_required, needs_queue_family_ownership_transfer,
+         transfer_family_index, graphics_family_index, pre_copy_barriers = std::move(pre_copy_barriers),
+         post_copy_barriers = std::move(post_copy_barriers)](CommandBufferBuilder &cmd_buf) mutable {
+            // Phase 1: Emit all pre-copy transitions at once.
+            pre_copy_barriers.flush_if_not_empty(cmd_buf);
+            if (any_buffer_gpu_update_required) {
+                for (const auto &copy_request : m_scratch_pending_buffer_copies) {
+                    cmd_buf.copy_buffer(copy_request.src_buffer, copy_request.dst_buffer, copy_request.region);
 
-        // Phase 2: Emit all post-copy visibility/layout barriers at once.
-        post_copy_barriers.flush_if_not_empty(cmd_buf);
-    };
+                    const auto dst_stage_mask = copy_request.dst_stage_mask | VK_PIPELINE_STAGE_2_COPY_BIT;
+                    const auto dst_access_mask = copy_request.dst_access_mask | VK_ACCESS_2_TRANSFER_WRITE_BIT;
+                    if (dst_stage_mask == VK_PIPELINE_STAGE_2_NONE || dst_access_mask == VK_ACCESS_2_NONE) {
+                        continue;
+                    }
+
+                    if (needs_queue_family_ownership_transfer) {
+                        post_copy_barriers.add(make_info<VkBufferMemoryBarrier2>({
+                            .srcStageMask = VK_PIPELINE_STAGE_2_COPY_BIT,
+                            .srcAccessMask = VK_ACCESS_2_TRANSFER_WRITE_BIT,
+                            .dstStageMask = VK_PIPELINE_STAGE_2_NONE,
+                            .dstAccessMask = VK_ACCESS_2_NONE,
+                            .srcQueueFamilyIndex = transfer_family_index,
+                            .dstQueueFamilyIndex = graphics_family_index,
+                            .buffer = copy_request.dst_buffer,
+                            .offset = copy_request.region.dstOffset,
+                            .size = copy_request.region.size,
+                        }));
+                        m_pending_queue_ownership_acquire_barriers.add(VkBufferMemoryBarrier2({
+                            .srcStageMask = VK_PIPELINE_STAGE_2_NONE,
+                            .srcAccessMask = VK_ACCESS_2_NONE,
+                            .dstStageMask = dst_stage_mask,
+                            .dstAccessMask = dst_access_mask,
+                            .srcQueueFamilyIndex = transfer_family_index,
+                            .dstQueueFamilyIndex = graphics_family_index,
+                            .buffer = copy_request.dst_buffer,
+                            .offset = copy_request.region.dstOffset,
+                            .size = copy_request.region.size,
+                        }));
+                    } else {
+                        post_copy_barriers.add(make_info<VkBufferMemoryBarrier2>({
+                            .srcStageMask = VK_PIPELINE_STAGE_2_COPY_BIT,
+                            .srcAccessMask = VK_ACCESS_2_TRANSFER_WRITE_BIT,
+                            .dstStageMask = dst_stage_mask,
+                            .dstAccessMask = dst_access_mask,
+                            .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+                            .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+                            .buffer = copy_request.dst_buffer,
+                            .offset = copy_request.region.dstOffset,
+                            .size = copy_request.region.size,
+                        }));
+                    }
+                }
+            }
+            if (any_texture_update_required) {
+                for (const auto &copy_request : m_scratch_pending_texture_copies) {
+                    cmd_buf.copy_buffer_to_image(copy_request.src_buffer, copy_request.dst_image, copy_request.region);
+                    if (needs_queue_family_ownership_transfer) {
+                        auto release_barrier = copy_request.post_copy_barrier;
+                        release_barrier.srcQueueFamilyIndex = transfer_family_index;
+                        release_barrier.dstQueueFamilyIndex = graphics_family_index;
+                        release_barrier.dstStageMask = VK_PIPELINE_STAGE_2_NONE;
+                        release_barrier.dstAccessMask = VK_ACCESS_2_NONE;
+                        post_copy_barriers.add(release_barrier);
+
+                        auto acquire_barrier = copy_request.post_copy_barrier;
+                        acquire_barrier.srcStageMask = VK_PIPELINE_STAGE_2_NONE;
+                        acquire_barrier.srcAccessMask = VK_ACCESS_2_NONE;
+                        acquire_barrier.srcQueueFamilyIndex = transfer_family_index;
+                        acquire_barrier.dstQueueFamilyIndex = graphics_family_index;
+                        m_pending_queue_ownership_acquire_barriers.add(acquire_barrier);
+                    } else {
+                        post_copy_barriers.add(copy_request.post_copy_barrier);
+                    }
+                }
+            }
+
+            // Phase 2: Emit all post-copy visibility/layout barriers at once.
+            post_copy_barriers.flush_if_not_empty(cmd_buf);
+        };
 
     if (use_transfer_queue) {
         const std::array<VkSemaphore, 1> upload_signal_semaphore = {m_upload_finished->semaphore()};

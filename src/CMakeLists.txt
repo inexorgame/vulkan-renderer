@@ -11,7 +11,6 @@ set(INEXOR_SOURCE_FILES
     vulkan-renderer/octree/cube.cpp
     vulkan-renderer/octree/indentation.cpp
 
-    vulkan-renderer/render-graph/buffer_copy_batch_builder.cpp
     vulkan-renderer/render-graph/buffer.cpp
     vulkan-renderer/render-graph/frame_sync_manager.cpp
     vulkan-renderer/render-graph/graphics_pass_builder.cpp
@@ -21,7 +20,6 @@ set(INEXOR_SOURCE_FILES
     vulkan-renderer/render-graph/resource_descriptor_manager.cpp
     vulkan-renderer/render-graph/staging_buffer.cpp
     vulkan-renderer/render-graph/swapchain_manager.cpp
-    vulkan-renderer/render-graph/texture_copy_batch_builder.cpp
     vulkan-renderer/render-graph/texture.cpp
 
     vulkan-renderer/render-modules/imgui/imgui_renderer.cpp

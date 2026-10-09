@@ -1,12 +1,10 @@
 #pragma once
 
-#include "inexor/vulkan-renderer/render-graph/buffer_copy_batch_builder.hpp"
 #include "inexor/vulkan-renderer/render-graph/frame_sync_manager.hpp"
 #include "inexor/vulkan-renderer/render-graph/graphics_pass_builder.hpp"
 #include "inexor/vulkan-renderer/render-graph/resource_descriptor_manager.hpp"
 #include "inexor/vulkan-renderer/render-graph/staging_buffer.hpp"
 #include "inexor/vulkan-renderer/render-graph/swapchain_manager.hpp"
-#include "inexor/vulkan-renderer/render-graph/texture_copy_batch_builder.hpp"
 #include "inexor/vulkan-renderer/wrapper/commands/command_buffer_builder.hpp"
 #include "inexor/vulkan-renderer/wrapper/commands/command_buffer_cache.hpp"
 #include "inexor/vulkan-renderer/wrapper/pipelines/graphics_pipeline_builder.hpp"
@@ -133,8 +131,6 @@ private:
     /// buffer/texture updates were uploaded via a dedicated transfer queue whose family differs from the graphics
     /// queue family (VK_SHARING_MODE_EXCLUSIVE resources require an explicit ownership transfer in that case).
     PipelineBarrierBatchBuilder m_pending_queue_ownership_acquire_barriers;
-    BufferCopyBatchBuilder m_buffer_copy_batch_builder;
-    TextureCopyBatchBuilder m_texture_copy_batch_builder;
     StagingBuffer m_staging_buffer;
     FrameSyncManager m_frame_sync_manager;
     std::size_t m_frame_slot_count{1};
