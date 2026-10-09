@@ -86,6 +86,17 @@ void RenderGraph::synchronize_frame_context() {
     }
 }
 
+void RenderGraph::register_frame_submission(const VkFence submission_fence) {
+    if (submission_fence == VK_NULL_HANDLE) {
+        throw tools::InexorException("Error: Graphics submission returned an invalid fence!");
+    }
+
+    // The same submission fence protects both kinds of frame-local ownership:
+    // frame-slot resources and the swapchain image acquired for this frame.
+    m_frame_sync_manager.mark_frame_slot_submission_fence(submission_fence);
+    m_swapchain_manager.mark_frame_swapchains_in_flight(submission_fence);
+}
+
 std::weak_ptr<PerFrameDescriptorSets>
 RenderGraph::add_resource_descriptor(const std::variant<std::weak_ptr<Buffer>, std::weak_ptr<Texture>> resource,
                                      const VkShaderStageFlags stage, const std::uint32_t dst_binding) {
@@ -852,8 +863,7 @@ void RenderGraph::render() {
     }
 
     m_inline_update_commands = {};
-    m_frame_sync_manager.mark_frame_slot_submission_fence(render_submit_fence);
-    m_swapchain_manager.mark_frame_swapchains_in_flight(render_submit_fence);
+    register_frame_submission(render_submit_fence);
     const auto finalize_end = collect_cpu_stats ? Clock::now() : Clock::time_point{};
     m_swapchain_manager.present(m_swapchain_manager.rendering_finished_semaphores());
     if (collect_cpu_stats) {

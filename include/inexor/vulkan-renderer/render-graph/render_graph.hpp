@@ -169,6 +169,9 @@ private:
 
     void synchronize_frame_context();
 
+    /// Register the single fence returned by the graphics submission for all frame-local ownership tracking.
+    void register_frame_submission(VkFence submission_fence);
+
     void invalidate_graphics_pass_secondary_cmd_buffers();
 
     /// Build the reusable parallel command-buffer recording tasks after the pass list changes.
