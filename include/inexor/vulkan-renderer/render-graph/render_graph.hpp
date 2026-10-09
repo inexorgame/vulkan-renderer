@@ -168,8 +168,6 @@ private:
         CpuPhaseDurations phase_max_ns{};
     } m_cpu_frame_stats;
 
-    void record_cpu_frame_stats(const CpuPhaseDurations &durations);
-
     void defer_release(std::span<const VkFence> fences, std::function<void()> release);
 
     void synchronize_frame_context();

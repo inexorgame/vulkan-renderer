@@ -690,43 +690,6 @@ void RenderGraph::record_command_buffer_for_pass(const CommandBuffer &cmd_buf, G
                                                            pass.m_rendering_info, pass.m_on_record_cmd_buffer);
 }
 
-void RenderGraph::record_cpu_frame_stats(const CpuPhaseDurations &durations) {
-    auto &stats = m_cpu_frame_stats;
-    ++stats.frames;
-    std::uint64_t frame_ns = 0;
-    for (std::size_t i = 0; i < durations.size(); ++i) {
-        frame_ns += durations[i];
-        stats.phase_total_ns[i] += durations[i];
-        stats.phase_max_ns[i] = std::max(stats.phase_max_ns[i], durations[i]);
-    }
-    stats.total_ns += frame_ns;
-    stats.max_frame_ns = std::max(stats.max_frame_ns, frame_ns);
-
-    if (stats.frames < 1024) {
-        return;
-    }
-
-    const auto average_us = [&](const CpuPhase phase) {
-        return static_cast<double>(stats.phase_total_ns[static_cast<std::size_t>(phase)]) / (1000.0 * stats.frames);
-    };
-    const auto peak_us = [&](const CpuPhase phase) {
-        return stats.phase_max_ns[static_cast<std::size_t>(phase)] / 1000.0;
-    };
-    spdlog::debug("RenderGraph CPU ({} frames, us): total avg={:.2f} max={:.2f}; house={:.2f}, "
-                  "acquire={:.2f}, context={:.2f}, resources={:.2f}, descriptors={:.2f}, "
-                  "record={:.2f}, submit={:.2f}, finalize={:.2f}, present={:.2f}",
-                  stats.frames, static_cast<double>(stats.total_ns) / (1000.0 * stats.frames),
-                  stats.max_frame_ns / 1000.0, average_us(CpuPhase::Housekeeping), average_us(CpuPhase::Acquire),
-                  average_us(CpuPhase::FrameContext), average_us(CpuPhase::Resources),
-                  average_us(CpuPhase::Descriptors), average_us(CpuPhase::Recording), average_us(CpuPhase::Submit),
-                  average_us(CpuPhase::Finalize), average_us(CpuPhase::Present));
-    spdlog::debug("RenderGraph CPU peaks (us): acquire={:.2f}, context={:.2f}, resources={:.2f}, "
-                  "record={:.2f}, submit={:.2f}, present={:.2f}",
-                  peak_us(CpuPhase::Acquire), peak_us(CpuPhase::FrameContext), peak_us(CpuPhase::Resources),
-                  peak_us(CpuPhase::Recording), peak_us(CpuPhase::Submit), peak_us(CpuPhase::Present));
-    stats = {};
-}
-
 void RenderGraph::render() {
     using Clock = std::chrono::steady_clock;
     const bool collect_cpu_stats = spdlog::get_level() <= spdlog::level::debug;
@@ -932,7 +895,6 @@ void RenderGraph::render() {
         durations[static_cast<std::size_t>(CpuPhase::Submit)] = elapsed_ns(submit_start, submit_end);
         durations[static_cast<std::size_t>(CpuPhase::Finalize)] = elapsed_ns(submit_end, finalize_end);
         durations[static_cast<std::size_t>(CpuPhase::Present)] = elapsed_ns(finalize_end, frame_end);
-        record_cpu_frame_stats(durations);
     }
 }
 
