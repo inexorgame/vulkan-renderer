@@ -61,9 +61,7 @@ VkResult Swapchain::acquire_next_image() {
 
     const auto slot_count = static_cast<std::uint32_t>(m_img_available.size());
     auto selected_slot = m_frame_index % slot_count;
-    constexpr std::uint32_t inflight_log_interval = 1024;
     const bool collect_stats = spdlog::get_level() <= spdlog::level::debug;
-    const bool log_inflight = ++m_inflight_stats.acquires >= inflight_log_interval;
     std::uint32_t pending_slots = 0;
     if (collect_stats) {
         // Sample every acquire so the interval maximum is not just the value at the log instant.
@@ -108,8 +106,8 @@ VkResult Swapchain::acquire_next_image() {
             ++m_inflight_stats.slot_wait_calls;
             auto &slot_fence = m_frame_slot_submission_fences[selected_slot];
             if (slot_fence != VK_NULL_HANDLE) {
-                const auto wait_start = collect_stats ? std::chrono::steady_clock::now()
-                                                      : std::chrono::steady_clock::time_point{};
+                const auto wait_start =
+                    collect_stats ? std::chrono::steady_clock::now() : std::chrono::steady_clock::time_point{};
                 if (const auto result = vkWaitForFences(m_device.device(), 1, &slot_fence, VK_TRUE,
                                                         std::numeric_limits<std::uint64_t>::max());
                     result != VK_SUCCESS) {
@@ -127,8 +125,8 @@ VkResult Swapchain::acquire_next_image() {
 
     m_current_frame_slot = selected_slot;
 
-    const auto acquire_start = collect_stats ? std::chrono::steady_clock::now()
-                                             : std::chrono::steady_clock::time_point{};
+    const auto acquire_start =
+        collect_stats ? std::chrono::steady_clock::now() : std::chrono::steady_clock::time_point{};
     const auto result =
         vkAcquireNextImageKHR(m_device.device(), m_swapchain, std::numeric_limits<std::uint64_t>::max(),
                               m_img_available[m_current_frame_slot]->semaphore(), VK_NULL_HANDLE, &m_current_img_index);
@@ -153,25 +151,6 @@ VkResult Swapchain::acquire_next_image() {
     // Store the current swapchain image and current swapchain image view!
     m_current_swapchain_img = m_imgs[m_current_img_index];
     m_current_swapchain_img_view = m_img_views[m_current_img_index];
-    if (log_inflight) {
-        if (collect_stats) {
-            const auto average_us = [](const std::uint64_t total_ns, const std::uint32_t count) {
-                return count == 0 ? 0.0 : static_cast<double>(total_ns) / (1000.0 * count);
-            };
-            spdlog::debug("Swapchain '{}' frames in flight ({} acquires): pending now={}/{}, max={}/{}, "
-                          "slot={}, image={}, slot waits={} total={:.2f}us max={:.2f}us, "
-                          "acquire avg={:.2f}us max={:.2f}us, present avg={:.2f}us max={:.2f}us ({} presents)",
-                          m_name, m_inflight_stats.acquires, pending_slots, slot_count,
-                          m_inflight_stats.max_pending_slots, slot_count, m_current_frame_slot, m_current_img_index,
-                          m_inflight_stats.slot_wait_calls, m_inflight_stats.slot_wait_total_ns / 1000.0,
-                          m_inflight_stats.slot_wait_max_ns / 1000.0,
-                          average_us(m_inflight_stats.acquire_total_ns, m_inflight_stats.acquires),
-                          m_inflight_stats.acquire_max_ns / 1000.0,
-                          average_us(m_inflight_stats.present_total_ns, m_inflight_stats.presents),
-                          m_inflight_stats.present_max_ns / 1000.0, m_inflight_stats.presents);
-        }
-        m_inflight_stats = {};
-    }
     return VK_SUCCESS;
 }
 
@@ -236,8 +215,8 @@ void Swapchain::present(const std::span<const VkSemaphore> rendering_finished) {
         .pImageIndices = &m_current_img_index,
     });
     const bool collect_stats = spdlog::get_level() <= spdlog::level::debug;
-    const auto present_start = collect_stats ? std::chrono::steady_clock::now()
-                                             : std::chrono::steady_clock::time_point{};
+    const auto present_start =
+        collect_stats ? std::chrono::steady_clock::now() : std::chrono::steady_clock::time_point{};
     const auto result = vkQueuePresentKHR(m_device.graphics_queue(), &present_info);
     if (collect_stats) {
         const auto duration = elapsed_ns(present_start);

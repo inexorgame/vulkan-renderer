@@ -227,6 +227,7 @@ ExampleApp::ExampleApp(int argc, char **argv) {
     argv = app.ensure_utf8(argv);
     app.add_flag("--vsync", m_vsync_enabled);
     app.add_flag("--no-cmd-buf-cache", m_no_cmd_buf_cache);
+    app.add_flag("--debug-vma", m_debug_vma);
     std::optional<std::uint32_t> preferred_gpu;
     app.add_option("--gpu", preferred_gpu);
     std::uint32_t max_fps = FPSLimiter::DEFAULT_FPS;
@@ -352,7 +353,7 @@ ExampleApp::ExampleApp(int argc, char **argv) {
                                                          required_extensions);
 
     m_device = std::make_unique<Device>(*m_instance, m_surface->surface(), physical_device, required_features,
-                                        required_extensions);
+                                        required_extensions, m_debug_vma);
 
     // Validate MSAA sample count against depth format capabilities
     if (m_msaa_sample_count != VK_SAMPLE_COUNT_1_BIT) {
@@ -713,7 +714,7 @@ void ExampleApp::run() {
                 generate_octree_indices();
                 m_octree_renderer->set_vertices_and_indices(m_octree_vertices, m_octree_indices);
             }
-            if (m_input->kbm_data().was_key_pressed_once(GLFW_KEY_V)) {
+            if (m_debug_vma && m_input->kbm_data().was_key_pressed_once(GLFW_KEY_V)) {
                 m_device->log_vma_statistics();
             }
             if (m_input->kbm_data().was_key_pressed_once(GLFW_KEY_P)) {

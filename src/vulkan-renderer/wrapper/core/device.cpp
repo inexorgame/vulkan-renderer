@@ -73,8 +73,9 @@ std::array<float, 4> get_debug_label_color(const DebugLabelColor color) {
 }
 
 Device::Device(const Instance &inst, const VkSurfaceKHR surface, const VkPhysicalDevice desired_gpu,
-               const VkPhysicalDeviceFeatures &required_features, const std::span<const char *> required_extensions)
-    : m_enabled_features(required_features) {
+               const VkPhysicalDeviceFeatures &required_features, const std::span<const char *> required_extensions,
+               const bool debug_vma)
+    : m_debug_vma(debug_vma), m_enabled_features(required_features) {
     // Lets just be safe and check if these function pointers are really available.
     if (vkCreateDevice == nullptr) {
         throw InexorException("Error: Function pointer 'vkCreateDevice' is not available!");
@@ -279,12 +280,8 @@ Device::~Device() {
     // Because the device handle must be valid for the destruction of the command pools in the CommandPool destructor,
     // we must destroy the command pools manually here in order to ensure the right order of destruction
     m_cmd_pools.clear();
-    // Dump detailed allocator stats before destruction so leaking allocations can be identified by name.
-    char *vma_stats_string = nullptr;
-    vmaBuildStatsString(m_allocator, &vma_stats_string, VK_TRUE);
-    if (vma_stats_string != nullptr) {
-        spdlog::warn("VMA allocator stats before destruction:\n{}", vma_stats_string);
-        vmaFreeStatsString(m_allocator, vma_stats_string);
+    if (m_debug_vma) {
+        log_vma_statistics();
     }
     // Now that we destroyed the command pools, we can destroy the allocator and finally the device itself
     vmaDestroyAllocator(m_allocator);
@@ -540,6 +537,10 @@ void Device::wait_idle(const VkQueue queue) const {
 }
 
 void Device::log_vma_statistics() const {
+    if (!m_debug_vma) {
+        return;
+    }
+
     VmaTotalStatistics total_statistics{};
     vmaCalculateStatistics(m_allocator, &total_statistics);
 

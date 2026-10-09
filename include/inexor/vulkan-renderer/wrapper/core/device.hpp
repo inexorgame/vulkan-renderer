@@ -79,6 +79,7 @@ private:
     VkPhysicalDevice m_physical_device{VK_NULL_HANDLE};
     std::unique_ptr<PipelineCache> m_pipeline_cache;
     VmaAllocator m_allocator{VK_NULL_HANDLE};
+    bool m_debug_vma{false};
     std::string m_gpu_name;
     VkPhysicalDeviceFeatures m_enabled_features{};
     std::array<std::uint8_t, VK_UUID_SIZE> m_pipeline_cache_uuid{};
@@ -121,7 +122,8 @@ public:
     /// @exception VulkanException vmaCreateAllocator call failed
     /// @note The creation of the physical device will not fail if one of the optional device features is not available
     Device(const Instance &inst, VkSurfaceKHR surface, VkPhysicalDevice physical_device,
-           const VkPhysicalDeviceFeatures &required_features, std::span<const char *> required_extensions);
+           const VkPhysicalDeviceFeatures &required_features, std::span<const char *> required_extensions,
+           bool debug_vma = false);
 
     ~Device();
 

@@ -57,6 +57,7 @@ private:
     WindowMode m_window_mode;
     std::string m_window_title;
     bool m_no_cmd_buf_cache{false};
+    bool m_debug_vma{false};
 
     std::vector<OctreeVertex> m_octree_vertices;
     std::vector<std::uint32_t> m_octree_indices;
