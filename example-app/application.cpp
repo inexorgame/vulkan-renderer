@@ -704,7 +704,9 @@ void ExampleApp::run() {
 
     while (!m_window->should_close()) {
         m_window->poll();
-        if (m_fps_limiter.is_next_frame_allowed()) {
+        // Presentation already paces the application when VSync is enabled. Keep updating
+        // limiter timing for input/camera deltas, but do not add a second CPU-side limiter wait.
+        if (m_fps_limiter.is_next_frame_allowed(!m_vsync_enabled)) {
             m_input->update_gamepad_data();
             process_input();
             update_imgui_overlay();
