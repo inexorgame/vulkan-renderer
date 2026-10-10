@@ -551,6 +551,7 @@ void ExampleApp::update_imgui_overlay() {
                 VK_API_VERSION_MINOR(Instance::REQUIRED_VK_API_VERSION),
                 VK_API_VERSION_PATCH(Instance::REQUIRED_VK_API_VERSION), m_msaa_text.data());
     ImGui::Text("Press N to regenerate octree");
+    ImGui::Text("Press P for performance statistics");
     ImGui::Spacing();
     draw_frame_time_graph();
     ImGui::End();
@@ -761,6 +762,7 @@ std::optional<std::uint32_t> ExampleApp::run() {
             }
             if (m_input->kbm_data().was_key_pressed_once(GLFW_KEY_P)) {
                 m_render_graph->log_gpu_frame_time();
+                m_render_graph->log_performance_stats();
             }
             check_octree_collisions();
         }

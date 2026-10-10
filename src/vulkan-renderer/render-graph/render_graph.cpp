@@ -52,6 +52,10 @@ RenderGraph::~RenderGraph() {
     try {
         m_device.wait_idle();
         m_frame_sync_manager.process_deferred_releases(true);
+        // All queued GPU work has completed, so emit the final accumulated report before
+        // the swapchain and frame-synchronization state is cleared below.
+        log_gpu_frame_time();
+        log_performance_stats();
         for (auto &release : m_inline_update_pending_releases) {
             release();
         }
@@ -714,19 +718,21 @@ void RenderGraph::record_command_buffer_for_pass(const CommandBuffer &cmd_buf, G
 
 void RenderGraph::render() {
     using Clock = std::chrono::steady_clock;
-    const bool collect_cpu_stats = spdlog::get_level() <= spdlog::level::debug;
+    // These timings are also used by the explicit performance report (P hotkey),
+    // so collect them independently of the current spdlog level.
+    constexpr bool collect_cpu_stats = true;
     const auto frame_start = collect_cpu_stats ? Clock::now() : Clock::time_point{};
     m_frame_sync_manager.process_deferred_releases(false);
     const auto housekeeping_end = collect_cpu_stats ? Clock::now() : Clock::time_point{};
     m_swapchain_manager.collect_frame_swapchains(m_graphics_passes);
     m_swapchain_manager.synchronize_frame_context();
     synchronize_frame_context();
+    const auto frame_context_end = collect_cpu_stats ? Clock::now() : Clock::time_point{};
     const auto waited_frame_fence = m_frame_sync_manager.wait_for_current_frame_slot();
     if (!m_swapchain_manager.acquire_next_images(waited_frame_fence)) {
         return;
     }
     const auto acquire_end = collect_cpu_stats ? Clock::now() : Clock::time_point{};
-    const auto frame_context_end = collect_cpu_stats ? Clock::now() : Clock::time_point{};
     update_resources();
     const auto resources_end = collect_cpu_stats ? Clock::now() : Clock::time_point{};
 
@@ -916,6 +922,7 @@ void RenderGraph::render() {
     m_inline_update_commands = {};
     register_frame_submission(render_submit_fence);
     m_last_gpu_query_frame_slot = m_current_frame_slot;
+    ++m_gpu_query_serial;
     const auto finalize_end = collect_cpu_stats ? Clock::now() : Clock::time_point{};
     m_swapchain_manager.present(m_swapchain_manager.rendering_finished_semaphores());
     if (collect_cpu_stats) {
@@ -928,12 +935,20 @@ void RenderGraph::render() {
         durations[static_cast<std::size_t>(CpuPhase::Housekeeping)] = elapsed_ns(frame_start, housekeeping_end);
         durations[static_cast<std::size_t>(CpuPhase::FrameContext)] = elapsed_ns(housekeeping_end, frame_context_end);
         durations[static_cast<std::size_t>(CpuPhase::Acquire)] = elapsed_ns(frame_context_end, acquire_end);
-        durations[static_cast<std::size_t>(CpuPhase::Resources)] = elapsed_ns(frame_context_end, resources_end);
+        durations[static_cast<std::size_t>(CpuPhase::Resources)] = elapsed_ns(acquire_end, resources_end);
         durations[static_cast<std::size_t>(CpuPhase::Descriptors)] = elapsed_ns(resources_end, descriptors_end);
         durations[static_cast<std::size_t>(CpuPhase::Recording)] = elapsed_ns(descriptors_end, submit_start);
         durations[static_cast<std::size_t>(CpuPhase::Submit)] = elapsed_ns(submit_start, submit_end);
         durations[static_cast<std::size_t>(CpuPhase::Finalize)] = elapsed_ns(submit_end, finalize_end);
         durations[static_cast<std::size_t>(CpuPhase::Present)] = elapsed_ns(finalize_end, frame_end);
+        const auto frame_total_ns = elapsed_ns(frame_start, frame_end);
+        ++m_cpu_frame_stats.frames;
+        m_cpu_frame_stats.total_ns += frame_total_ns;
+        m_cpu_frame_stats.max_frame_ns = std::max(m_cpu_frame_stats.max_frame_ns, frame_total_ns);
+        for (std::size_t i = 0; i < cpu_phase_count; ++i) {
+            m_cpu_frame_stats.phase_total_ns[i] += durations[i];
+            m_cpu_frame_stats.phase_max_ns[i] = std::max(m_cpu_frame_stats.phase_max_ns[i], durations[i]);
+        }
     }
 }
 
@@ -964,6 +979,52 @@ void RenderGraph::log_gpu_frame_time() const {
     spdlog::trace("GPU frame time: {:.3f} ms [ticks={}]", elapsed_ms, elapsed_ticks);
 }
 
+void RenderGraph::log_performance_stats() const {
+    const auto ns_to_ms = [](const std::uint64_t total_ns, const std::uint64_t count) {
+        return count == 0 ? 0.0 : static_cast<double>(total_ns) / static_cast<double>(count) / 1'000'000.0;
+    };
+
+    spdlog::trace("Performance averages over {} CPU frames ({} frame slots):", m_cpu_frame_stats.frames,
+                  m_frame_slot_count);
+    if (m_cpu_frame_stats.frames != 0) {
+        spdlog::trace("  CPU frame: {:.3f} ms (max {:.3f} ms)",
+                      ns_to_ms(m_cpu_frame_stats.total_ns, m_cpu_frame_stats.frames),
+                      static_cast<double>(m_cpu_frame_stats.max_frame_ns) / 1'000'000.0);
+        constexpr std::array<const char *, cpu_phase_count> phase_names{"housekeeping", "acquire",     "frame-context",
+                                                                        "resources",    "descriptors", "recording",
+                                                                        "submit",       "finalize",    "present"};
+        for (std::size_t i = 0; i < cpu_phase_count; ++i) {
+            spdlog::trace("  CPU {:<13}: {:.3f} ms (max {:.3f} ms)", phase_names[i],
+                          ns_to_ms(m_cpu_frame_stats.phase_total_ns[i], m_cpu_frame_stats.frames),
+                          static_cast<double>(m_cpu_frame_stats.phase_max_ns[i]) / 1'000'000.0);
+        }
+    }
+
+    const auto &wait_stats = m_frame_sync_manager.wait_stats();
+    spdlog::trace("  Frame-slot fence waits: {} calls, avg {:.3f} ms, max {:.3f} ms", wait_stats.waits,
+                  ns_to_ms(wait_stats.total_ns, wait_stats.waits),
+                  static_cast<double>(wait_stats.max_ns) / 1'000'000.0);
+
+    if (m_gpu_frame_count != 0) {
+        spdlog::trace("  GPU frame: {} samples, avg {:.3f} ms, max {:.3f} ms", m_gpu_frame_count,
+                      m_gpu_frame_total_ms / static_cast<double>(m_gpu_frame_count), m_gpu_frame_max_ms);
+    }
+
+    for (const auto &swapchain : m_swapchain_manager.frame_swapchains()) {
+        const auto &stats = swapchain->inflight_stats();
+        spdlog::trace("  Swapchain '{}':", swapchain->name());
+        spdlog::trace("    acquire avg/max {:.3f}/{:.3f} ms ({})",
+                      ns_to_ms(stats.acquire_total_ns, static_cast<std::uint64_t>(stats.acquires)),
+                      static_cast<double>(stats.acquire_max_ns) / 1'000'000.0, stats.acquires);
+        spdlog::trace("    present avg/max {:.3f}/{:.3f} ms ({})",
+                      ns_to_ms(stats.present_total_ns, static_cast<std::uint64_t>(stats.presents)),
+                      static_cast<double>(stats.present_max_ns) / 1'000'000.0, stats.presents);
+        spdlog::trace("    image-fence wait avg/max {:.3f}/{:.3f} ms ({})",
+                      ns_to_ms(stats.image_wait_total_ns, static_cast<std::uint64_t>(stats.image_waits)),
+                      static_cast<double>(stats.image_wait_max_ns) / 1'000'000.0, stats.image_waits);
+    }
+}
+
 std::optional<double> RenderGraph::try_get_gpu_frame_time_ms() const {
     if (!m_query_pool || !m_query_pool_has_results || !m_last_gpu_query_frame_slot) {
         return std::nullopt;
@@ -987,12 +1048,22 @@ std::optional<double> RenderGraph::try_get_gpu_frame_time_ms() const {
     }
 
     const auto elapsed_ticks = values[2] - values[0];
-    return static_cast<double>(elapsed_ticks) * static_cast<double>(m_timestamp_period) / 1'000'000.0;
+    const auto elapsed_ms = static_cast<double>(elapsed_ticks) * static_cast<double>(m_timestamp_period) / 1'000'000.0;
+    ++m_gpu_frame_count;
+    m_gpu_frame_total_ms += elapsed_ms;
+    m_gpu_frame_max_ms = std::max(m_gpu_frame_max_ms, elapsed_ms);
+    return elapsed_ms;
 }
 
 void RenderGraph::reset_graph() {
     m_frame_sync_manager.process_deferred_releases(true);
     m_cpu_frame_stats = {};
+    m_gpu_frame_count = 0;
+    m_gpu_frame_total_ms = 0.0;
+    m_gpu_frame_max_ms = 0.0;
+    m_gpu_query_serial = 0;
+    m_gpu_last_sampled_serial = 0;
+    m_gpu_last_frame_ms = 0.0;
     m_last_gpu_query_frame_slot.reset();
     m_staging_buffer.reset();
     m_recording_tasks.clear();

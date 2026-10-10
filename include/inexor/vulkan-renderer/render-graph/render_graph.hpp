@@ -166,6 +166,12 @@ private:
         CpuPhaseDurations phase_total_ns{};
         CpuPhaseDurations phase_max_ns{};
     } m_cpu_frame_stats;
+    mutable std::uint64_t m_gpu_frame_count{0};
+    mutable double m_gpu_frame_total_ms{0.0};
+    mutable double m_gpu_frame_max_ms{0.0};
+    std::uint64_t m_gpu_query_serial{0};
+    mutable std::uint64_t m_gpu_last_sampled_serial{0};
+    mutable double m_gpu_last_frame_ms{0.0};
 
     void defer_release(std::span<const VkFence> fences, std::function<void()> release);
 
@@ -323,6 +329,9 @@ public:
 
     /// Log the most recently recorded GPU frame time.
     void log_gpu_frame_time() const;
+
+    /// Log accumulated CPU, GPU, swapchain and synchronization timing averages.
+    void log_performance_stats() const;
 
     /// Returns the most recently recorded GPU frame time in milliseconds if the query results are available.
     [[nodiscard]] std::optional<double> try_get_gpu_frame_time_ms() const;

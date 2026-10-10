@@ -67,7 +67,11 @@ private:
         std::uint64_t acquire_max_ns{0};
         std::uint64_t present_total_ns{0};
         std::uint64_t present_max_ns{0};
-    } m_inflight_stats;
+        std::uint32_t image_waits{0};
+        std::uint64_t image_wait_total_ns{0};
+        std::uint64_t image_wait_max_ns{0};
+    };
+    mutable InFlightStats m_inflight_stats;
 
 public:
     /// Default constructor
@@ -124,6 +128,10 @@ public:
 
     /// Mark the currently acquired swapchain image as owned by the given submission fence.
     void mark_current_image_in_flight(VkFence fence);
+
+    [[nodiscard]] const InFlightStats &inflight_stats() const {
+        return m_inflight_stats;
+    }
 
     [[nodiscard]] std::uint32_t image_count() const {
         return static_cast<std::uint32_t>(m_imgs.size());
