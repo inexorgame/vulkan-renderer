@@ -35,7 +35,7 @@ CommandPool::CommandPool(const core::Device &device, const VkQueueFlagBits queue
     m_device.set_debug_name(m_cmd_pool, m_name);
 }
 
-CommandPool::CommandPool(CommandPool &&other) noexcept : m_device(other.m_device) {
+CommandPool::CommandPool(CommandPool &&other) noexcept : m_device(other.m_device), m_thread_id(other.m_thread_id) {
     m_name = std::move(other.m_name);
     m_cmd_pool = std::exchange(other.m_cmd_pool, nullptr);
     m_queue_type = other.m_queue_type;
