@@ -37,10 +37,9 @@ std::vector<std::uint64_t> QueryPool::get_results(const std::uint32_t first_quer
     }
     std::vector<std::uint64_t> results(actual_query_count, 0);
 
-    const auto result =
-        vkGetQueryPoolResults(m_device.device(), m_query_pool, first_query, actual_query_count,
-                              sizeof(std::uint64_t) * results.size(),
-                              results.data(), sizeof(std::uint64_t), VK_QUERY_RESULT_64_BIT | VK_QUERY_RESULT_WAIT_BIT);
+    const auto result = vkGetQueryPoolResults(m_device.device(), m_query_pool, first_query, actual_query_count,
+                                              sizeof(std::uint64_t) * results.size(), results.data(),
+                                              sizeof(std::uint64_t), VK_QUERY_RESULT_64_BIT | VK_QUERY_RESULT_WAIT_BIT);
     if (result != VK_SUCCESS) {
         throw tools::VulkanException("Error: vkGetQueryPoolResults failed!", result);
     }
@@ -49,7 +48,7 @@ std::vector<std::uint64_t> QueryPool::get_results(const std::uint32_t first_quer
 }
 
 std::optional<std::vector<std::uint64_t>> QueryPool::try_get_results(const std::uint32_t first_query,
-                                                                      const std::uint32_t query_count) const {
+                                                                     const std::uint32_t query_count) const {
     const auto actual_query_count = query_count == 0 ? m_query_count - first_query : query_count;
     if (first_query >= m_query_count || actual_query_count == 0 || first_query + actual_query_count > m_query_count) {
         throw std::invalid_argument("Error: Query range is outside the query pool!");
@@ -57,8 +56,8 @@ std::optional<std::vector<std::uint64_t>> QueryPool::try_get_results(const std::
     std::vector<std::uint64_t> results(actual_query_count * 2, 0);
 
     const auto result = vkGetQueryPoolResults(
-        m_device.device(), m_query_pool, first_query, actual_query_count, sizeof(std::uint64_t) * results.size(), results.data(),
-        sizeof(std::uint64_t) * 2, VK_QUERY_RESULT_64_BIT | VK_QUERY_RESULT_WITH_AVAILABILITY_BIT);
+        m_device.device(), m_query_pool, first_query, actual_query_count, sizeof(std::uint64_t) * results.size(),
+        results.data(), sizeof(std::uint64_t) * 2, VK_QUERY_RESULT_64_BIT | VK_QUERY_RESULT_WITH_AVAILABILITY_BIT);
     if (result == VK_NOT_READY) {
         return std::nullopt;
     }

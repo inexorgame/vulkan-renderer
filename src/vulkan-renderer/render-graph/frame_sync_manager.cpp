@@ -34,8 +34,8 @@ VkFence FrameSyncManager::wait_for_current_frame_slot() {
         return VK_NULL_HANDLE;
     }
 
-    if (const auto result = vkWaitForFences(m_device.device(), 1, &fence, VK_TRUE,
-                                            std::numeric_limits<std::uint64_t>::max());
+    if (const auto result =
+            vkWaitForFences(m_device.device(), 1, &fence, VK_TRUE, std::numeric_limits<std::uint64_t>::max());
         result != VK_SUCCESS) {
         throw VulkanException("Error: waiting for current frame slot failed!", result,
                               "FrameSyncManager::wait_for_current_frame_slot");
@@ -53,7 +53,7 @@ void FrameSyncManager::mark_frame_slot_submission_fence(const VkFence fence) {
 
 VkFence FrameSyncManager::frame_slot_submission_fence(const std::size_t frame_slot) const {
     return frame_slot < m_frame_slot_submission_fences.size() ? m_frame_slot_submission_fences[frame_slot]
-                                                               : VK_NULL_HANDLE;
+                                                              : VK_NULL_HANDLE;
 }
 
 void FrameSyncManager::defer_release(const std::span<const VkFence> fences, std::function<void()> release) {

@@ -38,8 +38,7 @@ using wrapper::synchronization::Semaphore;
 RenderGraph::RenderGraph(Device &device, const bool use_secondary_command_buffers, const bool one_command_buffer)
     : m_device(device), m_resource_descriptors(device), m_graphics_pipeline_builder(device),
       m_swapchain_manager(device), m_command_buffer_cache(device, use_secondary_command_buffers),
-      m_one_command_buffer(one_command_buffer),
-      m_query_pool(std::make_unique<wrapper::queries::QueryPool>(device, 4)),
+      m_one_command_buffer(one_command_buffer), m_query_pool(std::make_unique<wrapper::queries::QueryPool>(device, 4)),
       m_upload_finished(std::make_unique<Semaphore>(device, "render_graph_upload_finished")),
       m_frame_sync_manager(device), m_staging_buffer(device, "render_graph_upload_arena") {
     VkPhysicalDeviceProperties physical_device_properties{};
@@ -98,22 +97,20 @@ void RenderGraph::register_frame_submission(const VkFence submission_fence) {
     m_swapchain_manager.mark_frame_swapchains_in_flight(submission_fence);
 }
 
-VkFence RenderGraph::submit_graphics_frame(
-    const std::span<const wrapper::commands::CommandBuffer *const> command_buffers,
-    const std::span<const wrapper::core::QueueSemaphoreWait> wait_semaphores,
-    const std::span<const VkSemaphore> signal_semaphores) const {
+VkFence
+RenderGraph::submit_graphics_frame(const std::span<const wrapper::commands::CommandBuffer *const> command_buffers,
+                                   const std::span<const wrapper::core::QueueSemaphoreWait> wait_semaphores,
+                                   const std::span<const VkSemaphore> signal_semaphores) const {
     if (command_buffers.empty()) {
         throw tools::InexorException("Error: Graphics submission contains no command buffers!");
     }
     return m_device.submit_graphics_command_buffers(command_buffers, wait_semaphores, signal_semaphores);
 }
 
-VkFence RenderGraph::submit_graphics_frame(
-    const std::function<void(wrapper::commands::CommandBufferBuilder &)> &record,
-    const std::span<const wrapper::core::QueueSemaphoreWait> wait_semaphores,
-    const std::span<const VkSemaphore> signal_semaphores) const {
-    return m_device.execute(VK_QUEUE_GRAPHICS_BIT, DebugLabelColor::CYAN, record, wait_semaphores,
-                            signal_semaphores);
+VkFence RenderGraph::submit_graphics_frame(const std::function<void(wrapper::commands::CommandBufferBuilder &)> &record,
+                                           const std::span<const wrapper::core::QueueSemaphoreWait> wait_semaphores,
+                                           const std::span<const VkSemaphore> signal_semaphores) const {
+    return m_device.execute(VK_QUEUE_GRAPHICS_BIT, DebugLabelColor::CYAN, record, wait_semaphores, signal_semaphores);
 }
 
 std::weak_ptr<PerFrameDescriptorSets>
@@ -854,13 +851,13 @@ void RenderGraph::render() {
         if (collect_cpu_stats) {
             submit_start = Clock::now();
         }
-        render_submit_fence = submit_graphics_frame(
-            batch, render_wait_semaphores, m_swapchain_manager.rendering_finished_semaphores());
+        render_submit_fence =
+            submit_graphics_frame(batch, render_wait_semaphores, m_swapchain_manager.rendering_finished_semaphores());
     } else {
         render_submit_fence = submit_graphics_frame(
             [&](CommandBufferBuilder &builder) {
                 if (m_query_pool) {
-                        builder.reset_query_pool(*m_query_pool, query_base, 2)
+                    builder.reset_query_pool(*m_query_pool, query_base, 2)
                         .write_timestamp(*m_query_pool, query_base, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT);
                 }
                 if (m_inline_update_commands) {

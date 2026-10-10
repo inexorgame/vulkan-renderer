@@ -174,15 +174,15 @@ private:
     /// Register the single fence returned by the graphics submission for all frame-local ownership tracking.
     void register_frame_submission(VkFence submission_fence);
 
-    [[nodiscard]] VkFence submit_graphics_frame(
-        std::span<const wrapper::commands::CommandBuffer *const> command_buffers,
-        std::span<const wrapper::core::QueueSemaphoreWait> wait_semaphores,
-        std::span<const VkSemaphore> signal_semaphores) const;
+    [[nodiscard]] VkFence
+    submit_graphics_frame(std::span<const wrapper::commands::CommandBuffer *const> command_buffers,
+                          std::span<const wrapper::core::QueueSemaphoreWait> wait_semaphores,
+                          std::span<const VkSemaphore> signal_semaphores) const;
 
-    [[nodiscard]] VkFence submit_graphics_frame(
-        const std::function<void(wrapper::commands::CommandBufferBuilder &)> &record,
-        std::span<const wrapper::core::QueueSemaphoreWait> wait_semaphores,
-        std::span<const VkSemaphore> signal_semaphores) const;
+    [[nodiscard]] VkFence
+    submit_graphics_frame(const std::function<void(wrapper::commands::CommandBufferBuilder &)> &record,
+                          std::span<const wrapper::core::QueueSemaphoreWait> wait_semaphores,
+                          std::span<const VkSemaphore> signal_semaphores) const;
 
     void invalidate_graphics_pass_secondary_cmd_buffers();
 
