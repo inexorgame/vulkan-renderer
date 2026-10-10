@@ -33,10 +33,10 @@ using wrapper::core::Device;
 class Swapchain {
 private:
     // Frame-context resources are intentionally independent of the number of swapchain images.
-    // Two slots allow the CPU to prepare the next frame while the GPU processes the previous one.
-    static constexpr std::uint32_t MAX_FRAMES_IN_FLIGHT = 2;
+    static constexpr std::uint32_t DEFAULT_FRAMES_IN_FLIGHT = 2;
 
     const Device &m_device;
+    const std::uint32_t m_frames_in_flight;
     VkSwapchainKHR m_swapchain{VK_NULL_HANDLE};
     VkSurfaceKHR m_surface{VK_NULL_HANDLE};
     VkSurfaceFormatKHR m_surface_format;
@@ -67,14 +67,19 @@ private:
         std::uint64_t acquire_max_ns{0};
         std::uint64_t present_total_ns{0};
         std::uint64_t present_max_ns{0};
-    } m_inflight_stats;
+        std::uint32_t image_waits{0};
+        std::uint64_t image_wait_total_ns{0};
+        std::uint64_t image_wait_max_ns{0};
+    };
+    mutable InFlightStats m_inflight_stats;
 
 public:
     /// Default constructor
     /// @param device The device wrapper
     /// @param name The name of the swapchain
     /// @param surface The surface
-    Swapchain(const Device &device, std::string name, VkSurfaceKHR surface);
+    Swapchain(const Device &device, std::string name, VkSurfaceKHR surface,
+              std::uint32_t frames_in_flight = DEFAULT_FRAMES_IN_FLIGHT);
 
     ~Swapchain();
 
@@ -111,11 +116,11 @@ public:
     }
 
     [[nodiscard]] std::uint32_t next_frame_slot() const {
-        return m_frame_index % MAX_FRAMES_IN_FLIGHT;
+        return m_frame_index % m_frames_in_flight;
     }
 
     [[nodiscard]] std::uint32_t frame_slot_count() const {
-        return MAX_FRAMES_IN_FLIGHT;
+        return m_frames_in_flight;
     }
 
     /// Wait for the fence associated with the currently acquired swapchain image, if any.
@@ -123,6 +128,10 @@ public:
 
     /// Mark the currently acquired swapchain image as owned by the given submission fence.
     void mark_current_image_in_flight(VkFence fence);
+
+    [[nodiscard]] const InFlightStats &inflight_stats() const {
+        return m_inflight_stats;
+    }
 
     [[nodiscard]] std::uint32_t image_count() const {
         return static_cast<std::uint32_t>(m_imgs.size());

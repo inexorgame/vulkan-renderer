@@ -31,8 +31,12 @@ std::uint64_t elapsed_ns(const std::chrono::steady_clock::time_point start) {
 }
 } // namespace
 
-Swapchain::Swapchain(const core::Device &device, std::string name, const VkSurfaceKHR surface)
-    : m_device(device), m_name(std::move(name)), m_surface(surface) {
+Swapchain::Swapchain(const core::Device &device, std::string name, const VkSurfaceKHR surface,
+                     const std::uint32_t frames_in_flight)
+    : m_device(device), m_frames_in_flight(frames_in_flight), m_name(std::move(name)), m_surface(surface) {
+    if (m_frames_in_flight < 1 || m_frames_in_flight > 3) {
+        throw InexorException("Error: Number of frames in flight must be between 1 and 3!");
+    }
     if (vkCreateSwapchainKHR == nullptr) {
         throw InexorException("Error: Function pointer 'vkCreateSwapchainKHR' is not available!");
     }
@@ -59,7 +63,7 @@ VkResult Swapchain::acquire_next_image() {
         throw std::runtime_error("Error: Swapchain has no image-available semaphores!");
     }
 
-    const auto slot_count = MAX_FRAMES_IN_FLIGHT;
+    const auto slot_count = m_frames_in_flight;
     auto selected_slot = m_frame_index % slot_count;
     const bool collect_stats = spdlog::get_level() <= spdlog::level::debug;
 
@@ -70,11 +74,10 @@ VkResult Swapchain::acquire_next_image() {
     const auto result =
         vkAcquireNextImageKHR(m_device.device(), m_swapchain, std::numeric_limits<std::uint64_t>::max(),
                               m_img_available[m_current_frame_slot]->semaphore(), VK_NULL_HANDLE, &m_current_img_index);
-    if (collect_stats) {
-        const auto duration = elapsed_ns(acquire_start);
-        m_inflight_stats.acquire_total_ns += duration;
-        m_inflight_stats.acquire_max_ns = std::max(m_inflight_stats.acquire_max_ns, duration);
-    }
+    const auto duration = elapsed_ns(acquire_start);
+    ++m_inflight_stats.acquires;
+    m_inflight_stats.acquire_total_ns += duration;
+    m_inflight_stats.acquire_max_ns = std::max(m_inflight_stats.acquire_max_ns, duration);
     if (result == VK_ERROR_OUT_OF_DATE_KHR) {
         setup_swapchain(m_current_extent, m_vsync_enabled);
         // NOTE: After recreating the swapchain, we can't immediately attempt to acquire the next image index!
@@ -97,11 +100,16 @@ VkResult Swapchain::acquire_next_image() {
 void Swapchain::wait_for_current_image_if_in_flight(const VkFence already_waited_fence) const {
     const auto in_flight_fence = m_imgs_in_flight[m_current_img_index];
     if (in_flight_fence != VK_NULL_HANDLE && in_flight_fence != already_waited_fence) {
+        const auto wait_start = std::chrono::steady_clock::now();
         if (const auto result = vkWaitForFences(m_device.device(), 1, &in_flight_fence, VK_TRUE,
                                                 std::numeric_limits<std::uint64_t>::max());
             result != VK_SUCCESS) {
             throw VulkanException("Error: vkWaitForFences failed!", result, m_name);
         }
+        const auto duration = elapsed_ns(wait_start);
+        ++m_inflight_stats.image_waits;
+        m_inflight_stats.image_wait_total_ns += duration;
+        m_inflight_stats.image_wait_max_ns = std::max(m_inflight_stats.image_wait_max_ns, duration);
     }
 }
 
@@ -144,16 +152,12 @@ void Swapchain::present(const std::span<const VkSemaphore> rendering_finished) {
         .pSwapchains = &m_swapchain,
         .pImageIndices = &m_current_img_index,
     });
-    const bool collect_stats = spdlog::get_level() <= spdlog::level::debug;
-    const auto present_start =
-        collect_stats ? std::chrono::steady_clock::now() : std::chrono::steady_clock::time_point{};
+    const auto present_start = std::chrono::steady_clock::now();
     const auto result = vkQueuePresentKHR(m_device.graphics_queue(), &present_info);
-    if (collect_stats) {
-        const auto duration = elapsed_ns(present_start);
-        ++m_inflight_stats.presents;
-        m_inflight_stats.present_total_ns += duration;
-        m_inflight_stats.present_max_ns = std::max(m_inflight_stats.present_max_ns, duration);
-    }
+    const auto duration = elapsed_ns(present_start);
+    ++m_inflight_stats.presents;
+    m_inflight_stats.present_total_ns += duration;
+    m_inflight_stats.present_max_ns = std::max(m_inflight_stats.present_max_ns, duration);
     if (result != VK_SUCCESS) {
         if (result == VK_SUBOPTIMAL_KHR || result == VK_ERROR_OUT_OF_DATE_KHR) {
             // We need to recreate the swapchain
@@ -163,7 +167,7 @@ void Swapchain::present(const std::span<const VkSemaphore> rendering_finished) {
             throw VulkanException("Error: vkQueuePresentKHR failed!", result);
         }
     }
-    m_frame_index = (m_current_frame_slot + 1) % MAX_FRAMES_IN_FLIGHT;
+    m_frame_index = (m_current_frame_slot + 1) % m_frames_in_flight;
 }
 
 void Swapchain::setup_swapchain(const VkExtent2D requested_extent, const bool vsync_enabled) {
@@ -180,7 +184,7 @@ void Swapchain::setup_swapchain(const VkExtent2D requested_extent, const bool vs
 
     const auto swapchain_ci = make_info<VkSwapchainCreateInfoKHR>({
         .surface = m_surface,
-        .minImageCount = choose_image_count(caps),
+        .minImageCount = choose_image_count(caps, m_frames_in_flight),
         .imageFormat = m_surface_format.format,
         .imageColorSpace = m_surface_format.colorSpace,
         .imageExtent = choose_image_extent(requested_extent, caps, m_current_extent),
@@ -235,7 +239,7 @@ void Swapchain::setup_swapchain(const VkExtent2D requested_extent, const bool vs
         m_rendering_finished.emplace_back(
             std::make_unique<Semaphore>(m_device, "m_rendering_finished[image " + std::to_string(img_index) + "]"));
     }
-    for (std::uint32_t frame_slot = 0; frame_slot < MAX_FRAMES_IN_FLIGHT; ++frame_slot) {
+    for (std::uint32_t frame_slot = 0; frame_slot < m_frames_in_flight; ++frame_slot) {
         // Image-available semaphores belong to the reusable frame context.
         m_img_available.emplace_back(
             std::make_unique<Semaphore>(m_device, "m_img_available[slot " + std::to_string(frame_slot) + "]"));

@@ -11,21 +11,23 @@
 
 namespace inexor::vulkan_renderer::render_modules::imgui {
 
-// Using declarations for types only used in the implementation
-using inexor::vulkan_renderer::render_graph::BufferType;
-using inexor::vulkan_renderer::render_graph::DebugLabelColor;
-using inexor::vulkan_renderer::render_graph::GraphicsPassBuilder;
-using inexor::vulkan_renderer::wrapper::commands::CommandBuffer;
-using inexor::vulkan_renderer::wrapper::core::Device;
-using inexor::vulkan_renderer::wrapper::descriptors::DescriptorSetAllocator;
-using inexor::vulkan_renderer::wrapper::descriptors::DescriptorSetLayoutBuilder;
-using inexor::vulkan_renderer::wrapper::descriptors::DescriptorType;
-using inexor::vulkan_renderer::wrapper::descriptors::WriteDescriptorSetBuilder;
-
 ImGuiRenderer::ImGuiRenderer(std::shared_ptr<RenderGraph> render_graph, std::weak_ptr<Swapchain> swapchain,
                              std::function<void()> on_update_user_imgui_data)
     : m_imgui_module(std::make_unique<RenderModule>(render_graph, "ImGui")), m_swapchain(swapchain),
       m_on_update_user_imgui_data(std::move(on_update_user_imgui_data)) {
+
+    // Using declarations for types only used in the implementation
+    using inexor::vulkan_renderer::render_graph::BufferType;
+    using inexor::vulkan_renderer::render_graph::DebugLabelColor;
+    using inexor::vulkan_renderer::render_graph::GraphicsPassBuilder;
+    using inexor::vulkan_renderer::wrapper::commands::CommandBuffer;
+    using inexor::vulkan_renderer::wrapper::core::Device;
+    using inexor::vulkan_renderer::wrapper::descriptors::DescriptorSetAllocator;
+    using inexor::vulkan_renderer::wrapper::descriptors::DescriptorSetLayoutBuilder;
+    using inexor::vulkan_renderer::wrapper::descriptors::DescriptorType;
+    using inexor::vulkan_renderer::wrapper::descriptors::WriteDescriptorSetBuilder;
+    using inexor::vulkan_renderer::wrapper::pipelines::GraphicsPipelineBuilder;
+
     spdlog::trace("Creating ImGUI context");
     ImGui::CreateContext();
 
@@ -54,14 +56,12 @@ ImGuiRenderer::ImGuiRenderer(std::shared_ptr<RenderGraph> render_graph, std::wea
     m_vertex_shader = std::make_shared<Shader>(render_graph->device(), "shaders/ui.vert.spv");
     m_fragment_shader = std::make_shared<Shader>(render_graph->device(), "shaders/ui.frag.spv");
 
-    // Load font texture
-
-    // @TODO Move this data into a container class; have container class also support bold and italic.
     constexpr const char *FONT_FILE_PATH = "assets/fonts/NotoSans-Bold.ttf";
     constexpr float FONT_SIZE = 18.0f;
 
     spdlog::trace("Loading front {}", FONT_FILE_PATH);
 
+    // Load font texture
     // NOTE: We do not need to free this pointer because the memory is freed by ImGui internally again
     // This illustrates another reason why to use smart pointers instead nowadays: memory ownership clarity
     ImFont *font = io.Fonts->AddFontFromFileTTF(FONT_FILE_PATH, FONT_SIZE);
@@ -71,15 +71,13 @@ ImGuiRenderer::ImGuiRenderer(std::shared_ptr<RenderGraph> render_graph, std::wea
         spdlog::error("Unable to load font {}. Falling back to error texture", FONT_FILE_PATH);
         // @TODO generate error texture for rendergraph!
     } else {
-        spdlog::trace("Creating ImGUI font texture");
-
-        // Our font textures always have 4 channels and a single mip level by definition.
+        // Our font textures always have 4 channels and a single mip level by definition
         constexpr int FONT_TEXTURE_CHANNELS{4};
-
         m_upload_size = static_cast<VkDeviceSize>(m_font_texture_width) *
                         static_cast<VkDeviceSize>(m_font_texture_height) *
                         static_cast<VkDeviceSize>(FONT_TEXTURE_CHANNELS);
 
+        spdlog::trace("Creating ImGUI font texture");
         m_imgui_texture = render_graph->add_texture(
             "ImGui|Texture", render_graph::TextureUsage::DEFAULT, VK_FORMAT_R8G8B8A8_UNORM, m_font_texture_width,
             m_font_texture_height, FONT_TEXTURE_CHANNELS, VK_SAMPLE_COUNT_1_BIT, [&]() {
@@ -129,49 +127,48 @@ ImGuiRenderer::ImGuiRenderer(std::shared_ptr<RenderGraph> render_graph, std::wea
         render_graph::BufferUpdateMode::PER_FRAME_HOST_VISIBLE);
 
     // Add the ImGui graphics pipeline to rendergraph
-    m_imgui_module->add_graphics_pipeline(
-        [&](inexor::vulkan_renderer::wrapper::pipelines::GraphicsPipelineBuilder &pipeline_builder) {
-            const auto swapchain = m_swapchain.lock();
-            const auto descriptor_set = m_descriptor_set.lock();
-            return m_imgui_pipeline =
-                       pipeline_builder
-                           .set_vertex_input_bindings({
-                               {
-                                   .binding = 0,
-                                   .stride = sizeof(ImDrawVert),
-                                   .inputRate = VK_VERTEX_INPUT_RATE_VERTEX,
-                               },
-                           })
-                           .set_vertex_input_attributes({
-                               {
-                                   .location = 0,
-                                   .format = VK_FORMAT_R32G32_SFLOAT,
-                                   .offset = offsetof(ImDrawVert, pos),
-                               },
-                               {
-                                   .location = 1,
-                                   .format = VK_FORMAT_R32G32_SFLOAT,
-                                   .offset = offsetof(ImDrawVert, uv),
-                               },
-                               {
-                                   .location = 2,
-                                   .format = VK_FORMAT_R8G8B8A8_UNORM,
-                                   .offset = offsetof(ImDrawVert, col),
-                               },
-                           })
-                           .add_standard_alpha_blend_attachment()
-                           .add_color_attachment_format(swapchain->image_format())
-                           // ImGui line geometry contains both triangle windings.
-                           .set_culling_mode(VK_FALSE)
-                           .set_dynamic_scissor()
-                           .set_dynamic_viewport()
-                           .add_shader(m_vertex_shader)
-                           .add_shader(m_fragment_shader)
-                           .set_descriptor_set_layout(descriptor_set->layout())
-                           .add_descriptor_set(m_descriptor_set)
-                           .add_push_constant_range(VK_SHADER_STAGE_VERTEX_BIT, sizeof(m_push_const_block))
-                           .build("ImGui");
-        });
+    m_imgui_module->add_graphics_pipeline([&](GraphicsPipelineBuilder &pipeline_builder) {
+        const auto swapchain = m_swapchain.lock();
+        const auto descriptor_set = m_descriptor_set.lock();
+        return m_imgui_pipeline =
+                   pipeline_builder
+                       .set_vertex_input_bindings({
+                           {
+                               .binding = 0,
+                               .stride = sizeof(ImDrawVert),
+                               .inputRate = VK_VERTEX_INPUT_RATE_VERTEX,
+                           },
+                       })
+                       .set_vertex_input_attributes({
+                           {
+                               .location = 0,
+                               .format = VK_FORMAT_R32G32_SFLOAT,
+                               .offset = offsetof(ImDrawVert, pos),
+                           },
+                           {
+                               .location = 1,
+                               .format = VK_FORMAT_R32G32_SFLOAT,
+                               .offset = offsetof(ImDrawVert, uv),
+                           },
+                           {
+                               .location = 2,
+                               .format = VK_FORMAT_R8G8B8A8_UNORM,
+                               .offset = offsetof(ImDrawVert, col),
+                           },
+                       })
+                       .add_standard_alpha_blend_attachment()
+                       .add_color_attachment_format(swapchain->image_format())
+                       // IMPORTANT: ImGui line geometry contains both triangle windings! Do not cull backside!
+                       .set_culling_mode(VK_FALSE)
+                       .set_dynamic_scissor()
+                       .set_dynamic_viewport()
+                       .add_shader(m_vertex_shader)
+                       .add_shader(m_fragment_shader)
+                       .set_descriptor_set_layout(descriptor_set->layout())
+                       .add_descriptor_set(m_descriptor_set)
+                       .add_push_constant_range(VK_SHADER_STAGE_VERTEX_BIT, sizeof(m_push_const_block))
+                       .build("ImGui");
+    });
 
     // Add the ImGui graphics pass to rendergraph
     m_imgui_pass = m_imgui_module->add_graphics_pass([&](GraphicsPassBuilder &pass_builder) {

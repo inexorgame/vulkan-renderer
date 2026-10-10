@@ -4,6 +4,7 @@
 #include "inexor/vulkan-renderer/wrapper/core/device.hpp"
 
 #include <algorithm>
+#include <chrono>
 #include <limits>
 #include <unordered_map>
 #include <unordered_set>
@@ -34,12 +35,18 @@ VkFence FrameSyncManager::wait_for_current_frame_slot() {
         return VK_NULL_HANDLE;
     }
 
+    const auto wait_start = std::chrono::steady_clock::now();
     if (const auto result =
             vkWaitForFences(m_device.device(), 1, &fence, VK_TRUE, std::numeric_limits<std::uint64_t>::max());
         result != VK_SUCCESS) {
         throw VulkanException("Error: waiting for current frame slot failed!", result,
                               "FrameSyncManager::wait_for_current_frame_slot");
     }
+    const auto duration = static_cast<std::uint64_t>(
+        std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now() - wait_start).count());
+    ++m_wait_stats.waits;
+    m_wait_stats.total_ns += duration;
+    m_wait_stats.max_ns = std::max(m_wait_stats.max_ns, duration);
 
     return fence;
 }
@@ -160,6 +167,7 @@ void FrameSyncManager::clear() {
     m_frame_slot_submission_fences.clear();
     m_frame_slot_count = 1;
     m_current_frame_slot = 0;
+    m_wait_stats = {};
 }
 
 } // namespace inexor::vulkan_renderer::render_graph

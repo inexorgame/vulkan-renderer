@@ -30,6 +30,9 @@ public:
     /// Records one rendered frame and returns an updated FPS value periodically.
     [[nodiscard]] std::optional<std::uint32_t> get_fps();
 
+    /// Returns the average frame rate since the first rendered frame.
+    [[nodiscard]] std::optional<double> average_fps() const;
+
     /// Returns the time elapsed since the last allowed frame, in seconds.
     [[nodiscard]] double elapsed_seconds() const noexcept {
         return m_frame_elapsed.count();
@@ -43,9 +46,11 @@ private:
 
     Clock::time_point m_last_frame_time;
     Clock::time_point m_last_fps_update_time;
+    std::optional<Clock::time_point> m_first_frame_time;
 
     Duration m_frame_elapsed{0.0};
     std::uint32_t m_frames{0};
+    std::uint64_t m_total_frames{0};
 };
 
 } // namespace inexor::vulkan_renderer::tools

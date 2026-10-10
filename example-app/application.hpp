@@ -4,6 +4,7 @@
 
 #include <array>
 #include <optional>
+#include <thread>
 
 namespace inexor::vulkan_renderer::octree {
 // Forward declaration
@@ -59,6 +60,11 @@ private:
     bool m_no_cmd_buf_cache{false};
     bool m_one_cmd_buf{false};
     bool m_debug_vma{false};
+    std::uint32_t m_frames_in_flight{2};
+    std::uint32_t m_threadpool_workers{std::thread::hardware_concurrency()};
+    std::vector<VkPhysicalDevice> m_physical_devices;
+    std::vector<std::string> m_physical_device_names;
+    std::optional<std::uint32_t> m_gpu_to_restart;
 
     std::vector<OctreeVertex> m_octree_vertices;
     std::vector<std::uint32_t> m_octree_indices;
@@ -107,10 +113,11 @@ public:
     std::unique_ptr<Input> m_input;
 
 public:
-    ExampleApp(int argc, char **argv);
+    ExampleApp(int argc, char **argv, std::optional<std::uint32_t> gpu_override = std::nullopt);
     ~ExampleApp();
 
-    void run();
+    /// Run until the window closes or a different GPU was selected.
+    [[nodiscard]] std::optional<std::uint32_t> run();
 };
 
 } // namespace inexor::example_app
