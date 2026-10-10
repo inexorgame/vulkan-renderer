@@ -237,6 +237,8 @@ ExampleApp::ExampleApp(int argc, char **argv) {
     app.add_option("--msaa", msaa_samples);
     app.add_option("--frames-in-flight", m_frames_in_flight, "Number of frames that may be in flight")
         ->check(CLI::Range(1u, 3u));
+    app.add_option("--threadpool-workers", m_threadpool_workers, "Number of Taskflow worker threads")
+        ->check(CLI::Range(1u, 64u));
     app.parse(argc, argv);
 
     m_fps_limiter.set_max_fps(max_fps);
@@ -356,7 +358,7 @@ ExampleApp::ExampleApp(int argc, char **argv) {
                                                          required_extensions);
 
     m_device = std::make_unique<Device>(*m_instance, m_surface->surface(), physical_device, required_features,
-                                        required_extensions, m_debug_vma);
+                                        required_extensions, m_debug_vma, m_threadpool_workers);
 
     // Validate MSAA sample count against depth format capabilities
     if (m_msaa_sample_count != VK_SAMPLE_COUNT_1_BIT) {

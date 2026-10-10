@@ -18,6 +18,7 @@
 #include <span>
 #include <stdexcept>
 #include <string>
+#include <thread>
 
 namespace inexor::vulkan_renderer::wrapper::pipelines {
 // Forward declaration
@@ -123,7 +124,7 @@ public:
     /// @note The creation of the physical device will not fail if one of the optional device features is not available
     Device(const Instance &inst, VkSurfaceKHR surface, VkPhysicalDevice physical_device,
            const VkPhysicalDeviceFeatures &required_features, std::span<const char *> required_extensions,
-           bool debug_vma = false);
+           bool debug_vma = false, std::uint32_t threadpool_workers = std::thread::hardware_concurrency());
 
     ~Device();
 

@@ -74,8 +74,8 @@ std::array<float, 4> get_debug_label_color(const DebugLabelColor color) {
 
 Device::Device(const Instance &inst, const VkSurfaceKHR surface, const VkPhysicalDevice desired_gpu,
                const VkPhysicalDeviceFeatures &required_features, const std::span<const char *> required_extensions,
-               const bool debug_vma)
-    : m_debug_vma(debug_vma), m_enabled_features(required_features) {
+               const bool debug_vma, const std::uint32_t threadpool_workers)
+    : m_debug_vma(debug_vma), m_enabled_features(required_features), m_taskflow_executor(threadpool_workers) {
     // Lets just be safe and check if these function pointers are really available.
     if (vkCreateDevice == nullptr) {
         throw InexorException("Error: Function pointer 'vkCreateDevice' is not available!");

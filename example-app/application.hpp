@@ -4,6 +4,7 @@
 
 #include <array>
 #include <optional>
+#include <thread>
 
 namespace inexor::vulkan_renderer::octree {
 // Forward declaration
@@ -60,6 +61,7 @@ private:
     bool m_one_cmd_buf{false};
     bool m_debug_vma{false};
     std::uint32_t m_frames_in_flight{2};
+    std::uint32_t m_threadpool_workers{std::thread::hardware_concurrency()};
 
     std::vector<OctreeVertex> m_octree_vertices;
     std::vector<std::uint32_t> m_octree_indices;
