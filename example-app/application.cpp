@@ -235,6 +235,8 @@ ExampleApp::ExampleApp(int argc, char **argv) {
     app.add_option("--maxfps", max_fps);
     std::uint32_t msaa_samples = 1;
     app.add_option("--msaa", msaa_samples);
+    app.add_option("--frames-in-flight", m_frames_in_flight, "Number of frames that may be in flight")
+        ->check(CLI::Range(1u, 3u));
     app.parse(argc, argv);
 
     m_fps_limiter.set_max_fps(max_fps);
@@ -397,7 +399,7 @@ ExampleApp::ExampleApp(int argc, char **argv) {
         }
     }
 
-    m_swapchain = std::make_shared<Swapchain>(*m_device, "m_swapchain", m_surface->surface());
+    m_swapchain = std::make_shared<Swapchain>(*m_device, "m_swapchain", m_surface->surface(), m_frames_in_flight);
 
     m_camera = std::make_unique<Camera>(glm::vec3(6.0f, 10.0f, 2.0f), 180.0f, 0.0f,
                                         static_cast<float>(m_window->width()), static_cast<float>(m_window->height()));
@@ -406,7 +408,7 @@ ExampleApp::ExampleApp(int argc, char **argv) {
     m_camera->set_movement_speed(5.0f);
     m_camera->set_rotation_speed(0.5f);
 
-    m_render_graph = std::make_unique<RenderGraph>(*m_device, !m_no_cmd_buf_cache, m_one_cmd_buf);
+    m_render_graph = std::make_unique<RenderGraph>(*m_device, !m_no_cmd_buf_cache, m_one_cmd_buf, m_frames_in_flight);
 
     load_octree_geometry(true);
     generate_octree_indices();

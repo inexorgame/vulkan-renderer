@@ -33,10 +33,10 @@ using wrapper::core::Device;
 class Swapchain {
 private:
     // Frame-context resources are intentionally independent of the number of swapchain images.
-    // Two slots allow the CPU to prepare the next frame while the GPU processes the previous one.
-    static constexpr std::uint32_t MAX_FRAMES_IN_FLIGHT = 2;
+    static constexpr std::uint32_t DEFAULT_FRAMES_IN_FLIGHT = 2;
 
     const Device &m_device;
+    const std::uint32_t m_frames_in_flight;
     VkSwapchainKHR m_swapchain{VK_NULL_HANDLE};
     VkSurfaceKHR m_surface{VK_NULL_HANDLE};
     VkSurfaceFormatKHR m_surface_format;
@@ -74,7 +74,8 @@ public:
     /// @param device The device wrapper
     /// @param name The name of the swapchain
     /// @param surface The surface
-    Swapchain(const Device &device, std::string name, VkSurfaceKHR surface);
+    Swapchain(const Device &device, std::string name, VkSurfaceKHR surface,
+              std::uint32_t frames_in_flight = DEFAULT_FRAMES_IN_FLIGHT);
 
     ~Swapchain();
 
@@ -111,11 +112,11 @@ public:
     }
 
     [[nodiscard]] std::uint32_t next_frame_slot() const {
-        return m_frame_index % MAX_FRAMES_IN_FLIGHT;
+        return m_frame_index % m_frames_in_flight;
     }
 
     [[nodiscard]] std::uint32_t frame_slot_count() const {
-        return MAX_FRAMES_IN_FLIGHT;
+        return m_frames_in_flight;
     }
 
     /// Wait for the fence associated with the currently acquired swapchain image, if any.

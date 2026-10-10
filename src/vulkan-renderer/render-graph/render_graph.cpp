@@ -35,10 +35,12 @@ using wrapper::descriptors::PerFrameDescriptorSets;
 using wrapper::descriptors::WriteDescriptorSetBuilder;
 using wrapper::synchronization::Semaphore;
 
-RenderGraph::RenderGraph(Device &device, const bool use_secondary_command_buffers, const bool one_command_buffer)
+RenderGraph::RenderGraph(Device &device, const bool use_secondary_command_buffers, const bool one_command_buffer,
+                         const std::uint32_t frames_in_flight)
     : m_device(device), m_resource_descriptors(device), m_graphics_pipeline_builder(device),
       m_swapchain_manager(device), m_command_buffer_cache(device, use_secondary_command_buffers),
-      m_one_command_buffer(one_command_buffer), m_query_pool(std::make_unique<wrapper::queries::QueryPool>(device, 4)),
+      m_one_command_buffer(one_command_buffer),
+      m_query_pool(std::make_unique<wrapper::queries::QueryPool>(device, 2u * frames_in_flight)),
       m_upload_finished(std::make_unique<Semaphore>(device, "render_graph_upload_finished")),
       m_frame_sync_manager(device), m_staging_buffer(device, "render_graph_upload_arena") {
     VkPhysicalDeviceProperties physical_device_properties{};

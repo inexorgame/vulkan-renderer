@@ -59,6 +59,7 @@ private:
     bool m_no_cmd_buf_cache{false};
     bool m_one_cmd_buf{false};
     bool m_debug_vma{false};
+    std::uint32_t m_frames_in_flight{2};
 
     std::vector<OctreeVertex> m_octree_vertices;
     std::vector<std::uint32_t> m_octree_indices;

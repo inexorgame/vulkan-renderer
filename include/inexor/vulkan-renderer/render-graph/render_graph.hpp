@@ -241,7 +241,10 @@ public:
     /// @param device The device wrapper
     /// @param use_secondary_command_buffers Whether graphics passes should be recorded into cached secondary command
     /// buffers or directly into the primary command buffer.
-    RenderGraph(Device &device, bool use_secondary_command_buffers = true, bool one_command_buffer = false);
+    /// @param one_command_buffer Whether to record all graphics work into a single command buffer.
+    /// @param frames_in_flight The number of frame slots used by the render graph.
+    RenderGraph(Device &device, bool use_secondary_command_buffers = true, bool one_command_buffer = false,
+                std::uint32_t frames_in_flight = 2);
 
     ~RenderGraph();
 
