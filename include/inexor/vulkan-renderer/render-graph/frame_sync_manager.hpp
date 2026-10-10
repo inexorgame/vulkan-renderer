@@ -36,6 +36,9 @@ public:
 
     void set_frame_context(std::size_t frame_slot_count, std::size_t current_frame_slot);
 
+    /// Wait until the current frame slot is no longer used by a previous submission.
+    [[nodiscard]] VkFence wait_for_current_frame_slot();
+
     void mark_frame_slot_submission_fence(VkFence fence);
 
     void defer_release(std::span<const VkFence> fences, std::function<void()> release);
@@ -49,6 +52,8 @@ public:
     [[nodiscard]] const std::vector<VkFence> &frame_slot_submission_fences() const {
         return m_frame_slot_submission_fences;
     }
+
+    [[nodiscard]] VkFence frame_slot_submission_fence(std::size_t frame_slot) const;
 
     [[nodiscard]] std::size_t frame_slot_count() const {
         return m_frame_slot_count;

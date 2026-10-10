@@ -1,18 +1,19 @@
 #pragma once
 
-#include "inexor/vulkan-renderer/render-graph/buffer_copy_batch_builder.hpp"
 #include "inexor/vulkan-renderer/render-graph/frame_sync_manager.hpp"
 #include "inexor/vulkan-renderer/render-graph/graphics_pass_builder.hpp"
 #include "inexor/vulkan-renderer/render-graph/resource_descriptor_manager.hpp"
 #include "inexor/vulkan-renderer/render-graph/staging_buffer.hpp"
 #include "inexor/vulkan-renderer/render-graph/swapchain_manager.hpp"
-#include "inexor/vulkan-renderer/render-graph/texture_copy_batch_builder.hpp"
 #include "inexor/vulkan-renderer/wrapper/commands/command_buffer_builder.hpp"
 #include "inexor/vulkan-renderer/wrapper/commands/command_buffer_cache.hpp"
 #include "inexor/vulkan-renderer/wrapper/pipelines/graphics_pipeline_builder.hpp"
 #include "inexor/vulkan-renderer/wrapper/pipelines/pipeline_cache.hpp"
+#include "inexor/vulkan-renderer/wrapper/queries/query_pool.hpp"
 #include "inexor/vulkan-renderer/wrapper/synchronization/pipeline_barrier_batch_builder.hpp"
 
+#include <array>
+#include <cstdint>
 #include <functional>
 #include <limits>
 #include <memory>
@@ -20,8 +21,12 @@
 #include <span>
 #include <string>
 #include <tuple>
+#include <type_traits>
 #include <unordered_map>
+#include <variant>
 #include <vector>
+
+#include <taskflow/taskflow.hpp>
 
 namespace inexor::vulkan_renderer::wrapper::core {
 // Forward declaration
@@ -37,6 +42,7 @@ namespace inexor::vulkan_renderer::render_graph {
 // Forward declarations
 class Buffer;
 class GraphicsPass;
+class RenderModule;
 class Texture;
 } // namespace inexor::vulkan_renderer::render_graph
 
@@ -47,13 +53,14 @@ using wrapper::commands::CommandBufferCache;
 using wrapper::core::DebugLabelColor;
 using wrapper::core::Device;
 using wrapper::descriptors::PerFrameDescriptorSets;
-using wrapper::pipelines::GraphicsPipelineBuilder;
 using wrapper::pipelines::PipelineCache;
 using wrapper::synchronization::PipelineBarrierBuilder;
 
 // @TODO How to handle optional texture update depending on texture type?
 // @TODO By implementing textures which are not updated, but only initliazed, we could save memory!
 class RenderGraph {
+    friend class RenderModule;
+
 private:
     // The device wrapper
     Device &m_device;
@@ -80,11 +87,17 @@ private:
     /// --------------------------------------------------------------------------------------------------
 
     /// The graphics pipeline builder
-    GraphicsPipelineBuilder m_graphics_pipeline_builder;
+    ::inexor::vulkan_renderer::wrapper::pipelines::GraphicsPipelineBuilder m_graphics_pipeline_builder;
     /// A using declaration for graphics pipeline create functions
-    using OnBuildGraphicsPipeline = std::function<void(GraphicsPipelineBuilder &)>;
+    using OnBuildGraphicsPipeline =
+        std::function<std::shared_ptr<::inexor::vulkan_renderer::wrapper::pipelines::GraphicsPipeline>(
+            ::inexor::vulkan_renderer::wrapper::pipelines::GraphicsPipelineBuilder &)>;
     /// The graphics pipeline create functions registered to the rendergraph
     std::vector<OnBuildGraphicsPipeline> m_graphics_pipeline_create_functions;
+    /// The graphics pipelines registered to the rendergraph
+    std::vector<std::shared_ptr<::inexor::vulkan_renderer::wrapper::pipelines::GraphicsPipeline>> m_graphics_pipelines;
+    /// The render modules registered to the rendergraph
+    std::vector<RenderModule *> m_render_modules;
 
     /// --------------------------------------------------------------------------------------------------
     /// GRAPHICS PASSES
@@ -97,10 +110,18 @@ private:
     /// The graphics passes registered to the rendergraph
     std::vector<std::shared_ptr<GraphicsPass>> m_graphics_passes;
 
-    /// --------------------------------------------------------------------------------------------------
-
     SwapchainManager m_swapchain_manager;
     CommandBufferCache m_command_buffer_cache;
+    bool m_one_command_buffer{false};
+    tf::Taskflow m_recording_tasks;
+    bool m_recording_tasks_dirty{true};
+    std::string m_frame_slot_suffix;
+    std::vector<const wrapper::commands::CommandBuffer *> m_scratch_primary_command_buffers;
+    std::vector<VkCommandBuffer> m_scratch_secondary_command_buffers;
+    std::unique_ptr<wrapper::queries::QueryPool> m_query_pool;
+    bool m_query_pool_has_results{false};
+    std::optional<std::size_t> m_last_gpu_query_frame_slot;
+    float m_timestamp_period{0.0f};
     std::unique_ptr<wrapper::synchronization::Semaphore> m_upload_finished;
     bool m_upload_submission_pending{false};
     VkPipelineStageFlags2 m_upload_wait_stage_mask{VK_PIPELINE_STAGE_2_NONE};
@@ -112,29 +133,68 @@ private:
     /// buffer/texture updates were uploaded via a dedicated transfer queue whose family differs from the graphics
     /// queue family (VK_SHARING_MODE_EXCLUSIVE resources require an explicit ownership transfer in that case).
     PipelineBarrierBatchBuilder m_pending_queue_ownership_acquire_barriers;
-    BufferCopyBatchBuilder m_buffer_copy_batch_builder;
-    TextureCopyBatchBuilder m_texture_copy_batch_builder;
+    StagingBuffer m_staging_buffer;
     FrameSyncManager m_frame_sync_manager;
     std::size_t m_frame_slot_count{1};
     std::size_t m_current_frame_slot{0};
-
-    StagingBuffer m_staging_buffer;
-
     std::vector<PendingBufferCopy> m_scratch_pending_buffer_copies;
     std::vector<PendingTextureCopy> m_scratch_pending_texture_copies;
     std::vector<std::function<void()>> m_scratch_pending_releases;
     std::vector<VkFormat> m_scratch_color_attachment_formats;
     /// Reused scratch storage for render() to avoid a heap allocation every frame
     std::vector<wrapper::core::QueueSemaphoreWait> m_scratch_render_wait_semaphores;
+    std::vector<const wrapper::commands::CommandBuffer *> m_scratch_primary_batch_command_buffers;
+
+    enum class CpuPhase : std::size_t {
+        Housekeeping,
+        Acquire,
+        FrameContext,
+        Resources,
+        Descriptors,
+        Recording,
+        Submit,
+        Finalize,
+        Present,
+        Count,
+    };
+    static constexpr std::size_t cpu_phase_count = static_cast<std::size_t>(CpuPhase::Count);
+    using CpuPhaseDurations = std::array<std::uint64_t, cpu_phase_count>;
+    struct CpuFrameStats {
+        std::uint32_t frames{0};
+        std::uint64_t total_ns{0};
+        std::uint64_t max_frame_ns{0};
+        CpuPhaseDurations phase_total_ns{};
+        CpuPhaseDurations phase_max_ns{};
+    } m_cpu_frame_stats;
 
     void defer_release(std::span<const VkFence> fences, std::function<void()> release);
 
     void synchronize_frame_context();
 
-    void mark_graphics_pass_secondary_cmd_buffers_dirty();
-    void mark_graphics_passes_using_texture_dirty(const Texture &texture);
+    /// Register the single fence returned by the graphics submission for all frame-local ownership tracking.
+    void register_frame_submission(VkFence submission_fence);
 
-    /// --------------------------------------------------------------------------------------------------
+    [[nodiscard]] VkFence
+    submit_graphics_frame(std::span<const wrapper::commands::CommandBuffer *const> command_buffers,
+                          std::span<const wrapper::core::QueueSemaphoreWait> wait_semaphores,
+                          std::span<const VkSemaphore> signal_semaphores) const;
+
+    [[nodiscard]] VkFence
+    submit_graphics_frame(const std::function<void(wrapper::commands::CommandBufferBuilder &)> &record,
+                          std::span<const wrapper::core::QueueSemaphoreWait> wait_semaphores,
+                          std::span<const VkSemaphore> signal_semaphores) const;
+
+    void invalidate_graphics_pass_secondary_cmd_buffers();
+
+    /// Build the reusable parallel command-buffer recording tasks after the pass list changes.
+    void rebuild_recording_tasks();
+
+    void register_render_module(RenderModule &render_module);
+    void unregister_render_module(RenderModule &render_module);
+
+    void log_render_graph_overview() const;
+
+    void invalidate_graphics_passes_using_texture(const Texture &texture);
 
     /// @TODO Implement!
     void sort_graphics_passes_by_order();
@@ -144,6 +204,9 @@ private:
 
     /// Create the graphics pipelines
     void create_graphics_pipelines();
+
+    /// Build the cached texture-to-graphics-pass dependencies used for invalidation.
+    void build_texture_graphics_pass_dependencies();
 
     /// Ensure that rendergraph is a directed acyclic graph (DAG)
     void check_for_cycles();
@@ -155,6 +218,8 @@ private:
     /// Refresh the per-frame swapchain attachment part of VkRenderingInfo for a graphics pass.
     /// @param pass The graphics pass
     void refresh_graphics_pass_swapchain_rendering_info(GraphicsPass &pass);
+
+    void prepare_graphics_pass_for_recording(GraphicsPass &pass);
 
     /// Record the command buffer of a pass. After a lot of discussions about the API design of rendergraph, we came to
     /// the conclusion that it's the full responsibility of the programmer to manually bind pipelines, descriptors sets,
@@ -176,7 +241,7 @@ public:
     /// @param device The device wrapper
     /// @param use_secondary_command_buffers Whether graphics passes should be recorded into cached secondary command
     /// buffers or directly into the primary command buffer.
-    RenderGraph(Device &device, bool use_secondary_command_buffers = true);
+    RenderGraph(Device &device, bool use_secondary_command_buffers = true, bool one_command_buffer = false);
 
     ~RenderGraph();
 
@@ -188,6 +253,7 @@ public:
     [[nodiscard]] std::weak_ptr<Buffer> add_buffer(std::string name, BufferType type, std::function<void()> on_update,
                                                    BufferUpdateMode update_mode = BufferUpdateMode::DEVICE_LOCAL);
 
+private:
     /// Add a graphics pass to the rendergraph
     /// @param graphics_pass The graphics pass which was created
     /// @note There is no name parameter here because the OnBuildGraphicsPass callback will use GraphicsPassBuilder to
@@ -209,22 +275,18 @@ public:
     /// make object lifetime even more complex, which we should avoid at all cost.
     void add_graphics_pipeline(OnBuildGraphicsPipeline on_build_graphics_pipeline);
 
-    /// Add a resource descriptor to the rendergraph
-    /// @param name
-    /// @param on_build_descriptor_set_layout Builds and returns the descriptor set layout
-    /// @param on_build_write_descriptor_set Builds the write descriptor sets for one frame slot
+public:
+    /// Add a descriptor-backed render-graph resource and create the matching descriptor set layout/write updates
+    /// @param resource The buffer or texture resource to bind
+    /// @param stage The shader stage flag for the descriptor binding
+    /// @param dst_binding The destination binding for the descriptors
+    /// @return A weak pointer to the created
+    /// per-frame descriptor set wrapper
+    /// @note Buffer resources must be uniform buffers
+    /// @note Texture resources are bound as combined image samplers
     [[nodiscard]] std::weak_ptr<PerFrameDescriptorSets>
-    add_resource_descriptor(std::string name,
-                            ResourceDescriptorManager::OnBuildDescriptorSetLayout on_build_descriptor_set_layout,
-                            ResourceDescriptorManager::OnBuildWriteDescriptorSet on_build_write_descriptor_set);
-
-    /// Add a buffer resource descriptor with an inferred layout and descriptor write.
-    [[nodiscard]] std::weak_ptr<PerFrameDescriptorSets> add_resource_descriptor(std::weak_ptr<Buffer> resource,
-                                                                                VkShaderStageFlags stage);
-
-    /// Add a texture resource descriptor with an inferred layout and descriptor write.
-    [[nodiscard]] std::weak_ptr<PerFrameDescriptorSets> add_resource_descriptor(std::weak_ptr<Texture> resource,
-                                                                                VkShaderStageFlags stage);
+    add_resource_descriptor(std::variant<std::weak_ptr<Buffer>, std::weak_ptr<Texture>> resource,
+                            VkShaderStageFlags stage, std::uint32_t dst_binding = 0);
 
     /// Add a texture to the rendergraph
     /// @param name The texture name
@@ -243,7 +305,8 @@ public:
                                                      std::optional<std::function<void()>> on_update = std::nullopt);
 
     /// Compile the rendergraph
-    /// Ideally, this should only be done once at startup and all changes in the system will be reported to rendergraph.
+    /// Ideally, this should only be done once at startup and all changes in the system will be reported to
+    /// rendergraph.
     void compile();
 
     /// Since we need to pass the rendergraph to every render module anyways,
@@ -254,6 +317,12 @@ public:
 
     /// Render a frame while dealing automatically with all frames in flight internally
     void render();
+
+    /// Log the most recently recorded GPU frame time.
+    void log_gpu_frame_time() const;
+
+    /// Returns the most recently recorded GPU frame time in milliseconds if the query results are available.
+    [[nodiscard]] std::optional<double> try_get_gpu_frame_time_ms() const;
 
     /// Reset the entire rendergraph
     /// @note We avoid to name it reset() because this would be ambiguous with smart pointer methods

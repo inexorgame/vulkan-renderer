@@ -7,6 +7,8 @@
 #include "inexor/vulkan-renderer/wrapper/commands/command_buffer_builder.hpp"
 #include "inexor/vulkan-renderer/wrapper/commands/command_pool.hpp"
 
+#include <taskflow/taskflow.hpp>
+
 #include <array>
 #include <functional>
 #include <memory>
@@ -77,6 +79,7 @@ private:
     VkPhysicalDevice m_physical_device{VK_NULL_HANDLE};
     std::unique_ptr<PipelineCache> m_pipeline_cache;
     VmaAllocator m_allocator{VK_NULL_HANDLE};
+    bool m_debug_vma{false};
     std::string m_gpu_name;
     VkPhysicalDeviceFeatures m_enabled_features{};
     std::array<std::uint8_t, VK_UUID_SIZE> m_pipeline_cache_uuid{};
@@ -97,6 +100,9 @@ private:
     mutable std::vector<std::unique_ptr<CommandPool>> m_cmd_pools;
     mutable std::shared_mutex m_mutex;
 
+    /// Shared worker pool for all task graphs using this device.
+    tf::Executor m_taskflow_executor;
+
     /// Get the thread_local command pool.
     /// @param queue_type The Vulkan queue type
     /// @note This method will create a command pool for the thread if it doesn't already exist.
@@ -116,12 +122,18 @@ public:
     /// @exception VulkanException vmaCreateAllocator call failed
     /// @note The creation of the physical device will not fail if one of the optional device features is not available
     Device(const Instance &inst, VkSurfaceKHR surface, VkPhysicalDevice physical_device,
-           const VkPhysicalDeviceFeatures &required_features, std::span<const char *> required_extensions);
+           const VkPhysicalDeviceFeatures &required_features, std::span<const char *> required_extensions,
+           bool debug_vma = false);
 
     ~Device();
 
     [[nodiscard]] auto device() const {
         return m_device;
+    }
+
+    /// The shared Taskflow executor. Task graphs must outlive their submitted work.
+    [[nodiscard]] tf::Executor &taskflow_executor() {
+        return m_taskflow_executor;
     }
 
     /// Call `vkGetPhysicalDeviceSurfaceCapabilitiesKHR`.
@@ -170,9 +182,9 @@ public:
         const auto &cmd_buf =
             get_thread_command_pool(queue_type).request_command_buffer(source_location.function_name());
         CommandBufferBuilder builder(cmd_buf);
-        builder.begin_debug_label_region(source_location.function_name(), get_debug_label_color(dbg_label_color));
-        std::invoke(on_record, builder);
-        builder.end_debug_label_region();
+        builder.begin_debug_label_region(source_location.function_name(), get_debug_label_color(dbg_label_color))
+            .invoke(std::forward<OnRecord>(on_record))
+            .end_debug_label_region();
         cmd_buf.end_command_buffer();
         cmd_buf.submit(queue_type, wait_semaphores, signal_semaphores);
         return cmd_buf.submission_fence();
@@ -198,9 +210,9 @@ public:
         const auto &cmd_buf =
             get_thread_command_pool(queue_type).request_command_buffer(source_location.function_name());
         CommandBufferBuilder builder(cmd_buf);
-        builder.begin_debug_label_region(source_location.function_name(), get_debug_label_color(dbg_label_color));
-        std::invoke(on_record, builder);
-        builder.end_debug_label_region();
+        builder.begin_debug_label_region(source_location.function_name(), get_debug_label_color(dbg_label_color))
+            .invoke(std::forward<OnRecord>(on_record))
+            .end_debug_label_region();
         cmd_buf.end_command_buffer();
 
         cmd_buf.submit(queue_type, wait_semaphores, signal_semaphores);
@@ -290,6 +302,10 @@ public:
     /// @return A command buffer from the thread_local command pool.
     [[nodiscard]] const CommandBuffer &request_command_buffer(VkQueueFlagBits queue_type, const std::string &name);
 
+    /// Request a stable, name-keyed primary command buffer from the current thread's command pool.
+    [[nodiscard]] const CommandBuffer &request_named_command_buffer(VkQueueFlagBits queue_type,
+                                                                    const std::string &name);
+
     /// Request a secondary command buffer from the thread_local command pool.
     /// @param queue_type The Vulkan queue type which is required because a command pool is created with a queue family
     /// index associated with it.
@@ -297,6 +313,17 @@ public:
     /// @return A secondary command buffer from the thread_local command pool.
     [[nodiscard]] const CommandBuffer &request_secondary_command_buffer(VkQueueFlagBits queue_type,
                                                                         const std::string &name);
+
+    /// Submit a previously recorded command buffer and return its submission fence.
+    [[nodiscard]] VkFence submit_command_buffer(const CommandBuffer &command_buffer, VkQueueFlagBits queue_type,
+                                                std::span<const QueueSemaphoreWait> wait_semaphores = {},
+                                                std::span<const VkSemaphore> signal_semaphores = {}) const;
+
+    /// Submit multiple graphics command buffers in order with one fence owned by the final command buffer.
+    /// Earlier buffers must not be reused until that fence has completed (e.g. via their frame slot).
+    [[nodiscard]] VkFence submit_graphics_command_buffers(std::span<const CommandBuffer *const> command_buffers,
+                                                          std::span<const QueueSemaphoreWait> wait_semaphores = {},
+                                                          std::span<const VkSemaphore> signal_semaphores = {}) const;
 
     /// Wait until all submitted command buffers in the current thread's pool for a queue type are complete.
     void wait_for_submissions(VkQueueFlagBits queue_type) const;
@@ -343,8 +370,7 @@ public:
     void wait_idle(VkQueue queue = VK_NULL_HANDLE) const;
 
     /// Log VMA (Vulkan Memory Allocator) statistics
-    /// @param context A context string to identify where the statistics are being logged from
-    void log_vma_statistics(const char *context) const;
+    void log_vma_statistics() const;
 };
 
 } // namespace inexor::vulkan_renderer::wrapper::core

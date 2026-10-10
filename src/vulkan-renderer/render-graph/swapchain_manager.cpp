@@ -72,7 +72,7 @@ void SwapchainManager::collect_frame_swapchains(const std::vector<std::shared_pt
     }
 }
 
-bool SwapchainManager::acquire_next_images() {
+bool SwapchainManager::acquire_next_images(const VkFence already_waited_frame_fence) {
     m_swapchains_imgs_available.clear();
     m_swapchain_rendering_finished.clear();
     m_swapchains_imgs_available.reserve(m_frame_swapchains.size());
@@ -86,7 +86,7 @@ bool SwapchainManager::acquire_next_images() {
             return false;
         }
 
-        swapchain->wait_for_current_image_if_in_flight();
+        swapchain->wait_for_current_image_if_in_flight(already_waited_frame_fence);
         m_swapchains_imgs_available.emplace_back(swapchain->image_available_semaphore());
         m_swapchain_rendering_finished.emplace_back(swapchain->rendering_finished_semaphore());
     }
@@ -101,7 +101,7 @@ void SwapchainManager::synchronize_frame_context() {
 
     for (const auto &swapchain : m_frame_swapchains) {
         const auto swapchain_slot_count = static_cast<std::size_t>(swapchain->frame_slot_count());
-        const auto swapchain_frame_slot = static_cast<std::size_t>(swapchain->current_frame_slot());
+        const auto swapchain_frame_slot = static_cast<std::size_t>(swapchain->next_frame_slot());
 
         if (first_swapchain) {
             frame_slot_count = std::max<std::size_t>(1, swapchain_slot_count);
@@ -134,7 +134,6 @@ void SwapchainManager::prepare_swapchains_for_presenting(CommandBufferBuilder &c
 void SwapchainManager::mark_frame_swapchains_in_flight(const VkFence fence) const {
     for (const auto &swapchain : m_frame_swapchains) {
         swapchain->mark_current_image_in_flight(fence);
-        swapchain->mark_current_frame_slot_in_flight(fence);
     }
 }
 

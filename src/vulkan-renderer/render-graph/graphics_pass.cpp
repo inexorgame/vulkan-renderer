@@ -65,6 +65,8 @@ GraphicsPass::GraphicsPass(
 GraphicsPass::GraphicsPass(GraphicsPass &&other) noexcept {
     m_name = std::move(other.m_name);
     m_on_record_cmd_buffer = std::move(other.m_on_record_cmd_buffer);
+    m_cache_secondary_command_buffer = other.m_cache_secondary_command_buffer;
+    m_cached_recording_invalidated = other.m_cached_recording_invalidated;
     m_descriptor_set_layout = std::exchange(other.m_descriptor_set_layout, nullptr);
     m_descriptor_set = std::exchange(other.m_descriptor_set, VK_NULL_HANDLE);
     m_debug_label_color = other.m_debug_label_color;

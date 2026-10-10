@@ -14,6 +14,7 @@
 #include "inexor/vulkan-renderer/tools/random.hpp"
 #include "inexor/vulkan-renderer/tools/representation.hpp"
 #include "inexor/vulkan-renderer/wrapper/core/instance.hpp"
+#include "inexor/vulkan-renderer/wrapper/queries/query_pool.hpp"
 #include "inexor/vulkan-renderer/wrapper/windows/surface.hpp"
 #include "inexor/vulkan-renderer/wrapper/windows/window.hpp"
 
@@ -25,6 +26,10 @@
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include <spdlog/spdlog.h>
 
+#include <algorithm>
+#include <array>
+#include <cfloat>
+#include <cstdio>
 #include <mutex>
 #include <stdexcept>
 #include <string_view>
@@ -36,7 +41,24 @@ namespace inexor::example_app {
 // Using declarations
 using namespace inexor::vulkan_renderer;
 
-namespace {} // namespace
+namespace {
+
+template <std::size_t Size>
+std::array<float, Size> make_recent_samples(const std::array<float, Size> &history, std::size_t history_count,
+                                            std::size_t history_index, std::size_t sample_count) {
+    std::array<float, Size> samples{};
+    if (sample_count == 0) {
+        return samples;
+    }
+
+    const std::size_t start_index = history_count < sample_count ? 0 : (history_index + Size - sample_count) % Size;
+    for (std::size_t i = 0; i < sample_count; ++i) {
+        samples[i] = history[(start_index + i) % Size];
+    }
+    return samples;
+}
+
+} // namespace
 
 void ExampleApp::load_toml_configuration_file(const std::string &file_name) {
     spdlog::trace("Loading TOML configuration file: {}", file_name);
@@ -205,6 +227,8 @@ ExampleApp::ExampleApp(int argc, char **argv) {
     argv = app.ensure_utf8(argv);
     app.add_flag("--vsync", m_vsync_enabled);
     app.add_flag("--no-cmd-buf-cache", m_no_cmd_buf_cache);
+    app.add_flag("--one-cmd-buf", m_one_cmd_buf);
+    app.add_flag("--debug-vma", m_debug_vma);
     std::optional<std::uint32_t> preferred_gpu;
     app.add_option("--gpu", preferred_gpu);
     std::uint32_t max_fps = FPSLimiter::DEFAULT_FPS;
@@ -215,7 +239,7 @@ ExampleApp::ExampleApp(int argc, char **argv) {
 
     m_fps_limiter.set_max_fps(max_fps);
 
-    spdlog::info("MSAA samples requested: {}", msaa_samples);
+    spdlog::trace("MSAA samples requested: {}", msaa_samples);
 
     // Convert MSAA sample count to VkSampleCountFlagBits
     switch (msaa_samples) {
@@ -240,7 +264,7 @@ ExampleApp::ExampleApp(int argc, char **argv) {
         break;
     }
 
-    spdlog::info("MSAA sample count set to: {}", static_cast<int>(m_msaa_sample_count));
+    spdlog::trace("MSAA sample count set to: {}", static_cast<int>(m_msaa_sample_count));
     m_msaa_text = tools::as_string(m_msaa_sample_count);
 
     if (m_msaa_sample_count != VK_SAMPLE_COUNT_1_BIT) {
@@ -330,7 +354,7 @@ ExampleApp::ExampleApp(int argc, char **argv) {
                                                          required_extensions);
 
     m_device = std::make_unique<Device>(*m_instance, m_surface->surface(), physical_device, required_features,
-                                        required_extensions);
+                                        required_extensions, m_debug_vma);
 
     // Validate MSAA sample count against depth format capabilities
     if (m_msaa_sample_count != VK_SAMPLE_COUNT_1_BIT) {
@@ -363,7 +387,7 @@ ExampleApp::ExampleApp(int argc, char **argv) {
                 } else if (supported_samples & VK_SAMPLE_COUNT_2_BIT) {
                     clamped = VK_SAMPLE_COUNT_2_BIT;
                 }
-                spdlog::warn("Requested MSAA sample count not supported by depth format, clamping from {} to {}",
+                spdlog::warn("Requested MSAA sample count {} not supported by depth format, clamping to {}",
                              static_cast<int>(m_msaa_sample_count), static_cast<int>(clamped));
                 m_msaa_sample_count = clamped;
             } else {
@@ -382,7 +406,7 @@ ExampleApp::ExampleApp(int argc, char **argv) {
     m_camera->set_movement_speed(5.0f);
     m_camera->set_rotation_speed(0.5f);
 
-    m_render_graph = std::make_unique<RenderGraph>(*m_device, !m_no_cmd_buf_cache);
+    m_render_graph = std::make_unique<RenderGraph>(*m_device, !m_no_cmd_buf_cache, m_one_cmd_buf);
 
     load_octree_geometry(true);
     generate_octree_indices();
@@ -423,8 +447,6 @@ void ExampleApp::recreate_swapchain() {
     m_swapchain->setup_swapchain(
         VkExtent2D{static_cast<std::uint32_t>(window_width), static_cast<std::uint32_t>(window_height)},
         m_vsync_enabled);
-
-    // @TODO Update or recreate all swapchain or image attachments!
 }
 
 void ExampleApp::setup_render_graph() {
@@ -440,7 +462,7 @@ void ExampleApp::setup_render_graph() {
 
     // Create MSAA color buffer if MSAA is enabled
     if (m_msaa_sample_count != VK_SAMPLE_COUNT_1_BIT) {
-        spdlog::info("Creating MSAA color buffer with {} samples", static_cast<int>(m_msaa_sample_count));
+        spdlog::trace("Creating MSAA color buffer with {} samples", static_cast<int>(m_msaa_sample_count));
         m_color_buffer = m_render_graph->add_texture("m_color_buffer", TextureUsage::COLOR_ATTACHMENT,
                                                      m_swapchain->image_format(), m_swapchain->extent().width,
                                                      m_swapchain->extent().height, 4, m_msaa_sample_count, [&]() {
@@ -466,6 +488,12 @@ void ExampleApp::setup_render_graph() {
 
 void ExampleApp::update_imgui_overlay() {
     auto cursor_pos = m_input->kbm_data().get_cursor_pos();
+    const float cpu_frame_time_ms = static_cast<float>(m_fps_limiter.elapsed_seconds() * 1000.0);
+    const auto gpu_frame_time_ms = m_render_graph->try_get_gpu_frame_time_ms();
+    update_frame_time_graph(cpu_frame_time_ms,
+                            gpu_frame_time_ms ? std::optional<float>{static_cast<float>(*gpu_frame_time_ms)}
+                                              : std::nullopt,
+                            m_fps_limiter.elapsed_seconds());
 
     ImGuiIO &io = ImGui::GetIO();
     io.DeltaTime = m_fps_limiter.elapsed_seconds();
@@ -478,7 +506,7 @@ void ExampleApp::update_imgui_overlay() {
     ImGui::NewFrame();
     ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0);
     ImGui::SetNextWindowPos(ImVec2(10, 10));
-    ImGui::SetNextWindowSize(ImVec2(330, 0));
+    ImGui::SetNextWindowSize(ImVec2(400, 0));
     using namespace vulkan_renderer::meta;
     ImGui::Begin(APP_NAME, nullptr,
                  ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
@@ -487,26 +515,139 @@ void ExampleApp::update_imgui_overlay() {
     ImGui::Text("Vulkan API %d.%d.%d, %s", VK_API_VERSION_MAJOR(Instance::REQUIRED_VK_API_VERSION),
                 VK_API_VERSION_MINOR(Instance::REQUIRED_VK_API_VERSION),
                 VK_API_VERSION_PATCH(Instance::REQUIRED_VK_API_VERSION), m_msaa_text.data());
-    ImGui::Text("Press N to regenerate octree");
-    ImGui::Text("Press V for VMA memory statistics");
-    const auto cam_pos = m_camera->position();
-    ImGui::Text("Camera position (%.2f, %.2f, %.2f)", cam_pos.x, cam_pos.y, cam_pos.z);
-    const auto cam_rot = m_camera->rotation();
-    ImGui::Text("Camera rotation: (%.2f, %.2f, %.2f)", cam_rot.x, cam_rot.y, cam_rot.z);
-    const auto cam_front = m_camera->front();
-    ImGui::Text("Camera vector front: (%.2f, %.2f, %.2f)", cam_front.x, cam_front.y, cam_front.z);
-    const auto cam_right = m_camera->right();
-    ImGui::Text("Camera vector right: (%.2f, %.2f, %.2f)", cam_right.x, cam_right.y, cam_right.z);
-    const auto cam_up = m_camera->up();
-    ImGui::Text("Camera vector up (%.2f, %.2f, %.2f)", cam_up.x, cam_up.y, cam_up.z);
-    ImGui::Text("Yaw: %.2f pitch: %.2f roll: %.2f", m_camera->yaw(), m_camera->pitch(), m_camera->roll());
-    const auto cam_fov = m_camera->fov();
-    ImGui::Text("Field of view: %d", static_cast<std::uint32_t>(cam_fov));
-    ImGui::PushItemWidth(150.0f);
-    ImGui::PopItemWidth();
+    ImGui::Text("Press N to regenerate octree, V for VMA memory statistics");
+    ImGui::Spacing();
+    draw_frame_time_graph();
     ImGui::End();
     ImGui::PopStyleVar();
     ImGui::Render();
+}
+
+void ExampleApp::push_frame_time_sample(float cpu_frame_time_ms, std::optional<float> gpu_frame_time_ms) {
+    const auto sample_count = std::min<std::size_t>(m_frame_time_history_count + 1, FRAME_TIME_AVERAGE_WINDOW);
+    const auto average_recent_samples = [&](const auto &history, float fallback_value) {
+        float sum = 0.0f;
+        for (std::size_t i = 0; i < sample_count; ++i) {
+            const std::size_t index =
+                (m_frame_time_history_index + FRAME_TIME_HISTORY_SIZE - i) % FRAME_TIME_HISTORY_SIZE;
+            sum += history[index];
+        }
+        return sample_count > 0 ? sum / static_cast<float>(sample_count) : fallback_value;
+    };
+
+    m_cpu_raw_frame_time_history[m_frame_time_history_index] = cpu_frame_time_ms;
+    m_last_cpu_frame_time_ms = cpu_frame_time_ms;
+    m_cpu_frame_time_history[m_frame_time_history_index] =
+        average_recent_samples(m_cpu_raw_frame_time_history, cpu_frame_time_ms);
+
+    if (gpu_frame_time_ms) {
+        m_last_gpu_frame_time_ms = gpu_frame_time_ms;
+        m_gpu_raw_frame_time_history[m_frame_time_history_index] = *gpu_frame_time_ms;
+    } else if (m_frame_time_history_count > 0) {
+        const std::size_t previous_index =
+            (m_frame_time_history_index + FRAME_TIME_HISTORY_SIZE - 1) % FRAME_TIME_HISTORY_SIZE;
+        m_gpu_raw_frame_time_history[m_frame_time_history_index] = m_gpu_raw_frame_time_history[previous_index];
+    } else {
+        m_last_gpu_frame_time_ms = std::nullopt;
+        m_gpu_raw_frame_time_history[m_frame_time_history_index] = cpu_frame_time_ms;
+    }
+    m_gpu_frame_time_history[m_frame_time_history_index] =
+        average_recent_samples(m_gpu_raw_frame_time_history, m_gpu_raw_frame_time_history[m_frame_time_history_index]);
+
+    m_frame_time_history_index = (m_frame_time_history_index + 1) % FRAME_TIME_HISTORY_SIZE;
+    if (m_frame_time_history_count < FRAME_TIME_HISTORY_SIZE) {
+        ++m_frame_time_history_count;
+    }
+}
+
+void ExampleApp::update_frame_time_graph(float cpu_frame_time_ms, std::optional<float> gpu_frame_time_ms,
+                                         double elapsed_seconds) {
+    m_last_cpu_frame_time_ms = cpu_frame_time_ms;
+    if (gpu_frame_time_ms) {
+        m_last_gpu_frame_time_ms = gpu_frame_time_ms;
+    }
+
+    m_frame_time_sample_accumulator_seconds += elapsed_seconds;
+    while (m_frame_time_sample_accumulator_seconds >= FRAME_TIME_SAMPLE_INTERVAL_SECONDS) {
+        push_frame_time_sample(m_last_cpu_frame_time_ms, m_last_gpu_frame_time_ms);
+        m_frame_time_sample_accumulator_seconds -= FRAME_TIME_SAMPLE_INTERVAL_SECONDS;
+    }
+}
+
+void ExampleApp::draw_frame_time_graph() const {
+    if (m_frame_time_history_count == 0) {
+        ImGui::TextUnformatted("No frame-time samples yet");
+        return;
+    }
+
+    const ImVec4 cpu_color(0.20f, 0.60f, 1.00f, 1.0f);
+    const ImVec4 gpu_color(1.00f, 0.20f, 0.20f, 1.0f);
+    const ImGuiStyle &style = ImGui::GetStyle();
+    const float plot_height = std::max(72.0f, ImGui::GetTextLineHeight() * 2.5f + style.FramePadding.y * 2.0f);
+    const float child_height = 2.0f * plot_height + ImGui::GetTextLineHeightWithSpacing() + style.FramePadding.y;
+    ImGui::BeginChild("##frame_time_graph", ImVec2(0.0f, child_height), false,
+                      ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse |
+                          ImGuiWindowFlags_NoMouseInputs);
+
+    ImGui::TextUnformatted("Frame time (ms)");
+    ImGui::SameLine();
+    ImGui::TextColored(gpu_color, "GPU");
+    ImGui::SameLine();
+    ImGui::TextColored(cpu_color, "CPU");
+    const std::size_t visible_sample_count = std::min(m_frame_time_history_count, FRAME_TIME_GRAPH_ZOOM_SAMPLE_COUNT);
+    const std::array<float, FRAME_TIME_HISTORY_SIZE> cpu_samples = make_recent_samples(
+        m_cpu_frame_time_history, m_frame_time_history_count, m_frame_time_history_index, visible_sample_count);
+    const std::array<float, FRAME_TIME_HISTORY_SIZE> gpu_samples = make_recent_samples(
+        m_gpu_frame_time_history, m_frame_time_history_count, m_frame_time_history_index, visible_sample_count);
+
+    const auto draw_plot = [&](const char *id, const auto &samples, const ImVec4 &color) {
+        constexpr float tick_length = 4.0f;
+        constexpr float min_visible_scale = 0.05f;
+        float max_value = 0.0f;
+        for (std::size_t i = 0; i < visible_sample_count; ++i) {
+            max_value = std::max(max_value, samples[i]);
+        }
+        max_value = std::max(max_value * 1.12f, min_visible_scale);
+
+        std::array<std::array<char, 64>, 3> axis_labels{};
+        const float label_width = ImGui::CalcTextSize(" 999.99").x;
+        for (std::size_t i = 0; i < axis_labels.size(); ++i) {
+            const float value = max_value * (1.0f - static_cast<float>(i) / 2.0f);
+            std::snprintf(axis_labels[i].data(), axis_labels[i].size(), "%7.2f", static_cast<double>(value));
+        }
+
+        const ImVec2 row_pos = ImGui::GetCursorScreenPos();
+        const float axis_width = label_width + style.ItemInnerSpacing.x + tick_length;
+        const float plot_width = std::min(std::max(1.0f, ImGui::GetContentRegionAvail().x - axis_width), 320.0f);
+        ImGui::SetCursorScreenPos(ImVec2(row_pos.x + axis_width, row_pos.y));
+        ImGui::PushStyleColor(ImGuiCol_PlotLines, color);
+        ImGui::PushStyleColor(ImGuiCol_PlotLinesHovered, color);
+        ImGui::PlotLines(id, samples.data(), static_cast<int>(visible_sample_count), 0, nullptr, 0.0f, max_value,
+                         ImVec2(plot_width, plot_height));
+        ImGui::PopStyleColor(2);
+
+        const ImVec2 plot_min = ImGui::GetItemRectMin();
+        const ImVec2 plot_max = ImGui::GetItemRectMax();
+        const float top = plot_min.y + style.FramePadding.y;
+        const float bottom = plot_max.y - style.FramePadding.y;
+        auto *draw_list = ImGui::GetWindowDrawList();
+        const ImU32 axis_color = ImGui::GetColorU32(ImGuiCol_TextDisabled);
+        draw_list->AddLine(ImVec2(plot_min.x, top), ImVec2(plot_min.x, bottom), axis_color);
+        for (std::size_t i = 0; i < axis_labels.size(); ++i) {
+            const float y = top + (bottom - top) * static_cast<float>(i) / 2.0f;
+            const char *label = axis_labels[i].data();
+            const ImVec2 text_size = ImGui::CalcTextSize(label);
+            const float text_y = std::clamp(y - text_size.y * 0.5f, plot_min.y, plot_max.y - text_size.y);
+            draw_list->AddText(ImVec2(row_pos.x + label_width - text_size.x, text_y), ImGui::GetColorU32(ImGuiCol_Text),
+                               label);
+            draw_list->AddLine(ImVec2(plot_min.x - tick_length, y), ImVec2(plot_min.x, y), axis_color);
+        }
+    };
+
+    draw_plot("##cpu_frame_time_plot", cpu_samples, cpu_color);
+    draw_plot("##gpu_frame_time_plot", gpu_samples, gpu_color);
+
+    ImGui::EndChild();
 }
 
 void ExampleApp::process_input() {
@@ -564,7 +705,9 @@ void ExampleApp::run() {
 
     while (!m_window->should_close()) {
         m_window->poll();
-        if (m_fps_limiter.is_next_frame_allowed()) {
+        // Presentation already paces the application when VSync is enabled. Keep updating
+        // limiter timing for input/camera deltas, but do not add a second CPU-side limiter wait.
+        if (m_fps_limiter.is_next_frame_allowed(!m_vsync_enabled)) {
             m_input->update_gamepad_data();
             process_input();
             update_imgui_overlay();
@@ -574,8 +717,11 @@ void ExampleApp::run() {
                 generate_octree_indices();
                 m_octree_renderer->set_vertices_and_indices(m_octree_vertices, m_octree_indices);
             }
-            if (m_input->kbm_data().was_key_pressed_once(GLFW_KEY_V)) {
-                m_device->log_vma_statistics("Manual VMA statistics");
+            if (m_debug_vma && m_input->kbm_data().was_key_pressed_once(GLFW_KEY_V)) {
+                m_device->log_vma_statistics();
+            }
+            if (m_input->kbm_data().was_key_pressed_once(GLFW_KEY_P)) {
+                m_render_graph->log_gpu_frame_time();
             }
             check_octree_collisions();
         }

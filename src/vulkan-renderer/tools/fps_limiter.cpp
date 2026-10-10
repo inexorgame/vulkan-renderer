@@ -14,11 +14,11 @@ void FPSLimiter::set_max_fps(const std::uint32_t max_fps) {
     m_frame_time = Duration{1.0 / static_cast<double>(m_max_fps)};
 }
 
-bool FPSLimiter::is_next_frame_allowed() {
+bool FPSLimiter::is_next_frame_allowed(const bool enforce_limit) {
     const auto current_time = Clock::now();
     m_frame_elapsed = current_time - m_last_frame_time;
 
-    if (m_frame_elapsed < m_frame_time) {
+    if (enforce_limit && m_frame_elapsed < m_frame_time) {
         return false;
     }
 

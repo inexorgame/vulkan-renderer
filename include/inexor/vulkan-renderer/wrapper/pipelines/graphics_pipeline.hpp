@@ -103,6 +103,10 @@ public:
         return m_pipeline;
     }
 
+    [[nodiscard]] const std::string &name() const {
+        return m_name;
+    }
+
     [[nodiscard]] VkPipelineLayout pipeline_layout() const;
 };
 

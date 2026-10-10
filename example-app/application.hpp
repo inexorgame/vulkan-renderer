@@ -2,6 +2,9 @@
 
 #include "renderer.hpp"
 
+#include <array>
+#include <optional>
+
 namespace inexor::vulkan_renderer::octree {
 // Forward declaration
 class Cube;
@@ -43,15 +46,32 @@ using vulkan_renderer::wrapper::windows::WindowMode;
 /// A sample application demonstrating Inexor's vulkan-renderer.
 class ExampleApp : public ExampleAppBase {
 private:
+    static constexpr std::size_t FRAME_TIME_HISTORY_SIZE{240};
+    static constexpr std::size_t FRAME_TIME_AVERAGE_WINDOW{10};
+    static constexpr double FRAME_TIME_SAMPLE_INTERVAL_SECONDS{0.01};
+    static constexpr std::size_t FRAME_TIME_GRAPH_ZOOM_SAMPLE_COUNT{60};
+
     std::vector<VkPipelineShaderStageCreateInfo> m_shader_stages;
     std::uint32_t m_window_width{0};
     std::uint32_t m_window_height{0};
     WindowMode m_window_mode;
     std::string m_window_title;
     bool m_no_cmd_buf_cache{false};
+    bool m_one_cmd_buf{false};
+    bool m_debug_vma{false};
 
     std::vector<OctreeVertex> m_octree_vertices;
     std::vector<std::uint32_t> m_octree_indices;
+
+    std::array<float, FRAME_TIME_HISTORY_SIZE> m_cpu_frame_time_history{};
+    std::array<float, FRAME_TIME_HISTORY_SIZE> m_gpu_frame_time_history{};
+    std::array<float, FRAME_TIME_HISTORY_SIZE> m_cpu_raw_frame_time_history{};
+    std::array<float, FRAME_TIME_HISTORY_SIZE> m_gpu_raw_frame_time_history{};
+    std::size_t m_frame_time_history_index{0};
+    std::size_t m_frame_time_history_count{0};
+    float m_last_cpu_frame_time_ms{0.0f};
+    std::optional<float> m_last_gpu_frame_time_ms;
+    double m_frame_time_sample_accumulator_seconds{0.0};
 
     static VkBool32 validation_layer_debug_messenger_callback(VkDebugUtilsMessageSeverityFlagBitsEXT severity,
                                                               VkDebugUtilsMessageTypeFlagsEXT type,
@@ -69,6 +89,10 @@ private:
     void load_octree_geometry(bool initialize);
     void setup_window_and_input_callbacks();
     void update_imgui_overlay();
+    void push_frame_time_sample(float cpu_frame_time_ms, std::optional<float> gpu_frame_time_ms);
+    void update_frame_time_graph(float cpu_frame_time_ms, std::optional<float> gpu_frame_time_ms,
+                                 double elapsed_seconds);
+    void draw_frame_time_graph() const;
     /// Use the camera's position and view direction vector to check for ray-octree collisions with all octrees.
     void check_octree_collisions();
     void process_input();

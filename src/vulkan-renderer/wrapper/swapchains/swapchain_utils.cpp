@@ -60,7 +60,7 @@ std::uint32_t choose_image_count(const VkSurfaceCapabilitiesKHR &caps, const std
 }
 
 VkExtent2D choose_image_extent(const VkExtent2D &requested_extent, const VkSurfaceCapabilitiesKHR &caps,
-                               const VkExtent2D &current_extent) {
+                               const VkExtent2D &) {
     VkExtent2D result{};
     // If the surface size is determined by the extent of the swapchain (special value indicates this).
     if (caps.currentExtent.width == std::numeric_limits<std::uint32_t>::max()) {

@@ -1,6 +1,7 @@
 #include "inexor/vulkan-renderer/tools/enumerate.hpp"
 
 #include "inexor/vulkan-renderer/tools/exception.hpp"
+#include "inexor/vulkan-renderer/tools/make_info.hpp"
 
 #include <cstdint>
 
@@ -125,7 +126,7 @@ std::vector<VkQueueFamilyProperties> get_queue_family_properties(const VkPhysica
         // We must call resize here, not reserve!
         std::vector<VkQueueFamilyProperties2> queue_families2(props_count);
         for (auto &props2 : queue_families2) {
-            props2.sType = VK_STRUCTURE_TYPE_QUEUE_FAMILY_PROPERTIES_2;
+            props2 = tools::make_info<VkQueueFamilyProperties2>();
         }
 
         vkGetPhysicalDeviceQueueFamilyProperties2(physical_device, &props_count, queue_families2.data());

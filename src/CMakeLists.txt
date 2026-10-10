@@ -11,16 +11,15 @@ set(INEXOR_SOURCE_FILES
     vulkan-renderer/octree/cube.cpp
     vulkan-renderer/octree/indentation.cpp
 
-    vulkan-renderer/render-graph/buffer_copy_batch_builder.cpp
     vulkan-renderer/render-graph/buffer.cpp
     vulkan-renderer/render-graph/frame_sync_manager.cpp
     vulkan-renderer/render-graph/graphics_pass_builder.cpp
     vulkan-renderer/render-graph/graphics_pass.cpp
     vulkan-renderer/render-graph/render_graph.cpp
+    vulkan-renderer/render-graph/render_module.cpp
     vulkan-renderer/render-graph/resource_descriptor_manager.cpp
     vulkan-renderer/render-graph/staging_buffer.cpp
     vulkan-renderer/render-graph/swapchain_manager.cpp
-    vulkan-renderer/render-graph/texture_copy_batch_builder.cpp
     vulkan-renderer/render-graph/texture.cpp
 
     vulkan-renderer/render-modules/imgui/imgui_renderer.cpp
@@ -69,7 +68,10 @@ set(INEXOR_SOURCE_FILES
     vulkan-renderer/wrapper/pipelines/pipeline_cache.cpp
     vulkan-renderer/wrapper/pipelines/pipeline_layout.cpp
 
+    vulkan-renderer/wrapper/queries/query_pool.cpp
+
     vulkan-renderer/wrapper/shaders/shader.cpp
+    vulkan-renderer/wrapper/shaders/spirv-reflect.cpp
 
     vulkan-renderer/wrapper/swapchains/swapchain_utils.cpp
     vulkan-renderer/wrapper/swapchains/swapchain.cpp
@@ -155,7 +157,19 @@ FetchContent_MakeAvailable(volk)
 FetchContent_MakeAvailable(vma)
 FetchContent_MakeAvailable(glfw)
 FetchContent_MakeAvailable(glm)
+FetchContent_MakeAvailable(SPIRVReflect)
 FetchContent_MakeAvailable(tinygltf)
+
+    set(_INEXOR_PREVIOUS_CMAKE_FOLDER "${CMAKE_FOLDER}")
+    set(CMAKE_FOLDER "Dependencies")
+    FetchContent_MakeAvailable(taskflow)
+    if(DEFINED _INEXOR_PREVIOUS_CMAKE_FOLDER)
+        set(CMAKE_FOLDER "${_INEXOR_PREVIOUS_CMAKE_FOLDER}")
+    else()
+        unset(CMAKE_FOLDER)
+    endif()
+    unset(_INEXOR_PREVIOUS_CMAKE_FOLDER)
+
 FetchContent_MakeAvailable(imgui)
 add_library(imgui
     ${imgui_SOURCE_DIR}/imgui.cpp
@@ -172,6 +186,8 @@ target_link_libraries(inexor-vulkan-renderer-core-lib PUBLIC
     glm::glm
     imgui
     spdlog::spdlog_header_only
+    spirv-reflect-static
+    Taskflow::Taskflow
     tinygltf
     tomlplusplus::tomlplusplus
     volk::volk
@@ -188,6 +204,7 @@ if(MSVC)
         glm
         imgui
         spdlog
+        spirv-reflect-static
         tinygltf
         volk
         VulkanMemoryAllocator

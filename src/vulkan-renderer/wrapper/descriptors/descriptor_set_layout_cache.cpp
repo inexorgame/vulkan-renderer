@@ -21,7 +21,8 @@ DescriptorSetLayoutCache::create_descriptor_set_layout(const VkDescriptorSetLayo
     DescriptorSetLayoutInfo layout_info;
     layout_info.bindings.reserve(descriptor_set_layout_ci.bindingCount);
     bool is_sorted = true;
-    int last_binding = -1;
+    std::uint32_t last_binding = 0;
+    bool first_binding = true;
 
     // Loop through all bindings and ensure that the bindings are in increasing order
     for (std::size_t i = 0; i < descriptor_set_layout_ci.bindingCount; i++) {
@@ -29,8 +30,9 @@ DescriptorSetLayoutCache::create_descriptor_set_layout(const VkDescriptorSetLayo
         layout_info.bindings.push_back(descriptor_set_layout_ci.pBindings[i]);
 
         // Check if the descriptor set layout bindings are sorted by binding
-        if (descriptor_set_layout_ci.pBindings[i].binding < last_binding) {
+        if (first_binding || descriptor_set_layout_ci.pBindings[i].binding >= last_binding) {
             last_binding = descriptor_set_layout_ci.pBindings[i].binding;
+            first_binding = false;
         } else {
             is_sorted = false;
             // As soon as we know it's not sorted, we can stop and start sorting

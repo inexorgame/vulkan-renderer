@@ -20,6 +20,7 @@
 
 #include <algorithm>
 #include <functional>
+#include <stdexcept>
 #include <string_view>
 #include <utility>
 
@@ -72,8 +73,9 @@ std::array<float, 4> get_debug_label_color(const DebugLabelColor color) {
 }
 
 Device::Device(const Instance &inst, const VkSurfaceKHR surface, const VkPhysicalDevice desired_gpu,
-               const VkPhysicalDeviceFeatures &required_features, const std::span<const char *> required_extensions)
-    : m_enabled_features(required_features) {
+               const VkPhysicalDeviceFeatures &required_features, const std::span<const char *> required_extensions,
+               const bool debug_vma)
+    : m_debug_vma(debug_vma), m_enabled_features(required_features) {
     // Lets just be safe and check if these function pointers are really available.
     if (vkCreateDevice == nullptr) {
         throw InexorException("Error: Function pointer 'vkCreateDevice' is not available!");
@@ -98,8 +100,7 @@ Device::Device(const Instance &inst, const VkSurfaceKHR surface, const VkPhysica
     }
 
     // Get the device properties
-    VkPhysicalDeviceProperties2 device_properties2{};
-    device_properties2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2;
+    auto device_properties2 = tools::make_info<VkPhysicalDeviceProperties2>();
     vkGetPhysicalDeviceProperties2(m_physical_device, &device_properties2);
     std::memcpy(m_pipeline_cache_uuid.data(), device_properties2.properties.pipelineCacheUUID, VK_UUID_SIZE);
 
@@ -130,14 +131,10 @@ Device::Device(const Instance &inst, const VkSurfaceKHR surface, const VkPhysica
         tools::is_extension_supported(available_extensions, VK_EXT_MEMORY_PRIORITY_EXTENSION_NAME);
     bool memory_priority_feature_supported = false;
     if (memory_priority_ext_supported) {
-        VkPhysicalDeviceMemoryPriorityFeaturesEXT memory_priority_features{};
-        memory_priority_features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MEMORY_PRIORITY_FEATURES_EXT;
-
-        VkPhysicalDeviceFeatures2 features2{};
-        features2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
+        auto memory_priority_features = tools::make_info<VkPhysicalDeviceMemoryPriorityFeaturesEXT>();
+        auto features2 = tools::make_info<VkPhysicalDeviceFeatures2>();
         features2.pNext = &memory_priority_features;
         vkGetPhysicalDeviceFeatures2(m_physical_device, &features2);
-
         memory_priority_feature_supported = (memory_priority_features.memoryPriority == VK_TRUE);
     }
 
@@ -151,14 +148,10 @@ Device::Device(const Instance &inst, const VkSurfaceKHR surface, const VkPhysica
     }
 
     // We want to use synchronization2 for vkCmdPipelineBarrier2.
-    VkPhysicalDeviceSynchronization2Features sync2_feature{};
-    sync2_feature.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SYNCHRONIZATION_2_FEATURES;
-    sync2_feature.pNext = nullptr;
+    auto sync2_feature = tools::make_info<VkPhysicalDeviceSynchronization2Features>();
     sync2_feature.synchronization2 = VK_TRUE;
 
-    VkPhysicalDeviceMemoryPriorityFeaturesEXT memory_priority_feature{};
-    memory_priority_feature.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MEMORY_PRIORITY_FEATURES_EXT;
-    memory_priority_feature.pNext = nullptr;
+    auto memory_priority_feature = tools::make_info<VkPhysicalDeviceMemoryPriorityFeaturesEXT>();
     memory_priority_feature.memoryPriority = memory_priority_supported ? VK_TRUE : VK_FALSE;
 
     sync2_feature.pNext = memory_priority_supported ? &memory_priority_feature : nullptr;
@@ -185,7 +178,7 @@ Device::Device(const Instance &inst, const VkSurfaceKHR surface, const VkPhysica
         return index ? std::to_string(index.value()) : std::string("NONE");
     };
 
-    spdlog::trace("Selected queue family indices: [graphics: {}, compute: {}, transfer: {}, sparse binding: {}]",
+    spdlog::trace("Selected queue family indices: [graphics={}, compute={}, transfer={}, sparse binding={}]",
                   print_queue_family_index(m_graphics_queue_family_index),
                   print_queue_family_index(m_compute_queue_family_index),
                   print_queue_family_index(m_transfer_queue_family_index),
@@ -275,21 +268,20 @@ Device::Device(const Instance &inst, const VkSurfaceKHR surface, const VkPhysica
     get_thread_command_pool(VK_QUEUE_TRANSFER_BIT);
     get_thread_command_pool(VK_QUEUE_COMPUTE_BIT);
     get_thread_command_pool(VK_QUEUE_SPARSE_BINDING_BIT);
+    spdlog::trace("Taskflow executor created [worker threads={}]", m_taskflow_executor.num_workers());
 }
 
 Device::~Device() {
+    // Finish CPU tasks before taking the mutex they may need or destroying Vulkan resources.
+    m_taskflow_executor.wait_for_all();
     std::scoped_lock locker(m_mutex);
     // Wait for the device to complete ongoing work
     wait_idle();
     // Because the device handle must be valid for the destruction of the command pools in the CommandPool destructor,
     // we must destroy the command pools manually here in order to ensure the right order of destruction
     m_cmd_pools.clear();
-    // Dump detailed allocator stats before destruction so leaking allocations can be identified by name.
-    char *vma_stats_string = nullptr;
-    vmaBuildStatsString(m_allocator, &vma_stats_string, VK_TRUE);
-    if (vma_stats_string != nullptr) {
-        spdlog::warn("VMA allocator stats before destruction:\n{}", vma_stats_string);
-        vmaFreeStatsString(m_allocator, vma_stats_string);
+    if (m_debug_vma) {
+        log_vma_statistics();
     }
     // Now that we destroyed the command pools, we can destroy the allocator and finally the device itself
     vmaDestroyAllocator(m_allocator);
@@ -331,11 +323,11 @@ VkFence Device::execute(const VkQueueFlagBits queue_type, const DebugLabelColor 
                         const std::source_location source_location) const {
     const auto &cmd_buf = get_thread_command_pool(queue_type).request_command_buffer(source_location.function_name());
     CommandBufferBuilder builder(cmd_buf);
-    builder.begin_debug_label_region(source_location.function_name(), get_debug_label_color(dbg_label_color));
-    std::invoke(on_record, builder);
-    builder.end_debug_label_region();
-    cmd_buf.end_command_buffer();
-    cmd_buf.submit(queue_type, wait_semaphores, signal_semaphores);
+    builder.begin_debug_label_region(source_location.function_name(), get_debug_label_color(dbg_label_color))
+        .invoke(on_record)
+        .end_debug_label_region()
+        .end_command_buffer()
+        .submit(queue_type, wait_semaphores, signal_semaphores);
     return cmd_buf.submission_fence();
 }
 
@@ -346,11 +338,11 @@ VkFence Device::execute(const VkQueueFlagBits queue_type, const DebugLabelColor 
                         const std::source_location source_location) const {
     const auto &cmd_buf = get_thread_command_pool(queue_type).request_command_buffer(source_location.function_name());
     CommandBufferBuilder builder(cmd_buf);
-    builder.begin_debug_label_region(source_location.function_name(), get_debug_label_color(dbg_label_color));
-    std::invoke(on_record, builder);
-    builder.end_debug_label_region();
-    cmd_buf.end_command_buffer();
-    cmd_buf.submit(queue_type, wait_semaphores, signal_semaphore_infos);
+    builder.begin_debug_label_region(source_location.function_name(), get_debug_label_color(dbg_label_color))
+        .invoke(on_record)
+        .end_debug_label_region()
+        .end_command_buffer()
+        .submit(queue_type, wait_semaphores, signal_semaphore_infos);
     return cmd_buf.submission_fence();
 }
 
@@ -361,12 +353,11 @@ VkFence Device::execute(const VkQueueFlagBits queue_type, const DebugLabelColor 
                         const std::source_location source_location) const {
     const auto &cmd_buf = get_thread_command_pool(queue_type).request_command_buffer(source_location.function_name());
     CommandBufferBuilder builder(cmd_buf);
-    builder.begin_debug_label_region(source_location.function_name(), get_debug_label_color(dbg_label_color));
-    std::invoke(on_record, builder);
-    builder.end_debug_label_region();
-    cmd_buf.end_command_buffer();
-
-    cmd_buf.submit(queue_type, wait_semaphores, signal_semaphores);
+    builder.begin_debug_label_region(source_location.function_name(), get_debug_label_color(dbg_label_color))
+        .invoke(on_record)
+        .end_debug_label_region()
+        .end_command_buffer()
+        .submit(queue_type, wait_semaphores, signal_semaphores);
     return cmd_buf.submission_fence();
 }
 
@@ -377,12 +368,12 @@ VkFence Device::execute(const VkQueueFlagBits queue_type, const DebugLabelColor 
                         const std::source_location source_location) const {
     const auto &cmd_buf = get_thread_command_pool(queue_type).request_command_buffer(source_location.function_name());
     CommandBufferBuilder builder(cmd_buf);
-    builder.begin_debug_label_region(source_location.function_name(), get_debug_label_color(dbg_label_color));
-    std::invoke(on_record, builder);
-    builder.end_debug_label_region();
-    cmd_buf.end_command_buffer();
+    builder.begin_debug_label_region(source_location.function_name(), get_debug_label_color(dbg_label_color))
+        .invoke(on_record)
+        .end_debug_label_region()
+        .end_command_buffer()
+        .submit(queue_type, wait_semaphores, signal_semaphore_infos);
 
-    cmd_buf.submit(queue_type, wait_semaphores, signal_semaphore_infos);
     return cmd_buf.submission_fence();
 }
 
@@ -456,9 +447,71 @@ const CommandBuffer &Device::request_command_buffer(const VkQueueFlagBits queue_
     return get_thread_command_pool(queue_type).request_command_buffer(name);
 }
 
+const CommandBuffer &Device::request_named_command_buffer(const VkQueueFlagBits queue_type, const std::string &name) {
+    return get_thread_command_pool(queue_type).request_named_command_buffer(name);
+}
+
 const CommandBuffer &Device::request_secondary_command_buffer(const VkQueueFlagBits queue_type,
                                                               const std::string &name) {
     return get_thread_command_pool(queue_type).request_secondary_command_buffer(name);
+}
+
+VkFence Device::submit_command_buffer(const CommandBuffer &command_buffer, const VkQueueFlagBits queue_type,
+                                      const std::span<const QueueSemaphoreWait> wait_semaphores,
+                                      const std::span<const VkSemaphore> signal_semaphores) const {
+    command_buffer.submit(queue_type, wait_semaphores, signal_semaphores);
+    return command_buffer.submission_fence();
+}
+
+VkFence Device::submit_graphics_command_buffers(const std::span<const CommandBuffer *const> command_buffers,
+                                                const std::span<const QueueSemaphoreWait> wait_semaphores,
+                                                const std::span<const VkSemaphore> signal_semaphores) const {
+    if (command_buffers.empty()) {
+        throw std::invalid_argument("Cannot submit an empty command buffer batch");
+    }
+
+    std::vector<VkCommandBufferSubmitInfo> buffer_infos;
+    buffer_infos.reserve(command_buffers.size());
+    for (const auto *command_buffer : command_buffers) {
+        buffer_infos.push_back(tools::make_info<VkCommandBufferSubmitInfo>({
+            .commandBuffer = command_buffer->command_buffer(),
+        }));
+    }
+
+    std::vector<VkSemaphoreSubmitInfo> wait_infos;
+    wait_infos.reserve(wait_semaphores.size());
+    for (const auto &wait : wait_semaphores) {
+        wait_infos.push_back(tools::make_info<VkSemaphoreSubmitInfo>({
+            .semaphore = wait.semaphore,
+            .stageMask = wait.stage_mask,
+        }));
+    }
+
+    std::vector<VkSemaphoreSubmitInfo> signal_infos;
+    signal_infos.reserve(signal_semaphores.size());
+    for (const auto semaphore : signal_semaphores) {
+        signal_infos.push_back(tools::make_info<VkSemaphoreSubmitInfo>({
+            .semaphore = semaphore,
+            .stageMask = VK_PIPELINE_STAGE_2_ALL_GRAPHICS_BIT,
+        }));
+    }
+
+    const auto submit_info = tools::make_info<VkSubmitInfo2>({
+        .waitSemaphoreInfoCount = static_cast<std::uint32_t>(wait_infos.size()),
+        .pWaitSemaphoreInfos = wait_infos.empty() ? nullptr : wait_infos.data(),
+        .commandBufferInfoCount = static_cast<std::uint32_t>(buffer_infos.size()),
+        .pCommandBufferInfos = buffer_infos.data(),
+        .signalSemaphoreInfoCount = static_cast<std::uint32_t>(signal_infos.size()),
+        .pSignalSemaphoreInfos = signal_infos.empty() ? nullptr : signal_infos.data(),
+    });
+
+    const auto &last_command_buffer = *command_buffers.back();
+    if (const auto result = vkQueueSubmit2(m_graphics_queue, 1, &submit_info, last_command_buffer.submission_fence());
+        result != VK_SUCCESS) {
+        throw VulkanException("Error: vkQueueSubmit2 failed!", result, last_command_buffer.name());
+    }
+    last_command_buffer.m_has_been_submitted = true;
+    return last_command_buffer.submission_fence();
 }
 
 void Device::wait_for_submissions(const VkQueueFlagBits queue_type) const {
@@ -483,23 +536,26 @@ void Device::wait_idle(const VkQueue queue) const {
     }
 }
 
-void Device::log_vma_statistics(const char *context) const {
+void Device::log_vma_statistics() const {
+    if (!m_debug_vma) {
+        return;
+    }
+
     VmaTotalStatistics total_statistics{};
     vmaCalculateStatistics(m_allocator, &total_statistics);
 
-    const auto log_statistics = [context](const char *label, const VmaStatistics &statistics) {
-        spdlog::info("[{}] {}: blockCount={}, allocationCount={}, blockBytes={}, allocationBytes={}", context, label,
-                     statistics.blockCount, statistics.allocationCount, statistics.blockBytes,
-                     statistics.allocationBytes);
+    const auto log_statistics = [](const char *label, const VmaStatistics &statistics) {
+        spdlog::trace("{}: blockCount={}, allocationCount={}, blockBytes={}, allocationBytes={}", label,
+                      statistics.blockCount, statistics.allocationCount, statistics.blockBytes,
+                      statistics.allocationBytes);
     };
 
-    const auto log_detailed_statistics = [&log_statistics, context](const char *label,
-                                                                    const VmaDetailedStatistics &statistics) {
+    const auto log_detailed_statistics = [&log_statistics](const char *label, const VmaDetailedStatistics &statistics) {
         log_statistics(label, statistics.statistics);
-        spdlog::info("[{}] {}: unusedRangeCount={}, allocationSizeMin={}, allocationSizeMax={}, "
-                     "unusedRangeSizeMin={}, unusedRangeSizeMax={}",
-                     context, label, statistics.unusedRangeCount, statistics.allocationSizeMin,
-                     statistics.allocationSizeMax, statistics.unusedRangeSizeMin, statistics.unusedRangeSizeMax);
+        spdlog::trace("{}: unusedRangeCount={}, allocationSizeMin={}, allocationSizeMax={}, "
+                      "unusedRangeSizeMin={}, unusedRangeSizeMax={}",
+                      label, statistics.unusedRangeCount, statistics.allocationSizeMin, statistics.allocationSizeMax,
+                      statistics.unusedRangeSizeMin, statistics.unusedRangeSizeMax);
     };
 
     log_detailed_statistics("VmaDetailedStatistics", total_statistics.total);

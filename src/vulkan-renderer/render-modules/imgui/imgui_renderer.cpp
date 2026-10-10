@@ -3,6 +3,7 @@
 #include "inexor/vulkan-renderer/render-graph/buffer.hpp"
 #include "inexor/vulkan-renderer/render-graph/graphics_pass.hpp"
 #include "inexor/vulkan-renderer/render-graph/render_graph.hpp"
+#include "inexor/vulkan-renderer/render-graph/render_module.hpp"
 #include "inexor/vulkan-renderer/render-graph/texture.hpp"
 #include "inexor/vulkan-renderer/wrapper/descriptors/per_frame_descriptor_sets.hpp"
 #include "inexor/vulkan-renderer/wrapper/pipelines/graphics_pipeline.hpp"
@@ -11,19 +12,20 @@
 namespace inexor::vulkan_renderer::render_modules::imgui {
 
 // Using declarations for types only used in the implementation
-using render_graph::BufferType;
-using render_graph::DebugLabelColor;
-using render_graph::GraphicsPipelineBuilder;
-using wrapper::commands::CommandBuffer;
-using wrapper::core::Device;
-using wrapper::descriptors::DescriptorSetAllocator;
-using wrapper::descriptors::DescriptorSetLayoutBuilder;
-using wrapper::descriptors::DescriptorType;
-using wrapper::descriptors::WriteDescriptorSetBuilder;
+using inexor::vulkan_renderer::render_graph::BufferType;
+using inexor::vulkan_renderer::render_graph::DebugLabelColor;
+using inexor::vulkan_renderer::render_graph::GraphicsPassBuilder;
+using inexor::vulkan_renderer::wrapper::commands::CommandBuffer;
+using inexor::vulkan_renderer::wrapper::core::Device;
+using inexor::vulkan_renderer::wrapper::descriptors::DescriptorSetAllocator;
+using inexor::vulkan_renderer::wrapper::descriptors::DescriptorSetLayoutBuilder;
+using inexor::vulkan_renderer::wrapper::descriptors::DescriptorType;
+using inexor::vulkan_renderer::wrapper::descriptors::WriteDescriptorSetBuilder;
 
 ImGuiRenderer::ImGuiRenderer(std::shared_ptr<RenderGraph> render_graph, std::weak_ptr<Swapchain> swapchain,
                              std::function<void()> on_update_user_imgui_data)
-    : m_swapchain(swapchain), m_on_update_user_imgui_data(std::move(on_update_user_imgui_data)) {
+    : m_imgui_module(std::make_unique<RenderModule>(render_graph, "ImGui")), m_swapchain(swapchain),
+      m_on_update_user_imgui_data(std::move(on_update_user_imgui_data)) {
     spdlog::trace("Creating ImGUI context");
     ImGui::CreateContext();
 
@@ -49,10 +51,8 @@ ImGuiRenderer::ImGuiRenderer(std::shared_ptr<RenderGraph> render_graph, std::wea
     io.FontGlobalScale = 1.0f;
 
     spdlog::trace("Loading ImGUI shaders");
-    m_vertex_shader =
-        std::make_shared<Shader>(render_graph->device(), VK_SHADER_STAGE_VERTEX_BIT, "shaders/ui.vert.spv");
-    m_fragment_shader =
-        std::make_shared<Shader>(render_graph->device(), VK_SHADER_STAGE_FRAGMENT_BIT, "shaders/ui.frag.spv");
+    m_vertex_shader = std::make_shared<Shader>(render_graph->device(), "shaders/ui.vert.spv");
+    m_fragment_shader = std::make_shared<Shader>(render_graph->device(), "shaders/ui.frag.spv");
 
     // Load font texture
 
@@ -75,7 +75,6 @@ ImGuiRenderer::ImGuiRenderer(std::shared_ptr<RenderGraph> render_graph, std::wea
 
         // Our font textures always have 4 channels and a single mip level by definition.
         constexpr int FONT_TEXTURE_CHANNELS{4};
-        constexpr int FONT_MIP_LEVELS{1};
 
         m_upload_size = static_cast<VkDeviceSize>(m_font_texture_width) *
                         static_cast<VkDeviceSize>(m_font_texture_height) *
@@ -107,7 +106,7 @@ ImGuiRenderer::ImGuiRenderer(std::shared_ptr<RenderGraph> render_graph, std::wea
             }
             m_vertex_data.clear();
             m_index_data.clear();
-            for (std::size_t i = 0; i < imgui_draw_data->CmdListsCount; i++) {
+            for (int i = 0; i < imgui_draw_data->CmdListsCount; i++) {
                 const ImDrawList *cmd_list = imgui_draw_data->CmdLists[i];
                 m_vertex_data.insert(m_vertex_data.end(), cmd_list->VtxBuffer.Data,
                                      cmd_list->VtxBuffer.Data + cmd_list->VtxBuffer.Size);
@@ -130,51 +129,53 @@ ImGuiRenderer::ImGuiRenderer(std::shared_ptr<RenderGraph> render_graph, std::wea
         render_graph::BufferUpdateMode::PER_FRAME_HOST_VISIBLE);
 
     // Add the ImGui graphics pipeline to rendergraph
-    render_graph->add_graphics_pipeline([&](GraphicsPipelineBuilder &builder) {
-        const auto swapchain = m_swapchain.lock();
-        const auto descriptor_set = m_descriptor_set.lock();
-        m_imgui_pipeline = builder
-                               .set_vertex_input_bindings({
-                                   {
-                                       .binding = 0,
-                                       .stride = sizeof(ImDrawVert),
-                                       .inputRate = VK_VERTEX_INPUT_RATE_VERTEX,
-                                   },
-                               })
-                               .set_vertex_input_attributes({
-                                   {
-                                       .location = 0,
-                                       .format = VK_FORMAT_R32G32_SFLOAT,
-                                       .offset = offsetof(ImDrawVert, pos),
-                                   },
-                                   {
-                                       .location = 1,
-                                       .format = VK_FORMAT_R32G32_SFLOAT,
-                                       .offset = offsetof(ImDrawVert, uv),
-                                   },
-                                   {
-                                       .location = 2,
-                                       .format = VK_FORMAT_R8G8B8A8_UNORM,
-                                       .offset = offsetof(ImDrawVert, col),
-                                   },
-                               })
-                               .add_standard_alpha_blend_attachment()
-                               .add_color_attachment_format(swapchain->image_format())
-                               .set_dynamic_scissor()
-                               .set_dynamic_viewport()
-                               .add_shader(m_vertex_shader)
-                               .add_shader(m_fragment_shader)
-                               .set_descriptor_set_layout(descriptor_set->layout())
-                               .add_descriptor_set(m_descriptor_set)
-                               .add_push_constant_range(VK_SHADER_STAGE_VERTEX_BIT, sizeof(m_push_const_block))
-                               .build("ImGui");
-    });
-
-    using render_graph::GraphicsPassBuilder;
+    m_imgui_module->add_graphics_pipeline(
+        [&](inexor::vulkan_renderer::wrapper::pipelines::GraphicsPipelineBuilder &pipeline_builder) {
+            const auto swapchain = m_swapchain.lock();
+            const auto descriptor_set = m_descriptor_set.lock();
+            return m_imgui_pipeline =
+                       pipeline_builder
+                           .set_vertex_input_bindings({
+                               {
+                                   .binding = 0,
+                                   .stride = sizeof(ImDrawVert),
+                                   .inputRate = VK_VERTEX_INPUT_RATE_VERTEX,
+                               },
+                           })
+                           .set_vertex_input_attributes({
+                               {
+                                   .location = 0,
+                                   .format = VK_FORMAT_R32G32_SFLOAT,
+                                   .offset = offsetof(ImDrawVert, pos),
+                               },
+                               {
+                                   .location = 1,
+                                   .format = VK_FORMAT_R32G32_SFLOAT,
+                                   .offset = offsetof(ImDrawVert, uv),
+                               },
+                               {
+                                   .location = 2,
+                                   .format = VK_FORMAT_R8G8B8A8_UNORM,
+                                   .offset = offsetof(ImDrawVert, col),
+                               },
+                           })
+                           .add_standard_alpha_blend_attachment()
+                           .add_color_attachment_format(swapchain->image_format())
+                           // ImGui line geometry contains both triangle windings.
+                           .set_culling_mode(VK_FALSE)
+                           .set_dynamic_scissor()
+                           .set_dynamic_viewport()
+                           .add_shader(m_vertex_shader)
+                           .add_shader(m_fragment_shader)
+                           .set_descriptor_set_layout(descriptor_set->layout())
+                           .add_descriptor_set(m_descriptor_set)
+                           .add_push_constant_range(VK_SHADER_STAGE_VERTEX_BIT, sizeof(m_push_const_block))
+                           .build("ImGui");
+        });
 
     // Add the ImGui graphics pass to rendergraph
-    m_imgui_pass = render_graph->add_graphics_pass([&](GraphicsPassBuilder &builder) {
-        return builder.writes_to(swapchain)
+    m_imgui_pass = m_imgui_module->add_graphics_pass([&](GraphicsPassBuilder &pass_builder) {
+        return pass_builder.writes_to(swapchain)
             .reads_from(m_vertex_buffer)
             .reads_from(m_index_buffer)
             .set_on_record([&](wrapper::commands::CommandBufferBuilder &cmd_buf) {
@@ -182,7 +183,6 @@ ImGuiRenderer::ImGuiRenderer(std::shared_ptr<RenderGraph> render_graph, std::wea
                 if (draw_data == nullptr || draw_data->TotalVtxCount == 0 || draw_data->TotalIdxCount == 0) {
                     return;
                 }
-
                 const auto vertex_buffer = m_vertex_buffer.lock();
                 const auto index_buffer = m_index_buffer.lock();
                 if (!vertex_buffer || !index_buffer || vertex_buffer->buffer() == VK_NULL_HANDLE ||
@@ -191,7 +191,6 @@ ImGuiRenderer::ImGuiRenderer(std::shared_ptr<RenderGraph> render_graph, std::wea
                     // but GPU buffers are not uploaded yet. Skip recording in that case.
                     return;
                 }
-
                 const ImGuiIO &io = ImGui::GetIO();
                 m_push_const_block.scale = glm::vec2(2.0f / io.DisplaySize.x, 2.0f / io.DisplaySize.y);
 
@@ -209,9 +208,9 @@ ImGuiRenderer::ImGuiRenderer(std::shared_ptr<RenderGraph> render_graph, std::wea
 
                 std::uint32_t index_offset = 0;
                 std::int32_t vertex_offset = 0;
-                for (std::size_t i = 0; i < draw_data->CmdListsCount; i++) {
+                for (int i = 0; i < draw_data->CmdListsCount; i++) {
                     const ImDrawList *cmd_list = draw_data->CmdLists[i];
-                    for (std::int32_t j = 0; j < cmd_list->CmdBuffer.Size; j++) {
+                    for (int j = 0; j < cmd_list->CmdBuffer.Size; j++) {
                         const ImDrawCmd &draw_cmd = cmd_list->CmdBuffer[j];
                         cmd_buf
                             .set_scissor({

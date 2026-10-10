@@ -24,7 +24,8 @@ public:
     void set_max_fps(std::uint32_t max_fps);
 
     /// Returns true when enough time has elapsed for the next frame.
-    [[nodiscard]] bool is_next_frame_allowed();
+    /// When enforce_limit is false, timing is still updated but the frame is not throttled.
+    [[nodiscard]] bool is_next_frame_allowed(bool enforce_limit = true);
 
     /// Records one rendered frame and returns an updated FPS value periodically.
     [[nodiscard]] std::optional<std::uint32_t> get_fps();

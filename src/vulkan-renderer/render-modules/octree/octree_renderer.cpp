@@ -1,7 +1,9 @@
 #include "inexor/vulkan-renderer/render-modules/octree/octree_renderer.hpp"
 
 #include "inexor/vulkan-renderer/render-graph/buffer.hpp"
+#include "inexor/vulkan-renderer/render-graph/graphics_pass.hpp"
 #include "inexor/vulkan-renderer/render-graph/render_graph.hpp"
+#include "inexor/vulkan-renderer/render-graph/render_module.hpp"
 #include "inexor/vulkan-renderer/render-graph/texture.hpp"
 #include "inexor/vulkan-renderer/tools/camera.hpp"
 #include "inexor/vulkan-renderer/tools/exception.hpp"
@@ -21,16 +23,16 @@ namespace inexor::vulkan_renderer::render_modules::octree {
 OctreeRenderer::OctreeRenderer(std::shared_ptr<RenderGraph> render_graph, std::weak_ptr<Swapchain> swapchain,
                                std::weak_ptr<Texture> depth_buffer, std::shared_ptr<Camera> camera,
                                std::weak_ptr<Texture> color_buffer)
-    : m_swapchain(std::move(swapchain)), m_depth_buffer(std::move(depth_buffer)),
-      m_color_buffer(std::move(color_buffer)), m_camera(std::move(camera)) {
+    : m_octree_module(std::make_unique<RenderModule>(render_graph, "Octree")), m_swapchain(std::move(swapchain)),
+      m_depth_buffer(std::move(depth_buffer)), m_color_buffer(std::move(color_buffer)), m_camera(std::move(camera)) {
     // Using declarations
-    using render_graph::BufferType;
-    using render_graph::GraphicsPassBuilder;
-    using tools::InexorException;
-    using tools::make_info;
-    using wrapper::commands::CommandBuffer;
-    using wrapper::core::DebugLabelColor;
-    using wrapper::pipelines::GraphicsPipelineBuilder;
+    using inexor::vulkan_renderer::render_graph::BufferType;
+    using inexor::vulkan_renderer::render_graph::GraphicsPassBuilder;
+    using inexor::vulkan_renderer::tools::InexorException;
+    using inexor::vulkan_renderer::tools::make_info;
+    using inexor::vulkan_renderer::wrapper::commands::CommandBuffer;
+    using inexor::vulkan_renderer::wrapper::commands::CommandBufferBuilder;
+    using inexor::vulkan_renderer::wrapper::core::DebugLabelColor;
 
     if (!render_graph) {
         throw InexorException("Error: Parameter 'render_graph' is invalid!");
@@ -45,14 +47,9 @@ OctreeRenderer::OctreeRenderer(std::shared_ptr<RenderGraph> render_graph, std::w
         throw InexorException("Error: Parameter 'camera' is invalid!");
     }
 
-    // @TODO Maybe it is a good idea to let rendergraph load shaders and to abstract shader loading in it?
-
     // Load vertex and fragment shader for octree rendering
-    // @TODO Use spirv-cross to load shaders and determine type automatically
-    m_vertex_shader =
-        std::make_shared<Shader>(render_graph->device(), VK_SHADER_STAGE_VERTEX_BIT, "shaders/main.vert.spv");
-    m_fragment_shader =
-        std::make_shared<Shader>(render_graph->device(), VK_SHADER_STAGE_FRAGMENT_BIT, "shaders/main.frag.spv");
+    m_vertex_shader = std::make_shared<Shader>(render_graph->device(), "shaders/main.vert.spv");
+    m_fragment_shader = std::make_shared<Shader>(render_graph->device(), "shaders/main.frag.spv");
 
     m_mvp_matrix = render_graph->add_buffer(
         "model/view/proj", BufferType::UNIFORM_BUFFER,
@@ -92,72 +89,68 @@ OctreeRenderer::OctreeRenderer(std::shared_ptr<RenderGraph> render_graph, std::w
     });
 
     // Add the graphics pipeline for the octree renderer
-    render_graph->add_graphics_pipeline([&](GraphicsPipelineBuilder &builder) {
-        const auto pipeline_extent = m_swapchain.lock()->extent();
-        const auto descriptor_set = m_descriptor_set.lock();
-
-        // The octree graphics pipeline is stored in the octree renderer
-        // It is being build in this lambda by reference capture
-        m_octree_pipeline =
-            builder.add_shader(m_vertex_shader)
-                .add_shader(m_fragment_shader)
-                .set_vertex_input_bindings({{
-                    .binding = 0,
-                    .stride = sizeof(OctreeVertex),
-                    .inputRate = VK_VERTEX_INPUT_RATE_VERTEX,
-                }})
-                .set_vertex_input_attributes({
-                    {
-                        .location = 0,
-                        .format = VK_FORMAT_R32G32B32_SFLOAT,
-                        .offset = offsetof(OctreeVertex, position),
-                    },
-                    {
-                        .location = 1,
-                        .format = VK_FORMAT_R32G32B32_SFLOAT,
-                        .offset = offsetof(OctreeVertex, color),
-                    },
-                })
-                .add_standard_alpha_blend_attachment()
-                .set_depth_attachment_format(m_depth_buffer.lock()->format())
-                .set_multisampling(m_color_buffer.expired() ? VK_SAMPLE_COUNT_1_BIT : m_color_buffer.lock()->samples())
-                .set_standard_depth_stencil()
-                .add_color_attachment_format(m_swapchain.lock()->image_format())
-                .set_dynamic_scissor()
-                .set_dynamic_viewport()
-                .set_viewport({
-                    .width = static_cast<float>(pipeline_extent.width),
-                    .height = static_cast<float>(pipeline_extent.height),
-                    .minDepth = 0.0f,
-                    .maxDepth = 1.0f,
-                })
-                .set_scissor({
-                    .extent = pipeline_extent,
-                })
-                .set_descriptor_set_layout(descriptor_set->layout())
-                .add_descriptor_set(m_descriptor_set)
-                .build("Octree");
-    });
+    m_octree_module->add_graphics_pipeline(
+        [&](inexor::vulkan_renderer::wrapper::pipelines::GraphicsPipelineBuilder &pipeline_builder) {
+            const auto pipeline_extent = m_swapchain.lock()->extent();
+            const auto descriptor_set = m_descriptor_set.lock();
+            // The octree graphics pipeline is stored in the octree renderer
+            // It is being build in this lambda by reference capture
+            return m_octree_pipeline =
+                       pipeline_builder.add_shader(m_vertex_shader)
+                           .add_shader(m_fragment_shader)
+                           .set_vertex_input_bindings({{
+                               .binding = 0,
+                               .stride = sizeof(OctreeVertex),
+                               .inputRate = VK_VERTEX_INPUT_RATE_VERTEX,
+                           }})
+                           .set_vertex_input_attributes({
+                               {
+                                   .location = 0,
+                                   .format = VK_FORMAT_R32G32B32_SFLOAT,
+                                   .offset = offsetof(OctreeVertex, position),
+                               },
+                               {
+                                   .location = 1,
+                                   .format = VK_FORMAT_R32G32B32_SFLOAT,
+                                   .offset = offsetof(OctreeVertex, color),
+                               },
+                           })
+                           .add_standard_alpha_blend_attachment()
+                           .set_depth_attachment_format(m_depth_buffer.lock()->format())
+                           .set_multisampling(m_color_buffer.expired() ? VK_SAMPLE_COUNT_1_BIT
+                                                                       : m_color_buffer.lock()->samples())
+                           .set_standard_depth_stencil()
+                           .add_color_attachment_format(m_swapchain.lock()->image_format())
+                           .set_dynamic_scissor()
+                           .set_dynamic_viewport()
+                           .set_viewport({
+                               .width = static_cast<float>(pipeline_extent.width),
+                               .height = static_cast<float>(pipeline_extent.height),
+                               .minDepth = 0.0f,
+                               .maxDepth = 1.0f,
+                           })
+                           .set_scissor({
+                               .extent = pipeline_extent,
+                           })
+                           .set_descriptor_set_layout(descriptor_set->layout())
+                           .add_descriptor_set(m_descriptor_set)
+                           .build("Octree");
+        });
 
     // Add the graphics pass for the octree renderer
-    m_octree_pass = render_graph->add_graphics_pass([&](GraphicsPassBuilder &builder) {
-        // When MSAA is enabled, render to color buffer which will auto-resolve to swapchain
-        // Otherwise render directly to swapchain
-        if (!m_color_buffer.expired()) {
-            // MSAA path: write to MSAA color buffer
-            builder.writes_to(m_color_buffer, VkClearValue{0.0f, 0.0f, 0.0f});
-            // Keep the swapchain in the pass so render-graph can resolve into it
-            builder.writes_to(m_swapchain, std::nullopt);
-        } else {
-            // Non-MSAA path: write directly to swapchain
-            builder.writes_to(m_swapchain, VkClearValue{0.0f, 0.0f, 0.0f});
-        }
-
-        return builder.writes_to(m_depth_buffer, VkClearValue{.depthStencil = {.depth = 1.0f, .stencil = 0}})
+    m_octree_pass = m_octree_module->add_graphics_pass([&](GraphicsPassBuilder &pass_builder) {
+        return pass_builder
+            .conditionally_writes_to(m_color_buffer, !m_color_buffer.expired())
+            // When MSAA is enabled, render to color buffer which will auto-resolve to swapchain
+            // Otherwise render directly to swapchain
+            .writes_to(m_swapchain,
+                       m_color_buffer.expired() ? std::make_optional<VkClearValue>({0.0f, 0.0f, 0.0f}) : std::nullopt)
+            .writes_to(m_depth_buffer)
             .reads_from(m_vertex_buffer)
             .writes_to(m_index_buffer)
             .reads_from(m_index_buffer)
-            .set_on_record([&](wrapper::commands::CommandBufferBuilder &cmd_buf) {
+            .cache_secondary_command_buffer()
+            .set_on_record([&](CommandBufferBuilder &cmd_buf) {
                 const auto vertex_buffer = m_vertex_buffer.lock();
                 const auto index_buffer = m_index_buffer.lock();
                 const auto swapchain = m_swapchain.lock();
@@ -189,10 +182,13 @@ void OctreeRenderer::set_vertices_and_indices(std::vector<OctreeVertex> vertices
     if (m_octree_vertices == vertices && m_octree_indices == indices) {
         return;
     }
-
     m_octree_vertices = std::move(vertices);
     m_octree_indices = std::move(indices);
     m_geometry_updated = true;
+    // Empty geometry does not trigger a buffer upload; invalidate the recorded draw even in that case.
+    if (const auto pass = m_octree_pass.lock()) {
+        pass->invalidate_cached_recording();
+    }
 }
 
 } // namespace inexor::vulkan_renderer::render_modules::octree

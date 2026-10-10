@@ -32,6 +32,10 @@ using wrapper::core::Device;
 /// RAII wrapper class for swapchains
 class Swapchain {
 private:
+    // Frame-context resources are intentionally independent of the number of swapchain images.
+    // Two slots allow the CPU to prepare the next frame while the GPU processes the previous one.
+    static constexpr std::uint32_t MAX_FRAMES_IN_FLIGHT = 2;
+
     const Device &m_device;
     VkSwapchainKHR m_swapchain{VK_NULL_HANDLE};
     VkSurfaceKHR m_surface{VK_NULL_HANDLE};
@@ -42,7 +46,6 @@ private:
     std::vector<std::unique_ptr<Semaphore>> m_img_available;
     std::vector<std::unique_ptr<Semaphore>> m_rendering_finished;
     std::vector<VkFence> m_imgs_in_flight;
-    std::vector<VkFence> m_frame_slot_submission_fences;
     std::string m_name;
     bool m_vsync_enabled{false};
     VkFormat m_format{VK_FORMAT_UNDEFINED};
@@ -57,6 +60,14 @@ private:
     [[nodiscard]] std::vector<VkImage> get_swapchain_images();
 
     std::uint32_t m_frame_index{0};
+    struct InFlightStats {
+        std::uint32_t acquires{0};
+        std::uint32_t presents{0};
+        std::uint64_t acquire_total_ns{0};
+        std::uint64_t acquire_max_ns{0};
+        std::uint64_t present_total_ns{0};
+        std::uint64_t present_max_ns{0};
+    } m_inflight_stats;
 
 public:
     /// Default constructor
@@ -99,18 +110,19 @@ public:
         return m_img_available.empty() ? 0u : m_current_frame_slot;
     }
 
+    [[nodiscard]] std::uint32_t next_frame_slot() const {
+        return m_frame_index % MAX_FRAMES_IN_FLIGHT;
+    }
+
     [[nodiscard]] std::uint32_t frame_slot_count() const {
-        return static_cast<std::uint32_t>(m_img_available.size());
+        return MAX_FRAMES_IN_FLIGHT;
     }
 
     /// Wait for the fence associated with the currently acquired swapchain image, if any.
-    void wait_for_current_image_if_in_flight() const;
+    void wait_for_current_image_if_in_flight(VkFence already_waited_fence = VK_NULL_HANDLE) const;
 
     /// Mark the currently acquired swapchain image as owned by the given submission fence.
     void mark_current_image_in_flight(VkFence fence);
-
-    /// Mark the current frame slot as using the given submission fence.
-    void mark_current_frame_slot_in_flight(VkFence fence);
 
     [[nodiscard]] std::uint32_t image_count() const {
         return static_cast<std::uint32_t>(m_imgs.size());

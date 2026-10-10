@@ -6,6 +6,7 @@
 #include <memory>
 #include <optional>
 #include <string>
+#include <unordered_set>
 #include <vector>
 
 namespace inexor::vulkan_renderer::wrapper::core {
@@ -36,6 +37,9 @@ class VulkanException;
 } // namespace inexor::vulkan_renderer::tools
 
 namespace inexor::vulkan_renderer::render_graph {
+
+// Forward declarations
+class GraphicsPass;
 
 // Forward declaration
 class RenderGraph;
@@ -105,6 +109,7 @@ private:
     std::vector<PerFrameTextureResources> m_per_frame_texture_resources{1};
     std::size_t m_frame_slot_count{1};
     std::size_t m_current_frame_slot{0};
+    std::unordered_set<GraphicsPass *> m_graphics_passes_using_texture{};
 
     void create_all();
 
@@ -126,7 +131,7 @@ private:
     /// @param upload_offset Current write offset inside the shared upload arena buffer
     /// @param pending_texture_copies Collected copy jobs and image barriers
     void collect_update_copies(StagingBuffer &staging_buffer, std::size_t &upload_offset,
-                               std::vector<std::function<void()>> &pending_releases,
+                               std::vector<std::function<void()>> &,
                                std::vector<PendingTextureCopy> &pending_texture_copies);
 
     /// Record the barriers that prepare the texture image for upload.

@@ -1,0 +1,71 @@
+#include "inexor/vulkan-renderer/wrapper/queries/query_pool.hpp"
+
+#include "inexor/vulkan-renderer/tools/exception.hpp"
+#include "inexor/vulkan-renderer/tools/make_info.hpp"
+#include "inexor/vulkan-renderer/wrapper/core/device.hpp"
+
+#include <stdexcept>
+
+namespace inexor::vulkan_renderer::wrapper::queries {
+
+QueryPool::QueryPool(Device &device, const std::uint32_t query_count) : m_device(device), m_query_count(query_count) {
+    if (m_query_count == 0) {
+        throw std::invalid_argument("Error: Parameter 'query_count' must be greater than zero!");
+    }
+
+    const auto query_ci = tools::make_info<VkQueryPoolCreateInfo>({
+        .queryType = VK_QUERY_TYPE_TIMESTAMP,
+        .queryCount = m_query_count,
+    });
+    if (const auto result = vkCreateQueryPool(m_device.device(), &query_ci, nullptr, &m_query_pool);
+        result != VK_SUCCESS) {
+        throw tools::InexorException("Error: vkCreateQueryPool failed!");
+    }
+}
+
+QueryPool::~QueryPool() {
+    if (m_query_pool != VK_NULL_HANDLE) {
+        vkDestroyQueryPool(m_device.device(), m_query_pool, nullptr);
+    }
+}
+
+std::vector<std::uint64_t> QueryPool::get_results(const std::uint32_t first_query,
+                                                  const std::uint32_t query_count) const {
+    const auto actual_query_count = query_count == 0 ? m_query_count - first_query : query_count;
+    if (first_query >= m_query_count || actual_query_count == 0 || first_query + actual_query_count > m_query_count) {
+        throw std::invalid_argument("Error: Query range is outside the query pool!");
+    }
+    std::vector<std::uint64_t> results(actual_query_count, 0);
+
+    const auto result = vkGetQueryPoolResults(m_device.device(), m_query_pool, first_query, actual_query_count,
+                                              sizeof(std::uint64_t) * results.size(), results.data(),
+                                              sizeof(std::uint64_t), VK_QUERY_RESULT_64_BIT | VK_QUERY_RESULT_WAIT_BIT);
+    if (result != VK_SUCCESS) {
+        throw tools::VulkanException("Error: vkGetQueryPoolResults failed!", result);
+    }
+
+    return results;
+}
+
+std::optional<std::vector<std::uint64_t>> QueryPool::try_get_results(const std::uint32_t first_query,
+                                                                     const std::uint32_t query_count) const {
+    const auto actual_query_count = query_count == 0 ? m_query_count - first_query : query_count;
+    if (first_query >= m_query_count || actual_query_count == 0 || first_query + actual_query_count > m_query_count) {
+        throw std::invalid_argument("Error: Query range is outside the query pool!");
+    }
+    std::vector<std::uint64_t> results(actual_query_count * 2, 0);
+
+    const auto result = vkGetQueryPoolResults(
+        m_device.device(), m_query_pool, first_query, actual_query_count, sizeof(std::uint64_t) * results.size(),
+        results.data(), sizeof(std::uint64_t) * 2, VK_QUERY_RESULT_64_BIT | VK_QUERY_RESULT_WITH_AVAILABILITY_BIT);
+    if (result == VK_NOT_READY) {
+        return std::nullopt;
+    }
+    if (result != VK_SUCCESS && result != VK_INCOMPLETE) {
+        throw tools::VulkanException("Error: vkGetQueryPoolResults failed!", result);
+    }
+
+    return results;
+}
+
+} // namespace inexor::vulkan_renderer::wrapper::queries
