@@ -550,7 +550,7 @@ void ExampleApp::update_imgui_overlay() {
     ImGui::Text("Vulkan API %d.%d.%d, %s", VK_API_VERSION_MAJOR(Instance::REQUIRED_VK_API_VERSION),
                 VK_API_VERSION_MINOR(Instance::REQUIRED_VK_API_VERSION),
                 VK_API_VERSION_PATCH(Instance::REQUIRED_VK_API_VERSION), m_msaa_text.data());
-    ImGui::Text("Press N to regenerate octree, V for VMA memory statistics");
+    ImGui::Text("Press N to regenerate octree");
     ImGui::Spacing();
     draw_frame_time_graph();
     ImGui::End();
