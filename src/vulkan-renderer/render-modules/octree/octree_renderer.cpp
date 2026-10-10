@@ -25,6 +25,7 @@ OctreeRenderer::OctreeRenderer(std::shared_ptr<RenderGraph> render_graph, std::w
                                std::weak_ptr<Texture> color_buffer)
     : m_octree_module(std::make_unique<RenderModule>(render_graph, "Octree")), m_swapchain(std::move(swapchain)),
       m_depth_buffer(std::move(depth_buffer)), m_color_buffer(std::move(color_buffer)), m_camera(std::move(camera)) {
+
     // Using declarations
     using inexor::vulkan_renderer::render_graph::BufferType;
     using inexor::vulkan_renderer::render_graph::GraphicsPassBuilder;
@@ -33,6 +34,7 @@ OctreeRenderer::OctreeRenderer(std::shared_ptr<RenderGraph> render_graph, std::w
     using inexor::vulkan_renderer::wrapper::commands::CommandBuffer;
     using inexor::vulkan_renderer::wrapper::commands::CommandBufferBuilder;
     using inexor::vulkan_renderer::wrapper::core::DebugLabelColor;
+    using inexor::vulkan_renderer::wrapper::pipelines::GraphicsPipelineBuilder;
 
     if (!render_graph) {
         throw InexorException("Error: Parameter 'render_graph' is invalid!");
@@ -69,7 +71,7 @@ OctreeRenderer::OctreeRenderer(std::shared_ptr<RenderGraph> render_graph, std::w
     m_descriptor_set = render_graph->add_resource_descriptor(m_mvp_matrix, VK_SHADER_STAGE_VERTEX_BIT);
 
     m_vertex_buffer = render_graph->add_buffer("vertex buffer", BufferType::VERTEX_BUFFER, [&]() {
-        // Upload once after render-graph/swapchain recreation as well, because the new buffer starts null.
+        // Upload once after render-graph/swapchain recreation as well, because the new buffer starts null
         const auto vertex_buffer = m_vertex_buffer.lock();
         const bool needs_initial_upload = vertex_buffer && vertex_buffer->buffer() == VK_NULL_HANDLE;
         if ((m_geometry_updated || needs_initial_upload) && !m_octree_vertices.empty()) {
@@ -78,78 +80,83 @@ OctreeRenderer::OctreeRenderer(std::shared_ptr<RenderGraph> render_graph, std::w
     });
 
     m_index_buffer = render_graph->add_buffer("index buffer", BufferType::INDEX_BUFFER, [&]() {
-        // Upload once after render-graph/swapchain recreation as well, because the new buffer starts null.
+        // Upload once after render-graph/swapchain recreation as well, because the new buffer starts null
         const auto index_buffer = m_index_buffer.lock();
         const bool needs_initial_upload = index_buffer && index_buffer->buffer() == VK_NULL_HANDLE;
         if ((m_geometry_updated || needs_initial_upload) && !m_octree_indices.empty()) {
             index_buffer->request_update(m_octree_indices);
-            // Reset after index update has been requested so vertex+index uploads stay in sync.
+            // Reset after index update has been requested so vertex+index uploads stay in sync
             m_geometry_updated = false;
         }
     });
 
     // Add the graphics pipeline for the octree renderer
-    m_octree_module->add_graphics_pipeline(
-        [&](inexor::vulkan_renderer::wrapper::pipelines::GraphicsPipelineBuilder &pipeline_builder) {
-            const auto pipeline_extent = m_swapchain.lock()->extent();
-            const auto descriptor_set = m_descriptor_set.lock();
-            // The octree graphics pipeline is stored in the octree renderer
-            // It is being build in this lambda by reference capture
-            return m_octree_pipeline =
-                       pipeline_builder.add_shader(m_vertex_shader)
-                           .add_shader(m_fragment_shader)
-                           .set_vertex_input_bindings({{
-                               .binding = 0,
-                               .stride = sizeof(OctreeVertex),
-                               .inputRate = VK_VERTEX_INPUT_RATE_VERTEX,
-                           }})
-                           .set_vertex_input_attributes({
-                               {
-                                   .location = 0,
-                                   .format = VK_FORMAT_R32G32B32_SFLOAT,
-                                   .offset = offsetof(OctreeVertex, position),
-                               },
-                               {
-                                   .location = 1,
-                                   .format = VK_FORMAT_R32G32B32_SFLOAT,
-                                   .offset = offsetof(OctreeVertex, color),
-                               },
-                           })
-                           .add_standard_alpha_blend_attachment()
-                           .set_depth_attachment_format(m_depth_buffer.lock()->format())
-                           .set_multisampling(m_color_buffer.expired() ? VK_SAMPLE_COUNT_1_BIT
-                                                                       : m_color_buffer.lock()->samples())
-                           .set_standard_depth_stencil()
-                           .add_color_attachment_format(m_swapchain.lock()->image_format())
-                           .set_dynamic_scissor()
-                           .set_dynamic_viewport()
-                           .set_viewport({
-                               .width = static_cast<float>(pipeline_extent.width),
-                               .height = static_cast<float>(pipeline_extent.height),
-                               .minDepth = 0.0f,
-                               .maxDepth = 1.0f,
-                           })
-                           .set_scissor({
-                               .extent = pipeline_extent,
-                           })
-                           .set_descriptor_set_layout(descriptor_set->layout())
-                           .add_descriptor_set(m_descriptor_set)
-                           .build("Octree");
-        });
+    m_octree_module->add_graphics_pipeline([&](GraphicsPipelineBuilder &pipeline_builder) {
+        const auto pipeline_extent = m_swapchain.lock()->extent();
+        const auto descriptor_set = m_descriptor_set.lock();
+        // The octree graphics pipeline is stored in the octree renderer
+        // It is being build in this lambda by reference capture
+        return m_octree_pipeline = pipeline_builder.add_shader(m_vertex_shader)
+                                       .add_shader(m_fragment_shader)
+                                       .set_vertex_input_bindings({{
+                                           .binding = 0,
+                                           .stride = sizeof(OctreeVertex),
+                                           .inputRate = VK_VERTEX_INPUT_RATE_VERTEX,
+                                       }})
+                                       .set_vertex_input_attributes({
+                                           {
+                                               .location = 0,
+                                               .format = VK_FORMAT_R32G32B32_SFLOAT,
+                                               .offset = offsetof(OctreeVertex, position),
+                                           },
+                                           {
+                                               .location = 1,
+                                               .format = VK_FORMAT_R32G32B32_SFLOAT,
+                                               .offset = offsetof(OctreeVertex, color),
+                                           },
+                                       })
+                                       .add_standard_alpha_blend_attachment()
+                                       .set_depth_attachment_format(m_depth_buffer.lock()->format())
+                                       .set_multisampling(m_color_buffer.expired() ? VK_SAMPLE_COUNT_1_BIT
+                                                                                   : m_color_buffer.lock()->samples())
+                                       .set_standard_depth_stencil()
+                                       .add_color_attachment_format(m_swapchain.lock()->image_format())
+                                       .set_dynamic_scissor()
+                                       .set_dynamic_viewport()
+                                       .set_viewport({
+                                           .width = static_cast<float>(pipeline_extent.width),
+                                           .height = static_cast<float>(pipeline_extent.height),
+                                           .minDepth = 0.0f,
+                                           .maxDepth = 1.0f,
+                                       })
+                                       .set_scissor({
+                                           .extent = pipeline_extent,
+                                       })
+                                       .set_descriptor_set_layout(descriptor_set->layout())
+                                       .add_descriptor_set(m_descriptor_set)
+                                       .build("Octree");
+    });
 
-    // Add the graphics pass for the octree renderer
+    // Add the graphics pass for the octree renderer.
     m_octree_pass = m_octree_module->add_graphics_pass([&](GraphicsPassBuilder &pass_builder) {
         return pass_builder
+            // We only need to render to color buffer if MSAA is enabled, otherwise we render directly to swapchain.
             .conditionally_writes_to(m_color_buffer, !m_color_buffer.expired())
-            // When MSAA is enabled, render to color buffer which will auto-resolve to swapchain
-            // Otherwise render directly to swapchain
+            // When MSAA is enabled, render to color buffer which will auto-resolve to swapchain.
+            // Otherwise render directly to swapchain.
             .writes_to(m_swapchain,
                        m_color_buffer.expired() ? std::make_optional<VkClearValue>({0.0f, 0.0f, 0.0f}) : std::nullopt)
             .writes_to(m_depth_buffer)
             .reads_from(m_vertex_buffer)
             .writes_to(m_index_buffer)
             .reads_from(m_index_buffer)
+            // Unlike ImGui, we can allow secondary command buffers to be used fore octree rendering, because the octree
+            // geometry is static and does not change every frame. This allows us to cache the command buffer recording
+            // for octree rendering and reuse it across frames, which can improve performance.
             .cache_secondary_command_buffer()
+            // @TODO Is there any way to associate the resources which are used in a command buffer?
+            // This way rendergraph would have a complete high level overview!
+            // In the future, this would allow us to make resource aliasing by analyzing lifetime.
             .set_on_record([&](CommandBufferBuilder &cmd_buf) {
                 const auto vertex_buffer = m_vertex_buffer.lock();
                 const auto index_buffer = m_index_buffer.lock();

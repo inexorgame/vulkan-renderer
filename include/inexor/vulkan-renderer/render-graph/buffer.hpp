@@ -66,6 +66,7 @@ class Buffer {
     friend render_graph::RenderGraph;
 
 private:
+    // Each frame in flight has its own buffer and allocation.
     struct PerFrameBufferResources {
         VkBuffer m_buffer{VK_NULL_HANDLE};
         VmaAllocation m_alloc{VK_NULL_HANDLE};
