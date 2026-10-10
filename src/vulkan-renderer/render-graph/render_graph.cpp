@@ -738,7 +738,9 @@ void RenderGraph::render() {
     for (const auto semaphore : m_swapchain_manager.image_available_semaphores()) {
         render_wait_semaphores.push_back({
             .semaphore = semaphore,
-            .stage_mask = VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT,
+            // Swapchain images are consumed as color attachments. Waiting at the
+            // first stage that accesses the image avoids stalling unrelated work.
+            .stage_mask = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT,
         });
     }
     if (m_upload_submission_pending) {
