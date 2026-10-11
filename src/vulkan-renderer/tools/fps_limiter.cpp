@@ -1,6 +1,7 @@
 ﻿#include "inexor/vulkan-renderer/tools/fps_limiter.hpp"
 
 #include <algorithm>
+#include <limits>
 
 namespace inexor::vulkan_renderer::tools {
 
@@ -28,8 +29,14 @@ bool FPSLimiter::is_next_frame_allowed(const bool enforce_limit) {
 
 std::optional<std::uint32_t> FPSLimiter::get_fps() {
     ++m_frames;
+    if (m_total_frames != std::numeric_limits<std::uint64_t>::max()) {
+        ++m_total_frames;
+    }
 
     const auto current_time = Clock::now();
+    if (!m_first_frame_time) {
+        m_first_frame_time = current_time;
+    }
     const Duration fps_elapsed = current_time - m_last_fps_update_time;
 
     if (fps_elapsed < FPS_UPDATE_INTERVAL) {
@@ -42,6 +49,19 @@ std::optional<std::uint32_t> FPSLimiter::get_fps() {
     m_last_fps_update_time = current_time;
 
     return fps;
+}
+
+std::optional<double> FPSLimiter::average_fps() const {
+    if (!m_first_frame_time || m_total_frames == 0) {
+        return std::nullopt;
+    }
+
+    const Duration elapsed = Clock::now() - *m_first_frame_time;
+    if (elapsed.count() <= 0.0) {
+        return std::nullopt;
+    }
+
+    return static_cast<double>(m_total_frames) / elapsed.count();
 }
 
 } // namespace inexor::vulkan_renderer::tools

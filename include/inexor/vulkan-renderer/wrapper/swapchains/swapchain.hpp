@@ -1,5 +1,6 @@
 #pragma once
 
+#include "inexor/vulkan-renderer/wrapper/swapchains/swapchain_performance.hpp"
 #include "inexor/vulkan-renderer/wrapper/synchronization/semaphore.hpp"
 
 #include <volk.h>
@@ -33,10 +34,10 @@ using wrapper::core::Device;
 class Swapchain {
 private:
     // Frame-context resources are intentionally independent of the number of swapchain images.
-    // Two slots allow the CPU to prepare the next frame while the GPU processes the previous one.
-    static constexpr std::uint32_t MAX_FRAMES_IN_FLIGHT = 2;
+    static constexpr std::uint32_t DEFAULT_FRAMES_IN_FLIGHT = 2;
 
     const Device &m_device;
+    const std::uint32_t m_frames_in_flight;
     VkSwapchainKHR m_swapchain{VK_NULL_HANDLE};
     VkSurfaceKHR m_surface{VK_NULL_HANDLE};
     VkSurfaceFormatKHR m_surface_format;
@@ -60,21 +61,15 @@ private:
     [[nodiscard]] std::vector<VkImage> get_swapchain_images();
 
     std::uint32_t m_frame_index{0};
-    struct InFlightStats {
-        std::uint32_t acquires{0};
-        std::uint32_t presents{0};
-        std::uint64_t acquire_total_ns{0};
-        std::uint64_t acquire_max_ns{0};
-        std::uint64_t present_total_ns{0};
-        std::uint64_t present_max_ns{0};
-    } m_inflight_stats;
+    mutable SwapchainPerformance m_performance_measurements;
 
 public:
     /// Default constructor
     /// @param device The device wrapper
     /// @param name The name of the swapchain
     /// @param surface The surface
-    Swapchain(const Device &device, std::string name, VkSurfaceKHR surface);
+    Swapchain(const Device &device, std::string name, VkSurfaceKHR surface,
+              std::uint32_t frames_in_flight = DEFAULT_FRAMES_IN_FLIGHT);
 
     ~Swapchain();
 
@@ -111,11 +106,11 @@ public:
     }
 
     [[nodiscard]] std::uint32_t next_frame_slot() const {
-        return m_frame_index % MAX_FRAMES_IN_FLIGHT;
+        return m_frame_index % m_frames_in_flight;
     }
 
     [[nodiscard]] std::uint32_t frame_slot_count() const {
-        return MAX_FRAMES_IN_FLIGHT;
+        return m_frames_in_flight;
     }
 
     /// Wait for the fence associated with the currently acquired swapchain image, if any.
@@ -123,6 +118,10 @@ public:
 
     /// Mark the currently acquired swapchain image as owned by the given submission fence.
     void mark_current_image_in_flight(VkFence fence);
+
+    [[nodiscard]] const SwapchainPerformance::Statistics &inflight_stats() const {
+        return m_performance_measurements.statistics();
+    }
 
     [[nodiscard]] std::uint32_t image_count() const {
         return static_cast<std::uint32_t>(m_imgs.size());

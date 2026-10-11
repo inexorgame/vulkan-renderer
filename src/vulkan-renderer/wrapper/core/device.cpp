@@ -74,8 +74,8 @@ std::array<float, 4> get_debug_label_color(const DebugLabelColor color) {
 
 Device::Device(const Instance &inst, const VkSurfaceKHR surface, const VkPhysicalDevice desired_gpu,
                const VkPhysicalDeviceFeatures &required_features, const std::span<const char *> required_extensions,
-               const bool debug_vma)
-    : m_debug_vma(debug_vma), m_enabled_features(required_features) {
+               const bool debug_vma, const std::uint32_t threadpool_workers)
+    : m_debug_vma(debug_vma), m_enabled_features(required_features), m_taskflow_executor(threadpool_workers) {
     // Lets just be safe and check if these function pointers are really available.
     if (vkCreateDevice == nullptr) {
         throw InexorException("Error: Function pointer 'vkCreateDevice' is not available!");
@@ -378,65 +378,47 @@ VkFence Device::execute(const VkQueueFlagBits queue_type, const DebugLabelColor 
 }
 
 CommandPool &Device::get_thread_command_pool(const VkQueueFlagBits queue_type) const {
-    // NOTE: thread_local keyword means that it is implicitely static!
-    thread_local CommandPool *thread_graphics_cmd_pool = nullptr;       // NOLINT
-    thread_local CommandPool *thread_compute_cmd_pool = nullptr;        // NOLINT
-    thread_local CommandPool *thread_transfer_cmd_pool = nullptr;       // NOLINT
-    thread_local CommandPool *thread_sparse_binding_cmd_pool = nullptr; // NOLINT
+    const auto thread_id = std::this_thread::get_id();
 
+    {
+        std::shared_lock lock(m_mutex);
+        for (const auto &pool : m_cmd_pools) {
+            if (pool && pool->thread_id() == thread_id && pool->queue_type() == queue_type) {
+                return *pool;
+            }
+        }
+    }
+
+    std::unique_lock lock(m_mutex);
+    for (const auto &pool : m_cmd_pools) {
+        if (pool && pool->thread_id() == thread_id && pool->queue_type() == queue_type) {
+            return *pool;
+        }
+    }
+
+    std::optional<std::uint32_t> queue_family_index;
     switch (queue_type) {
-    case VK_QUEUE_GRAPHICS_BIT: {
-        if (thread_graphics_cmd_pool == nullptr) {
-            // NOTE: We checked earlier for a valid queue family index for graphics so no error checks required here.
-            auto cmd_pool = std::make_unique<CommandPool>(*this, queue_type, m_graphics_queue_family_index.value(),
-                                                          "thread_graphics_cmd_pool");
-            std::unique_lock lock(m_mutex);
-            thread_graphics_cmd_pool = m_cmd_pools.emplace_back(std::move(cmd_pool)).get();
-        }
-        std::shared_lock lock(m_mutex);
-        return *thread_graphics_cmd_pool;
+    case VK_QUEUE_GRAPHICS_BIT:
+        queue_family_index = m_graphics_queue_family_index;
+        break;
+    case VK_QUEUE_COMPUTE_BIT:
+        queue_family_index = m_compute_queue_family_index;
+        break;
+    case VK_QUEUE_TRANSFER_BIT:
+        queue_family_index = m_transfer_queue_family_index;
+        break;
+    case VK_QUEUE_SPARSE_BINDING_BIT:
+        queue_family_index = m_sparse_binding_queue_family_index;
+        break;
+    default:
+        throw InexorException("Error: Unsupported queue type for command pool!");
     }
-    case VK_QUEUE_COMPUTE_BIT: {
-        if (thread_compute_cmd_pool == nullptr) {
-            if (!has_any_compute_queue()) {
-                throw std::runtime_error("Error: GPU '" + m_gpu_name + "' has no compute queue!");
-            }
-            auto cmd_pool = std::make_unique<CommandPool>(*this, queue_type, m_compute_queue_family_index.value(),
-                                                          "thread_compute_cmd_pool");
-            std::unique_lock lock(m_mutex);
-            thread_compute_cmd_pool = m_cmd_pools.emplace_back(std::move(cmd_pool)).get();
-        }
-        std::shared_lock lock(m_mutex);
-        return *thread_compute_cmd_pool;
+    if (!queue_family_index) {
+        throw InexorException("Error: Requested queue type has no queue family!");
     }
-    case VK_QUEUE_TRANSFER_BIT: {
-        if (!has_any_transfer_queue()) {
-            return get_thread_command_pool(VK_QUEUE_GRAPHICS_BIT);
-        }
-        if (thread_transfer_cmd_pool == nullptr) {
-            auto cmd_pool = std::make_unique<CommandPool>(*this, queue_type, m_transfer_queue_family_index.value(),
-                                                          "thread_transfer_cmd_pool");
-            std::unique_lock lock(m_mutex);
-            thread_transfer_cmd_pool = m_cmd_pools.emplace_back(std::move(cmd_pool)).get();
-        }
-        std::shared_lock lock(m_mutex);
-        return *thread_transfer_cmd_pool;
-    }
-    case VK_QUEUE_SPARSE_BINDING_BIT: {
-        if (thread_sparse_binding_cmd_pool == nullptr) {
-            if (!has_any_sparse_binding_queue()) {
-                throw std::runtime_error("Error: GPU '" + m_gpu_name + "' has no sparse binding queue!");
-            }
-            auto cmd_pool = std::make_unique<CommandPool>(
-                *this, queue_type, m_sparse_binding_queue_family_index.value(), "thread_sparse_binding_cmd_pool");
-            std::unique_lock lock(m_mutex);
-            thread_sparse_binding_cmd_pool = m_cmd_pools.emplace_back(std::move(cmd_pool)).get();
-        }
-        std::shared_lock lock(m_mutex);
-        return *thread_sparse_binding_cmd_pool;
-    }
-    }
-    throw std::runtime_error("Error: Unknown VuklkanQueueType!");
+    const auto pool_name = "Command Pool [thread=" + std::to_string(std::hash<std::thread::id>{}(thread_id)) + "]";
+    m_cmd_pools.emplace_back(std::make_unique<CommandPool>(*this, queue_type, *queue_family_index, pool_name));
+    return *m_cmd_pools.back();
 }
 
 VkPipelineCache Device::pipeline_cache() const {

@@ -14,7 +14,7 @@
 
 namespace inexor::vulkan_renderer::render_graph {
 
-Texture::Texture(const wrapper::core::Device &device, std::string name, const TextureUsage usage, const VkFormat format,
+Texture::Texture(const Device &device, std::string name, const TextureUsage usage, const VkFormat format,
                  const std::uint32_t width, const std::uint32_t height, const std::uint32_t channels,
                  const VkSampleCountFlagBits samples, std::optional<std::function<void()>> on_update)
     : m_device(device), m_name(std::move(name)), m_usage(usage), m_on_update(std::move(on_update)), m_format(format),
@@ -146,15 +146,17 @@ void Texture::create_all() {
 }
 
 void Texture::create_per_frame_resources(PerFrameTextureResources &frame_resource, const std::size_t slot_index) {
-    const auto slot_name =
-        m_per_frame_texture_resources.size() > 1 ? m_name + "[slot " + std::to_string(slot_index) + "]" : m_name;
+    // Determine the name of the frame resource based on the slot index for debugging purposes.
+    const auto slot_name = m_name + "[slot=" + std::to_string(slot_index) + "]";
+    // If the image does not already exist, we must create it.
+    // Otherwise we can reuse the existing image and image view for this frame resource.
     if (!frame_resource.m_image) {
         frame_resource.m_image = std::make_shared<Image>(m_device, slot_name);
     }
-    if (m_samples > VK_SAMPLE_COUNT_1_BIT && !frame_resource.m_msaa_image) {
+    if (!frame_resource.m_msaa_image && m_samples > VK_SAMPLE_COUNT_1_BIT) {
         frame_resource.m_msaa_image = std::make_shared<Image>(m_device, slot_name + "|msaa");
     }
-
+    // Create the image for the frame resource.
     auto img_ci = tools::make_info<VkImageCreateInfo>({
         .imageType = VK_IMAGE_TYPE_2D,
         .format = m_format,
@@ -181,7 +183,7 @@ void Texture::create_per_frame_resources(PerFrameTextureResources &frame_resourc
         .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
         .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
     });
-
+    // Create the image view for the frame resource.
     const auto img_view_ci = tools::make_info<VkImageViewCreateInfo>({
         .viewType = VK_IMAGE_VIEW_TYPE_2D,
         .format = m_format,

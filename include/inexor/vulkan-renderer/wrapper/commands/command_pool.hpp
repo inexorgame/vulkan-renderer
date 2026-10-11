@@ -4,6 +4,7 @@
 
 #include <memory>
 #include <string>
+#include <thread>
 #include <unordered_map>
 #include <vector>
 
@@ -23,6 +24,7 @@ namespace inexor::vulkan_renderer::wrapper::commands {
 class CommandPool {
     std::string m_name;
     const core::Device &m_device;
+    const std::thread::id m_thread_id{std::this_thread::get_id()};
     VkCommandPool m_cmd_pool{VK_NULL_HANDLE};
     VkQueueFlagBits m_queue_type;
     /// The command buffers which can be requested by the current thread
@@ -72,6 +74,14 @@ public:
     /// @param name The internal debug name which will be assigned to this command buffer (must not be empty)
     /// @return A command buffer handle instance which allows access to the requested command buffer
     [[nodiscard]] const CommandBuffer &request_secondary_command_buffer(const std::string &name);
+
+    [[nodiscard]] std::thread::id thread_id() const {
+        return m_thread_id;
+    }
+
+    [[nodiscard]] VkQueueFlagBits queue_type() const {
+        return m_queue_type;
+    }
 
     /// Wait until all submitted command buffers in this pool have finished execution.
     void wait_for_all_submissions() const;

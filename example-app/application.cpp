@@ -210,7 +210,7 @@ void ExampleApp::initialize_spdlog() {
     logger->set_pattern("%Y-%m-%d %T.%f %^%l%$ %5t [%n] %v");
 }
 
-ExampleApp::ExampleApp(int argc, char **argv) {
+ExampleApp::ExampleApp(int argc, char **argv, const std::optional<std::uint32_t> gpu_override) {
     initialize_spdlog();
 
     // Print some metadata about the project and build to console
@@ -229,13 +229,19 @@ ExampleApp::ExampleApp(int argc, char **argv) {
     app.add_flag("--no-cmd-buf-cache", m_no_cmd_buf_cache);
     app.add_flag("--one-cmd-buf", m_one_cmd_buf);
     app.add_flag("--debug-vma", m_debug_vma);
-    std::optional<std::uint32_t> preferred_gpu;
-    app.add_option("--gpu", preferred_gpu);
+    std::optional<std::uint32_t> command_line_gpu;
+    app.add_option("--gpu", command_line_gpu);
     std::uint32_t max_fps = FPSLimiter::DEFAULT_FPS;
     app.add_option("--maxfps", max_fps);
     std::uint32_t msaa_samples = 1;
     app.add_option("--msaa", msaa_samples);
+    app.add_option("--frames-in-flight", m_frames_in_flight, "Number of frames that may be in flight")
+        ->check(CLI::Range(1u, 3u));
+    app.add_option("--threadpool-workers", m_threadpool_workers, "Number of Taskflow worker threads")
+        ->check(CLI::Range(1u, 64u));
     app.parse(argc, argv);
+
+    std::optional<std::uint32_t> preferred_gpu = gpu_override ? gpu_override : command_line_gpu;
 
     m_fps_limiter.set_max_fps(max_fps);
 
@@ -333,8 +339,13 @@ ExampleApp::ExampleApp(int argc, char **argv) {
 
     spdlog::trace("V-sync {}", m_vsync_enabled ? "enabled" : "disabled");
 
-    const auto physical_devices = tools::get_physical_devices(m_instance->instance());
-    if (preferred_gpu && *preferred_gpu >= physical_devices.size()) {
+    m_physical_devices = tools::get_physical_devices(m_instance->instance());
+    m_physical_device_names.reserve(m_physical_devices.size());
+    for (const auto physical_device : m_physical_devices) {
+        m_physical_device_names.push_back(tools::get_physical_device_name(physical_device));
+    }
+
+    if (preferred_gpu && *preferred_gpu >= m_physical_devices.size()) {
         spdlog::critical("GPU index {} is out of range!", *preferred_gpu);
         // NOTE: This is not a problem, the most suitable gpu will be chosen automatically later!
         preferred_gpu = std::nullopt;
@@ -349,12 +360,12 @@ ExampleApp::ExampleApp(int argc, char **argv) {
     };
 
     const VkPhysicalDevice physical_device =
-        preferred_gpu ? physical_devices[*preferred_gpu]
+        preferred_gpu ? m_physical_devices[*preferred_gpu]
                       : tools::pick_best_physical_device(*m_instance, m_surface->surface(), required_features,
                                                          required_extensions);
 
     m_device = std::make_unique<Device>(*m_instance, m_surface->surface(), physical_device, required_features,
-                                        required_extensions, m_debug_vma);
+                                        required_extensions, m_debug_vma, m_threadpool_workers);
 
     // Validate MSAA sample count against depth format capabilities
     if (m_msaa_sample_count != VK_SAMPLE_COUNT_1_BIT) {
@@ -397,7 +408,7 @@ ExampleApp::ExampleApp(int argc, char **argv) {
         }
     }
 
-    m_swapchain = std::make_shared<Swapchain>(*m_device, "m_swapchain", m_surface->surface());
+    m_swapchain = std::make_shared<Swapchain>(*m_device, "m_swapchain", m_surface->surface(), m_frames_in_flight);
 
     m_camera = std::make_unique<Camera>(glm::vec3(6.0f, 10.0f, 2.0f), 180.0f, 0.0f,
                                         static_cast<float>(m_window->width()), static_cast<float>(m_window->height()));
@@ -406,7 +417,7 @@ ExampleApp::ExampleApp(int argc, char **argv) {
     m_camera->set_movement_speed(5.0f);
     m_camera->set_rotation_speed(0.5f);
 
-    m_render_graph = std::make_unique<RenderGraph>(*m_device, !m_no_cmd_buf_cache, m_one_cmd_buf);
+    m_render_graph = std::make_unique<RenderGraph>(*m_device, !m_no_cmd_buf_cache, m_one_cmd_buf, m_frames_in_flight);
 
     load_octree_geometry(true);
     generate_octree_indices();
@@ -510,12 +521,37 @@ void ExampleApp::update_imgui_overlay() {
     using namespace vulkan_renderer::meta;
     ImGui::Begin(APP_NAME, nullptr,
                  ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
-    ImGui::Text("%s", m_device->gpu_name().c_str());
+    if (m_physical_devices.size() > 1) {
+        const auto current_gpu =
+            std::find(m_physical_devices.begin(), m_physical_devices.end(), m_device->physical_device());
+        int selected_gpu = current_gpu == m_physical_devices.end()
+                               ? 0
+                               : static_cast<int>(std::distance(m_physical_devices.begin(), current_gpu));
+        ImGui::SetNextItemWidth(240.0f);
+        if (ImGui::BeginCombo("##GPU", m_physical_device_names[static_cast<std::size_t>(selected_gpu)].c_str())) {
+            for (std::size_t index = 0; index < m_physical_device_names.size(); ++index) {
+                const bool is_selected = static_cast<int>(index) == selected_gpu;
+                ImGui::PushID(static_cast<int>(index));
+                if (ImGui::Selectable(m_physical_device_names[index].c_str(), is_selected) && !is_selected) {
+                    m_gpu_to_restart = static_cast<std::uint32_t>(index);
+                }
+                if (is_selected) {
+                    ImGui::SetItemDefaultFocus();
+                }
+                ImGui::PopID();
+            }
+            ImGui::EndCombo();
+        }
+        if (m_gpu_to_restart) {
+            ImGui::TextUnformatted("Restarting with selected GPU...");
+        }
+    }
     ImGui::Text("Engine version %s (git SHA %s)", ENGINE_VERSION_STR, BUILD_GIT);
     ImGui::Text("Vulkan API %d.%d.%d, %s", VK_API_VERSION_MAJOR(Instance::REQUIRED_VK_API_VERSION),
                 VK_API_VERSION_MINOR(Instance::REQUIRED_VK_API_VERSION),
                 VK_API_VERSION_PATCH(Instance::REQUIRED_VK_API_VERSION), m_msaa_text.data());
-    ImGui::Text("Press N to regenerate octree, V for VMA memory statistics");
+    ImGui::Text("Press N to regenerate octree");
+    ImGui::Text("Press P for performance statistics");
     ImGui::Spacing();
     draw_frame_time_graph();
     ImGui::End();
@@ -523,59 +559,13 @@ void ExampleApp::update_imgui_overlay() {
     ImGui::Render();
 }
 
-void ExampleApp::push_frame_time_sample(float cpu_frame_time_ms, std::optional<float> gpu_frame_time_ms) {
-    const auto sample_count = std::min<std::size_t>(m_frame_time_history_count + 1, FRAME_TIME_AVERAGE_WINDOW);
-    const auto average_recent_samples = [&](const auto &history, float fallback_value) {
-        float sum = 0.0f;
-        for (std::size_t i = 0; i < sample_count; ++i) {
-            const std::size_t index =
-                (m_frame_time_history_index + FRAME_TIME_HISTORY_SIZE - i) % FRAME_TIME_HISTORY_SIZE;
-            sum += history[index];
-        }
-        return sample_count > 0 ? sum / static_cast<float>(sample_count) : fallback_value;
-    };
-
-    m_cpu_raw_frame_time_history[m_frame_time_history_index] = cpu_frame_time_ms;
-    m_last_cpu_frame_time_ms = cpu_frame_time_ms;
-    m_cpu_frame_time_history[m_frame_time_history_index] =
-        average_recent_samples(m_cpu_raw_frame_time_history, cpu_frame_time_ms);
-
-    if (gpu_frame_time_ms) {
-        m_last_gpu_frame_time_ms = gpu_frame_time_ms;
-        m_gpu_raw_frame_time_history[m_frame_time_history_index] = *gpu_frame_time_ms;
-    } else if (m_frame_time_history_count > 0) {
-        const std::size_t previous_index =
-            (m_frame_time_history_index + FRAME_TIME_HISTORY_SIZE - 1) % FRAME_TIME_HISTORY_SIZE;
-        m_gpu_raw_frame_time_history[m_frame_time_history_index] = m_gpu_raw_frame_time_history[previous_index];
-    } else {
-        m_last_gpu_frame_time_ms = std::nullopt;
-        m_gpu_raw_frame_time_history[m_frame_time_history_index] = cpu_frame_time_ms;
-    }
-    m_gpu_frame_time_history[m_frame_time_history_index] =
-        average_recent_samples(m_gpu_raw_frame_time_history, m_gpu_raw_frame_time_history[m_frame_time_history_index]);
-
-    m_frame_time_history_index = (m_frame_time_history_index + 1) % FRAME_TIME_HISTORY_SIZE;
-    if (m_frame_time_history_count < FRAME_TIME_HISTORY_SIZE) {
-        ++m_frame_time_history_count;
-    }
-}
-
 void ExampleApp::update_frame_time_graph(float cpu_frame_time_ms, std::optional<float> gpu_frame_time_ms,
                                          double elapsed_seconds) {
-    m_last_cpu_frame_time_ms = cpu_frame_time_ms;
-    if (gpu_frame_time_ms) {
-        m_last_gpu_frame_time_ms = gpu_frame_time_ms;
-    }
-
-    m_frame_time_sample_accumulator_seconds += elapsed_seconds;
-    while (m_frame_time_sample_accumulator_seconds >= FRAME_TIME_SAMPLE_INTERVAL_SECONDS) {
-        push_frame_time_sample(m_last_cpu_frame_time_ms, m_last_gpu_frame_time_ms);
-        m_frame_time_sample_accumulator_seconds -= FRAME_TIME_SAMPLE_INTERVAL_SECONDS;
-    }
+    m_performance_measurements.update(cpu_frame_time_ms, gpu_frame_time_ms, elapsed_seconds);
 }
 
 void ExampleApp::draw_frame_time_graph() const {
-    if (m_frame_time_history_count == 0) {
+    if (m_performance_measurements.sample_count() == 0) {
         ImGui::TextUnformatted("No frame-time samples yet");
         return;
     }
@@ -594,11 +584,14 @@ void ExampleApp::draw_frame_time_graph() const {
     ImGui::TextColored(gpu_color, "GPU");
     ImGui::SameLine();
     ImGui::TextColored(cpu_color, "CPU");
-    const std::size_t visible_sample_count = std::min(m_frame_time_history_count, FRAME_TIME_GRAPH_ZOOM_SAMPLE_COUNT);
-    const std::array<float, FRAME_TIME_HISTORY_SIZE> cpu_samples = make_recent_samples(
-        m_cpu_frame_time_history, m_frame_time_history_count, m_frame_time_history_index, visible_sample_count);
-    const std::array<float, FRAME_TIME_HISTORY_SIZE> gpu_samples = make_recent_samples(
-        m_gpu_frame_time_history, m_frame_time_history_count, m_frame_time_history_index, visible_sample_count);
+    const std::size_t visible_sample_count =
+        std::min(m_performance_measurements.sample_count(), FRAME_TIME_GRAPH_ZOOM_SAMPLE_COUNT);
+    const std::array<float, FRAME_TIME_HISTORY_SIZE> cpu_samples =
+        make_recent_samples(m_performance_measurements.cpu_samples(), m_performance_measurements.sample_count(),
+                            m_performance_measurements.sample_index(), visible_sample_count);
+    const std::array<float, FRAME_TIME_HISTORY_SIZE> gpu_samples =
+        make_recent_samples(m_performance_measurements.gpu_samples(), m_performance_measurements.sample_count(),
+                            m_performance_measurements.sample_index(), visible_sample_count);
 
     const auto draw_plot = [&](const char *id, const auto &samples, const ImVec4 &color) {
         constexpr float tick_length = 4.0f;
@@ -700,7 +693,7 @@ void ExampleApp::check_octree_collisions() {
     }
 }
 
-void ExampleApp::run() {
+std::optional<std::uint32_t> ExampleApp::run() {
     spdlog::trace("Running Application");
 
     while (!m_window->should_close()) {
@@ -711,6 +704,10 @@ void ExampleApp::run() {
             m_input->update_gamepad_data();
             process_input();
             update_imgui_overlay();
+            if (m_gpu_to_restart) {
+                m_device->wait_idle();
+                return m_gpu_to_restart;
+            }
             render_frame();
             if (m_input->kbm_data().was_key_pressed_once(GLFW_KEY_N)) {
                 load_octree_geometry(false);
@@ -722,10 +719,12 @@ void ExampleApp::run() {
             }
             if (m_input->kbm_data().was_key_pressed_once(GLFW_KEY_P)) {
                 m_render_graph->log_gpu_frame_time();
+                m_render_graph->log_performance_stats();
             }
             check_octree_collisions();
         }
     }
+    return std::nullopt;
 }
 
 } // namespace inexor::example_app

@@ -2,6 +2,7 @@
 
 #include "inexor/vulkan-renderer/render-graph/frame_sync_manager.hpp"
 #include "inexor/vulkan-renderer/render-graph/graphics_pass_builder.hpp"
+#include "inexor/vulkan-renderer/render-graph/render_graph_performance.hpp"
 #include "inexor/vulkan-renderer/render-graph/resource_descriptor_manager.hpp"
 #include "inexor/vulkan-renderer/render-graph/staging_buffer.hpp"
 #include "inexor/vulkan-renderer/render-graph/swapchain_manager.hpp"
@@ -145,27 +146,10 @@ private:
     std::vector<wrapper::core::QueueSemaphoreWait> m_scratch_render_wait_semaphores;
     std::vector<const wrapper::commands::CommandBuffer *> m_scratch_primary_batch_command_buffers;
 
-    enum class CpuPhase : std::size_t {
-        Housekeeping,
-        Acquire,
-        FrameContext,
-        Resources,
-        Descriptors,
-        Recording,
-        Submit,
-        Finalize,
-        Present,
-        Count,
-    };
-    static constexpr std::size_t cpu_phase_count = static_cast<std::size_t>(CpuPhase::Count);
-    using CpuPhaseDurations = std::array<std::uint64_t, cpu_phase_count>;
-    struct CpuFrameStats {
-        std::uint32_t frames{0};
-        std::uint64_t total_ns{0};
-        std::uint64_t max_frame_ns{0};
-        CpuPhaseDurations phase_total_ns{};
-        CpuPhaseDurations phase_max_ns{};
-    } m_cpu_frame_stats;
+    mutable RenderGraphPerformance m_performance_measurements;
+    std::uint64_t m_gpu_query_serial{0};
+    mutable std::uint64_t m_gpu_last_sampled_serial{0};
+    mutable double m_gpu_last_frame_ms{0.0};
 
     void defer_release(std::span<const VkFence> fences, std::function<void()> release);
 
@@ -241,7 +225,10 @@ public:
     /// @param device The device wrapper
     /// @param use_secondary_command_buffers Whether graphics passes should be recorded into cached secondary command
     /// buffers or directly into the primary command buffer.
-    RenderGraph(Device &device, bool use_secondary_command_buffers = true, bool one_command_buffer = false);
+    /// @param one_command_buffer Whether to record all graphics work into a single command buffer.
+    /// @param frames_in_flight The number of frame slots used by the render graph.
+    RenderGraph(Device &device, bool use_secondary_command_buffers = true, bool one_command_buffer = false,
+                std::uint32_t frames_in_flight = 2);
 
     ~RenderGraph();
 
@@ -320,6 +307,9 @@ public:
 
     /// Log the most recently recorded GPU frame time.
     void log_gpu_frame_time() const;
+
+    /// Log accumulated CPU, GPU, swapchain and synchronization timing averages.
+    void log_performance_stats() const;
 
     /// Returns the most recently recorded GPU frame time in milliseconds if the query results are available.
     [[nodiscard]] std::optional<double> try_get_gpu_frame_time_ms() const;

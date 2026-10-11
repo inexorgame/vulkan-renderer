@@ -1,9 +1,11 @@
 ﻿#pragma once
 
+#include "example_app_performance.hpp"
 #include "renderer.hpp"
 
 #include <array>
 #include <optional>
+#include <thread>
 
 namespace inexor::vulkan_renderer::octree {
 // Forward declaration
@@ -59,19 +61,16 @@ private:
     bool m_no_cmd_buf_cache{false};
     bool m_one_cmd_buf{false};
     bool m_debug_vma{false};
+    std::uint32_t m_frames_in_flight{2};
+    std::uint32_t m_threadpool_workers{std::thread::hardware_concurrency()};
+    std::vector<VkPhysicalDevice> m_physical_devices;
+    std::vector<std::string> m_physical_device_names;
+    std::optional<std::uint32_t> m_gpu_to_restart;
 
     std::vector<OctreeVertex> m_octree_vertices;
     std::vector<std::uint32_t> m_octree_indices;
 
-    std::array<float, FRAME_TIME_HISTORY_SIZE> m_cpu_frame_time_history{};
-    std::array<float, FRAME_TIME_HISTORY_SIZE> m_gpu_frame_time_history{};
-    std::array<float, FRAME_TIME_HISTORY_SIZE> m_cpu_raw_frame_time_history{};
-    std::array<float, FRAME_TIME_HISTORY_SIZE> m_gpu_raw_frame_time_history{};
-    std::size_t m_frame_time_history_index{0};
-    std::size_t m_frame_time_history_count{0};
-    float m_last_cpu_frame_time_ms{0.0f};
-    std::optional<float> m_last_gpu_frame_time_ms;
-    double m_frame_time_sample_accumulator_seconds{0.0};
+    ExampleAppPerformance m_performance_measurements;
 
     static VkBool32 validation_layer_debug_messenger_callback(VkDebugUtilsMessageSeverityFlagBitsEXT severity,
                                                               VkDebugUtilsMessageTypeFlagsEXT type,
@@ -89,7 +88,6 @@ private:
     void load_octree_geometry(bool initialize);
     void setup_window_and_input_callbacks();
     void update_imgui_overlay();
-    void push_frame_time_sample(float cpu_frame_time_ms, std::optional<float> gpu_frame_time_ms);
     void update_frame_time_graph(float cpu_frame_time_ms, std::optional<float> gpu_frame_time_ms,
                                  double elapsed_seconds);
     void draw_frame_time_graph() const;
@@ -107,10 +105,11 @@ public:
     std::unique_ptr<Input> m_input;
 
 public:
-    ExampleApp(int argc, char **argv);
+    ExampleApp(int argc, char **argv, std::optional<std::uint32_t> gpu_override = std::nullopt);
     ~ExampleApp();
 
-    void run();
+    /// Run until the window closes or a different GPU was selected.
+    [[nodiscard]] std::optional<std::uint32_t> run();
 };
 
 } // namespace inexor::example_app
