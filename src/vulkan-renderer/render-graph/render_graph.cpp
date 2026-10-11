@@ -232,6 +232,7 @@ void RenderGraph::create_graphics_pipelines() {
 }
 
 void RenderGraph::log_render_graph_overview() const {
+    spdlog::trace("------------------------------------------------------------------");
     spdlog::trace("RenderGraph overview: {} module(s)", m_render_modules.size());
     for (const auto *module : m_render_modules) {
         if (!module) {
@@ -286,6 +287,7 @@ void RenderGraph::log_render_graph_overview() const {
             spdlog::trace("      Pipeline: {}", pipeline->name());
         }
     }
+    spdlog::trace("------------------------------------------------------------------");
 }
 
 void RenderGraph::check_for_cycles() {
@@ -950,6 +952,7 @@ void RenderGraph::render() {
 }
 
 void RenderGraph::log_gpu_frame_time() const {
+    spdlog::trace("------------------------------------------------------------------");
     if (!m_query_pool || !m_query_pool_has_results || !m_last_gpu_query_frame_slot) {
         return;
     }
@@ -1001,6 +1004,7 @@ void RenderGraph::log_performance_stats() const {
                       ns_to_ms(stats.image_wait_total_ns, static_cast<std::uint64_t>(stats.image_waits)),
                       static_cast<double>(stats.image_wait_max_ns) / 1'000'000.0, stats.image_waits);
     }
+    spdlog::trace("------------------------------------------------------------------");
 }
 
 std::optional<double> RenderGraph::try_get_gpu_frame_time_ms() const {
