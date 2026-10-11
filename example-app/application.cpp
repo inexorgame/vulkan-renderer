@@ -720,7 +720,6 @@ std::optional<std::uint32_t> ExampleApp::run() {
             if (m_input->kbm_data().was_key_pressed_once(GLFW_KEY_P)) {
                 m_render_graph->log_gpu_frame_time();
                 m_render_graph->log_performance_stats();
-                spdlog::trace("Average FPS: {:.0f}", m_performance_measurements.average_fps());
             }
             check_octree_collisions();
         }
