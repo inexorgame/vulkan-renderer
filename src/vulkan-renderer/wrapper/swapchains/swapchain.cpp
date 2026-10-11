@@ -74,10 +74,9 @@ VkResult Swapchain::acquire_next_image() {
     const auto result =
         vkAcquireNextImageKHR(m_device.device(), m_swapchain, std::numeric_limits<std::uint64_t>::max(),
                               m_img_available[m_current_frame_slot]->semaphore(), VK_NULL_HANDLE, &m_current_img_index);
-    const auto duration = elapsed_ns(acquire_start);
-    ++m_inflight_stats.acquires;
-    m_inflight_stats.acquire_total_ns += duration;
-    m_inflight_stats.acquire_max_ns = std::max(m_inflight_stats.acquire_max_ns, duration);
+    if (collect_stats) {
+        m_performance_measurements.record_acquire(elapsed_ns(acquire_start));
+    }
     if (result == VK_ERROR_OUT_OF_DATE_KHR) {
         setup_swapchain(m_current_extent, m_vsync_enabled);
         // NOTE: After recreating the swapchain, we can't immediately attempt to acquire the next image index!
@@ -107,9 +106,7 @@ void Swapchain::wait_for_current_image_if_in_flight(const VkFence already_waited
             throw VulkanException("Error: vkWaitForFences failed!", result, m_name);
         }
         const auto duration = elapsed_ns(wait_start);
-        ++m_inflight_stats.image_waits;
-        m_inflight_stats.image_wait_total_ns += duration;
-        m_inflight_stats.image_wait_max_ns = std::max(m_inflight_stats.image_wait_max_ns, duration);
+        m_performance_measurements.record_image_wait(duration);
     }
 }
 
@@ -155,9 +152,7 @@ void Swapchain::present(const std::span<const VkSemaphore> rendering_finished) {
     const auto present_start = std::chrono::steady_clock::now();
     const auto result = vkQueuePresentKHR(m_device.graphics_queue(), &present_info);
     const auto duration = elapsed_ns(present_start);
-    ++m_inflight_stats.presents;
-    m_inflight_stats.present_total_ns += duration;
-    m_inflight_stats.present_max_ns = std::max(m_inflight_stats.present_max_ns, duration);
+    m_performance_measurements.record_present(duration);
     if (result != VK_SUCCESS) {
         if (result == VK_SUBOPTIMAL_KHR || result == VK_ERROR_OUT_OF_DATE_KHR) {
             // We need to recreate the swapchain
@@ -254,7 +249,7 @@ void Swapchain::setup_swapchain(const VkExtent2D requested_extent, const bool vs
     m_imgs_in_flight.assign(m_imgs.size(), VK_NULL_HANDLE);
     m_current_frame_slot = 0;
     m_frame_index = 0;
-    m_inflight_stats = {};
+    m_performance_measurements.reset();
 
     spdlog::trace("Creating {} swapchain image views", m_imgs.size());
 

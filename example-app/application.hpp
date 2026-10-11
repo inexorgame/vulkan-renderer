@@ -1,5 +1,6 @@
 ﻿#pragma once
 
+#include "example_app_performance.hpp"
 #include "renderer.hpp"
 
 #include <array>
@@ -69,15 +70,7 @@ private:
     std::vector<OctreeVertex> m_octree_vertices;
     std::vector<std::uint32_t> m_octree_indices;
 
-    std::array<float, FRAME_TIME_HISTORY_SIZE> m_cpu_frame_time_history{};
-    std::array<float, FRAME_TIME_HISTORY_SIZE> m_gpu_frame_time_history{};
-    std::array<float, FRAME_TIME_HISTORY_SIZE> m_cpu_raw_frame_time_history{};
-    std::array<float, FRAME_TIME_HISTORY_SIZE> m_gpu_raw_frame_time_history{};
-    std::size_t m_frame_time_history_index{0};
-    std::size_t m_frame_time_history_count{0};
-    float m_last_cpu_frame_time_ms{0.0f};
-    std::optional<float> m_last_gpu_frame_time_ms;
-    double m_frame_time_sample_accumulator_seconds{0.0};
+    ExampleAppPerformance m_performance_measurements;
 
     static VkBool32 validation_layer_debug_messenger_callback(VkDebugUtilsMessageSeverityFlagBitsEXT severity,
                                                               VkDebugUtilsMessageTypeFlagsEXT type,
@@ -95,7 +88,6 @@ private:
     void load_octree_geometry(bool initialize);
     void setup_window_and_input_callbacks();
     void update_imgui_overlay();
-    void push_frame_time_sample(float cpu_frame_time_ms, std::optional<float> gpu_frame_time_ms);
     void update_frame_time_graph(float cpu_frame_time_ms, std::optional<float> gpu_frame_time_ms,
                                  double elapsed_seconds);
     void draw_frame_time_graph() const;

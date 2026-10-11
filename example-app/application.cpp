@@ -559,59 +559,13 @@ void ExampleApp::update_imgui_overlay() {
     ImGui::Render();
 }
 
-void ExampleApp::push_frame_time_sample(float cpu_frame_time_ms, std::optional<float> gpu_frame_time_ms) {
-    const auto sample_count = std::min<std::size_t>(m_frame_time_history_count + 1, FRAME_TIME_AVERAGE_WINDOW);
-    const auto average_recent_samples = [&](const auto &history, float fallback_value) {
-        float sum = 0.0f;
-        for (std::size_t i = 0; i < sample_count; ++i) {
-            const std::size_t index =
-                (m_frame_time_history_index + FRAME_TIME_HISTORY_SIZE - i) % FRAME_TIME_HISTORY_SIZE;
-            sum += history[index];
-        }
-        return sample_count > 0 ? sum / static_cast<float>(sample_count) : fallback_value;
-    };
-
-    m_cpu_raw_frame_time_history[m_frame_time_history_index] = cpu_frame_time_ms;
-    m_last_cpu_frame_time_ms = cpu_frame_time_ms;
-    m_cpu_frame_time_history[m_frame_time_history_index] =
-        average_recent_samples(m_cpu_raw_frame_time_history, cpu_frame_time_ms);
-
-    if (gpu_frame_time_ms) {
-        m_last_gpu_frame_time_ms = gpu_frame_time_ms;
-        m_gpu_raw_frame_time_history[m_frame_time_history_index] = *gpu_frame_time_ms;
-    } else if (m_frame_time_history_count > 0) {
-        const std::size_t previous_index =
-            (m_frame_time_history_index + FRAME_TIME_HISTORY_SIZE - 1) % FRAME_TIME_HISTORY_SIZE;
-        m_gpu_raw_frame_time_history[m_frame_time_history_index] = m_gpu_raw_frame_time_history[previous_index];
-    } else {
-        m_last_gpu_frame_time_ms = std::nullopt;
-        m_gpu_raw_frame_time_history[m_frame_time_history_index] = cpu_frame_time_ms;
-    }
-    m_gpu_frame_time_history[m_frame_time_history_index] =
-        average_recent_samples(m_gpu_raw_frame_time_history, m_gpu_raw_frame_time_history[m_frame_time_history_index]);
-
-    m_frame_time_history_index = (m_frame_time_history_index + 1) % FRAME_TIME_HISTORY_SIZE;
-    if (m_frame_time_history_count < FRAME_TIME_HISTORY_SIZE) {
-        ++m_frame_time_history_count;
-    }
-}
-
 void ExampleApp::update_frame_time_graph(float cpu_frame_time_ms, std::optional<float> gpu_frame_time_ms,
                                          double elapsed_seconds) {
-    m_last_cpu_frame_time_ms = cpu_frame_time_ms;
-    if (gpu_frame_time_ms) {
-        m_last_gpu_frame_time_ms = gpu_frame_time_ms;
-    }
-
-    m_frame_time_sample_accumulator_seconds += elapsed_seconds;
-    while (m_frame_time_sample_accumulator_seconds >= FRAME_TIME_SAMPLE_INTERVAL_SECONDS) {
-        push_frame_time_sample(m_last_cpu_frame_time_ms, m_last_gpu_frame_time_ms);
-        m_frame_time_sample_accumulator_seconds -= FRAME_TIME_SAMPLE_INTERVAL_SECONDS;
-    }
+    m_performance_measurements.update(cpu_frame_time_ms, gpu_frame_time_ms, elapsed_seconds);
 }
 
 void ExampleApp::draw_frame_time_graph() const {
-    if (m_frame_time_history_count == 0) {
+    if (m_performance_measurements.sample_count() == 0) {
         ImGui::TextUnformatted("No frame-time samples yet");
         return;
     }
@@ -630,11 +584,14 @@ void ExampleApp::draw_frame_time_graph() const {
     ImGui::TextColored(gpu_color, "GPU");
     ImGui::SameLine();
     ImGui::TextColored(cpu_color, "CPU");
-    const std::size_t visible_sample_count = std::min(m_frame_time_history_count, FRAME_TIME_GRAPH_ZOOM_SAMPLE_COUNT);
-    const std::array<float, FRAME_TIME_HISTORY_SIZE> cpu_samples = make_recent_samples(
-        m_cpu_frame_time_history, m_frame_time_history_count, m_frame_time_history_index, visible_sample_count);
-    const std::array<float, FRAME_TIME_HISTORY_SIZE> gpu_samples = make_recent_samples(
-        m_gpu_frame_time_history, m_frame_time_history_count, m_frame_time_history_index, visible_sample_count);
+    const std::size_t visible_sample_count =
+        std::min(m_performance_measurements.sample_count(), FRAME_TIME_GRAPH_ZOOM_SAMPLE_COUNT);
+    const std::array<float, FRAME_TIME_HISTORY_SIZE> cpu_samples =
+        make_recent_samples(m_performance_measurements.cpu_samples(), m_performance_measurements.sample_count(),
+                            m_performance_measurements.sample_index(), visible_sample_count);
+    const std::array<float, FRAME_TIME_HISTORY_SIZE> gpu_samples =
+        make_recent_samples(m_performance_measurements.gpu_samples(), m_performance_measurements.sample_count(),
+                            m_performance_measurements.sample_index(), visible_sample_count);
 
     const auto draw_plot = [&](const char *id, const auto &samples, const ImVec4 &color) {
         constexpr float tick_length = 4.0f;

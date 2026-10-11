@@ -1,5 +1,6 @@
 #pragma once
 
+#include "inexor/vulkan-renderer/wrapper/swapchains/swapchain_performance.hpp"
 #include "inexor/vulkan-renderer/wrapper/synchronization/semaphore.hpp"
 
 #include <volk.h>
@@ -60,18 +61,7 @@ private:
     [[nodiscard]] std::vector<VkImage> get_swapchain_images();
 
     std::uint32_t m_frame_index{0};
-    struct InFlightStats {
-        std::uint32_t acquires{0};
-        std::uint32_t presents{0};
-        std::uint64_t acquire_total_ns{0};
-        std::uint64_t acquire_max_ns{0};
-        std::uint64_t present_total_ns{0};
-        std::uint64_t present_max_ns{0};
-        std::uint32_t image_waits{0};
-        std::uint64_t image_wait_total_ns{0};
-        std::uint64_t image_wait_max_ns{0};
-    };
-    mutable InFlightStats m_inflight_stats;
+    mutable SwapchainPerformance m_performance_measurements;
 
 public:
     /// Default constructor
@@ -129,8 +119,8 @@ public:
     /// Mark the currently acquired swapchain image as owned by the given submission fence.
     void mark_current_image_in_flight(VkFence fence);
 
-    [[nodiscard]] const InFlightStats &inflight_stats() const {
-        return m_inflight_stats;
+    [[nodiscard]] const SwapchainPerformance::Statistics &inflight_stats() const {
+        return m_performance_measurements.statistics();
     }
 
     [[nodiscard]] std::uint32_t image_count() const {
