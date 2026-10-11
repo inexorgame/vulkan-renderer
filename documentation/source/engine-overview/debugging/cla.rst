@@ -5,6 +5,9 @@ Command Line Arguments
 
 You can start vulkan-renderer with the following command line arguments:
 
+Options that take a value accept either ``--option=value`` or
+``--option value``. Use ``--help`` to display this list from the executable.
+
 .. option:: --gpu <index>
 
     Specifies which GPU to use by array index, **starting from 0**.
@@ -19,10 +22,26 @@ You can start vulkan-renderer with the following command line arguments:
 
     Disables the secondary command buffer cache and records graphics passes directly into the primary command buffer.
 
+.. option:: --one-cmd-buf
+
+    Uses one command buffer for render-graph recording.
+
+.. option:: --debug-vma
+
+    Enables Vulkan Memory Allocator debugging and the additional VMA debug controls.
+
 .. option:: --maxfps <fps>
 
-    Limits the max frames per seconds to a specified value. The command line argument will be `clamped <https://en.cppreference.com/w/cpp/algorithm/clamp.html>`__ in between the values ``1 fps`` and ``2000 fps`` as lower and higher bounds.
+    Limits the maximum frame rate to the specified value when VSync is disabled. The default is ``4000`` FPS.
 
 .. option:: --msaa <samples>
 
     Sets the multisample anti-aliasing sample count. Supported values are ``1``, ``2``, ``4``, ``8``, and ``16``. Any other value falls back to ``1``.
+
+.. option:: --frames-in-flight <count>
+
+    Sets the number of frames that may be in flight. The value must be from ``1`` to ``3``; the default is ``2``.
+
+.. option:: --threadpool-workers <count>
+
+    Sets the number of Taskflow worker threads. The value must be from ``1`` to ``64``; the default is the number of hardware-concurrency threads.
