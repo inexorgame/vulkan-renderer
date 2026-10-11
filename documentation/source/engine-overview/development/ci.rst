@@ -37,7 +37,7 @@ Continuous Integration (CI)
    * - Commit Naming Check
      - `A Python helper script <https://github.com/inexorgame/vulkan-renderer/blob/main/.github/workflows/commit_naming.yml>`__, see also :ref:`COMMIT_NAMING`
 
-- For the main branch, all resulting builds from the CI (so called artifacts) are released on GitHub as `nightly build <https://github.com/inexorgame/vulkan-renderer/releases/tag/nightly>`__.
+- For the main branch, all resulting builds from the CI (so called artifacts) are released on GitHub as `nightly build <https://github.com/inexorgame/vulkan-renderer/releases/tag/nightly>`__. The separate Release workflow publishes artifacts from the exact successful GHA run after a push or a manual GHA dispatch on main. Pull requests and merge queue runs do not publish releases or include a release job in their GHA checks.
 - We also have a `webhook <https://gist.github.com/jagrosh/5b1761213e33fc5b54ec7f6379034a22>`__ which directly dispatches the build status into our `Discord <https://discord.com/invite/acUW8k7>`__.
 
 .. |github actions| image:: https://img.shields.io/github/actions/workflow/status/inexorgame/vulkan-renderer/build.yml?branch=main

@@ -47,11 +47,3 @@ jobs:
       vulkan-sdk-version: "1.4.357.0"
       vulkan-sdk-checksum-linux: "0f09bf6a0625e346bf004be70b92907e934a4c76606b323441b2baf3a5a0e66d"
       vulkan-sdk-checksum-windows: "81f474711e9042f4cd22b31b2f7a8870db2e428b21586fb43dd80150be97310d"
-
-  release:
-    name: Release
-    needs:
-      - linux-build
-      - windows-build
-      - documentation
-    uses: ./.github/workflows/release.yml
