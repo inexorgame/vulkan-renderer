@@ -146,7 +146,9 @@ public:
     /// @param vsync_enabled ``true`` if vertical synchronization is enabled.
     /// @exception VulkanException vkCreateSwapchainKHR call failed
     /// @exception VulkanException vkGetPhysicalDeviceSurfaceSupportKHR call failed
-    void setup_swapchain(VkExtent2D extent, bool vsync_enabled);
+    void setup_swapchain(
+        VkExtent2D extent, bool vsync_enabled,
+        SwapchainPerformance::RecreationReason recreation_reason = SwapchainPerformance::RecreationReason::Explicit);
 
     [[nodiscard]] const VkSwapchainKHR swapchain() const {
         return m_swapchain;

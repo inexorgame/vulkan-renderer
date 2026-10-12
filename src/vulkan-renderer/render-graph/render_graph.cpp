@@ -994,12 +994,54 @@ void RenderGraph::log_performance_stats() const {
     for (const auto &swapchain : m_swapchain_manager.frame_swapchains()) {
         const auto &stats = swapchain->inflight_stats();
         spdlog::trace("  Swapchain '{}':", swapchain->name());
-        spdlog::trace("    acquire avg/max {:.3f}/{:.3f} ms ({})", stats.acquire_average_ns() / 1'000'000.0,
+        spdlog::trace("    acquire: avg={:.3f} ms max={:.3f} ms count={}", stats.acquire_average_ns() / 1'000'000.0,
                       static_cast<double>(stats.acquire_max_ns) / 1'000'000.0, stats.acquires);
-        spdlog::trace("    present avg/max {:.3f}/{:.3f} ms ({})", stats.present_average_ns() / 1'000'000.0,
+        spdlog::trace("    present: avg={:.3f} ms max={:.3f} ms count={}", stats.present_average_ns() / 1'000'000.0,
                       static_cast<double>(stats.present_max_ns) / 1'000'000.0, stats.presents);
-        spdlog::trace("    image-fence wait avg/max {:.3f}/{:.3f} ms ({})", stats.image_wait_average_ns() / 1'000'000.0,
+        spdlog::trace("    image-fence: wait avg={:.3f} ms max={:.3f} ms count={}",
+                      stats.image_wait_average_ns() / 1'000'000.0,
                       static_cast<double>(stats.image_wait_max_ns) / 1'000'000.0, stats.image_waits);
+        spdlog::trace("    acquire: p50={:.3f} ms p95={:.3f} ms p99={:.3f} ms immediate={} blocking={}",
+                      static_cast<double>(stats.acquire_percentile_ns(0.50)) / 1'000'000.0,
+                      static_cast<double>(stats.acquire_percentile_ns(0.95)) / 1'000'000.0,
+                      static_cast<double>(stats.acquire_percentile_ns(0.99)) / 1'000'000.0, stats.immediate_acquires,
+                      stats.blocking_acquires);
+        spdlog::trace("    present: p50={:.3f} ms p95={:.3f} ms p99={:.3f} ms",
+                      static_cast<double>(stats.present_percentile_ns(0.50)) / 1'000'000.0,
+                      static_cast<double>(stats.present_percentile_ns(0.95)) / 1'000'000.0,
+                      static_cast<double>(stats.present_percentile_ns(0.99)) / 1'000'000.0);
+        spdlog::trace("    image-wait: p50={:.3f} ms p95={:.3f} ms p99={:.3f} ms",
+                      static_cast<double>(stats.image_wait_percentile_ns(0.50)) / 1'000'000.0,
+                      static_cast<double>(stats.image_wait_percentile_ns(0.95)) / 1'000'000.0,
+                      static_cast<double>(stats.image_wait_percentile_ns(0.99)) / 1'000'000.0);
+        spdlog::trace("    acquire results: success={} suboptimal={} out-of-date={} error={}", stats.acquire_successes,
+                      stats.acquire_suboptimal, stats.acquire_out_of_date, stats.acquire_errors);
+        spdlog::trace("    present results: success={} suboptimal={} out-of-date={} error={}", stats.present_successes,
+                      stats.present_suboptimal, stats.present_out_of_date, stats.present_errors);
+        spdlog::trace("    acquire-to-present: avg={:.3f} ms max={:.3f} ms p50={:.3f} ms p95={:.3f} ms "
+                      "p99={:.3f} ms count={}",
+                      stats.frame_average_ns() / 1'000'000.0, static_cast<double>(stats.frame_max_ns) / 1'000'000.0,
+                      static_cast<double>(stats.frame_percentile_ns(0.50)) / 1'000'000.0,
+                      static_cast<double>(stats.frame_percentile_ns(0.95)) / 1'000'000.0,
+                      static_cast<double>(stats.frame_percentile_ns(0.99)) / 1'000'000.0, stats.completed_frames);
+        spdlog::trace("    present interval: last={:.3f} ms avg={:.3f} ms max={:.3f} ms p50={:.3f} ms "
+                      "p95={:.3f} ms p99={:.3f} ms max-frames-in-flight={}",
+                      static_cast<double>(stats.last_present_interval_ns) / 1'000'000.0,
+                      stats.present_interval_average_ns() / 1'000'000.0,
+                      static_cast<double>(stats.present_interval_max_ns) / 1'000'000.0,
+                      static_cast<double>(stats.present_interval_percentile_ns(0.50)) / 1'000'000.0,
+                      static_cast<double>(stats.present_interval_percentile_ns(0.95)) / 1'000'000.0,
+                      static_cast<double>(stats.present_interval_percentile_ns(0.99)) / 1'000'000.0,
+                      stats.max_frames_in_flight);
+        spdlog::trace("    recreations: total={} explicit={} acquire-OOD={} present-suboptimal={} present-OOD={}",
+                      stats.recreations, stats.explicit_recreations, stats.acquire_out_of_date_recreations,
+                      stats.present_suboptimal_recreations, stats.present_out_of_date_recreations);
+        std::string image_acquisitions{"    acquisitions:"};
+        for (std::size_t image_index = 0; image_index < stats.image_acquires.size(); ++image_index) {
+            image_acquisitions += (image_index == 0 ? " " : ", ") + ("[" + std::to_string(image_index) + "]=") +
+                                  std::to_string(stats.image_acquires[image_index]);
+        }
+        spdlog::trace("{}", image_acquisitions);
     }
     spdlog::trace("------------------------------------------------------------------");
 }
