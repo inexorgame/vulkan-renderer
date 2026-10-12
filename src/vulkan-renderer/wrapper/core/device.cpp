@@ -268,7 +268,8 @@ Device::Device(const Instance &inst, const VkSurfaceKHR surface, const VkPhysica
     get_thread_command_pool(VK_QUEUE_TRANSFER_BIT);
     get_thread_command_pool(VK_QUEUE_COMPUTE_BIT);
     get_thread_command_pool(VK_QUEUE_SPARSE_BINDING_BIT);
-    spdlog::trace("Taskflow executor created [worker threads={}]", m_taskflow_executor.num_workers());
+
+    spdlog::trace("Taskflow executor created [threads={}]", m_taskflow_executor.num_workers());
 }
 
 Device::~Device() {

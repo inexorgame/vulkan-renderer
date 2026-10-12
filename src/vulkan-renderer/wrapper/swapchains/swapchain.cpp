@@ -197,7 +197,7 @@ void Swapchain::setup_swapchain(const VkExtent2D requested_extent, const bool vs
 
     m_format = swapchain_ci.imageFormat;
 
-    spdlog::trace("Creating swapchain");
+    spdlog::trace("Creating swapchain '{}'", m_name);
 
     if (const auto result = vkCreateSwapchainKHR(m_device.device(), &swapchain_ci, nullptr, &m_swapchain);
         result != VK_SUCCESS) {
