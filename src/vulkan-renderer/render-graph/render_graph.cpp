@@ -994,14 +994,11 @@ void RenderGraph::log_performance_stats() const {
     for (const auto &swapchain : m_swapchain_manager.frame_swapchains()) {
         const auto &stats = swapchain->inflight_stats();
         spdlog::trace("  Swapchain '{}':", swapchain->name());
-        spdlog::trace("    acquire avg/max {:.3f}/{:.3f} ms ({})",
-                      ns_to_ms(stats.acquire_total_ns, static_cast<std::uint64_t>(stats.acquires)),
+        spdlog::trace("    acquire avg/max {:.3f}/{:.3f} ms ({})", stats.acquire_average_ns() / 1'000'000.0,
                       static_cast<double>(stats.acquire_max_ns) / 1'000'000.0, stats.acquires);
-        spdlog::trace("    present avg/max {:.3f}/{:.3f} ms ({})",
-                      ns_to_ms(stats.present_total_ns, static_cast<std::uint64_t>(stats.presents)),
+        spdlog::trace("    present avg/max {:.3f}/{:.3f} ms ({})", stats.present_average_ns() / 1'000'000.0,
                       static_cast<double>(stats.present_max_ns) / 1'000'000.0, stats.presents);
-        spdlog::trace("    image-fence wait avg/max {:.3f}/{:.3f} ms ({})",
-                      ns_to_ms(stats.image_wait_total_ns, static_cast<std::uint64_t>(stats.image_waits)),
+        spdlog::trace("    image-fence wait avg/max {:.3f}/{:.3f} ms ({})", stats.image_wait_average_ns() / 1'000'000.0,
                       static_cast<double>(stats.image_wait_max_ns) / 1'000'000.0, stats.image_waits);
     }
     spdlog::trace("------------------------------------------------------------------");
