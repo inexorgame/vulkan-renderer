@@ -150,6 +150,7 @@ private:
     std::uint64_t m_gpu_query_serial{0};
     mutable std::uint64_t m_gpu_last_sampled_serial{0};
     mutable double m_gpu_last_frame_ms{0.0};
+    mutable std::optional<std::uint64_t> m_gpu_last_end_timestamp;
 
     void defer_release(std::span<const VkFence> fences, std::function<void()> release);
 

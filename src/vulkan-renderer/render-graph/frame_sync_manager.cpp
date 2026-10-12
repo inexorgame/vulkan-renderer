@@ -30,11 +30,27 @@ VkFence FrameSyncManager::wait_for_current_frame_slot() {
         m_frame_slot_submission_fences.resize(m_frame_slot_count, VK_NULL_HANDLE);
     }
 
+    ++m_wait_stats.frame_slot_checks;
+    const auto occupied_slots = static_cast<std::size_t>(std::count_if(
+        m_frame_slot_submission_fences.begin(), m_frame_slot_submission_fences.end(), [&](const VkFence candidate) {
+            return candidate != VK_NULL_HANDLE && vkGetFenceStatus(m_device.device(), candidate) == VK_NOT_READY;
+        }));
+    ++m_wait_stats.utilization_samples;
+    m_wait_stats.occupied_slots_total += occupied_slots;
+    m_wait_stats.last_occupied_slots = occupied_slots;
+    m_wait_stats.max_occupied_slots = std::max(m_wait_stats.max_occupied_slots, occupied_slots);
+    if (occupied_slots == m_frame_slot_count) {
+        ++m_wait_stats.fully_occupied_samples;
+    }
+
     auto &fence = m_frame_slot_submission_fences.at(m_current_frame_slot);
     if (fence == VK_NULL_HANDLE) {
         return VK_NULL_HANDLE;
     }
 
+    if (vkGetFenceStatus(m_device.device(), fence) == VK_NOT_READY) {
+        ++m_wait_stats.blocking_waits;
+    }
     const auto wait_start = std::chrono::steady_clock::now();
     if (const auto result =
             vkWaitForFences(m_device.device(), 1, &fence, VK_TRUE, std::numeric_limits<std::uint64_t>::max());
