@@ -1,6 +1,6 @@
 ﻿#pragma once
 
-#include "example_app_performance.hpp"
+#include "application_performance.hpp"
 #include "renderer.hpp"
 
 #include <array>
