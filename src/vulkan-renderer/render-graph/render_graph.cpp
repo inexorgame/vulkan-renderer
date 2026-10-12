@@ -16,6 +16,7 @@
 #include <spdlog/spdlog.h>
 
 #include <algorithm>
+#include <array>
 #include <chrono>
 #include <cstdint>
 #include <cstring>
@@ -37,6 +38,17 @@ using wrapper::synchronization::Semaphore;
 using CpuPhase = RenderGraphPerformance::CpuPhase;
 using CpuPhaseDurations = RenderGraphPerformance::CpuPhaseDurations;
 constexpr auto cpu_phase_count = RenderGraphPerformance::cpu_phase_count;
+
+constexpr VkQueryPipelineStatisticFlags pipeline_statistic_flags =
+    VK_QUERY_PIPELINE_STATISTIC_INPUT_ASSEMBLY_VERTICES_BIT |
+    VK_QUERY_PIPELINE_STATISTIC_INPUT_ASSEMBLY_PRIMITIVES_BIT |
+    VK_QUERY_PIPELINE_STATISTIC_VERTEX_SHADER_INVOCATIONS_BIT | VK_QUERY_PIPELINE_STATISTIC_CLIPPING_INVOCATIONS_BIT |
+    VK_QUERY_PIPELINE_STATISTIC_CLIPPING_PRIMITIVES_BIT | VK_QUERY_PIPELINE_STATISTIC_FRAGMENT_SHADER_INVOCATIONS_BIT;
+
+constexpr std::array<const char *, 6> pipeline_statistic_names{
+    "input assembly vertices", "input assembly primitives", "vertex shader invocations",
+    "clipping invocations",    "clipping primitives",       "fragment shader invocations",
+};
 
 RenderGraph::RenderGraph(Device &device, const bool use_secondary_command_buffers, const bool one_command_buffer,
                          const std::uint32_t frames_in_flight)
@@ -297,6 +309,22 @@ void RenderGraph::check_for_cycles() {
 void RenderGraph::compile() {
     check_for_cycles();
     sort_graphics_passes_by_order();
+    if (m_graphics_passes.size() > std::numeric_limits<std::uint32_t>::max()) {
+        throw std::overflow_error("Error: Graphics pass count exceeds uint32_t!");
+    }
+    m_pipeline_statistics_queries_per_frame = static_cast<std::uint32_t>(m_graphics_passes.size());
+    if (m_pipeline_statistics_queries_per_frame > 0) {
+        const auto frame_slots = m_query_pool->query_count() / 2;
+        if (m_pipeline_statistics_queries_per_frame > std::numeric_limits<std::uint32_t>::max() / frame_slots) {
+            throw std::overflow_error("Error: Pipeline statistics query count exceeds uint32_t!");
+        }
+        m_pipeline_statistics_query_pool = std::make_unique<wrapper::queries::QueryPool>(
+            m_device, VK_QUERY_TYPE_PIPELINE_STATISTICS, frame_slots * m_pipeline_statistics_queries_per_frame,
+            pipeline_statistic_flags);
+    } else {
+        m_pipeline_statistics_query_pool.reset();
+    }
+    m_pipeline_statistics_query_pool_has_results = false;
     rebuild_recording_tasks();
     synchronize_frame_context();
     build_texture_graphics_pass_dependencies();
@@ -310,17 +338,24 @@ void RenderGraph::rebuild_recording_tasks() {
     for (std::size_t i = 0; i < m_graphics_passes.size(); ++i) {
         m_recording_tasks.emplace([this, i] {
             const auto &pass = *m_graphics_passes[i];
+            const auto statistics_query_index =
+                static_cast<std::uint32_t>(m_current_frame_slot) * m_pipeline_statistics_queries_per_frame +
+                static_cast<std::uint32_t>(i);
             if (!m_command_buffer_cache.uses_secondary_command_buffers()) {
                 const auto command_buffer_name = "render_graph_pass[" + std::to_string(i) + "]" + m_frame_slot_suffix;
                 const auto &command_buffer =
                     m_device.request_named_command_buffer(VK_QUEUE_GRAPHICS_BIT, command_buffer_name);
                 CommandBufferBuilder builder(command_buffer);
                 builder.begin_debug_label_region(pass.m_name, pass.m_debug_label_color)
-                    .begin_rendering(pass.m_rendering_info)
-                    .invoke(pass.m_on_record_cmd_buffer)
-                    .end_rendering()
-                    .end_debug_label_region()
-                    .end_command_buffer();
+                    .begin_rendering(pass.m_rendering_info);
+                if (m_pipeline_statistics_query_pool) {
+                    builder.begin_query(*m_pipeline_statistics_query_pool, statistics_query_index);
+                }
+                builder.invoke(pass.m_on_record_cmd_buffer);
+                if (m_pipeline_statistics_query_pool) {
+                    builder.end_query(*m_pipeline_statistics_query_pool, statistics_query_index);
+                }
+                builder.end_rendering().end_debug_label_region().end_command_buffer();
                 m_scratch_primary_command_buffers[i] = &command_buffer;
                 return;
             }
@@ -336,9 +371,20 @@ void RenderGraph::rebuild_recording_tasks() {
             });
             const auto inheritance_info = make_info<VkCommandBufferInheritanceInfo>({
                 .pNext = &inheritance_rendering_info,
+                .pipelineStatistics = pipeline_statistic_flags,
             });
+            auto record_with_statistics = [this, statistics_query_index,
+                                           record = pass.m_on_record_cmd_buffer](CommandBufferBuilder &builder) {
+                if (m_pipeline_statistics_query_pool) {
+                    builder.begin_query(*m_pipeline_statistics_query_pool, statistics_query_index);
+                }
+                builder.invoke(record);
+                if (m_pipeline_statistics_query_pool) {
+                    builder.end_query(*m_pipeline_statistics_query_pool, statistics_query_index);
+                }
+            };
             m_scratch_secondary_command_buffers[i] = m_command_buffer_cache.record_secondary_command_buffer(
-                pass.m_name, pass.m_cached_render_extent, inheritance_info, pass.m_on_record_cmd_buffer,
+                pass.m_name, pass.m_cached_render_extent, inheritance_info, std::move(record_with_statistics),
                 pass.m_cache_secondary_command_buffer);
         });
     }
@@ -784,6 +830,8 @@ void RenderGraph::render() {
     }
     const auto descriptors_end = collect_cpu_stats ? Clock::now() : Clock::time_point{};
     const auto query_base = static_cast<std::uint32_t>(m_current_frame_slot * 2);
+    const auto statistics_query_base =
+        static_cast<std::uint32_t>(m_current_frame_slot) * m_pipeline_statistics_queries_per_frame;
 
     VkFence render_submit_fence = VK_NULL_HANDLE;
     Clock::time_point submit_start{};
@@ -794,19 +842,30 @@ void RenderGraph::render() {
                     builder.reset_query_pool(*m_query_pool, query_base, 2)
                         .write_timestamp(*m_query_pool, query_base, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT);
                 }
+                if (m_pipeline_statistics_query_pool) {
+                    builder.reset_query_pool(*m_pipeline_statistics_query_pool, statistics_query_base,
+                                             m_pipeline_statistics_queries_per_frame);
+                }
                 if (m_inline_update_commands) {
                     builder.invoke(m_inline_update_commands);
                 }
                 m_pending_queue_ownership_acquire_barriers.flush_if_not_empty(builder);
                 m_swapchain_manager.prepare_swapchains_for_rendering(builder);
 
-                for (const auto &pass : m_graphics_passes) {
+                for (std::size_t pass_index = 0; pass_index < m_graphics_passes.size(); ++pass_index) {
+                    const auto &pass = m_graphics_passes[pass_index];
                     prepare_graphics_pass_for_recording(*pass);
                     builder.begin_debug_label_region(pass->m_name, pass->m_debug_label_color)
-                        .begin_rendering(pass->m_rendering_info)
-                        .invoke(pass->m_on_record_cmd_buffer)
-                        .end_rendering()
-                        .end_debug_label_region();
+                        .begin_rendering(pass->m_rendering_info);
+                    const auto statistics_query_index = statistics_query_base + static_cast<std::uint32_t>(pass_index);
+                    if (m_pipeline_statistics_query_pool) {
+                        builder.begin_query(*m_pipeline_statistics_query_pool, statistics_query_index);
+                    }
+                    builder.invoke(pass->m_on_record_cmd_buffer);
+                    if (m_pipeline_statistics_query_pool) {
+                        builder.end_query(*m_pipeline_statistics_query_pool, statistics_query_index);
+                    }
+                    builder.end_rendering().end_debug_label_region();
                 }
 
                 m_swapchain_manager.prepare_swapchains_for_presenting(builder);
@@ -828,6 +887,10 @@ void RenderGraph::render() {
         if (m_query_pool) {
             frame_start_builder.reset_query_pool(*m_query_pool, query_base, 2)
                 .write_timestamp(*m_query_pool, query_base, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT);
+        }
+        if (m_pipeline_statistics_query_pool) {
+            frame_start_builder.reset_query_pool(*m_pipeline_statistics_query_pool, statistics_query_base,
+                                                 m_pipeline_statistics_queries_per_frame);
         }
         if (m_inline_update_commands) {
             frame_start_builder.invoke(m_inline_update_commands);
@@ -875,6 +938,10 @@ void RenderGraph::render() {
                     builder.reset_query_pool(*m_query_pool, query_base, 2)
                         .write_timestamp(*m_query_pool, query_base, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT);
                 }
+                if (m_pipeline_statistics_query_pool) {
+                    builder.reset_query_pool(*m_pipeline_statistics_query_pool, statistics_query_base,
+                                             m_pipeline_statistics_queries_per_frame);
+                }
                 if (m_inline_update_commands) {
                     builder.invoke(m_inline_update_commands);
                 }
@@ -912,6 +979,9 @@ void RenderGraph::render() {
     if (m_query_pool) {
         m_query_pool_has_results = true;
     }
+    if (m_pipeline_statistics_query_pool) {
+        m_pipeline_statistics_query_pool_has_results = true;
+    }
 
     m_upload_submission_pending = false;
 
@@ -947,6 +1017,8 @@ void RenderGraph::render() {
         durations[static_cast<std::size_t>(CpuPhase::Finalize)] = elapsed_ns(submit_end, finalize_end);
         durations[static_cast<std::size_t>(CpuPhase::Present)] = elapsed_ns(finalize_end, frame_end);
         const auto frame_total_ns = elapsed_ns(frame_start, frame_end);
+        m_performance_measurements.record_queue_submit(durations[static_cast<std::size_t>(CpuPhase::Submit)],
+                                                       render_wait_semaphores.size());
         m_performance_measurements.record_cpu_frame(frame_total_ns, durations);
     }
 }
@@ -979,6 +1051,44 @@ void RenderGraph::log_gpu_frame_time() const {
     spdlog::trace("GPU frame time: {:.3f} ms [ticks={}]", elapsed_ms, elapsed_ticks);
 }
 
+void RenderGraph::log_pipeline_statistics() const {
+    if (!m_pipeline_statistics_query_pool || !m_pipeline_statistics_query_pool_has_results ||
+        !m_last_gpu_query_frame_slot || m_pipeline_statistics_queries_per_frame == 0) {
+        spdlog::trace("  Vulkan pipeline statistics: no results");
+        return;
+    }
+
+    const auto first_query =
+        static_cast<std::uint32_t>(*m_last_gpu_query_frame_slot) * m_pipeline_statistics_queries_per_frame;
+    try {
+        // Performance reports are requested explicitly (P or shutdown), so waiting for the latest submitted
+        // frame is preferable to intermittently omitting its counters.
+        const auto results =
+            m_pipeline_statistics_query_pool->get_results(first_query, m_pipeline_statistics_queries_per_frame);
+        const auto values_per_query = m_pipeline_statistics_query_pool->values_per_query();
+        if (values_per_query != pipeline_statistic_names.size()) {
+            spdlog::warn("Unexpected pipeline statistic result count: {}", values_per_query);
+            return;
+        }
+
+        std::array<std::uint64_t, pipeline_statistic_names.size()> totals{};
+        for (std::uint32_t query = 0; query < m_pipeline_statistics_queries_per_frame; ++query) {
+            const auto result_base = static_cast<std::size_t>(query) * values_per_query;
+            for (std::size_t statistic = 0; statistic < totals.size(); ++statistic) {
+                totals[statistic] += results[result_base + statistic];
+            }
+        }
+
+        spdlog::trace("  Vulkan pipeline statistics (latest frame, {} passes):",
+                      m_pipeline_statistics_queries_per_frame);
+        for (std::size_t statistic = 0; statistic < totals.size(); ++statistic) {
+            spdlog::trace("    {}: {}", pipeline_statistic_names[statistic], totals[statistic]);
+        }
+    } catch (const std::exception &exception) {
+        spdlog::warn("Failed to read Vulkan pipeline statistics: {}", exception.what());
+    }
+}
+
 void RenderGraph::log_performance_stats() const {
     const auto ns_to_ms = [](const std::uint64_t total_ns, const std::uint64_t count) {
         return count == 0 ? 0.0 : static_cast<double>(total_ns) / static_cast<double>(count) / 1'000'000.0;
@@ -987,23 +1097,79 @@ void RenderGraph::log_performance_stats() const {
     m_performance_measurements.log();
 
     const auto &wait_stats = m_frame_sync_manager.wait_stats();
-    spdlog::trace("  Frame-slot fence waits: {} calls, avg {:.3f} ms, max {:.3f} ms", wait_stats.waits,
+    spdlog::trace("  Frame-slot fence waits: checks={} calls={} blocking={} blocking-frequency={:.1f}% "
+                  "avg={:.3f} ms max={:.3f} ms",
+                  wait_stats.frame_slot_checks, wait_stats.waits, wait_stats.blocking_waits,
+                  wait_stats.frame_slot_checks == 0 ? 0.0
+                                                    : 100.0 * static_cast<double>(wait_stats.blocking_waits) /
+                                                          static_cast<double>(wait_stats.frame_slot_checks),
                   ns_to_ms(wait_stats.total_ns, wait_stats.waits),
                   static_cast<double>(wait_stats.max_ns) / 1'000'000.0);
+    spdlog::trace("  CPU waiting for GPU: total={:.3f} ms avg={:.3f} ms max={:.3f} ms",
+                  static_cast<double>(wait_stats.total_ns) / 1'000'000.0,
+                  ns_to_ms(wait_stats.total_ns, wait_stats.waits),
+                  static_cast<double>(wait_stats.max_ns) / 1'000'000.0);
+    spdlog::trace("  Occupied frame slots: current={} avg={:.2f} max={} capacity={} fully-occupied-samples={}",
+                  wait_stats.last_occupied_slots,
+                  wait_stats.utilization_samples == 0 ? 0.0
+                                                      : static_cast<double>(wait_stats.occupied_slots_total) /
+                                                            static_cast<double>(wait_stats.utilization_samples),
+                  wait_stats.max_occupied_slots, m_frame_sync_manager.frame_slot_count(),
+                  wait_stats.fully_occupied_samples);
 
     for (const auto &swapchain : m_swapchain_manager.frame_swapchains()) {
         const auto &stats = swapchain->inflight_stats();
         spdlog::trace("  Swapchain '{}':", swapchain->name());
-        spdlog::trace("    acquire avg/max {:.3f}/{:.3f} ms ({})",
-                      ns_to_ms(stats.acquire_total_ns, static_cast<std::uint64_t>(stats.acquires)),
+        spdlog::trace("    acquire: avg={:.3f} ms max={:.3f} ms count={}", stats.acquire_average_ns() / 1'000'000.0,
                       static_cast<double>(stats.acquire_max_ns) / 1'000'000.0, stats.acquires);
-        spdlog::trace("    present avg/max {:.3f}/{:.3f} ms ({})",
-                      ns_to_ms(stats.present_total_ns, static_cast<std::uint64_t>(stats.presents)),
+        spdlog::trace("    present: avg={:.3f} ms max={:.3f} ms count={}", stats.present_average_ns() / 1'000'000.0,
                       static_cast<double>(stats.present_max_ns) / 1'000'000.0, stats.presents);
-        spdlog::trace("    image-fence wait avg/max {:.3f}/{:.3f} ms ({})",
-                      ns_to_ms(stats.image_wait_total_ns, static_cast<std::uint64_t>(stats.image_waits)),
+        spdlog::trace("    image-fence: wait avg={:.3f} ms max={:.3f} ms count={}",
+                      stats.image_wait_average_ns() / 1'000'000.0,
                       static_cast<double>(stats.image_wait_max_ns) / 1'000'000.0, stats.image_waits);
+        spdlog::trace("    acquire: p50={:.3f} ms p95={:.3f} ms p99={:.3f} ms immediate={} blocking={}",
+                      static_cast<double>(stats.acquire_percentile_ns(0.50)) / 1'000'000.0,
+                      static_cast<double>(stats.acquire_percentile_ns(0.95)) / 1'000'000.0,
+                      static_cast<double>(stats.acquire_percentile_ns(0.99)) / 1'000'000.0, stats.immediate_acquires,
+                      stats.blocking_acquires);
+        spdlog::trace("    present: p50={:.3f} ms p95={:.3f} ms p99={:.3f} ms",
+                      static_cast<double>(stats.present_percentile_ns(0.50)) / 1'000'000.0,
+                      static_cast<double>(stats.present_percentile_ns(0.95)) / 1'000'000.0,
+                      static_cast<double>(stats.present_percentile_ns(0.99)) / 1'000'000.0);
+        spdlog::trace("    image-wait: p50={:.3f} ms p95={:.3f} ms p99={:.3f} ms",
+                      static_cast<double>(stats.image_wait_percentile_ns(0.50)) / 1'000'000.0,
+                      static_cast<double>(stats.image_wait_percentile_ns(0.95)) / 1'000'000.0,
+                      static_cast<double>(stats.image_wait_percentile_ns(0.99)) / 1'000'000.0);
+        spdlog::trace("    acquire results: success={} suboptimal={} out-of-date={} error={}", stats.acquire_successes,
+                      stats.acquire_suboptimal, stats.acquire_out_of_date, stats.acquire_errors);
+        spdlog::trace("    present results: success={} suboptimal={} out-of-date={} error={}", stats.present_successes,
+                      stats.present_suboptimal, stats.present_out_of_date, stats.present_errors);
+        spdlog::trace("    acquire-to-present: avg={:.3f} ms max={:.3f} ms p50={:.3f} ms p95={:.3f} ms "
+                      "p99={:.3f} ms count={}",
+                      stats.frame_average_ns() / 1'000'000.0, static_cast<double>(stats.frame_max_ns) / 1'000'000.0,
+                      static_cast<double>(stats.frame_percentile_ns(0.50)) / 1'000'000.0,
+                      static_cast<double>(stats.frame_percentile_ns(0.95)) / 1'000'000.0,
+                      static_cast<double>(stats.frame_percentile_ns(0.99)) / 1'000'000.0, stats.completed_frames);
+        spdlog::trace("    present interval: last={:.3f} ms avg={:.3f} ms max={:.3f} ms p50={:.3f} ms "
+                      "p95={:.3f} ms p99={:.3f} ms max-frames-in-flight={}",
+                      static_cast<double>(stats.last_present_interval_ns) / 1'000'000.0,
+                      stats.present_interval_average_ns() / 1'000'000.0,
+                      static_cast<double>(stats.present_interval_max_ns) / 1'000'000.0,
+                      static_cast<double>(stats.present_interval_percentile_ns(0.50)) / 1'000'000.0,
+                      static_cast<double>(stats.present_interval_percentile_ns(0.95)) / 1'000'000.0,
+                      static_cast<double>(stats.present_interval_percentile_ns(0.99)) / 1'000'000.0,
+                      stats.max_frames_in_flight);
+        spdlog::trace("    recreations: total={} explicit={} acquire-OOD={} present-suboptimal={} present-OOD={}",
+                      stats.recreations, stats.explicit_recreations, stats.acquire_out_of_date_recreations,
+                      stats.present_suboptimal_recreations, stats.present_out_of_date_recreations);
+        std::string image_acquisitions{"    acquisitions:"};
+        for (std::size_t image_index = 0; image_index < stats.image_acquires.size(); ++image_index) {
+            image_acquisitions += (image_index == 0 ? " " : ", ") + ("[" + std::to_string(image_index) + "]=") +
+                                  std::to_string(stats.image_acquires[image_index]);
+        }
+        spdlog::trace("{}", image_acquisitions);
     }
+    log_pipeline_statistics();
     spdlog::trace("------------------------------------------------------------------");
 }
 
@@ -1031,7 +1197,19 @@ std::optional<double> RenderGraph::try_get_gpu_frame_time_ms() const {
 
     const auto elapsed_ticks = values[2] - values[0];
     const auto elapsed_ms = static_cast<double>(elapsed_ticks) * static_cast<double>(m_timestamp_period) / 1'000'000.0;
-    m_performance_measurements.record_gpu_frame(elapsed_ms);
+    if (m_gpu_last_sampled_serial == m_gpu_query_serial) {
+        return m_gpu_last_frame_ms;
+    }
+    std::optional<double> gpu_idle_ms;
+    if (m_gpu_last_end_timestamp && m_gpu_last_sampled_serial + 1 == m_gpu_query_serial &&
+        values[0] >= *m_gpu_last_end_timestamp) {
+        gpu_idle_ms = static_cast<double>(values[0] - *m_gpu_last_end_timestamp) *
+                      static_cast<double>(m_timestamp_period) / 1'000'000.0;
+    }
+    m_performance_measurements.record_gpu_frame(elapsed_ms, gpu_idle_ms);
+    m_gpu_last_sampled_serial = m_gpu_query_serial;
+    m_gpu_last_frame_ms = elapsed_ms;
+    m_gpu_last_end_timestamp = values[2];
     return elapsed_ms;
 }
 
@@ -1041,7 +1219,11 @@ void RenderGraph::reset_graph() {
     m_gpu_query_serial = 0;
     m_gpu_last_sampled_serial = 0;
     m_gpu_last_frame_ms = 0.0;
+    m_gpu_last_end_timestamp.reset();
     m_last_gpu_query_frame_slot.reset();
+    m_pipeline_statistics_query_pool.reset();
+    m_pipeline_statistics_queries_per_frame = 0;
+    m_pipeline_statistics_query_pool_has_results = false;
     m_staging_buffer.reset();
     m_recording_tasks.clear();
     m_recording_tasks_dirty = true;

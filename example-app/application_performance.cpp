@@ -1,4 +1,4 @@
-#include "example_app_performance.hpp"
+#include "application_performance.hpp"
 
 #include <algorithm>
 

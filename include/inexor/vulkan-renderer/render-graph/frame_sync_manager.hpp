@@ -21,9 +21,16 @@ using wrapper::core::Device;
 class FrameSyncManager {
 public:
     struct WaitStats {
+        std::uint64_t frame_slot_checks{0};
         std::uint64_t waits{0};
+        std::uint64_t blocking_waits{0};
         std::uint64_t total_ns{0};
         std::uint64_t max_ns{0};
+        std::uint64_t utilization_samples{0};
+        std::uint64_t occupied_slots_total{0};
+        std::size_t last_occupied_slots{0};
+        std::size_t max_occupied_slots{0};
+        std::uint64_t fully_occupied_samples{0};
     };
 
 private:

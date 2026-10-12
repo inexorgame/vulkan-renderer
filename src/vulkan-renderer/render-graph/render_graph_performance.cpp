@@ -16,10 +16,27 @@ void RenderGraphPerformance::record_cpu_frame(const std::uint64_t total, const C
     }
 }
 
-void RenderGraphPerformance::record_gpu_frame(const double elapsed) {
+void RenderGraphPerformance::record_gpu_frame(const double elapsed, const std::optional<double> gpu_idle_ms) {
     ++m_gpu_frames;
     m_gpu_total_ms += elapsed;
     m_gpu_max_ms = std::max(m_gpu_max_ms, elapsed);
+    if (gpu_idle_ms) {
+        ++m_gpu_idle_samples;
+        m_gpu_idle_total_ms += *gpu_idle_ms;
+        m_gpu_idle_max_ms = std::max(m_gpu_idle_max_ms, *gpu_idle_ms);
+    }
+}
+
+void RenderGraphPerformance::record_queue_submit(const std::uint64_t duration_ns,
+                                                 const std::size_t wait_semaphore_count) {
+    ++m_queue_submits;
+    m_queue_submit_total_ns += duration_ns;
+    m_queue_submit_max_ns = std::max(m_queue_submit_max_ns, duration_ns);
+    m_semaphore_waits += wait_semaphore_count;
+    m_max_semaphore_waits = std::max<std::uint64_t>(m_max_semaphore_waits, wait_semaphore_count);
+    if (wait_semaphore_count != 0) {
+        ++m_submits_with_semaphore_waits;
+    }
 }
 
 void RenderGraphPerformance::reset() {
@@ -45,6 +62,21 @@ void RenderGraphPerformance::log() const {
     if (m_gpu_frames != 0)
         spdlog::trace("  GPU frame: {} samples, avg {:.3f} ms, max {:.3f} ms", m_gpu_frames,
                       m_gpu_total_ms / static_cast<double>(m_gpu_frames), m_gpu_max_ms);
+    if (m_queue_submits != 0) {
+        spdlog::trace("  Queue submit: count={} avg={:.3f} ms max={:.3f} ms", m_queue_submits,
+                      ns_to_ms(m_queue_submit_total_ns, m_queue_submits),
+                      static_cast<double>(m_queue_submit_max_ns) / 1'000'000.0);
+        spdlog::trace("  Semaphore waits: total={} submits-with-waits={} frequency={:.1f}% max-per-submit={}",
+                      m_semaphore_waits, m_submits_with_semaphore_waits,
+                      100.0 * static_cast<double>(m_submits_with_semaphore_waits) /
+                          static_cast<double>(m_queue_submits),
+                      m_max_semaphore_waits);
+    }
+    if (m_gpu_idle_samples != 0) {
+        spdlog::trace("  GPU waiting for CPU (inter-frame idle estimate): samples={} avg={:.3f} ms max={:.3f} ms",
+                      m_gpu_idle_samples, m_gpu_idle_total_ms / static_cast<double>(m_gpu_idle_samples),
+                      m_gpu_idle_max_ms);
+    }
 }
 
 } // namespace inexor::vulkan_renderer::render_graph

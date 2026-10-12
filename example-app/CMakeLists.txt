@@ -1,7 +1,7 @@
 set(INEXOR_EXAMPLE_SOURCE_FILES
     main.cpp
     application.cpp
-    example_app_performance.cpp
+    application_performance.cpp
     renderer.cpp
 )
 

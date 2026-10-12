@@ -121,6 +121,9 @@ private:
     std::vector<VkCommandBuffer> m_scratch_secondary_command_buffers;
     std::unique_ptr<wrapper::queries::QueryPool> m_query_pool;
     bool m_query_pool_has_results{false};
+    std::unique_ptr<wrapper::queries::QueryPool> m_pipeline_statistics_query_pool;
+    std::uint32_t m_pipeline_statistics_queries_per_frame{0};
+    bool m_pipeline_statistics_query_pool_has_results{false};
     std::optional<std::size_t> m_last_gpu_query_frame_slot;
     float m_timestamp_period{0.0f};
     std::unique_ptr<wrapper::synchronization::Semaphore> m_upload_finished;
@@ -150,6 +153,7 @@ private:
     std::uint64_t m_gpu_query_serial{0};
     mutable std::uint64_t m_gpu_last_sampled_serial{0};
     mutable double m_gpu_last_frame_ms{0.0};
+    mutable std::optional<std::uint64_t> m_gpu_last_end_timestamp;
 
     void defer_release(std::span<const VkFence> fences, std::function<void()> release);
 
@@ -177,6 +181,9 @@ private:
     void unregister_render_module(RenderModule &render_module);
 
     void log_render_graph_overview() const;
+
+    /// Log pipeline statistics for the most recently submitted frame.
+    void log_pipeline_statistics() const;
 
     void invalidate_graphics_passes_using_texture(const Texture &texture);
 
