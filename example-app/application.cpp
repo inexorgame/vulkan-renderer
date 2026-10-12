@@ -353,7 +353,7 @@ ExampleApp::ExampleApp(int argc, char **argv, const std::optional<std::uint32_t>
     }
 
     const VkPhysicalDeviceFeatures required_features{
-        // Add required physical device features here if desired...
+        .pipelineStatisticsQuery = VK_TRUE,
     };
 
     std::vector<const char *> required_extensions{

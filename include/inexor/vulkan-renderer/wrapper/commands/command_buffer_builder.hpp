@@ -155,10 +155,45 @@ public:
         if (query_pool.query_pool() == VK_NULL_HANDLE) {
             throw InexorException("Error: Parameter 'query_pool' is invalid!");
         }
+        if (query_pool.query_type() != VK_QUERY_TYPE_TIMESTAMP) {
+            throw std::invalid_argument("Error: Parameter 'query_pool' is not a timestamp query pool!");
+        }
         if (query_index >= query_pool.query_count()) {
             throw std::out_of_range("Error: Parameter 'query_index' is out of range!");
         }
         vkCmdWriteTimestamp(command_buffer_handle(), stage_mask, query_pool.query_pool(), query_index);
+        return *this;
+    }
+
+    CommandBufferBuilder &begin_query(const queries::QueryPool &query_pool, std::uint32_t query_index,
+                                      VkQueryControlFlags flags = 0) {
+        if (query_pool.query_pool() == VK_NULL_HANDLE) {
+            throw InexorException("Error: Parameter 'query_pool' is invalid!");
+        }
+        if (query_pool.query_type() == VK_QUERY_TYPE_TIMESTAMP) {
+            throw std::invalid_argument("Error: Timestamp queries cannot be begun!");
+        }
+        if (query_pool.query_type() == VK_QUERY_TYPE_PIPELINE_STATISTICS && flags != 0) {
+            throw std::invalid_argument("Error: Pipeline statistics queries do not support query control flags!");
+        }
+        if (query_index >= query_pool.query_count()) {
+            throw std::out_of_range("Error: Parameter 'query_index' is out of range!");
+        }
+        vkCmdBeginQuery(command_buffer_handle(), query_pool.query_pool(), query_index, flags);
+        return *this;
+    }
+
+    CommandBufferBuilder &end_query(const queries::QueryPool &query_pool, std::uint32_t query_index) {
+        if (query_pool.query_pool() == VK_NULL_HANDLE) {
+            throw InexorException("Error: Parameter 'query_pool' is invalid!");
+        }
+        if (query_pool.query_type() == VK_QUERY_TYPE_TIMESTAMP) {
+            throw std::invalid_argument("Error: Timestamp queries cannot be ended!");
+        }
+        if (query_index >= query_pool.query_count()) {
+            throw std::out_of_range("Error: Parameter 'query_index' is out of range!");
+        }
+        vkCmdEndQuery(command_buffer_handle(), query_pool.query_pool(), query_index);
         return *this;
     }
 
