@@ -79,8 +79,8 @@ PipelineCache::PipelineCache(const core::Device &device) : m_device(device) {
 }
 
 PipelineCache::~PipelineCache() {
-    save_cache_data_to_disk();
     if (m_pipeline_cache != VK_NULL_HANDLE) {
+        save_cache_data_to_disk();
         vkDestroyPipelineCache(m_device.device(), m_pipeline_cache, nullptr);
         m_pipeline_cache = VK_NULL_HANDLE;
     }

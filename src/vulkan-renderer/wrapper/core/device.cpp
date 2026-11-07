@@ -263,11 +263,15 @@ Device::Device(const Instance &inst, const VkSurfaceKHR surface, const VkPhysica
     // Create a Vuklan pipeline cache to speed up pipeline creation
     m_pipeline_cache = std::make_unique<PipelineCache>(*this);
 
-    // Create command pools at here instead of allocating them lazily at first request during runtime
+    // Create command pools here instead of allocating them lazily at first request during runtime
     get_thread_command_pool(VK_QUEUE_GRAPHICS_BIT);
     get_thread_command_pool(VK_QUEUE_TRANSFER_BIT);
-    get_thread_command_pool(VK_QUEUE_COMPUTE_BIT);
-    get_thread_command_pool(VK_QUEUE_SPARSE_BINDING_BIT);
+    if (has_any_compute_queue()) {
+        get_thread_command_pool(VK_QUEUE_COMPUTE_BIT);
+    }
+    if (has_any_sparse_binding_queue()) {
+        get_thread_command_pool(VK_QUEUE_SPARSE_BINDING_BIT);
+    }
 
     spdlog::trace("Taskflow executor created [threads={}]", m_taskflow_executor.num_workers());
 }
@@ -406,6 +410,9 @@ CommandPool &Device::get_thread_command_pool(const VkQueueFlagBits queue_type) c
         queue_family_index = m_compute_queue_family_index;
         break;
     case VK_QUEUE_TRANSFER_BIT:
+        if (!has_any_transfer_queue()) {
+            return get_thread_command_pool(VK_QUEUE_GRAPHICS_BIT);
+        }
         queue_family_index = m_transfer_queue_family_index;
         break;
     case VK_QUEUE_SPARSE_BINDING_BIT:

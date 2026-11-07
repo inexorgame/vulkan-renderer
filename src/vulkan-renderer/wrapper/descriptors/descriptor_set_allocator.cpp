@@ -28,6 +28,7 @@ DescriptorSetAllocator::DescriptorSetAllocator(DescriptorSetAllocator &&other) n
     : m_device(other.m_device), m_max_descriptor_count(other.m_max_descriptor_count),
       m_descriptor_pool_allocator(std::move(other.m_descriptor_pool_allocator)) {
     m_current_pool = std::exchange(other.m_current_pool, VK_NULL_HANDLE);
+    m_current_pool_set_allocations = std::exchange(other.m_current_pool_set_allocations, 0);
 }
 
 VkDescriptorSet DescriptorSetAllocator::allocate(const std::string &name,

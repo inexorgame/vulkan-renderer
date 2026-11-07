@@ -5,34 +5,37 @@
 #include <glm/gtx/intersect.hpp>
 #include <glm/gtx/norm.hpp>
 
+#include <algorithm>
+#include <cmath>
+#include <limits>
+
 namespace inexor::vulkan_renderer::octree {
 
 bool ray_box_collision(const std::array<glm::vec3, 2> &box_bounds, const glm::vec3 &position,
                        const glm::vec3 &direction) {
-    glm::vec3 inverse_dir{1 / direction.x, 1 / direction.y, 1 / direction.z};
-    std::array<std::int32_t, 3> sign{static_cast<std::int32_t>(inverse_dir.x < 0),
-                                     static_cast<std::int32_t>(inverse_dir.y < 0),
-                                     static_cast<std::int32_t>(inverse_dir.z < 0)};
+    float tmin = -std::numeric_limits<float>::infinity();
+    float tmax = std::numeric_limits<float>::infinity();
 
-    float tmin{(box_bounds[sign[0]].x - position.x) * inverse_dir.x};
-    float tmax{(box_bounds[1 - sign[0]].x - position.x) * inverse_dir.x};
-    float tymin{(box_bounds[sign[1]].y - position.y) * inverse_dir.y};
-    float tymax{(box_bounds[1 - sign[1]].y - position.y) * inverse_dir.y};
-
-    if ((tmin > tymax) || (tymin > tmax)) {
-        return false;
+    for (int i = 0; i < 3; ++i) {
+        if (std::abs(direction[i]) < std::numeric_limits<float>::epsilon()) {
+            if (position[i] < box_bounds[0][i] || position[i] > box_bounds[1][i]) {
+                return false;
+            }
+        } else {
+            const float inv_d = 1.0f / direction[i];
+            float t0 = (box_bounds[0][i] - position[i]) * inv_d;
+            float t1 = (box_bounds[1][i] - position[i]) * inv_d;
+            if (t0 > t1) {
+                std::swap(t0, t1);
+            }
+            tmin = std::max(tmin, t0);
+            tmax = std::min(tmax, t1);
+            if (tmax < tmin) {
+                return false;
+            }
+        }
     }
-    if (tymin > tmin) {
-        tmin = tymin;
-    }
-    if (tymax < tmax) {
-        tmax = tymax;
-    }
-
-    float tzmin{(box_bounds[sign[2]].z - position.z) * inverse_dir.z};
-    float tzmax{(box_bounds[1 - sign[2]].z - position.z) * inverse_dir.z};
-
-    return (tmin <= tzmax) && (tzmin <= tmax);
+    return tmax >= std::max(0.0f, tmin);
 }
 
 std::optional<RayCubeCollision<Cube>> ray_cube_collision_check(const Cube &cube, const glm::vec3 pos,

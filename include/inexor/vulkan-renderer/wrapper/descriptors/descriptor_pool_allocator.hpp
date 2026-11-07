@@ -28,7 +28,7 @@ private:
     /// The default pool sizes
     std::vector<VkDescriptorPoolSize> m_pool_sizes;
     /// The maximum number of descriptor sets per pool
-    std::uint32_t m_max_descriptor_count;
+    std::uint32_t m_max_descriptor_count{4096};
 
     /// Default constructor
     /// @param device The device wrapper
