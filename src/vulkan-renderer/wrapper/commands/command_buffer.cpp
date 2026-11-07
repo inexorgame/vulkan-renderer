@@ -576,7 +576,7 @@ void CommandBuffer::submit(const VkQueueFlagBits queue_type,
     auto get_queue = [&]() {
         switch (queue_type) {
         case VK_QUEUE_TRANSFER_BIT: {
-            return m_device.m_transfer_queue;
+            return m_device.m_transfer_queue != VK_NULL_HANDLE ? m_device.m_transfer_queue : m_device.m_graphics_queue;
         }
         case VK_QUEUE_COMPUTE_BIT: {
             return m_device.m_compute_queue;

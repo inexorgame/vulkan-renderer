@@ -264,7 +264,7 @@ public:
     }
 
     [[nodiscard]] bool has_any_sparse_binding_queue() const {
-        return m_transfer_queue != VK_NULL_HANDLE;
+        return m_sparse_binding_queue != VK_NULL_HANDLE;
     }
 
     // TODO: Move to command buffer wrapper!
@@ -279,7 +279,7 @@ public:
 
     // TODO: Move to command buffer wrapper!
     [[nodiscard]] VkQueue transfer_queue() const {
-        return m_transfer_queue;
+        return m_transfer_queue != VK_NULL_HANDLE ? m_transfer_queue : m_graphics_queue;
     }
 
     [[nodiscard]] std::uint32_t graphics_queue_family_index() const {
@@ -290,10 +290,13 @@ public:
     }
 
     [[nodiscard]] std::uint32_t transfer_queue_family_index() const {
-        if (!m_transfer_queue_family_index.has_value()) {
-            throw std::runtime_error("Error: Transfer queue family index is not available!");
+        if (m_transfer_queue_family_index.has_value()) {
+            return m_transfer_queue_family_index.value();
         }
-        return m_transfer_queue_family_index.value();
+        if (m_graphics_queue_family_index.has_value()) {
+            return m_graphics_queue_family_index.value();
+        }
+        throw std::runtime_error("Error: Neither transfer nor graphics queue family index is available!");
     }
 
     /// Request a command buffer from the thread_local command pool.

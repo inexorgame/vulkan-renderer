@@ -59,14 +59,15 @@ TEST(Swapchain, choose_image_count) {
 
 TEST(Swapchain, choose_image_extent) {
     silence_spdlog();
-    VkSurfaceCapabilitiesKHR caps;
+    VkSurfaceCapabilitiesKHR caps{};
     caps.maxImageExtent = {1920, 1080};
     caps.minImageExtent = {128, 238};
     const VkExtent2D current_extent{512, 512};
     const VkExtent2D numeric_limit{std::numeric_limits<std::uint32_t>::max(),
                                    std::numeric_limits<std::uint32_t>::max()};
-    // If the current extent is numeric max, the requested extent is returned
-    const auto chosen_extent1 = choose_image_extent(numeric_limit, caps, current_extent);
+    // If the surface current extent is numeric max, the requested extent is chosen and clamped to limits
+    caps.currentExtent = numeric_limit;
+    const auto chosen_extent1 = choose_image_extent(current_extent, caps, current_extent);
     EXPECT_EQ(chosen_extent1.width, current_extent.width);
     EXPECT_EQ(chosen_extent1.height, current_extent.height);
     // The application can select a dimension withing the range limits of the surface.

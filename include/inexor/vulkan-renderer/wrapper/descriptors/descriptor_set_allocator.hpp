@@ -29,7 +29,7 @@ private:
     // The descriptor pool currently in use (handled by a DescriptorPool instance)
     VkDescriptorPool m_current_pool{VK_NULL_HANDLE};
     std::uint32_t m_current_pool_set_allocations{0};
-    std::uint32_t m_max_descriptor_count;
+    std::uint32_t m_max_descriptor_count{4096};
 
     /// The descriptor pool allocator
     DescriptorPoolAllocator m_descriptor_pool_allocator;

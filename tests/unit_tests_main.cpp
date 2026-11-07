@@ -12,9 +12,13 @@ int main(int argc, char **argv) {
     std::cout << APP_NAME << ", version " << APP_VERSION_STR << std::endl;
     std::cout << "Configuration: " << BUILD_TYPE << ", Git SHA " << BUILD_GIT << std::endl;
 
+    const bool is_interactive = (argc <= 1);
     testing::InitGoogleTest(&argc, argv);
-    RUN_ALL_TESTS();
+    const int result = RUN_ALL_TESTS();
 
-    std::cout << "Press Enter to close" << std::endl;
-    std::cin.get();
+    if (is_interactive) {
+        std::cout << "Press Enter to close" << std::endl;
+        std::cin.get();
+    }
+    return result;
 }

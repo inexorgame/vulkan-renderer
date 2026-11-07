@@ -257,8 +257,10 @@ std::shared_ptr<Cube> Cube::neighbor(const Axis axis, const NeighborDirection di
 
 void Cube::remove_children() {
     for (auto &child : m_children) {
-        child->remove_children();
-        child.reset();
+        if (child) {
+            child->remove_children();
+            child.reset();
+        }
     }
 }
 
@@ -444,7 +446,7 @@ void Cube::set_type(const Type new_type) {
 }
 
 void Cube::simplify() {
-    if (m_type != Type::OCTANT) {
+    if (m_type != Type::OCTANT || !m_children[0]) {
         return;
     }
     const Type first_child_type = m_children[0]->type();

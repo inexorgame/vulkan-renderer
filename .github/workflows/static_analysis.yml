@@ -16,7 +16,7 @@ on:
 jobs:
   clang-tidy:
     name: Clang-Tidy
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     env:
       INEXOR_CMAKE_PRESET: "linux-clang-debug"
     steps:
@@ -71,7 +71,7 @@ jobs:
 
   scan-build:
     name: scan-build
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     env:
       INEXOR_CMAKE_PRESET: "linux-clang-debug"
     steps:
@@ -113,7 +113,7 @@ jobs:
 
   cppcheck:
     name: Cppcheck
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     env:
       INEXOR_CMAKE_PRESET: "linux-clang-debug"
     steps:
